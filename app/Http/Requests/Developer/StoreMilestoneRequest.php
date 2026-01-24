@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Requests\Developer;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreMilestoneRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'project_id' => 'required|exists:developer_projects,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2000',
+            'milestone_type' => 'required|string|max:100',
+            'target_date' => 'required|date',
+            'actual_date' => 'nullable|date',
+            'status' => 'nullable|in:pending,in_progress,completed,overdue,cancelled',
+            'priority_level' => 'nullable|in:low,medium,high,critical',
+            'progress_percentage' => 'nullable|integer|min:0|max:100',
+            'budget_allocated' => 'nullable|numeric|min:0',
+            'actual_cost' => 'nullable|numeric|min:0',
+            'deliverables' => 'nullable|array',
+            'dependencies' => 'nullable|array',
+            'assigned_team' => 'nullable|array',
+            'stakeholders' => 'nullable|array',
+            'success_criteria' => 'nullable|array',
+            'risk_factors' => 'nullable|array',
+            'mitigation_strategies' => 'nullable|array',
+            'quality_standards' => 'nullable|array',
+            'approval_required' => 'nullable|boolean',
+            'approved_by' => 'nullable|string|max:255',
+            'approval_date' => 'nullable|date',
+            'completion_notes' => 'nullable|string|max:2000',
+            'lessons_learned' => 'nullable|string|max:2000',
+            'next_milestones' => 'nullable|array',
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'project_id.required' => 'Project is required.',
+            'project_id.exists' => 'Selected project does not exist.',
+            'title.required' => 'Milestone title is required.',
+            'milestone_type.required' => 'Milestone type is required.',
+            'target_date.required' => 'Target date is required.',
+            'target_date.date' => 'Target date must be a valid date.',
+            'progress_percentage.integer' => 'Progress percentage must be a whole number.',
+            'progress_percentage.min' => 'Progress percentage cannot be negative.',
+            'progress_percentage.max' => 'Progress percentage cannot exceed 100%.',
+            'budget_allocated.numeric' => 'Budget allocated must be a number.',
+            'budget_allocated.min' => 'Budget allocated cannot be negative.',
+            'actual_cost.numeric' => 'Actual cost must be a number.',
+            'actual_cost.min' => 'Actual cost cannot be negative.',
+            'documents.*.mimes' => 'Documents must be PDF, DOC, DOCX, JPG, JPEG, or PNG files.',
+            'documents.*.max' => 'Document size cannot exceed 10MB.',
+            'images.*.image' => 'Each file must be an image.',
+            'images.*.mimes' => 'Images must be JPEG, PNG, JPG, or GIF files.',
+            'images.*.max' => 'Image size cannot exceed 5MB.',
+        ];
+    }
+}
