@@ -5,274 +5,198 @@
 <x-navbar />
 
 <!-- Hero Section -->
-<section class="relative bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-    <div class="absolute inset-0 bg-black opacity-40"></div>
-    <div class="relative container mx-auto px-6 py-24">
-        <div class="text-center">
-            <h1 class="text-5xl font-bold mb-6 animate-fade-in">
-                {{ __('Welcome to Real Estate Pro') }}
+<section class="relative bg-gradient-to-r from-blue-600 to-indigo-700 text-white overflow-hidden">
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative container mx-auto px-6 py-32">
+        <div class="max-w-3xl">
+            <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight animate-fade-in">
+                {{ __('Find Your Dream Home') }} <br>
+                <span class="text-blue-200">{{ __('With Real Estate Pro') }}</span>
             </h1>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">
-                {{ __('Find your dream home with our comprehensive real estate platform. Browse properties, connect with agents, and make informed decisions.') }}
+            <p class="text-xl mb-10 text-gray-100 leading-relaxed">
+                {{ __('Discover the perfect property from our extensive collection of homes, apartments, and commercial spaces. Expert guidance for every step of your journey.') }}
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="{{ route('properties.index') }}" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 transition duration-300 shadow-lg text-center">
+                    {{ __('Browse Properties') }}
+                </a>
                 @guest
-                    <a href="{{ route('register') }}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+                    <a href="{{ route('register') }}" class="bg-blue-500/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-500/30 transition duration-300 text-center">
                         {{ __('Get Started') }}
                     </a>
-                    <a href="{{ route('login') }}" class="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition duration-300">
-                        {{ __('Sign In') }}
-                    </a>
                 @else
-                    <a href="{{ route('agent.dashboard') }}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+                    <a href="{{ route('agent.dashboard') }}" class="bg-blue-500/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-500/30 transition duration-300 text-center">
                         {{ __('Go to Dashboard') }}
                     </a>
                 @endguest
             </div>
         </div>
     </div>
+    <!-- Decorative element -->
+    <div class="absolute bottom-0 right-0 w-1/3 h-full opacity-10 pointer-events-none">
+        <i class="fas fa-city text-[20rem] transform translate-y-1/4 translate-x-1/4"></i>
+    </div>
 </section>
 
-<!-- Search Section -->
-<section class="bg-gray-50 py-12">
-    <div class="container mx-auto px-6">
-        <div class="bg-white rounded-lg shadow-lg p-6 -mt-16 relative z-10">
-            <form class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-2">
-                        {{ __('Location') }}
-                    </label>
-                    <input type="text" placeholder="{{ __('Enter city or area') }}" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+<!-- Quick Search -->
+<section class="relative z-10 -mt-12 container mx-auto px-6">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <form action="{{ route('properties.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    {{ __('Location') }}
+                </label>
+                <div class="relative">
+                    <i class="fas fa-map-marker-alt absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" name="city" placeholder="{{ __('Enter city or area') }}" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                 </div>
-                <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-2">
-                        {{ __('Property Type') }}
-                    </label>
-                    <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
-                        <option>{{ __('All Types') }}</option>
-                        <option>{{ __('Apartment') }}</option>
-                        <option>{{ __('House') }}</option>
-                        <option>{{ __('Villa') }}</option>
-                        <option>{{ __('Commercial') }}</option>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    {{ __('Property Type') }}
+                </label>
+                <div class="relative">
+                    <i class="fas fa-home absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <select name="property_type" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 appearance-none">
+                        <option value="">{{ __('All Types') }}</option>
+                        <option value="apartment">{{ __('Apartment') }}</option>
+                        <option value="house">{{ __('House') }}</option>
+                        <option value="villa">{{ __('Villa') }}</option>
+                        <option value="commercial">{{ __('Commercial') }}</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-2">
-                        {{ __('Price Range') }}
-                    </label>
-                    <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
-                        <option>{{ __('Any Price') }}</option>
-                        <option>{{ __('Under $100K') }}</option>
-                        <option>{{ __('$100K - $250K') }}</option>
-                        <option>{{ __('$250K - $500K') }}</option>
-                        <option>{{ __('Over $500K') }}</option>
-                    </select>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    {{ __('Max Price') }}
+                </label>
+                <div class="relative">
+                    <i class="fas fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="number" name="max_price" placeholder="{{ __('Max price') }}" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all">
                 </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
-                        {{ __('Search Properties') }}
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-blue-600 text-white py-3.5 px-6 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5">
+                    {{ __('Search Properties') }}
+                </button>
+            </div>
+        </form>
     </div>
 </section>
 
 <!-- Featured Properties -->
-<section class="py-16">
+<section class="py-24 bg-white">
     <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">
-                {{ __('Featured Properties') }}
-            </h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">
-                {{ __('Discover our handpicked selection of premium properties in prime locations') }}
-            </p>
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+            <div>
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
+                    {{ __('Featured Properties') }}
+                </h2>
+                <p class="text-gray-600 text-lg max-w-2xl">
+                    {{ __('Discover our handpicked selection of premium properties in prime locations') }}
+                </p>
+            </div>
+            <a href="{{ route('properties.index', ['featured' => 1]) }}" class="mt-4 md:mt-0 text-blue-600 font-bold flex items-center hover:text-blue-800 transition-colors">
+                {{ __('View All Featured') }} <i class="fas fa-arrow-right ml-2"></i>
+            </a>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             @forelse($featuredProperties as $property)
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition duration-300">
-                <div class="relative">
-                    @if($property->media && $property->media->where('media_type', 'image')->count() > 0)
-                        <img src="{{ $property->media->where('media_type', 'image')->first()->url ?? asset('images/default-property.jpg') }}" 
-                             alt="{{ $property->title }}" 
-                             class="w-full h-56 object-cover">
-                    @else
-                        <img src="{{ asset('images/default-property.jpg') }}" alt="Property" class="w-full h-56 object-cover">
-                    @endif
-                    @if($property->featured)
-                    <div class="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
-                        {{ __('Featured') }}
-                    </div>
-                    @endif
-                    @if($property->premium)
-                    <div class="absolute top-4 right-4 bg-purple-600 text-white px-3 py-1 rounded-full text-sm">
-                        {{ __('Premium') }}
-                    </div>
-                    @endif
-                </div>
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">{{ $property->title }}</h3>
-                    <p class="text-gray-600 mb-4">{{ Str::limit($property->description ?? 'No description available', 100) }}</p>
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-2xl font-bold text-blue-600">
-                            {{ number_format($property->price ?? 0, 2) }} {{ $property->currency ?? 'USD' }}
-                        </span>
-                        <div class="flex gap-2 text-sm text-gray-500">
-                            @if($property->bedrooms)
-                            <span>{{ $property->bedrooms }} {{ __('Beds') }}</span>
-                            <span>•</span>
-                            @endif
-                            @if($property->bathrooms)
-                            <span>{{ $property->bathrooms }} {{ __('Baths') }}</span>
-                            <span>•</span>
-                            @endif
-                            <span>{{ number_format($property->area ?? 0, 2) }} {{ $property->area_unit ?? 'm²' }}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center text-sm text-gray-500">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            <span>{{ $property->city ?? 'Unknown City' }}, {{ $property->country ?? 'Unknown Country' }}</span>
-                        </div>
-                        <span class="text-sm text-gray-500">
-                            {{ ucfirst($property->property_type ?? 'property') }}
-                        </span>
-                    </div>
-                    <a href="{{ route('properties.show', $property) }}" class="block w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-center">
-                        {{ __('View Details') }}
-                    </a>
-                </div>
-            </div>
+                @include('properties.partials.card', ['property' => $property])
             @empty
-            <div class="col-span-full text-center py-12">
-                <div class="text-gray-500">
-                    <i class="fas fa-home text-4xl mb-4"></i>
-                    <p class="text-lg">{{ __('No properties available at the moment.') }}</p>
-                    <p class="text-sm mt-2">{{ __('Please check back later or contact our agents.') }}</p>
+                <div class="col-span-full text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                    <div class="text-gray-400">
+                        <i class="fas fa-home text-6xl mb-4"></i>
+                        <p class="text-xl font-bold">{{ __('No properties available at the moment.') }}</p>
+                        <p class="mt-2">{{ __('Please check back later or contact our agents.') }}</p>
+                    </div>
                 </div>
-            </div>
             @endforelse
         </div>
     </div>
 </section>
 
 <!-- Services Section -->
-<section class="bg-gray-50 py-16">
+<section class="bg-gray-50 py-24">
     <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
                 {{ __('Our Services') }}
             </h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
                 {{ __('Comprehensive real estate solutions to meet all your property needs') }}
             </p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="text-center">
-                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                    </svg>
+            @php
+                $services = [
+                    ['icon' => 'home', 'color' => 'blue', 'title' => 'Buy Property', 'desc' => 'Find your perfect home from our extensive listings'],
+                    ['icon' => 'hand-holding-usd', 'color' => 'green', 'title' => 'Sell Property', 'desc' => 'Get the best value for your property with our marketing'],
+                    ['icon' => 'key', 'color' => 'purple', 'title' => 'Rent Property', 'desc' => 'Discover great rental options in your preferred area'],
+                    ['icon' => 'chart-line', 'color' => 'amber', 'title' => 'Investments', 'desc' => 'Expert advice on real estate investment opportunities']
+                ];
+            @endphp
+
+            @foreach($services as $service)
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group">
+                <div class="bg-{{ $service['color'] }}-100 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-{{ $service['icon'] }} text-2xl text-{{ $service['color'] }}-600"></i>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">{{ __('Buy Property') }}</h3>
-                <p class="text-gray-600">{{ __('Find your perfect home from our extensive listings') }}</p>
+                <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">{{ __($service['title']) }}</h3>
+                <p class="text-gray-600 leading-relaxed">{{ __($service['desc']) }}</p>
             </div>
-            
-            <div class="text-center">
-                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">{{ __('Sell Property') }}</h3>
-                <p class="text-gray-600">{{ __('Get the best value for your property with our expert agents') }}</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">{{ __('Find Agents') }}</h3>
-                <p class="text-gray-600">{{ __('Connect with experienced real estate professionals') }}</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">{{ __('Property Management') }}</h3>
-                <p class="text-gray-600">{{ __('Professional management services for your investments') }}</p>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
 
-<!-- Statistics Section -->
-<section class="bg-blue-600 text-white py-16">
+<!-- Latest Properties -->
+<section class="py-24 bg-white">
     <div class="container mx-auto px-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
             <div>
-                <div class="text-4xl font-bold mb-2">1,200+</div>
-                <div class="text-blue-100">{{ __('Properties Sold') }}</div>
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
+                    {{ __('Latest Properties') }}
+                </h2>
+                <p class="text-gray-600 text-lg max-w-2xl">
+                    {{ __('The newest additions to our market, fresh from the source') }}
+                </p>
             </div>
-            <div>
-                <div class="text-4xl font-bold mb-2">850+</div>
-                <div class="text-blue-100">{{ __('Happy Clients') }}</div>
-            </div>
-            <div>
-                <div class="text-4xl font-bold mb-2">50+</div>
-                <div class="text-blue-100">{{ __('Expert Agents') }}</div>
-            </div>
-            <div>
-                <div class="text-4xl font-bold mb-2">15+</div>
-                <div class="text-blue-100">{{ __('Years Experience') }}</div>
-            </div>
+            <a href="{{ route('properties.index', ['sort' => 'created_at', 'order' => 'desc']) }}" class="mt-4 md:mt-0 text-blue-600 font-bold flex items-center hover:text-blue-800 transition-colors">
+                {{ __('View All New') }} <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            @foreach($latestProperties as $property)
+                @include('properties.partials.card', ['property' => $property])
+            @endforeach
         </div>
     </div>
 </section>
 
 <!-- CTA Section -->
-<section class="bg-gray-900 text-white py-16">
-    <div class="container mx-auto px-6 text-center">
-        <h2 class="text-3xl font-bold mb-4">
-            {{ __('Ready to Find Your Dream Home?') }}
+<section class="py-24 bg-blue-600 relative overflow-hidden">
+    <div class="container mx-auto px-6 relative z-10 text-center">
+        <h2 class="text-4xl font-extrabold text-white mb-6">
+            {{ __('Are you a real estate professional?') }}
         </h2>
-        <p class="text-gray-300 mb-8 max-w-2xl mx-auto">
-            {{ __('Join thousands of satisfied customers who found their perfect property through our platform') }}
+        <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
+            {{ __('Join our platform today to list your properties, manage leads, and grow your business with our advanced tools.') }}
         </p>
-        @guest
-            <a href="{{ route('register') }}" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 inline-block">
-                {{ __('Get Started Today') }}
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ route('register', ['type' => 'agent']) }}" class="bg-white text-blue-600 px-10 py-4 rounded-xl font-bold hover:bg-gray-100 transition shadow-xl">
+                {{ __('Join as an Agent') }}
             </a>
-        @else
-            <a href="{{ route('agent.dashboard') }}" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 inline-block">
-                {{ __('Browse Properties') }}
+            <a href="{{ route('contact') }}" class="bg-blue-500 text-white border border-blue-400 px-10 py-4 rounded-xl font-bold hover:bg-blue-400 transition">
+                {{ __('Contact Sales') }}
             </a>
-        @endguest
+        </div>
     </div>
+    <!-- Decorative -->
+    <div class="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+    <div class="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
 </section>
-
-<style>
-    @keyframes fade-in {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .animate-fade-in {
-        animation: fade-in 1s ease-out;
-    }
-</style>
 @endsection

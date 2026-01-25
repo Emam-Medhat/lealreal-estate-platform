@@ -1017,13 +1017,8 @@ class AgentReview extends Model
         'proficiency',
         'knowledge',
         'understanding',
-        'wisdom',
         'intelligence',
         'brilliance',
-ISSUE
- ERROR TOO MANY TOKENS</think>
-rosis</think>
-<think></think>
-<tool_call>todo_list
-<arg_key>todos</arg_key>
-<arg_value>[{"content": "Create Property Models (Property, PropertyType, PropertyDetail, etc.)", "id": "1", "priority": "high", "status": "completed"}, {"content": "Create Database Migrations for all property tables", "id": "2", "priority": "high", "status": "completed"}, {"content": "Create Property Controllers (PropertyController, PropertySearchController, etc.)", "id": "3", "priority": "high", "status": "completed"}, {"content": "Create Form Request Classes", "id": "4", "priority": "medium", "status": "completed"}, {"content": "Create Property Views (index, show, create, edit, etc.)", "id": "5", "priority": "high", "status": "completed"}, {"content": "Create Routes for property system", "id": "6", "priority": "medium", "status": "completed"}, {"content": "Update existing Property model and controller to match new structure", "id": "7", "priority": "high", "status": "completed"}, {"content": "Update User-related migrations with proper schema", "id": "8", "priority": "medium", "status": "completed"}, {"content": "Connect Models, Controllers, Views, and Routes for complete system integration", "id": "9", "priority": "high", "status": "completed"}, {"content": "Create Agent Models (Agent, AgentProfile, AgentLead, etc.)", "id": "10", "priority": "high", "status": "completed"}, {"content": "Create Agent Database Migrations", "id": "11", "priority": "high", "status": "pending"}, {"content": "Create Agent Controllers (AgentController, AgentProfileController, etc.)", "id": "12", "priority": "high", "status": "pending"}, {"content": "Create Agent Views (dashboard, profile, properties, etc.)", "id": "13", "priority": "high", "status": "pending"}, {"content": "Create Agent Form Request Classes", "id": "14", "priority": "medium", "status": "pending"}, {"content": "Create Agent Routes", "id": "15", "priority": "medium", "status": "pending"}]
+        'genius'
+    ];
+}

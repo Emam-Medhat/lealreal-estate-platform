@@ -17,20 +17,14 @@ class AgentMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // if (Auth::check() && (Auth::user()->is_agent || Auth::user()->user_type === 'agent')) {
-        //     return $next($request);
-        // }
-
-        // // Redirect non-agent users to their appropriate dashboard
-        // if (Auth::check()) {
-        //     return redirect()->route('dashboard')->with('error', 'Access denied. Agent role required.');
-        // }
-
-        // // Redirect unauthenticated users to login
-        // return redirect()->route('login')->with('error', 'Please login to access this page.');
-
+        if (Auth::check() && (Auth::user()->user_type === 'agent' || Auth::user()->agent()->exists())) {
             return $next($request);
+        }
 
+        if (Auth::check()) {
+            return redirect()->route('dashboard')->with('error', 'Access denied. Agent role required.');
+        }
 
+        return redirect()->route('login')->with('error', 'Please login to access this page.');
     }
 }

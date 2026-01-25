@@ -17,6 +17,7 @@ class Agent extends Model
     protected $fillable = [
         'user_id',
         'agency_id',
+        'company_id',
         'license_number',
         'specialization',
         'experience_years',
@@ -54,6 +55,11 @@ class Agent extends Model
     public function agency(): BelongsTo
     {
         return $this->belongsTo(Agency::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function profile(): HasOne

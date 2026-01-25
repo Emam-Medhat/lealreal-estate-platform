@@ -24,7 +24,8 @@ class AgentProfile extends Model
         'website',
         'social_media',
         'languages',
-        'specialties',
+        'specializations',
+        'service_areas',
         'achievements',
         'education',
         'experience',
@@ -47,7 +48,8 @@ class AgentProfile extends Model
     protected $casts = [
         'social_media' => 'json',
         'languages' => 'json',
-        'specialties' => 'json',
+        'specializations' => 'json',
+        'service_areas' => 'json',
         'achievements' => 'json',
         'education' => 'json',
         'experience' => 'json',
@@ -81,8 +83,8 @@ class AgentProfile extends Model
 
     public function getTopSpecialtiesAttribute(): array
     {
-        $specialties = $this->specialties ?? [];
-        return array_slice($specialties, 0, 3);
+        $specializations = $this->specializations ?? [];
+        return array_slice($specializations, 0, 3);
     }
 
     public function getYearsOfExperienceAttribute(): int

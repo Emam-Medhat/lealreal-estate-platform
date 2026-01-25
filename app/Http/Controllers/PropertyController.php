@@ -36,12 +36,11 @@ class PropertyController extends Controller
     public function index(Request $request)
     {
         $query = Property::with([
-            'propertyType',
+            'agent.profile',
             'location',
-            'details',
-            'pricing',
+            'propertyType',
             'media' => function ($query) {
-                $query->where('media_type', 'image')->limit(3);
+                $query->where('media_type', 'image')->orderBy('sort_order');
             },
             'propertyAmenities',
             'features'
@@ -59,27 +58,19 @@ class PropertyController extends Controller
         }
 
         if ($request->min_price) {
-            $query->whereHas('price', function ($q) use ($request) {
-                $q->where('price', '>=', $request->min_price);
-            });
+            $query->where('price', '>=', $request->min_price);
         }
 
         if ($request->max_price) {
-            $query->whereHas('price', function ($q) use ($request) {
-                $q->where('price', '<=', $request->max_price);
-            });
+            $query->where('price', '<=', $request->max_price);
         }
 
         if ($request->city) {
-            $query->whereHas('location', function ($q) use ($request) {
-                $q->where('city', 'like', '%' . $request->city . '%');
-            });
+            $query->where('city', 'like', '%' . $request->city . '%');
         }
 
         if ($request->bedrooms) {
-            $query->whereHas('details', function ($q) use ($request) {
-                $q->where('bedrooms', '>=', $request->bedrooms);
-            });
+            $query->where('bedrooms', '>=', $request->bedrooms);
         }
 
         if ($request->featured) {
@@ -96,16 +87,13 @@ class PropertyController extends Controller
 
         switch ($sort) {
             case 'price_low':
-                $query->leftJoin('property_prices', 'properties.id', '=', 'property_prices.property_id')
-                    ->orderByRaw('property_prices.price ASC NULLS LAST');
+                $query->orderBy('price', 'asc');
                 break;
             case 'price_high':
-                $query->leftJoin('property_prices', 'properties.id', '=', 'property_prices.property_id')
-                    ->orderByRaw('property_prices.price DESC NULLS LAST');
+                $query->orderBy('price', 'desc');
                 break;
             case 'area':
-                $query->join('property_details', 'properties.id', '=', 'property_details.property_id')
-                    ->orderBy('property_details.area', 'desc');
+                $query->orderBy('area', 'desc');
                 break;
             case 'views':
                 $query->orderBy('views_count', 'desc');
@@ -124,28 +112,13 @@ class PropertyController extends Controller
     {
         $property->load([
             'propertyType',
-            'location',
-            'details',
-            'pricing',
             'media' => function ($query) {
                 $query->orderBy('sort_order');
             },
-            'propertyAmenities',
+            'propertyAmenities.amenity',
             'features',
-            'documents' => function ($query) {
-                $query->public();
-            },
-            'virtualTours' => function ($query) {
-                $query->public()->ordered();
-            },
-            'floorPlans' => function ($query) {
-                $query->ordered();
-            },
             'agent'
         ]);
-
-        // Record view
-        $this->recordView($property);
 
         // Increment views
         $property->incrementViews();

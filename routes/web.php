@@ -46,51 +46,6 @@ Route::get('/test-properties', function () {
 // Include content routes
 require __DIR__ . '/content.php';
 
-// Include projects routes
-require __DIR__ . '/projects.php';
-
-// Include inspection photos routes
-require __DIR__ . '/inspection-photos.php';
-
-// Include maintenance teams routes
-require __DIR__ . '/maintenance-teams.php';
-
-// Include inventory routes
-require __DIR__ . '/inventory.php';
-
-// Include work orders routes
-require __DIR__ . '/work-orders.php';
-
-// Include AI routes
-require __DIR__ . '/ai.php';
-
-// Include DeFi routes
-require __DIR__ . '/defi.php';
-
-// Include Geospatial Analytics routes
-require __DIR__ . '/geospatial.php';
-
-// Include Neighborhood & Community Management routes
-require __DIR__ . '/neighborhood.php';
-
-// Include Subscription routes
-require __DIR__ . '/subscription.php';
-
-// Include Blockchain routes
-require __DIR__ . '/blockchain.php';
-
-// Include Metaverse routes
-require __DIR__ . '/metaverse.php';
-
-// Include IoT routes
-require __DIR__ . '/iot.php';
-
-// Include Gamification routes
-require __DIR__ . '/gamification.php';
-
-// Include Advanced Real Estate Marketing routes
-require __DIR__ . '/marketing.php';
-
 // Home page
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -166,75 +121,8 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa', 'fingerprint'])->gr
     Route::get('/dashboard/settings', [DashboardController::class, 'settings'])->name('dashboard.settings');
     Route::put('/dashboard/settings', [DashboardController::class, 'updateSettings'])->name('dashboard.settings.update');
 
-    // Agent Routes
-    Route::middleware(['auth'])->prefix('agent')->name('agent.')->group(function () {
-        // Agent Dashboard
-        Route::get('/dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/stats', [App\Http\Controllers\Agent\DashboardController::class, 'getStats'])->name('stats');
-
-        // Properties Management
-        Route::get('/properties', [App\Http\Controllers\Agent\PropertyController::class, 'index'])->name('properties.index');
-        Route::get('/properties/featured', [App\Http\Controllers\Agent\PropertyController::class, 'featured'])->name('properties.featured');
-        Route::get('/properties/create', [App\Http\Controllers\Agent\PropertyController::class, 'create'])->name('properties.create');
-        Route::post('/properties', [App\Http\Controllers\Agent\PropertyController::class, 'store'])->name('properties.store');
-        Route::get('/properties/{property}', [App\Http\Controllers\Agent\PropertyController::class, 'show'])->name('properties.show');
-        Route::get('/properties/{property}/edit', [App\Http\Controllers\Agent\PropertyController::class, 'edit'])->name('properties.edit');
-        Route::put('/properties/{property}', [App\Http\Controllers\Agent\PropertyController::class, 'update'])->name('properties.update');
-        Route::delete('/properties/{property}', [App\Http\Controllers\Agent\PropertyController::class, 'destroy'])->name('properties.destroy');
-        Route::post('/properties/{property}/duplicate', [App\Http\Controllers\Agent\PropertyController::class, 'duplicate'])->name('properties.duplicate');
-        Route::post('/properties/{property}/publish', [App\Http\Controllers\Agent\PropertyController::class, 'publish'])->name('properties.publish');
-        Route::post('/properties/{property}/archive', [App\Http\Controllers\Agent\PropertyController::class, 'archive'])->name('properties.archive');
-        Route::post('/properties/{property}/images', [App\Http\Controllers\Agent\PropertyController::class, 'uploadImages'])->name('properties.uploadImages');
-        Route::delete('/properties/{property}/images/{media}', [App\Http\Controllers\Agent\PropertyController::class, 'deleteImage'])->name('properties.deleteImage');
-        Route::post('/properties/{property}/images/{media}/primary', [App\Http\Controllers\Agent\PropertyController::class, 'setPrimaryImage'])->name('properties.setPrimaryImage');
-
-        // CRM Lead Management
-        Route::get('/crm', [App\Http\Controllers\Agent\CrmController::class, 'index'])->name('crm.index');
-        Route::get('/crm/leads', [App\Http\Controllers\Agent\CrmController::class, 'leads'])->name('crm.leads');
-        Route::get('/crm/create', [App\Http\Controllers\Agent\CrmController::class, 'create'])->name('crm.create');
-        Route::post('/crm', [App\Http\Controllers\Agent\CrmController::class, 'store'])->name('crm.store');
-        Route::get('/crm/{lead}', [App\Http\Controllers\Agent\CrmController::class, 'show'])->name('crm.show');
-        Route::get('/crm/{lead}/edit', [App\Http\Controllers\Agent\CrmController::class, 'edit'])->name('crm.edit');
-        Route::put('/crm/{lead}', [App\Http\Controllers\Agent\CrmController::class, 'update'])->name('crm.update');
-        Route::delete('/crm/{lead}', [App\Http\Controllers\Agent\CrmController::class, 'destroy'])->name('crm.destroy');
-        Route::post('/crm/{lead}/convert', [App\Http\Controllers\Agent\CrmController::class, 'convert'])->name('crm.convert');
-        Route::post('/crm/{lead}/lose', [App\Http\Controllers\Agent\CrmController::class, 'lose'])->name('crm.lose');
-        Route::post('/crm/{lead}/archive', [App\Http\Controllers\Agent\CrmController::class, 'archive'])->name('crm.archive');
-        Route::post('/crm/{lead}/activity', [App\Http\Controllers\Agent\CrmController::class, 'addActivity'])->name('crm.addActivity');
-        Route::post('/crm/{lead}/note', [App\Http\Controllers\Agent\CrmController::class, 'addNote'])->name('crm.addNote');
-        Route::post('/crm/{lead}/task', [App\Http\Controllers\Agent\CrmController::class, 'addTask'])->name('crm.addTask');
-        Route::post('/crm/{lead}/follow-up', [App\Http\Controllers\Agent\CrmController::class, 'scheduleFollowUp'])->name('crm.scheduleFollowUp');
-        Route::post('/crm/{lead}/contact', [App\Http\Controllers\Agent\CrmController::class, 'recordContact'])->name('crm.recordContact');
-
-        // Appointments Management
-        Route::get('/appointments', [App\Http\Controllers\Agent\AppointmentController::class, 'index'])->name('appointments.index');
-        Route::get('/appointments/calendar', [App\Http\Controllers\Agent\AppointmentController::class, 'calendar'])->name('appointments.calendar');
-        Route::get('/appointments/create', [App\Http\Controllers\Agent\AppointmentController::class, 'create'])->name('appointments.create');
-        Route::post('/appointments', [App\Http\Controllers\Agent\AppointmentController::class, 'store'])->name('appointments.store');
-        Route::get('/appointments/{appointment}', [App\Http\Controllers\Agent\AppointmentController::class, 'show'])->name('appointments.show');
-        Route::get('/appointments/{appointment}/edit', [App\Http\Controllers\Agent\AppointmentController::class, 'edit'])->name('appointments.edit');
-        Route::put('/appointments/{appointment}', [App\Http\Controllers\Agent\AppointmentController::class, 'update'])->name('appointments.update');
-        Route::delete('/appointments/{appointment}', [App\Http\Controllers\Agent\AppointmentController::class, 'destroy'])->name('appointments.destroy');
-        Route::post('/appointments/{appointment}/confirm', [App\Http\Controllers\Agent\AppointmentController::class, 'confirm'])->name('appointments.confirm');
-        Route::post('/appointments/{appointment}/cancel', [App\Http\Controllers\Agent\AppointmentController::class, 'cancel'])->name('appointments.cancel');
-        Route::post('/appointments/{appointment}/no-show', [App\Http\Controllers\Agent\AppointmentController::class, 'markAsNoShow'])->name('appointments.noShow');
-        Route::post('/appointments/{appointment}/complete', [App\Http\Controllers\Agent\AppointmentController::class, 'complete'])->name('appointments.complete');
-        Route::post('/appointments/{appointment}/reschedule', [App\Http\Controllers\Agent\AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
-        Route::post('/appointments/{appointment}/note', [App\Http\Controllers\Agent\AppointmentController::class, 'addNote'])->name('appointments.addNote');
-        Route::post('/appointments/{appointment}/document', [App\Http\Controllers\Agent\AppointmentController::class, 'addDocument'])->name('appointments.addDocument');
-
-        Route::prefix('offers')->name('offers.')->group(function () {
-            Route::get('/', function () {
-                return redirect()->route('offers.index');
-            })->name('index');
-            Route::get('/received', function () {
-                return redirect()->route('offers.index', ['type' => 'received']);
-            })->name('received');
-            Route::get('/sent', function () {
-                return redirect()->route('offers.index', ['type' => 'sent']);
-            })->name('sent');
-        });
-    });
+    // Agent Routes are handled in routes/agent_panel.php (registered in bootstrap/app.php)
+});
 
     // User Profile Management
 // Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -710,7 +598,7 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa', 'fingerprint'])->gr
 //     Route::get('/admin/users/{user}/kyc', [AdminKYCController::class, 'review'])->name('admin.kyc.review');
 //     Route::put('/admin/users/{user}/kyc', [AdminKYCController::class, 'approve'])->name('admin.kyc.approve');
 //     Route::delete('/admin/users/{user}/kyc', [AdminKYCController::class, 'reject'])->name('admin.kyc.reject');
-});
+// });
 
 // Investors Management Routes
 Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(function () {
@@ -1072,8 +960,6 @@ Route::prefix('payments')->name('payments.')->middleware(['auth'])->group(functi
         Route::get('/stats', [App\Http\Controllers\Payment\CryptoPaymentController::class, 'getCryptoStats'])->name('stats');
     });
 });
-
-// Investors Management Routes
 Route::prefix('investors')->name('investors.')->middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\Investor\InvestorController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\Investor\InvestorController::class, 'create'])->name('create');

@@ -16,7 +16,7 @@ use App\Http\Controllers\Agent\AgentOfferController;
 |
 */
 
-Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(function () {
+Route::middleware(['auth', 'verified', 'agent'])->prefix('agent')->name('agent.')->group(function () {
     
     // Agent Dashboard
     Route::get('/dashboard', [AgentDashboardController::class, 'index'])->name('dashboard');

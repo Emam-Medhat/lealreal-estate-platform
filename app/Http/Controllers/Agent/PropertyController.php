@@ -63,94 +63,65 @@ class PropertyController extends Controller
 
     public function store(Request $request)
     {
-        try {
-            $agent = Auth::user();
+        $agent = Auth::user();
             
-            // Debug: Log the incoming request data
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'property_type' => 'required|in:apartment,villa,house,land,commercial',
+            'listing_type' => 'required|in:sale,rent',
+            'price' => 'required|numeric|min:0',
+            'currency' => 'required|string|in:SAR,USD,EUR',
+            'area' => 'required|numeric|min:0',
+            'area_unit' => 'required|in:sq_m,sq_ft',
+            'bedrooms' => 'nullable|integer|min:0',
+            'bathrooms' => 'nullable|integer|min:0',
+            'floors' => 'nullable|integer|min:0',
+            'year_built' => 'nullable|integer|min:1900|max:' . date('Y'),
+            'status' => 'required|in:draft,active,inactive,sold,rented',
+            'featured' => 'boolean',
+            'premium' => 'boolean',
+            'address' => 'required|string|max:500',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'country' => 'required|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'amenities' => 'nullable|string',
+            'nearby_places' => 'nullable|string',
+            'virtual_tour_url' => 'nullable|url',
+            'video_url' => 'nullable|url',
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|mimes:pdf,doc,docx|max:10240',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
 
-            Log::info('Property creation attempt', [
-                'user_id' => $agent->id,
-                'request_data' => $request->all()
-            ]);
-            
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'property_type' => 'required|in:apartment,villa,house,land,commercial',
-                'listing_type' => 'required|in:sale,rent',
-                'price' => 'required|numeric|min:0',
-                'currency' => 'required|string|in:SAR,USD,EUR',
-                'area' => 'required|numeric|min:0',
-                'area_unit' => 'required|in:sq_m,sq_ft',
-                'bedrooms' => 'nullable|integer|min:0',
-                'bathrooms' => 'nullable|integer|min:0',
-                'floors' => 'nullable|integer|min:0',
-                'year_built' => 'nullable|integer|min:1900|max:' . date('Y'),
-                'status' => 'required|in:draft,active,inactive,sold,rented',
-                'featured' => 'boolean',
-                'premium' => 'boolean',
-                'address' => 'required|string|max:500',
-                'city' => 'required|string|max:100',
-                'state' => 'nullable|string|max:100',
-                'country' => 'required|string|max:100',
-                'postal_code' => 'nullable|string|max:20',
-                'latitude' => 'nullable|numeric|between:-90,90',
-                'longitude' => 'nullable|numeric|between:-180,180',
-                'amenities' => 'nullable|string',
-                'nearby_places' => 'nullable|string',
-                'virtual_tour_url' => 'nullable|url',
-                'video_url' => 'nullable|url',
-                'documents' => 'nullable|array',
-                'documents.*' => 'file|mimes:pdf,doc,docx|max:10240',
-                'images' => 'nullable|array',
-                'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
-            ]);
-
-            // Convert comma-separated strings to arrays
-            if (!empty($validated['amenities'])) {
-                $validated['amenities'] = array_map('trim', explode(',', $validated['amenities']));
-            } else {
-                $validated['amenities'] = [];
-            }
-
-            if (!empty($validated['nearby_places'])) {
-                $validated['nearby_places'] = array_map('trim', explode(',', $validated['nearby_places']));
-            } else {
-                $validated['nearby_places'] = [];
-            }
-
-            // Debug: Log validation success
-            \Log::info('Validation passed', ['validated_data' => $validated]);
-
-            $validated['agent_id'] = $agent->id;
-            $validated['property_code'] = $this->generatePropertyCode();
-            $validated['views_count'] = 0;
-            $validated['inquiries_count'] = 0;
-            $validated['favorites_count'] = 0;
-
-            // Debug: Log before creating property
-            \Log::info('About to create property', ['data_to_create' => $validated]);
-
-            $property = Property::create($validated);
-
-            // Debug: Log successful creation
-            \Log::info('Property created successfully', ['property_id' => $property->id]);
-
-            return redirect()
-                ->route('agent.properties.show', $property)
-                ->with('success', 'Property created successfully!');
-
-        } catch (\Exception $e) {
-            // Debug: Log any errors
-            \Log::error('Property creation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create property: ' . $e->getMessage());
+        // Convert comma-separated strings to arrays
+        if (!empty($validated['amenities'])) {
+            $validated['amenities'] = array_map('trim', explode(',', $validated['amenities']));
+        } else {
+            $validated['amenities'] = [];
         }
+
+        if (!empty($validated['nearby_places'])) {
+            $validated['nearby_places'] = array_map('trim', explode(',', $validated['nearby_places']));
+        } else {
+            $validated['nearby_places'] = [];
+        }
+
+        $validated['agent_id'] = $agent->id;
+        $validated['property_code'] = $this->generatePropertyCode();
+        $validated['views_count'] = 0;
+        $validated['inquiries_count'] = 0;
+        $validated['favorites_count'] = 0;
+
+        $property = Property::create($validated);
+
+        return redirect()
+            ->route('agent.properties.show', $property)
+            ->with('success', 'Property created successfully!');
     }
 
     public function show(Property $property)

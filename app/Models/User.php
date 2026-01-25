@@ -257,11 +257,10 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\ReportSchedule::class);
     }
 
-    // TODO: Create SubscriptionPlan model
-    // public function subscriptionPlan(): BelongsTo
-    // {
-    //     return $this->belongsTo(SubscriptionPlan::class);
-    // }
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
+    }
 
     public function referredBy(): BelongsTo
     {
@@ -273,34 +272,50 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'referred_by_user_id');
     }
 
-    // TODO: Create Company model
-    // public function company(): BelongsTo
-    // {
-    //     return $this->belongsTo(Company::class);
-    // }
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
-    // TODO: Create Developer model
-    // public function developer(): BelongsTo
-    // {
-    //     return $this->belongsTo(Developer::class);
-    // }
+    public function developer(): BelongsTo
+    {
+        return $this->belongsTo(Developer::class);
+    }
 
     public function bannedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'banned_by');
     }
 
-    // TODO: Create Property model
-    // public function properties(): HasMany
-    // {
-    //     return $this->hasMany(Property::class);
-    // }
+    public function properties(): HasMany
+    {
+        return $this->hasMany(Property::class);
+    }
 
-    // TODO: Create Review model
-    // public function reviews(): HasMany
-    // {
-    //     return $this->hasMany(Review::class);
-    // }
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function agent(): HasOne
+    {
+        return $this->hasOne(Agent::class);
+    }
+
+    public function leads(): HasMany
+    {
+        return $this->hasMany(AgentLead::class);
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(AgentAppointment::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(AgentCommission::class);
+    }
 
     // TODO: Create Transaction model
     // public function transactions(): HasMany
@@ -442,5 +457,9 @@ class User extends Authenticatable
         $preferences = $this->notifications_preferences ?? [];
         $preferences[$key] = $value;
         $this->update(['notifications_preferences' => $preferences]);
+    }
+      public function profile()
+    {
+        return $this->hasOne(Profile::class);
     }
 }

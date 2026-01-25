@@ -29,7 +29,7 @@ class AgentPropertyController extends Controller
         }
         
         $properties = $agent->properties()
-            ->with(['location', 'price', 'media'])
+            ->with(['location', 'pricing', 'media'])
             ->when($request->search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -38,15 +38,15 @@ class AgentPropertyController extends Controller
                 $query->where('status', $status);
             })
             ->when($request->property_type, function ($query, $type) {
-                $query->where('property_type_id', $type);
+                $query->where('property_type', $type);
             })
             ->when($request->min_price, function ($query, $price) {
-                $query->whereHas('price', function ($priceQuery) use ($price) {
+                $query->whereHas('pricing', function ($priceQuery) use ($price) {
                     $priceQuery->where('price', '>=', $price);
                 });
             })
             ->when($request->max_price, function ($query, $price) {
-                $query->whereHas('price', function ($priceQuery) use ($price) {
+                $query->whereHas('pricing', function ($priceQuery) use ($price) {
                     $priceQuery->where('price', '<=', $price);
                 });
             })
@@ -79,7 +79,7 @@ class AgentPropertyController extends Controller
                 'slug' => Str::slug($request->title) . '-' . time(),
                 'property_code' => 'PROP-' . strtoupper(uniqid()),
                 'description' => $request->description,
-                'property_type_id' => $request->property_type_id,
+                'property_type' => $request->property_type,
                 'listing_type' => $request->listing_type,
                 'status' => $request->status ?? 'draft',
                 'bedrooms' => $request->bedrooms,
@@ -326,7 +326,7 @@ class AgentPropertyController extends Controller
     {
         $this->authorize('update', $property);
         
-        $property->load(['location', 'price', 'media', 'amenities', 'features']);
+        $property->load(['location', 'pricing', 'media', 'propertyAmenities', 'features']);
         
         return view('agent.properties.edit', compact('property'));
     }
@@ -341,7 +341,7 @@ class AgentPropertyController extends Controller
             $property->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'property_type_id' => $request->property_type_id,
+                'property_type' => $request->property_type,
                 'status' => $request->status,
                 'bedrooms' => $request->bedrooms,
                 'bathrooms' => $request->bathrooms,

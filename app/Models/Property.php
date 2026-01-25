@@ -17,10 +17,10 @@ class Property extends Model
 
     protected $fillable = [
         'agent_id',
+        'company_id',
         'title',
         'slug',
         'property_code',
-        'description',
         'description',
         'property_type',
         'listing_type',
@@ -99,6 +99,11 @@ class Property extends Model
         return $this->belongsTo(Agent::class, 'agent_id');
     }
 
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function media(): HasMany
     {
         return $this->hasMany(PropertyMedia::class);
@@ -129,9 +134,19 @@ class Property extends Model
         return $this->hasOne(PropertyPrice::class);
     }
 
+    public function price(): HasOne
+    {
+        return $this->pricing();
+    }
+
     public function propertyAmenities(): BelongsToMany
     {
         return $this->belongsToMany(PropertyAmenity::class, 'property_amenity_property');
+    }
+
+    public function amenities(): BelongsToMany
+    {
+        return $this->propertyAmenities();
     }
 
     public function features(): BelongsToMany

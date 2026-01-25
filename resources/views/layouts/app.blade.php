@@ -10,6 +10,143 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: box-shadow 0.15s ease-in-out;
+        }
+        
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn {
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        .alert-purple {
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+        }
+        
+        .badge.bg-purple {
+            background-color: #6f42c1 !important;
+        }
+        
+        .property-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .property-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .property-image {
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .property-card:hover .property-image {
+            transform: scale(1.05);
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 1rem;
+        }
+        
+        .footer {
+            background-color: #343a40;
+            color: white;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .custom-toast {
+            min-width: 250px;
+        }
+    </style>
+    
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -29,7 +166,7 @@
 
             <!-- Desktop Navigation -->
             <div class="hidden md:flex items-center space-x-6">
-                <a href="{{ route('home') }}" class="text-white hover:text-blue-200 transition font-medium">{{ __('Home') }}</a>
+                <a href="/" class="text-white hover:text-blue-200 transition font-medium">{{ __('Home') }}</a>
                 
                 @guest
                     <a href="{{ route('login') }}" class="text-white hover:text-blue-200 transition font-medium">{{ __('Login') }}</a>
@@ -137,11 +274,11 @@
         <!-- Mobile Menu -->
         <div id="mobileMenu" class="hidden md:hidden pb-4">
             @guest
-                <a href="{{ route('home') }}" class="block py-2 text-white hover:text-blue-200">{{ __('Home') }}</a>
+                <a href="/" class="block py-2 text-white hover:text-blue-200">{{ __('Home') }}</a>
                 <a href="{{ route('login') }}" class="block py-2 text-white hover:text-blue-200">{{ __('Login') }}</a>
                 <a href="{{ route('register') }}" class="block py-2 text-white hover:text-blue-200">{{ __('Register') }}</a>
             @else
-                <a href="{{ route('home') }}" class="block py-2 text-white hover:text-blue-200">{{ __('Home') }}</a>
+                <a href="/" class="block py-2 text-white hover:text-blue-200">{{ __('Home') }}</a>
                 <a href="{{ route('properties.index') }}" class="block py-2 text-white hover:text-blue-200">{{ __('Properties') }}</a>
                 <a href="{{ route('agents.directory') }}" class="block py-2 text-white hover:text-blue-200">{{ __('Agents') }}</a>
                 <a href="{{ route('about') }}" class="block py-2 text-white hover:text-blue-200">{{ __('About') }}</a>

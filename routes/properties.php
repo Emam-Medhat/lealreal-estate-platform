@@ -40,13 +40,14 @@ Route::get('/property-types/search', [PropertyTypeController::class, 'search'])-
 Route::get('/property-types/{propertyType}/export', [PropertyTypeController::class, 'export'])->name('property-types.export');
 
 // Main Property Routes
+Route::get('/', [PropertyController::class, 'index'])->name('properties.index');
 Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
-Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
-Route::post('/properties', [PropertyController::class, 'store'])->name('properties.store');
+Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create')->middleware('auth');
+Route::post('/properties', [PropertyController::class, 'store'])->name('properties.store')->middleware('auth');
 Route::get('/properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
-Route::get('/properties/{property}/edit', [PropertyController::class, 'edit'])->name('properties.edit');
-Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
-Route::delete('/properties/{property}', [PropertyController::class, 'destroy'])->name('properties.destroy');
+Route::get('/properties/{property}/edit', [PropertyController::class, 'edit'])->name('properties.edit')->middleware('auth');
+Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update')->middleware('auth');
+Route::delete('/properties/{property}', [PropertyController::class, 'destroy'])->name('properties.destroy')->middleware('auth');
 Route::post('/properties/{property}/duplicate', [PropertyController::class, 'duplicate'])->name('properties.duplicate');
 Route::post('/properties/{property}/publish', [PropertyController::class, 'publish'])->name('properties.publish');
 Route::post('/properties/{property}/archive', [PropertyController::class, 'archive'])->name('properties.archive');

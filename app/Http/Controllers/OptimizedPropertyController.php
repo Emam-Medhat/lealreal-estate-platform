@@ -232,51 +232,25 @@ class OptimizedPropertyController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug: Log all request data
-        \Log::info('=== PROPERTY CREATION START ===');
-        \Log::info('All request data:', $request->all());
-
-        // Check specific fields
-        \Log::info('=== CHECKING SPECIFIC FIELDS ===');
-        \Log::info('Price from request: ' . $request->input('price'));
-        \Log::info('Currency from request: ' . $request->input('currency'));
-        \Log::info('City from request: ' . $request->input('city'));
-        \Log::info('Country from request: ' . $request->input('country'));
-
-        // Get all data first, then validate
-        $data = $request->all();
-
-        // Check if price exists in request
-        if (!isset($data['price'])) {
-            \Log::error('❌ Price field missing from request');
-            return back()
-                ->withInput()
-                ->with('error', 'Price field is required. Please make sure you filled the pricing information.');
-        }
-
-        // Log validation rules
-        \Log::info('Validation rules applied');
-
-        try {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'listing_type' => 'required|in:sale,rent',
-                'property_type' => 'required|string|in:apartment,villa,house,land,commercial',
-                'price' => 'nullable|numeric|min:0',
-                'currency' => 'nullable|string|size:3',
-                'city' => 'nullable|string|max:255',
-                'country' => 'nullable|string|max:255',
-                'address' => 'nullable|string|max:500',
-                'latitude' => 'nullable|numeric',
-                'longitude' => 'nullable|numeric',
-                'bedrooms' => 'nullable|integer|min:0',
-                'bathrooms' => 'nullable|integer|min:0',
-                'area' => 'nullable|integer|min:0',
-                'area_unit' => 'nullable|string',
-                'land_area' => 'nullable|integer|min:0',
-                'land_area_unit' => 'nullable|string',
-                'featured' => 'boolean',
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'listing_type' => 'required|in:sale,rent',
+            'property_type' => 'required|string|in:apartment,villa,house,land,commercial',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'bedrooms' => 'nullable|integer|min:0',
+            'bathrooms' => 'nullable|integer|min:0',
+            'area' => 'nullable|integer|min:0',
+            'area_unit' => 'nullable|string',
+            'land_area' => 'nullable|integer|min:0',
+            'land_area_unit' => 'nullable|string',
+            'featured' => 'boolean',
                 'premium' => 'boolean',
                 'images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
                 'room_images.living_room.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
@@ -289,31 +263,8 @@ class OptimizedPropertyController extends Controller
                 'room_images.amenities.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
             ]);
 
-            \Log::info('✅ Validation passed. Validated data:', $validated);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('❌ Validation failed:', $e->errors());
-            return back()
-                ->withInput()
-                ->withErrors($e->errors())
-                ->with('error', 'Please fix the validation errors.');
-        }
-
-        try {
             DB::beginTransaction();
 
-            // Force set values if not in validated
-            $price = $validated['price'] ?? $request->input('price', 0);
-            $currency = $validated['currency'] ?? $request->input('currency', 'SAR');
-            $city = $validated['city'] ?? $request->input('city', 'Unknown');
-            $country = $validated['country'] ?? $request->input('country', 'Saudi Arabia');
-
-            \Log::info('=== FINAL VALUES ===');
-            \Log::info('Price: ' . $price);
-            \Log::info('Currency: ' . $currency);
-            \Log::info('City: ' . $city);
-            \Log::info('Country: ' . $country);
-
-            // Create property
             $property = Property::create([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
@@ -321,11 +272,11 @@ class OptimizedPropertyController extends Controller
                 'property_type' => $validated['property_type'],
                 'agent_id' => Auth::user()->id,
                 'property_code' => 'PROP-' . strtoupper(uniqid()),
-                'price' => $price,
-                'currency' => $currency,
+                'price' => $validated['price'] ?? 0,
+                'currency' => $validated['currency'] ?? 'SAR',
                 'address' => $validated['address'] ?? null,
-                'city' => $city,
-                'country' => $country,
+                'city' => $validated['city'] ?? 'Unknown',
+                'country' => $validated['country'] ?? 'Saudi Arabia',
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
                 'status' => 'draft',
@@ -337,8 +288,6 @@ class OptimizedPropertyController extends Controller
                 'bedrooms' => $validated['bedrooms'] ?? null,
                 'bathrooms' => $validated['bathrooms'] ?? null,
             ]);
-
-            \Log::info('✅ Property created successfully with ID: ' . $property->id);
 
             // Handle main images
             if ($request->hasFile('images')) {
@@ -353,7 +302,7 @@ class OptimizedPropertyController extends Controller
                         'file_size' => $image->getSize(),
                         'file_type' => $image->getMimeType(),
                         'sort_order' => $index,
-                        'is_featured' => $index === 0, // First image is featured
+                        'is_featured' => $index === 0,
                         'uploaded_by' => Auth::user()->id,
                     ]);
                 }
@@ -386,9 +335,8 @@ class OptimizedPropertyController extends Controller
             return redirect()
                 ->route('optimized.properties.show', $property)
                 ->with('success', 'Property created successfully!');
-        } catch (Exception $e) {
-            DB::rollback();
-            \Log::error('Property creation error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
             return back()
                 ->withInput()
                 ->with('error', 'Error creating property: ' . $e->getMessage());

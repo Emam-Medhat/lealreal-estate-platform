@@ -30,16 +30,18 @@ class AgentDashboardController extends BaseAgentController
             'total_properties' => $agent->properties()->count(),
             'active_properties' => $agent->properties()->where('status', 'active')->count(),
             'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
+            'total_leads' => $agent->leads()->count(),
             'pending_leads' => $agent->leads()->where('status', 'pending')->count(),
-            'today_appointments' => $agent->appointments()
+            'total_appointments' => $agent->appointments()->count(),
+            'today_appointments_count' => $agent->appointments()
                 ->whereDate('appointment_date', today())
                 ->where('status', 'scheduled')
                 ->count(),
             'this_month_commissions' => $agent->commissions()
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
+                ->whereMonth('commission_date', now()->month)
+                ->whereYear('commission_date', now()->year)
                 ->sum('amount'),
-            'total_commissions' => $agent->commissions()->sum('amount'),
+            'total_commission' => $agent->commissions()->sum('amount'),
             'average_rating' => $agent->reviews()->avg('rating') ?? 0,
         ];
 
@@ -51,15 +53,22 @@ class AgentDashboardController extends BaseAgentController
 
         // Get recent properties
         $recentProperties = $agent->properties()
-            ->with(['location', 'price'])
+            ->with(['location', 'pricing'])
             ->latest()
             ->limit(6)
+            ->get();
+
+        // Get today's appointments
+        $todayAppointments = $agent->appointments()
+            ->with('lead')
+            ->whereDate('appointment_date', today())
+            ->orderBy('appointment_date')
             ->get();
 
         // Get upcoming appointments
         $upcomingAppointments = $agent->appointments()
             ->with('lead')
-            ->where('appointment_date', '>=', now())
+            ->where('appointment_date', '>', now())
             ->where('status', 'scheduled')
             ->orderBy('appointment_date')
             ->limit(5)
@@ -79,6 +88,7 @@ class AgentDashboardController extends BaseAgentController
             'stats',
             'recentActivities',
             'recentProperties',
+            'todayAppointments',
             'upcomingAppointments',
             'recentLeads',
             'performanceData'

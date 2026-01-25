@@ -30,9 +30,23 @@ class PropertyObserver
     public function created(Property $property): void
     {
         // Create initial analytics record (if table exists)
-        // PropertyAnalytic::create(['property_id' => $property->id, ...]);
+        try {
+            PropertyAnalytic::create([
+                'property_id' => $property->id,
+                'views_count' => 0,
+                'favorites_count' => 0,
+                'inquiries_count' => 0,
+                'metadata' => json_encode(['created_at' => now()])
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't fail the property creation
+            \Log::warning('Could not create property analytics: ' . $e->getMessage());
+        }
 
-        event(new \App\Events\PropertyCreated($property));
+        // Fire event only if it exists
+        if (class_exists('\App\Events\PropertyCreated')) {
+            event(new \App\Events\PropertyCreated($property));
+        }
     }
 
     /**
@@ -42,10 +56,11 @@ class PropertyObserver
     {
         // Clear cache
         Cache::forget('property_' . $property->id);
-        // Skip slug cache as slug column doesn't exist
-        // Cache::forget('property_slug_' . $property->slug);
-
-        event(new \App\Events\PropertyUpdated($property));
+        
+        // Fire event only if it exists
+        if (class_exists('\App\Events\PropertyUpdated')) {
+            event(new \App\Events\PropertyUpdated($property));
+        }
     }
 
     /**
@@ -53,8 +68,10 @@ class PropertyObserver
      */
     public function deleted(Property $property): void
     {
-        // Cleanup relationships or let cascade handle it
-        event(new \App\Events\PropertyDeleted($property));
+        // Fire event only if it exists
+        if (class_exists('\App\Events\PropertyDeleted')) {
+            event(new \App\Events\PropertyDeleted($property));
+        }
     }
 
     /**

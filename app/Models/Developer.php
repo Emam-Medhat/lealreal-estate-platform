@@ -16,6 +16,7 @@ class Developer extends Model
 
     protected $fillable = [
         'user_id',
+        'company_id',
         'company_name',
         'company_name_ar',
         'license_number',
@@ -73,6 +74,11 @@ class Developer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function profile(): HasOne

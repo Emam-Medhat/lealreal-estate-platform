@@ -19,7 +19,7 @@ class AgentController extends Controller
 {
     public function directory(Request $request)
     {
-        $agents = Agent::with(['profile', 'user.profile', 'company'])
+        $agents = Agent::with(['profile', 'user', 'company'])
             ->where('status', 'active')
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('user', function ($q) use ($search) {
@@ -47,7 +47,7 @@ class AgentController extends Controller
                 });
             })
             ->orderByRaw('(
-                SELECT AVG(rating) FROM reviews WHERE agent_id = agents.id
+                SELECT AVG(rating) FROM agent_reviews WHERE agent_id = agents.id
             ) DESC')
             ->paginate(12);
 
@@ -66,7 +66,7 @@ class AgentController extends Controller
 
     public function index(Request $request)
     {
-        $agents = Agent::with(['profile', 'user.profile', 'company'])
+        $agents = Agent::with(['profile', 'user', 'company'])
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('user', function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -95,7 +95,7 @@ class AgentController extends Controller
 
     public function show(Agent $agent)
     {
-        $agent->load(['profile', 'user.profile', 'company', 'properties' => function ($query) {
+        $agent->load(['profile', 'user', 'company', 'properties' => function ($query) {
             $query->latest()->limit(10);
         }, 'reviews' => function ($query) {
             $query->latest()->limit(5);
@@ -317,7 +317,7 @@ class AgentController extends Controller
 
     public function getAgents(Request $request): JsonResponse
     {
-        $agents = Agent::with(['user.profile', 'company'])
+        $agents = Agent::with(['user', 'company'])
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('user', function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%");

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CompanyController extends Controller
 {
@@ -301,14 +302,64 @@ class CompanyController extends Controller
 
             DB::commit();
 
-            return redirect()->route('companies.index')
-                ->with('success', count($companyIds) . ' companies deleted successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Selected companies deleted successfully.'
+            ]);
 
         } catch (\Exception $e) {
             DB::rollback();
             
-            return redirect()->back()
-                ->with('error', 'Failed to delete companies: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete companies: ' . $e->getMessage()
+            ], 500);
         }
+    }
+
+    public function members(Company $company)
+    {
+        $this->authorize('view', $company);
+        
+        $members = $company->members()->with('user')->paginate(20);
+        return view('companies.members', compact('company', 'members'));
+    }
+
+    public function addMember(Request $request, Company $company)
+    {
+        $this->authorize('update', $company);
+        
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'role' => 'required|string|in:admin,manager,agent,staff',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($company->members()->where('user_id', $user->id)->exists()) {
+            return redirect()->back()->with('error', 'User is already a member of this company.');
+        }
+
+        $company->members()->create([
+            'user_id' => $user->id,
+            'role' => $request->role,
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Member added successfully.');
+    }
+
+    public function removeMember(Company $company, User $user)
+    {
+        $this->authorize('update', $company);
+        
+        if ($user->id === $company->created_by) {
+            return redirect()->back()->with('error', 'The company owner cannot be removed.');
+        }
+
+        $company->members()->where('user_id', $user->id)->delete();
+
+        return redirect()->back()->with('success', 'Member removed successfully.');
     }
 }
