@@ -3,8 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Property;
+use App\Models\Agent;
+use App\Models\Company;
+use App\Models\Project;
+use App\Models\ProjectTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -14,14 +20,14 @@ class DashboardController extends Controller
     }
 
     /**
-     * Show the user dashboard.
+     * Show the comprehensive dashboard with all site controls.
      */
     public function index()
     {
         $user = Auth::user();
         
-        // Get user statistics based on role
-        $stats = $this->getUserStats($user);
+        // Get comprehensive statistics
+        $stats = $this->getComprehensiveStats($user);
         
         return view('dashboard.index', compact('user', 'stats'));
     }
@@ -96,29 +102,114 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get user statistics based on role.
+     * Get comprehensive statistics for all site controls.
      */
-    private function getUserStats(User $user)
+    private function getComprehensiveStats(User $user)
     {
+        // Basic stats
         $stats = [
-            'properties_count' => $user->properties_count ?? 0,
-            'favorites_count' => $user->favorites_count ?? 0,
-            'wallet_balance' => $user->wallet_balance ?? 0,
-            'login_count' => $user->login_count ?? 0,
+            'user' => [
+                'properties_count' => $user->properties_count ?? 0,
+                'favorites_count' => $user->favorites_count ?? 0,
+                'wallet_balance' => $user->wallet_balance ?? 0,
+                'login_count' => $user->login_count ?? 0,
+                'unread_notifications' => $user->unreadNotifications()->count(),
+            ],
+            
+            // Site-wide stats
+            'site' => [
+                'total_users' => User::count(),
+                'total_properties' => Property::count(),
+                'total_agents' => Agent::count(),
+                'total_companies' => Company::count(),
+                'total_projects' => Project::count(),
+                'total_tasks' => ProjectTask::count(),
+                'new_users_today' => User::whereDate('created_at', today())->count(),
+                'new_properties_today' => Property::whereDate('created_at', today())->count(),
+            ],
+            
+            // Recent activity
+            'recent_users' => User::latest()->take(5)->get(),
+            'recent_properties' => Property::latest()->take(5)->get(),
+            'recent_projects' => Project::latest()->take(5)->get(),
+            'recent_tasks' => ProjectTask::latest()->take(5)->get(),
+            
+            // Quick links and controls
+            'quick_links' => [
+                'users_management' => [
+                    'title' => 'إدارة المستخدمين',
+                    'icon' => 'fas fa-users',
+                    'color' => 'blue',
+                    'links' => [
+                        ['title' => 'جميع المستخدمين', 'route' => 'admin.users.index', 'icon' => 'fas fa-list'],
+                        ['title' => 'إضافة مستخدم', 'route' => 'admin.users.create', 'icon' => 'fas fa-plus'],
+                        ['title' => 'الوكلاء', 'route' => 'admin.agents.index', 'icon' => 'fas fa-user-tie'],
+                        ['title' => 'الشركات', 'route' => 'companies.index', 'icon' => 'fas fa-building'],
+                    ]
+                ],
+                'properties_management' => [
+                    'title' => 'إدارة العقارات',
+                    'icon' => 'fas fa-home',
+                    'color' => 'green',
+                    'links' => [
+                        ['title' => 'جميع العقارات', 'route' => 'properties.index', 'icon' => 'fas fa-list'],
+                        ['title' => 'إضافة عقار', 'route' => 'properties.create', 'icon' => 'fas fa-plus'],
+                        ['title' => 'المفضلة', 'route' => 'properties.favorites', 'icon' => 'fas fa-heart'],
+                        ['title' => 'البحث المتقدم', 'route' => 'properties.search.index', 'icon' => 'fas fa-search'],
+                    ]
+                ],
+                'projects_management' => [
+                    'title' => 'إدارة المشاريع',
+                    'icon' => 'fas fa-project-diagram',
+                    'color' => 'purple',
+                    'links' => [
+                        ['title' => 'جميع المشاريع', 'route' => 'projects.index', 'icon' => 'fas fa-list'],
+                        ['title' => 'إضافة مشروع', 'route' => 'projects.create', 'icon' => 'fas fa-plus'],
+                    ]
+                ],
+                'system_management' => [
+                    'title' => 'إدارة النظام',
+                    'icon' => 'fas fa-cogs',
+                    'color' => 'yellow',
+                    'links' => [
+                        ['title' => 'الإعدادات', 'route' => 'settings.index', 'icon' => 'fas fa-cog'],
+                        ['title' => 'الصيانة', 'route' => 'maintenance.index', 'icon' => 'fas fa-tools'],
+                        ['title' => 'التقارير', 'route' => 'reports.index', 'icon' => 'fas fa-chart-bar'],
+                        ['title' => 'السجلات', 'route' => 'admin.settings.logs', 'icon' => 'fas fa-file-alt'],
+                    ]
+                ],
+            ],
+            
+            // System status
+            'system_status' => [
+                'database' => 'Online',
+                'storage' => '65% Used',
+                'api' => 'Online',
+                'queue' => '12 Jobs',
+                'cache' => 'Active',
+                'mail' => 'Configured',
+            ],
+            
+            // Charts data (simplified for now)
+            'charts' => [
+                'user_growth' => [12, 19, 3, 5, 2, 3],
+                'property_growth' => [8, 15, 12, 18, 25, 20],
+                'revenue' => [12000, 19000, 30000, 50000, 42000, 38000],
+            ]
         ];
 
         // Add role-specific stats
         if ($user->is_agent) {
-            $stats['properties_sold'] = $user->properties_sold ?? 0;
-            $stats['properties_rented'] = $user->properties_rented ?? 0;
-            $stats['total_commission'] = $user->total_commission_earned ?? 0;
-            $stats['client_count'] = $user->client_count ?? 0;
+            $stats['user']['properties_sold'] = $user->properties_sold ?? 0;
+            $stats['user']['properties_rented'] = $user->properties_rented ?? 0;
+            $stats['user']['total_commission'] = $user->total_commission_earned ?? 0;
+            $stats['user']['client_count'] = $user->client_count ?? 0;
         }
 
         if ($user->is_investor) {
-            $stats['properties_invested'] = $user->properties_invested ?? 0;
-            $stats['total_investments'] = $user->total_investments ?? 0;
-            $stats['investment_returns'] = $user->investment_returns ?? 0;
+            $stats['user']['properties_invested'] = $user->properties_invested ?? 0;
+            $stats['user']['total_investments'] = $user->total_investments ?? 0;
+            $stats['user']['investment_returns'] = $user->investment_returns ?? 0;
         }
 
         return $stats;

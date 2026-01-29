@@ -118,7 +118,7 @@
                     @endforelse
                 </div>
                 <div class="mt-4">
-                    <a href="{{ route('properties.saved') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <a href="{{ route('properties.favorites') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         View All Saved →
                     </a>
                 </div>
@@ -159,17 +159,17 @@
                     <p class="font-medium text-gray-800">Browse Properties</p>
                 </a>
                 
-                <a href="{{ route('properties.saved') }}" class="bg-green-50 border border-green-200 rounded-lg p-4 hover:bg-green-100 transition-colors text-center">
+                <a href="{{ route('properties.favorites') }}" class="bg-green-50 border border-green-200 rounded-lg p-4 hover:bg-green-100 transition-colors text-center">
                     <i class="fas fa-heart text-green-600 text-2xl mb-2"></i>
                     <p class="font-medium text-gray-800">Saved Properties</p>
                 </a>
                 
-                <a href="{{ route('user.profile') }}" class="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition-colors text-center">
+                <a href="{{ route('user.profile.edit') }}" class="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition-colors text-center">
                     <i class="fas fa-user text-purple-600 text-2xl mb-2"></i>
                     <p class="font-medium text-gray-800">Edit Profile</p>
                 </a>
                 
-                <a href="{{ route('user.wallet') }}" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition-colors text-center">
+                <a href="{{ route('wallet.index') }}" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition-colors text-center">
                     <i class="fas fa-wallet text-yellow-600 text-2xl mb-2"></i>
                     <p class="font-medium text-gray-800">My Wallet</p>
                 </a>

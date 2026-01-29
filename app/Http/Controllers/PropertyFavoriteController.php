@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Property;
-use App\Models\PropertyFavorite;
+use App\Models\UserFavorite;
+use App\Models\PropertyAnalytic;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -17,35 +18,60 @@ class PropertyFavoriteController extends Controller
 
     public function index(Request $request)
     {
-        $user = Auth::user();
-        
-        $favorites = $user->favoriteProperties()
-            ->with([
-                'propertyType',
-                'location',
-                'details',
-                'price',
-                'media' => function($query) {
-                    $query->where('media_type', 'image')->limit(3);
-                }
-            ])
-            ->where('status', 'active')
-            ->paginate(12);
+        try {
+            $user = Auth::user();
+            
+            if (!$user) {
+                return redirect()->route('login');
+            }
+            
+            $favorites = UserFavorite::where('user_id', $user->id)
+                ->where('favoritable_type', Property::class)
+                ->whereHasMorph('favoritable', [Property::class], function($query) {
+                    $query->where('status', 'active');
+                })
+                ->with([
+                    'favoritable' => function($query) {
+                        $query->with([
+                            'propertyType',
+                            'location',
+                            'details',
+                            'pricing', // Property model uses pricing() for price relationship
+                            'media' => function($q) {
+                                $q->where('media_type', 'image')->limit(3);
+                            }
+                        ]);
+                    }
+                ])
+                ->paginate(12);
 
-        return view('properties.favorites', compact('favorites'));
+            return view('properties.favorites', compact('favorites'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Favorites index error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->route('home')->with('error', 'Unable to load favorites. Please try again.');
+        }
     }
 
-    public function add(Request $request): JsonResponse
+    public function add(Request $request, Property $property = null): JsonResponse
     {
-        $request->validate([
-            'property_id' => 'required|exists:properties,id',
-        ]);
+        $propertyId = $property ? $property->id : $request->property_id;
+
+        if (!$propertyId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Property ID is required',
+            ], 400);
+        }
 
         $user = Auth::user();
-        $propertyId = $request->property_id;
 
         // Check if property exists and is active
-        $property = Property::where('id', $propertyId)
+        $property = $property ?: Property::where('id', $propertyId)
             ->where('status', 'active')
             ->first();
 
@@ -57,8 +83,9 @@ class PropertyFavoriteController extends Controller
         }
 
         // Check if already favorited
-        $existingFavorite = PropertyFavorite::where('user_id', $user->id)
-            ->where('property_id', $propertyId)
+        $existingFavorite = UserFavorite::where('user_id', $user->id)
+            ->where('favoritable_type', Property::class)
+            ->where('favoritable_id', $property->id)
             ->first();
 
         if ($existingFavorite) {
@@ -69,16 +96,17 @@ class PropertyFavoriteController extends Controller
         }
 
         // Add to favorites
-        PropertyFavorite::create([
+        UserFavorite::create([
             'user_id' => $user->id,
-            'property_id' => $propertyId,
+            'favoritable_type' => Property::class,
+            'favoritable_id' => $property->id,
         ]);
 
         // Increment property favorites count
         $property->increment('favorites_count');
 
         // Record analytics
-        PropertyAnalytic::recordMetric($propertyId, 'favorites');
+        PropertyAnalytic::recordMetric($property->id, 'favorites');
 
         return response()->json([
             'success' => true,
@@ -88,17 +116,22 @@ class PropertyFavoriteController extends Controller
         ]);
     }
 
-    public function remove(Request $request): JsonResponse
+    public function remove(Request $request, Property $property = null): JsonResponse
     {
-        $request->validate([
-            'property_id' => 'required|exists:properties,id',
-        ]);
+        $propertyId = $property ? $property->id : $request->property_id;
+
+        if (!$propertyId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Property ID is required',
+            ], 400);
+        }
 
         $user = Auth::user();
-        $propertyId = $request->property_id;
 
-        $favorite = PropertyFavorite::where('user_id', $user->id)
-            ->where('property_id', $propertyId)
+        $favorite = UserFavorite::where('user_id', $user->id)
+            ->where('favoritable_type', Property::class)
+            ->where('favoritable_id', $propertyId)
             ->first();
 
         if (!$favorite) {
@@ -111,7 +144,7 @@ class PropertyFavoriteController extends Controller
         $favorite->delete();
 
         // Decrement property favorites count
-        $property = Property::find($propertyId);
+        $property = $property ?: Property::find($propertyId);
         if ($property) {
             $property->decrement('favorites_count');
         }
@@ -133,8 +166,9 @@ class PropertyFavoriteController extends Controller
         $user = Auth::user();
         $propertyId = $request->property_id;
 
-        $favorite = PropertyFavorite::where('user_id', $user->id)
-            ->where('property_id', $propertyId)
+        $favorite = UserFavorite::where('user_id', $user->id)
+            ->where('favoritable_type', Property::class)
+            ->where('favoritable_id', $propertyId)
             ->first();
 
         if ($favorite) {
@@ -153,9 +187,10 @@ class PropertyFavoriteController extends Controller
             ]);
         } else {
             // Add to favorites
-            PropertyFavorite::create([
+            UserFavorite::create([
                 'user_id' => $user->id,
-                'property_id' => $propertyId,
+                'favoritable_type' => Property::class,
+                'favoritable_id' => $propertyId,
             ]);
 
             $property = Property::find($propertyId);
@@ -182,8 +217,9 @@ class PropertyFavoriteController extends Controller
         $user = Auth::user();
         $propertyId = $request->property_id;
 
-        $isFavorited = PropertyFavorite::where('user_id', $user->id)
-            ->where('property_id', $propertyId)
+        $isFavorited = UserFavorite::where('user_id', $user->id)
+            ->where('favoritable_type', Property::class)
+            ->where('favoritable_id', $propertyId)
             ->exists();
 
         $property = Property::find($propertyId);
@@ -208,8 +244,9 @@ class PropertyFavoriteController extends Controller
         $action = $request->action;
 
         if ($action === 'remove') {
-            $removed = PropertyFavorite::where('user_id', $user->id)
-                ->whereIn('property_id', $propertyIds)
+            $removed = UserFavorite::where('user_id', $user->id)
+                ->where('favoritable_type', Property::class)
+                ->whereIn('favoritable_id', $propertyIds)
                 ->delete();
 
             // Update property favorites counts
@@ -297,7 +334,7 @@ class PropertyFavoriteController extends Controller
                 ->pluck('count', 'listing_type'),
             'recently_added' => $user->favoriteProperties()
                 ->where('status', 'active')
-                ->latest('property_favorites.created_at')
+                ->latest('user_favorites.created_at')
                 ->limit(5)
                 ->with(['propertyType', 'price'])
                 ->get(),
@@ -306,6 +343,17 @@ class PropertyFavoriteController extends Controller
         return response()->json([
             'success' => true,
             'data' => $stats,
+        ]);
+    }
+
+    public function getAlerts(): JsonResponse
+    {
+        $user = Auth::user();
+        
+        // This would return favorite alerts
+        return response()->json([
+            'success' => true,
+            'data' => [],
         ]);
     }
 

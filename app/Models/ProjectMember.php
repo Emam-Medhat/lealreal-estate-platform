@@ -14,15 +14,16 @@ class ProjectMember extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'project_team_id',
+        'project_id',
+        'team_id',
         'user_id',
-        'role_id',
+        'role',
+        'status',
         'hourly_rate',
         'start_date',
         'end_date',
         'joined_at',
-        'status',
-        'created_by',
+        'notes',
     ];
 
     protected $casts = [
@@ -32,19 +33,19 @@ class ProjectMember extends Model
         'hourly_rate' => 'decimal:2',
     ];
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function team(): BelongsTo
     {
-        return $this->belongsTo(ProjectTeam::class);
+        return $this->belongsTo(ProjectTeam::class, 'team_id');
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function role(): BelongsTo
-    {
-        return $this->belongsTo(Role::class);
     }
 
     public function creator(): BelongsTo

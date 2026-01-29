@@ -16,6 +16,9 @@ class Agent extends Model
 
     protected $fillable = [
         'user_id',
+        'name',
+        'email',
+        'phone',
         'agency_id',
         'company_id',
         'license_number',
@@ -29,19 +32,22 @@ class Agent extends Model
         'is_active',
         'commission_rate',
         'territory_id',
+        'hire_date',
         'join_date',
         'verified_at',
         'suspended_at',
+        'created_by',
     ];
 
     protected $casts = [
-        'rating' => 'decimal:2',
-        'total_sales' => 'decimal:15,2',
+        'rating' => 'float',
+        'total_sales' => 'float',
         'total_properties' => 'integer',
         'experience_years' => 'integer',
         'is_verified' => 'boolean',
         'is_active' => 'boolean',
-        'commission_rate' => 'decimal:5,2',
+        'commission_rate' => 'float',
+        'hire_date' => 'datetime',
         'join_date' => 'date',
         'verified_at' => 'datetime',
         'suspended_at' => 'datetime',

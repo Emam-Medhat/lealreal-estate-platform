@@ -47,6 +47,14 @@ class PropertyObserver
         if (class_exists('\App\Events\PropertyCreated')) {
             event(new \App\Events\PropertyCreated($property));
         }
+
+        // Send notification to admins and managers
+        try {
+            $admins = \App\Models\User::whereIn('role', ['admin', 'manager'])->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\PropertyCreated($property));
+        } catch (\Exception $e) {
+            \Log::warning('Could not send property creation notification: ' . $e->getMessage());
+        }
     }
 
     /**

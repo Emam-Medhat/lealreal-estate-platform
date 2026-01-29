@@ -70,6 +70,7 @@ class Property extends Model
         'postal_code',
         'latitude',
         'longitude',
+        'currency',
     ];
 
     protected $casts = [
@@ -112,6 +113,11 @@ class Property extends Model
     public function images(): HasMany
     {
         return $this->hasMany(PropertyMedia::class)->where('media_type', 'image');
+    }
+
+    public function favoritedBy(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(User::class, 'favoritable', 'user_favorites');
     }
 
     public function propertyType(): BelongsTo

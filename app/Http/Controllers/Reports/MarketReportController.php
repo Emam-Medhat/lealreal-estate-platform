@@ -67,17 +67,17 @@ class MarketReportController extends Controller
             ->with('success', 'Market report generation started.');
     }
 
-    public function show(Report $report)
+    public function show($id)
     {
-        $marketReport = $report->marketReport;
+        $report = Report::findOrFail($id);
         
-        if (!$marketReport) {
-            abort(404, 'Market report data not found');
+        if ($report->type !== 'market') {
+            abort(404, 'This is not a market report');
         }
 
-        $report->load(['visualizations', 'exports']);
+        $report->load(['exports']);
 
-        return view('reports.market.show', compact('report', 'marketReport'));
+        return view('reports.market.show', compact('report'));
     }
 
     public function getMarketData(Request $request): JsonResponse
@@ -155,11 +155,21 @@ class MarketReportController extends Controller
     private function getMarketStats(Carbon $startDate, Carbon $endDate): array
     {
         return [
-            'average_price' => $this->getAveragePrice($startDate, $endDate),
-            'total_listings' => $this->getTotalListings($startDate, $endDate),
-            'total_sales' => $this->getTotalSales($startDate, $endDate),
-            'inventory_level' => $this->getInventoryLevel($startDate, $endDate),
+            'total_reports' => $this->getTotalReports($startDate, $endDate),
+            'avg_growth' => $this->getAverageGrowth($startDate, $endDate),
+            'available_properties' => $this->getTotalListings($startDate, $endDate),
+            'avg_price' => $this->getAveragePrice($startDate, $endDate),
         ];
+    }
+
+    private function getTotalReports(Carbon $startDate, Carbon $endDate): int
+    {
+        return MarketReport::whereBetween('period_start', [$startDate, $endDate])->count() ?? 0;
+    }
+
+    private function getAverageGrowth(Carbon $startDate, Carbon $endDate): string
+    {
+        return '12.5%'; // Placeholder
     }
 
     private function getAveragePrice(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): float
@@ -192,7 +202,7 @@ class MarketReportController extends Controller
             ->when($marketArea, function ($query, $area) {
                 return $query->where('location', 'like', "%{$area}%");
             })
-            ->count() ?? 150;
+            ->count() ?? 0;
     }
 
     private function getTotalSales(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): int

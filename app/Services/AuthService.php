@@ -80,6 +80,7 @@ class AuthService
                 'subscription_end_date' => now()->addDays(30),
                 'wallet_balance' => 0,
                 'login_count' => 0,
+                'registration_ip' => request()->ip(),
             ]);
 
             // Set role-specific booleans

@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserWallet;
-use App\Models\WalletTransaction;
+use App\Models\UserTransaction;
 use App\Models\UserActivityLog;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -71,16 +72,18 @@ class UserWalletController extends Controller
                 'status' => 'active',
             ]);
 
-            $transaction = WalletTransaction::create([
+            $transaction = UserTransaction::create([
+                'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
-                'type' => 'deposit',
+                'transaction_id' => 'TXN_' . strtoupper(uniqid()),
+                'transaction_type' => 'deposit',
                 'amount' => $request->amount,
-                'balance_before' => $wallet->balance,
-                'balance_after' => $wallet->balance + $request->amount,
-                'payment_method' => $request->payment_method,
-                'description' => $request->description ?? 'Wallet deposit',
-                'status' => 'pending',
-                'reference_id' => 'DEP_' . strtoupper(uniqid()),
+                'currency' => $wallet->currency,
+                'fee' => 0,
+                'total_amount' => $request->amount,
+                'status' => 'completed',
+                'description' => $request->description ?? 'Deposit to wallet',
+                'completed_at' => now(),
             ]);
 
             $wallet->update(['balance' => $wallet->balance + $request->amount]);
@@ -88,8 +91,23 @@ class UserWalletController extends Controller
             UserActivityLog::create([
                 'user_id' => $user->id,
                 'action' => 'wallet_deposit',
-                'details' => "Deposited {$request->amount} {$wallet->currency} to wallet",
+                'description' => "Deposited {$request->amount} {$wallet->currency} to wallet",
                 'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'amount' => $request->amount,
+                    'currency' => $wallet->currency,
+                    'payment_method' => $request->payment_method,
+                    'transaction_id' => $transaction->id,
+                ],
+            ]);
+
+            // Send notification
+            NotificationService::walletNotification($user, 'deposit', [
+                'amount' => $request->amount,
+                'currency' => $wallet->currency,
+                'payment_method' => $request->payment_method,
+                'transaction_id' => $transaction->id,
             ]);
 
             DB::commit();
@@ -104,9 +122,16 @@ class UserWalletController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
+            \Log::error('Deposit failed: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'amount' => $request->amount ?? null,
+                'payment_method' => $request->payment_method ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process deposit',
+                'message' => 'Failed to process deposit: ' . $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -116,8 +141,9 @@ class UserWalletController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:1|max:10000',
-            'payment_method' => 'required|in:bank_transfer,paypal,crypto',
+            'payment_method' => 'required|in:bank_transfer,paypal,crypto,check',
             'description' => 'nullable|string|max:255',
+            'reason' => 'nullable|string|max:255',
         ]);
 
         $user = Auth::user();
@@ -133,16 +159,18 @@ class UserWalletController extends Controller
         DB::beginTransaction();
         
         try {
-            $transaction = WalletTransaction::create([
+            $transaction = UserTransaction::create([
+                'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
-                'type' => 'withdrawal',
+                'transaction_id' => 'TXN_' . strtoupper(uniqid()),
+                'transaction_type' => 'withdrawal',
                 'amount' => $request->amount,
-                'balance_before' => $wallet->balance,
-                'balance_after' => $wallet->balance - $request->amount,
-                'payment_method' => $request->payment_method,
-                'description' => $request->description ?? 'Wallet withdrawal',
-                'status' => 'pending',
-                'reference_id' => 'WTH_' . strtoupper(uniqid()),
+                'currency' => $wallet->currency,
+                'fee' => 0,
+                'total_amount' => $request->amount,
+                'status' => 'completed',
+                'description' => $request->reason ?? $request->description ?? 'Withdrawal from wallet',
+                'completed_at' => now(),
             ]);
 
             $wallet->update(['balance' => $wallet->balance - $request->amount]);
@@ -150,8 +178,15 @@ class UserWalletController extends Controller
             UserActivityLog::create([
                 'user_id' => $user->id,
                 'action' => 'wallet_withdrawal',
-                'details' => "Withdrew {$request->amount} {$wallet->currency} from wallet",
+                'description' => "Withdrew {$request->amount} {$wallet->currency} from wallet",
                 'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'amount' => $request->amount,
+                    'currency' => $wallet->currency,
+                    'payment_method' => $request->payment_method,
+                    'transaction_id' => $transaction->id,
+                ],
             ]);
 
             DB::commit();
@@ -211,29 +246,33 @@ class UserWalletController extends Controller
         
         try {
             // Create sender transaction
-            $senderTransaction = WalletTransaction::create([
+            $senderTransaction = UserTransaction::create([
+                'user_id' => $sender->id,
                 'wallet_id' => $senderWallet->id,
-                'type' => 'transfer_out',
+                'transaction_id' => 'TXN_' . strtoupper(uniqid()),
+                'transaction_type' => 'transfer',
                 'amount' => $request->amount,
-                'balance_before' => $senderWallet->balance,
-                'balance_after' => $senderWallet->balance - $request->amount,
-                'description' => $request->description ?? "Transfer to {$recipient->name}",
+                'currency' => $senderWallet->currency,
+                'fee' => 0,
+                'total_amount' => $request->amount,
                 'status' => 'completed',
-                'reference_id' => 'TRF_OUT_' . strtoupper(uniqid()),
-                'recipient_id' => $recipient->id,
+                'description' => $request->description ?? "Transfer to {$recipient->name}",
+                'completed_at' => now(),
             ]);
 
             // Create recipient transaction
-            $recipientTransaction = WalletTransaction::create([
+            $recipientTransaction = UserTransaction::create([
+                'user_id' => $recipient->id,
                 'wallet_id' => $recipientWallet->id,
-                'type' => 'transfer_in',
+                'transaction_id' => 'TXN_' . strtoupper(uniqid()),
+                'transaction_type' => 'transfer',
                 'amount' => $request->amount,
-                'balance_before' => $recipientWallet->balance,
-                'balance_after' => $recipientWallet->balance + $request->amount,
-                'description' => $request->description ?? "Transfer from {$sender->name}",
+                'currency' => $recipientWallet->currency,
+                'fee' => 0,
+                'total_amount' => $request->amount,
                 'status' => 'completed',
-                'reference_id' => 'TRF_IN_' . strtoupper(uniqid()),
-                'sender_id' => $sender->id,
+                'description' => $request->description ?? "Transfer from {$sender->name}",
+                'completed_at' => now(),
             ]);
 
             // Update balances
@@ -244,15 +283,31 @@ class UserWalletController extends Controller
             UserActivityLog::create([
                 'user_id' => $sender->id,
                 'action' => 'wallet_transfer_out',
-                'details' => "Transferred {$request->amount} {$senderWallet->currency} to {$recipient->name}",
+                'description' => "Transferred {$request->amount} {$senderWallet->currency} to {$recipient->name}",
                 'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'amount' => $request->amount,
+                    'currency' => $senderWallet->currency,
+                    'recipient_id' => $recipient->id,
+                    'recipient_name' => $recipient->name,
+                    'transaction_id' => $senderTransaction->id,
+                ],
             ]);
 
             UserActivityLog::create([
                 'user_id' => $recipient->id,
                 'action' => 'wallet_transfer_in',
-                'details' => "Received {$request->amount} {$recipientWallet->currency} from {$sender->name}",
+                'description' => "Received {$request->amount} {$recipientWallet->currency} from {$sender->name}",
                 'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'amount' => $request->amount,
+                    'currency' => $recipientWallet->currency,
+                    'sender_id' => $sender->id,
+                    'sender_name' => $sender->name,
+                    'transaction_id' => $recipientTransaction->id,
+                ],
             ]);
 
             DB::commit();
@@ -312,7 +367,7 @@ class UserWalletController extends Controller
 
         $transactions = $wallet->transactions()
             ->when($request->type, function ($query, $type) {
-                $query->where('type', $type);
+                $query->where('transaction_type', $type);
             })
             ->when($request->status, function ($query, $status) {
                 $query->where('status', $status);
@@ -326,11 +381,11 @@ class UserWalletController extends Controller
         ]);
     }
 
-    public function getTransaction(WalletTransaction $transaction): JsonResponse
+    public function getTransaction(UserTransaction $transaction): JsonResponse
     {
         $user = Auth::user();
         
-        if ($transaction->wallet->user_id !== $user->id) {
+        if ($transaction->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -341,6 +396,76 @@ class UserWalletController extends Controller
             'success' => true,
             'transaction' => $transaction
         ]);
+    }
+
+    public function exportTransactions(Request $request)
+    {
+        $user = Auth::user();
+        $wallet = $user->wallet;
+
+        if (!$wallet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No wallet found'
+            ], 404);
+        }
+
+        $transactions = $wallet->transactions()
+            ->when($request->type, function ($query, $type) {
+                $query->where('transaction_type', $type);
+            })
+            ->when($request->status, function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->when($request->date_from, function ($query, $dateFrom) {
+                $query->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($request->date_to, function ($query, $dateTo) {
+                $query->whereDate('created_at', '<=', $dateTo);
+            })
+            ->latest()
+            ->get();
+
+        $filename = 'wallet_transactions_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($transactions) {
+            $file = fopen('php://output', 'w');
+            
+            // CSV Header
+            fputcsv($file, [
+                'Transaction ID',
+                'Type',
+                'Amount',
+                'Currency',
+                'Status',
+                'Description',
+                'Created At',
+                'Completed At'
+            ]);
+            
+            // CSV Data
+            foreach ($transactions as $transaction) {
+                fputcsv($file, [
+                    $transaction->transaction_id,
+                    $transaction->transaction_type,
+                    $transaction->amount,
+                    $transaction->currency,
+                    $transaction->status,
+                    $transaction->description,
+                    $transaction->created_at,
+                    $transaction->completed_at
+                ]);
+            }
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function getStats(): JsonResponse
@@ -363,10 +488,10 @@ class UserWalletController extends Controller
         }
 
         $stats = [
-            'total_deposits' => $wallet->transactions()->where('type', 'deposit')->sum('amount'),
-            'total_withdrawals' => $wallet->transactions()->where('type', 'withdrawal')->sum('amount'),
-            'total_transfers_in' => $wallet->transactions()->where('type', 'transfer_in')->sum('amount'),
-            'total_transfers_out' => $wallet->transactions()->where('type', 'transfer_out')->sum('amount'),
+            'total_deposits' => $wallet->transactions()->where('transaction_type', 'deposit')->sum('amount'),
+            'total_withdrawals' => $wallet->transactions()->where('transaction_type', 'withdrawal')->sum('amount'),
+            'total_transfers_in' => $wallet->transactions()->where('transaction_type', 'transfer')->sum('amount'),
+            'total_transfers_out' => $wallet->transactions()->where('transaction_type', 'transfer')->sum('amount'),
             'net_balance' => $wallet->balance,
             'transaction_count' => $wallet->transactions()->count(),
         ];

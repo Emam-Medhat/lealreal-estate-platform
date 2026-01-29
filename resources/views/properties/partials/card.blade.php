@@ -38,8 +38,8 @@
             <i class="fas fa-tag mr-2"></i>
             {{ optional($property->propertyType)->name ?? 'Property' }}
         </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
-            <a href="{{ route('properties.show', $property) }}">
+        <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors" style="font-size:20px">
+            <a href="{{ route('optimized.properties.show', $property) }}">
                 {{ $property->title }}
             </a>
         </h3>
@@ -70,7 +70,7 @@
                      alt="Agent" class="w-8 h-8 rounded-full border border-gray-200">
                 <span class="ml-2 text-sm text-gray-600 font-medium">{{ $property->agent?->name ?? 'Professional Agent' }}</span>
             </div>
-            <a href="{{ route('properties.show', $property) }}" class="text-blue-600 font-bold text-sm hover:text-blue-800 transition-colors flex items-center">
+            <a href="{{ route('optimized.properties.show', $property) }}" class="text-blue-600 font-bold text-sm hover:text-blue-800 transition-colors flex items-center">
                 View Details <i class="fas fa-arrow-right ml-2 text-xs"></i>
             </a>
         </div>

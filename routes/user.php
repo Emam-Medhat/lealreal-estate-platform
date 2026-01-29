@@ -16,20 +16,28 @@ use App\Http\Controllers\UserPreferenceController;
 |
 */
 
+// Home route (fallback)
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+// Inventory route (fallback) - add admin middleware
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/inventory', [App\Http\Controllers\InventoryController::class, 'index'])->name('inventory.index');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     
     // User Dashboard
-    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
+    Route::get('/user/dashboard', [App\Http\Controllers\UserDashboardController::class, 'index'])->name('user.dashboard');
     
     // Profile Management
-    Route::prefix('profile')->group(function () {
-        Route::get('/', [UserProfileController::class, 'show'])->name('profile.show');
-        Route::get('/edit', [UserProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/', [UserProfileController::class, 'update'])->name('profile.update');
-        Route::post('/avatar', [UserProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
-        Route::delete('/avatar', [UserProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
-        Route::get('/completion', [UserProfileController::class, 'completion'])->name('profile.completion');
-        Route::get('/public/{user}', [UserProfileController::class, 'publicProfile'])->name('profile.public');
+    Route::prefix('profile')->name('user.profile')->group(function () {
+        Route::get('/', [UserProfileController::class, 'show'])->name('');
+        Route::get('/edit', [UserProfileController::class, 'edit'])->name('.edit');
+        Route::put('/', [UserProfileController::class, 'update'])->name('.update');
+        Route::post('/avatar', [UserProfileController::class, 'uploadAvatar'])->name('.avatar.upload');
+        Route::delete('/avatar', [UserProfileController::class, 'deleteAvatar'])->name('.avatar.delete');
+        Route::get('/completion', [UserProfileController::class, 'completion'])->name('.completion');
+        Route::get('/public/{user}', [UserProfileController::class, 'publicProfile'])->name('.public');
     });
     
     // KYC Verification
@@ -58,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/transfer/confirm', [UserWalletController::class, 'transfer'])->name('wallet.transfer.confirm');
         Route::get('/statement', [UserWalletController::class, 'getTransactions'])->name('wallet.statement');
         Route::get('/statistics', [UserWalletController::class, 'getStats'])->name('wallet.statistics');
+        Route::get('/export', [UserWalletController::class, 'exportTransactions'])->name('wallet.export');
     });
     
     // User Settings
@@ -80,20 +89,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/analytics', [UserController::class, 'activityAnalytics'])->name('user.activity.analytics');
     });
     
-    // User Reports
+    // User Reports (Moved/Handled by routes/reports.php)
+    /*
     Route::prefix('reports')->group(function () {
         Route::get('/', [UserController::class, 'reports'])->name('user.reports');
         Route::post('/generate', [UserController::class, 'generateReport'])->name('user.reports.generate');
-        Route::get('/{report}', [UserController::class, 'downloadReport'])->name('user.reports.download');
+        Route::get('/{report}', [App\Http\Controllers\Reports\SalesReportController::class, 'show'])->name('user.reports.download');
         Route::get('/{report}/preview', [UserController::class, 'previewReport'])->name('user.reports.preview');
     });
+    */
     
     // User Favorites
     Route::prefix('favorites')->group(function () {
-        Route::get('/', [UserController::class, 'favorites'])->name('user.favorites');
-        Route::post('/{property}', [UserController::class, 'addFavorite'])->name('user.favorites.add');
-        Route::delete('/{property}', [UserController::class, 'removeFavorite'])->name('user.favorites.remove');
-        Route::get('/export', [UserController::class, 'exportFavorites'])->name('user.favorites.export');
+        Route::get('/', [App\Http\Controllers\PropertyFavoriteController::class, 'index'])->name('user.favorites');
+        Route::post('/{property}', [App\Http\Controllers\PropertyFavoriteController::class, 'add'])->name('user.favorites.add');
+        Route::delete('/{property}', [App\Http\Controllers\PropertyFavoriteController::class, 'remove'])->name('user.favorites.remove');
+        Route::get('/export', [App\Http\Controllers\PropertyFavoriteController::class, 'export'])->name('user.favorites.export');
     });
     
     // User Comparisons
@@ -112,6 +123,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{session}', [UserController::class, 'revokeSession'])->name('user.sessions.revoke');
         Route::delete('/all', [UserController::class, 'revokeAllSessions'])->name('user.sessions.revoke.all');
         Route::get('/active', [UserController::class, 'activeSessions'])->name('user.sessions.active');
+    });
+    
+    // User Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [UserController::class, 'notifications'])->name('user.notifications');
+        Route::get('/unread', [UserController::class, 'unreadNotifications'])->name('user.notifications.unread');
+        Route::put('/{notification}/read', [UserController::class, 'markNotificationRead'])->name('user.notifications.read');
+        Route::put('/read-all', [UserController::class, 'markAllNotificationsRead'])->name('user.notifications.read.all');
+        Route::delete('/{notification}', [UserController::class, 'deleteNotification'])->name('user.notifications.delete');
+        Route::post('/settings', [UserController::class, 'updateNotificationSettings'])->name('user.notifications.settings');
     });
     
     // User Search History

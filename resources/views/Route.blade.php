@@ -3,144 +3,579 @@
 @section('title', 'خريطة الروتات - Route Map')
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="row">
+
+
+<style>
+/* Root Variables */
+:root {
+    --primary: #4361ee;
+    --primary-soft: rgba(67, 97, 238, 0.1);
+    --success: #4cc9f0;
+    --success-soft: rgba(76, 201, 240, 0.1);
+    --warning: #f72585;
+    --warning-soft: rgba(247, 37, 133, 0.1);
+    --info: #4895ef;
+    --info-soft: rgba(72, 149, 239, 0.1);
+    --danger: #ef233c;
+    --danger-soft: rgba(239, 35, 60, 0.1);
+    --glass: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+body {
+    background: #f8f9fa;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(67, 97, 238, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(76, 201, 240, 0.05) 0px, transparent 50%);
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #2b2d42;
+}
+
+/* Glassmorphism Components */
+.glass-card {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-gradient {
+    background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+    border-radius: 24px;
+}
+
+/* Header Decorations */
+.shape-1 {
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.shape-2 {
+    position: absolute;
+    bottom: -30px;
+    left: 20%;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
+/* Icon Boxes */
+.icon-box-white {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* Buttons */
+.btn-blur-light {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-blur-light:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-success-modern {
+    background: #4cc9f0;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(76, 201, 240, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-success-modern:hover {
+    background: #3fb6da;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 201, 240, 0.4);
+}
+
+/* Stats Cards */
+.stat-card {
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid #f1f3f9;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.bg-soft-primary { background: var(--primary-soft); }
+.bg-soft-success { background: var(--success-soft); }
+.bg-soft-warning { background: var(--warning-soft); }
+.bg-soft-info { background: var(--info-soft); }
+.bg-soft-danger { background: var(--danger-soft); }
+.bg-soft-secondary { background: #f1f3f9; }
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.stat-value {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.search-box .form-control {
+    padding: 12px 12px 12px 45px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-weight: 500;
+}
+
+.search-box .form-control:focus {
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* Filter Buttons */
+.btn-filter {
+    background: #f1f3f9;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.btn-filter:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.btn-filter.active {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-filter-clear {
+    background: transparent;
+    border: 1px dashed #cbd5e1;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+/* Method Badges */
+.method-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.method-badge.get { background: #dcfce7; color: #166534; }
+.method-badge.post { background: #fef9c3; color: #854d0e; }
+.method-badge.put { background: #e0f2fe; color: #075985; }
+.method-badge.delete { background: #fee2e2; color: #991b1b; }
+.method-badge.patch { background: #f1f5f9; color: #475569; }
+
+/* Table Styling */
+.table-modern thead th {
+    background: #f8fafc;
+    border-bottom: 2px solid #f1f3f9;
+    padding: 16px 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.table-modern tbody td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f9;
+}
+
+.route-row {
+    transition: background 0.2s;
+}
+
+.route-row:hover {
+    background: #f8fafc;
+}
+
+.uri-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.uri-text {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: var(--primary-soft);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.api-tag {
+    background: #ede9fe;
+    color: #5b21b6;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.name-badge {
+    background: #f1f5f9;
+    color: #334155;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.action-text {
+    font-size: 0.85rem;
+    color: #64748b;
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: #f1f3f9;
+    color: #64748b;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-icon:hover {
+    transform: translateY(-2px);
+}
+
+.btn-view:hover { background: var(--primary); color: white; }
+.btn-copy:hover { background: #10b981; color: white; }
+.btn-link:hover { background: #3b82f6; color: white; }
+
+/* Toast */
+.glass-toast {
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    color: white;
+    min-width: 250px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.toast-icon {
+    color: #10b981;
+    font-size: 1.25rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+.animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container-fluid { padding: 20px !important; }
+    .display-5 { font-size: 2rem; }
+    .glass-card { border-radius: 16px; }
+    .stat-card { padding: 16px; }
+}
+</style>
+
+<div class="container-fluid py-5 px-md-5">
+    <!-- Modern Header Section -->
+    <div class="row mb-5 animate-fade-in">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-route me-2"></i>
-                    خريطة رووتات الموقع
-                </h1>
-                <div class="d-flex gap-2">
-                    <input type="text" id="searchRoutes" class="form-control" placeholder="بحث في الروتات..." style="width: 300px;">
-                    <button class="btn btn-primary" onclick="expandAll()">
-                        <i class="fas fa-expand"></i> توسيع الكل
-                    </button>
-                    <button class="btn btn-secondary" onclick="collapseAll()">
-                        <i class="fas fa-compress"></i> طي الكل
-                    </button>
-                    <a href="{{ route('routes.export') }}" class="btn btn-success" title="تصدير الروتات">
-                        <i class="fas fa-download"></i> تصدير CSV
-                    </a>
+            <div class="glass-card overflow-hidden">
+                <div class="header-gradient p-5 position-relative">
+                    <!-- Decorative Shapes -->
+                    <div class="shape-1"></div>
+                    <div class="shape-2"></div>
+                    
+                    <div class="position-relative z-1">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
+                            <div>
+                                <h1 class="display-5 fw-bold text-white mb-2 d-flex align-items-center">
+                                    <div class="icon-box-white me-3">
+                                        <i class="fas fa-route"></i>
+                                    </div>
+                                    خريطة رووتات النظام
+                                </h1>
+                                <p class="text-white-50 fs-5 mb-0">استعراض وإدارة جميع رووتات التطبيق بواجهة عصرية</p>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button onclick="expandAll()" class="btn btn-blur-light">
+                                    <i class="fas fa-expand-alt me-2"></i>توسيع
+                                </button>
+                                <button onclick="collapseAll()" class="btn btn-blur-light">
+                                    <i class="fas fa-compress-alt me-2"></i>طي
+                                </button>
+                                <a href="{{ route('routes.export') }}" class="btn btn-success-modern">
+                                    <i class="fas fa-file-export me-2"></i>تصدير CSV
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- إحصائيات سريعة -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">إجمالي الروتات</h5>
-                    <h2 class="mb-0">{{ count($routes) }}</h2>
+    <!-- Stats Section -->
+    <div class="row mb-5 animate-fade-in-up">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-soft-primary">
+                    <i class="fas fa-globe text-primary"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">إجمالي الروتات</span>
+                    <h2 class="stat-value">{{ count($routes) }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">روتات GET</h5>
-                    <h2 class="mb-0">{{ $routes->where('methods', 'like', '%GET%')->count() }}</h2>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-soft-success">
+                    <i class="fas fa-eye text-success"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">GET</span>
+                    <h2 class="stat-value">{{ $routes->where('is_get', true)->count() }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5 class="card-title">روتات POST</h5>
-                    <h2 class="mb-0">{{ $routes->where('methods', 'like', '%POST%')->count() }}</h2>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-soft-warning">
+                    <i class="fas fa-plus-circle text-warning"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">POST</span>
+                    <h2 class="stat-value">{{ $routes->where('is_post', true)->count() }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5 class="card-title">روتات API</h5>
-                    <h2 class="mb-0">{{ $routes->where('uri', 'like', 'api%')->count() }}</h2>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-soft-info">
+                    <i class="fas fa-edit text-info"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">PUT</span>
+                    <h2 class="stat-value">{{ $routes->where('is_put', true)->count() }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-soft-danger">
+                    <i class="fas fa-trash text-danger"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">DELETE</span>
+                    <h2 class="stat-value">{{ $routes->where('is_delete', true)->count() }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-soft-secondary">
+                    <i class="fas fa-code text-secondary"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">API</span>
+                    <h2 class="stat-value">{{ $routes->where('is_api', true)->count() }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- الروتات مقسمة حسب الملف -->
-    @php
-        $routesByFile = $routes->groupBy(function($route) {
-            if (str_contains($route->uri, 'properties')) return 'properties';
-            if (str_contains($route->uri, 'users') || str_contains($route->uri, 'profile')) return 'users';
-            if (str_contains($route->uri, 'analytics')) return 'analytics';
-            if (str_contains($route->uri, 'ai')) return 'ai';
-            if (str_contains($route->uri, 'admin')) return 'admin';
-            if (str_contains($route->uri, 'taxes')) return 'taxes';
-            if (str_contains($route->uri, 'reports')) return 'reports';
-            if (str_contains($route->uri, 'leads')) return 'leads';
-            if (str_contains($route->uri, 'documents')) return 'documents';
-            if (str_contains($route->uri, 'contracts')) return 'contracts';
-            if (str_contains($route->uri, 'auctions')) return 'auctions';
-            if (str_contains($route->uri, 'ads')) return 'ads';
-            if (str_contains($route->uri, 'financial')) return 'financial';
-            if (str_contains($route->uri, 'api')) return 'api';
-            return 'general';
-        });
-    @endphp
-
-    @foreach($routesByFile as $category => $categoryRoutes)
-        <div class="card mb-4 route-category" data-category="{{ $category }}">
-            <div class="card-header bg-{{ getCardColor($category) }} text-white" onclick="toggleCategory('{{ $category }}')">
-                <h5 class="mb-0 d-flex justify-content-between align-items-center">
-                    <span>
-                        <i class="fas fa-{{ getCategoryIcon($category) }} me-2"></i>
-                        {{ getCategoryTitle($category) }}
-                        <span class="badge bg-light text-dark ms-2">{{ $categoryRoutes->count() }}</span>
-                    </span>
-                    <i class="fas fa-chevron-down toggle-icon"></i>
-                </h5>
+    <!-- Search and Filters Section -->
+    <div class="row mb-5 animate-fade-in-up" style="animation-delay: 0.1s;">
+        <div class="col-12">
+            <div class="glass-card p-4">
+                <div class="row g-4 align-items-center">
+                    <div class="col-xl-4 col-lg-5">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchRoutes" class="form-control" placeholder="ابحث عن روت أو مسار...">
+                        </div>
+                    </div>
+                    <div class="col-xl-8 col-lg-7">
+                        <div class="filter-group d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <button class="btn btn-filter method-get" onclick="filterByMethod('GET')">GET</button>
+                            <button class="btn btn-filter method-post" onclick="filterByMethod('POST')">POST</button>
+                            <button class="btn btn-filter method-put" onclick="filterByMethod('PUT')">PUT</button>
+                            <button class="btn btn-filter method-delete" onclick="filterByMethod('DELETE')">DELETE</button>
+                            <button class="btn btn-filter method-patch" onclick="filterByMethod('PATCH')">PATCH</button>
+                            <button class="btn btn-filter-clear" onclick="clearFilters()">
+                                <i class="fas fa-times me-1"></i>مسح الفلاتر
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-0" id="category-{{ $category }}">
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="row animate-fade-in-up" style="animation-delay: 0.2s;">
+        <div class="col-12">
+            <div class="glass-card overflow-hidden border-0">
+                <div class="card-header-modern">
+                    <div class="d-flex justify-content-between align-items-center px-4 py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-list-ul me-2 text-primary"></i>
+                            قائمة الروتات المسجلة
+                        </h5>
+                        <div id="routeCount" class="badge-count">{{ count($routes) }} روت</div>
+                    </div>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                    <table class="table table-modern mb-0" id="routesTable">
+                        <thead>
                             <tr>
-                                <th>الطريقة</th>
-                                <th>الرابط</th>
+                                <th style="width: 150px;">الطريقة</th>
+                                <th>المسار (URI)</th>
                                 <th>الاسم</th>
-                                <th>الوظيفة</th>
-                                <th>الإجراء</th>
+                                <th>الإجراء (Action)</th>
+                                <th style="width: 140px; text-align: center;">العمليات</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($categoryRoutes as $route)
-                                <tr class="route-row" data-search="{{ $route->uri }} {{ $route->name ?? '' }}">
+                            @foreach($routes as $route)
+                                <tr class="route-row" data-search="{{ $route['uri'] }} {{ $route['name'] ?? '' }}" data-methods="{{ implode(',', $route['methods']) }}">
                                     <td>
-                                        @foreach($route->methods as $method)
-                                            <span class="badge bg-{{ getMethodColor($method) }} me-1">{{ $method }}</span>
-                                        @endforeach
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach($route['methods'] as $method)
+                                                <span class="method-badge {{ strtolower($method) }}">{{ $method }}</span>
+                                            @endforeach
+                                        </div>
                                     </td>
                                     <td>
-                                        <code class="text-primary">{{ $route->uri }}</code>
+                                        <div class="uri-container">
+                                            <code class="uri-text">{{ $route['uri'] }}</code>
+                                            @if($route['is_api'])
+                                                <span class="api-tag">API</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td>
-                                        @if($route->name)
-                                            <code class="text-success">{{ $route->name }}</code>
+                                        @if($route['name'])
+                                            <span class="name-badge">{{ $route['name'] }}</span>
                                         @else
-                                            <span class="text-muted">-</span>
+                                            <span class="text-muted small italic opacity-50">بدون اسم</span>
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="route-description">{{ getRouteDescription($route) }}</span>
+                                        <div class="action-text" title="{{ $route['action'] }}">
+                                            {{ Str::limit($route['action'], 50) }}
+                                        </div>
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-sm">
-                                            @if(in_array('GET', $route->methods))
-                                                <a href="{{ url($route->uri) }}" class="btn btn-outline-primary" target="_blank" title="فتح الرابط">
+                                        <div class="action-buttons">
+                                            @if($route['is_get'])
+                                                <a href="{{ url($route['uri']) }}" class="btn-icon btn-view" target="_blank" title="عرض المسار">
                                                     <i class="fas fa-external-link-alt"></i>
                                                 </a>
                                             @endif
-                                            @if($route->name)
-                                                <button class="btn btn-outline-info" onclick="copyRouteName('{{ $route->name }}')" title="نسخ اسم الرابط">
+                                            @if($route['name'])
+                                                <button class="btn-icon btn-copy" onclick="copyRouteName('{{ $route['name'] }}')" title="نسخ الاسم">
                                                     <i class="fas fa-copy"></i>
                                                 </button>
-                                                <button class="btn btn-outline-success" onclick="copyRouteUrl('{{ url($route->uri) }}')" title="نسخ الرابط الكامل">
+                                                <button class="btn-icon btn-link" onclick="copyRouteUrl('{{ url($route['uri']) }}')" title="نسخ الرابط">
                                                     <i class="fas fa-link"></i>
                                                 </button>
                                             @endif
@@ -153,282 +588,139 @@
                 </div>
             </div>
         </div>
-    @endforeach
+    </div>
 </div>
 
-<!-- JavaScript -->
-<script>
-function toggleCategory(category) {
-    const element = document.getElementById(`category-${category}`);
-    const icon = event.currentTarget.querySelector('.toggle-icon');
-    
-    if (element.style.display === 'none') {
-        element.style.display = 'block';
-        icon.classList.remove('fa-chevron-left');
-        icon.classList.add('fa-chevron-down');
-    } else {
-        element.style.display = 'none';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-left');
-    }
-}
-
-function expandAll() {
-    document.querySelectorAll('.route-category .card-body').forEach(el => {
-        el.style.display = 'block';
-    });
-    document.querySelectorAll('.toggle-icon').forEach(icon => {
-        icon.classList.remove('fa-chevron-left');
-        icon.classList.add('fa-chevron-down');
-    });
-}
-
-function collapseAll() {
-    document.querySelectorAll('.route-category .card-body').forEach(el => {
-        el.style.display = 'none';
-    });
-    document.querySelectorAll('.toggle-icon').forEach(icon => {
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-left');
-    });
-}
-
-function copyRouteName(name) {
-    navigator.clipboard.writeText(name);
-    showToast('تم نسخ اسم الرابط: ' + name);
-}
-
-function copyRouteUrl(url) {
-    navigator.clipboard.writeText(url);
-    showToast('تم نسخ الرابط: ' + url);
-}
-
-function showToast(message) {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = 'position-fixed top-0 end-0 p-3';
-    toast.style.zIndex = '11';
-    toast.innerHTML = `
-        <div class="toast show" role="alert">
-            <div class="toast-body">
-                ${message}
-            </div>
+<!-- Modern Toast Notification -->
+<div id="toast" class="toast-container position-fixed bottom-0 start-0 p-4" style="display: none; z-index: 9999;">
+    <div class="glass-toast p-3 d-flex align-items-center gap-3">
+        <div class="toast-icon">
+            <i class="fas fa-check-circle"></i>
         </div>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
+        <div class="toast-body fw-medium" id="toastMessage">
+            تمت العملية بنجاح
+        </div>
+    </div>
+</div>
 
+<script>
 // Search functionality
 document.getElementById('searchRoutes').addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase();
     const rows = document.querySelectorAll('.route-row');
+    let visibleCount = 0;
     
     rows.forEach(row => {
         const searchableText = row.getAttribute('data-search').toLowerCase();
         if (searchableText.includes(searchTerm)) {
             row.style.display = '';
+            visibleCount++;
         } else {
             row.style.display = 'none';
         }
     });
+    
+    updateCountDisplay(visibleCount);
 });
 
-// Auto-expand category when searching
-document.getElementById('searchRoutes').addEventListener('input', function(e) {
-    if (e.target.value.length > 0) {
-        expandAll();
-    }
-});
+// Filter by method
+function filterByMethod(method) {
+    const rows = document.querySelectorAll('.route-row');
+    const buttons = document.querySelectorAll('.btn-filter');
+    let visibleCount = 0;
+    
+    // Toggle active state on buttons
+    buttons.forEach(btn => {
+        if (btn.classList.contains('method-' + method.toLowerCase())) {
+            btn.classList.toggle('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    const isActive = document.querySelector('.btn-filter.method-' + method.toLowerCase() + '.active');
+
+    rows.forEach(row => {
+        if (!isActive) {
+            row.style.display = '';
+            visibleCount++;
+            return;
+        }
+        
+        const methods = row.getAttribute('data-methods').split(',');
+        if (methods.includes(method)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    updateCountDisplay(visibleCount);
+}
+
+// Clear all filters
+function clearFilters() {
+    const rows = document.querySelectorAll('.route-row');
+    const buttons = document.querySelectorAll('.btn-filter');
+    
+    rows.forEach(row => row.style.display = '');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById('searchRoutes').value = '';
+    updateCountDisplay(rows.length);
+}
+
+function updateCountDisplay(count) {
+    document.getElementById('routeCount').textContent = count + ' روت';
+}
+
+// Copy functions
+function copyRouteName(name) {
+    navigator.clipboard.writeText(name);
+    showToast('تم نسخ اسم الروت: ' + name);
+}
+
+function copyRouteUrl(url) {
+    navigator.clipboard.writeText(url);
+    showToast('تم نسخ الرابط الكامل بنجاح');
+}
+
+// Toast notification
+function showToast(message) {
+    const toastElement = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    toastMessage.textContent = message;
+    
+    toastElement.style.display = 'block';
+    toastElement.style.opacity = '0';
+    toastElement.style.transform = 'translateY(20px)';
+    
+    // Simple animation
+    setTimeout(() => {
+        toastElement.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        toastElement.style.opacity = '1';
+        toastElement.style.transform = 'translateY(0)';
+    }, 10);
+    
+    setTimeout(() => {
+        toastElement.style.opacity = '0';
+        toastElement.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            toastElement.style.display = 'none';
+        }, 300);
+    }, 3000);
+}
+
+// Expand/Collapse functions (stubs for the user's existing logic if needed)
+function expandAll() {
+    // Implement if there's a specific expansion logic
+    console.log('Expand All clicked');
+}
+
+function collapseAll() {
+    // Implement if there's a specific collapse logic
+    console.log('Collapse All clicked');
+}
 </script>
-
-<style>
-.route-category .card-header {
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.route-category .card-header:hover {
-    opacity: 0.9;
-}
-
-.toggle-icon {
-    transition: transform 0.3s;
-}
-
-.route-description {
-    font-size: 0.9em;
-    color: #666;
-}
-
-.badge {
-    font-size: 0.8em;
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    background-color: #f8f9fa;
-}
-
-.route-row:hover {
-    background-color: #f8f9fa;
-}
-
-.btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
-}
-
-.toast {
-    min-width: 250px;
-}
-
-.card-body {
-    transition: all 0.3s ease;
-}
-</style>
 @endsection
-
-<?php
-// Helper functions for the view
-function getCardColor($category) {
-    $colors = [
-        'properties' => 'primary',
-        'users' => 'success',
-        'analytics' => 'info',
-        'ai' => 'warning',
-        'admin' => 'danger',
-        'taxes' => 'dark',
-        'reports' => 'secondary',
-        'leads' => 'primary',
-        'documents' => 'success',
-        'contracts' => 'info',
-        'auctions' => 'warning',
-        'ads' => 'danger',
-        'financial' => 'dark',
-        'api' => 'secondary',
-        'general' => 'light'
-    ];
-    return $colors[$category] ?? 'secondary';
-}
-
-function getCategoryIcon($category) {
-    $icons = [
-        'properties' => 'home',
-        'users' => 'users',
-        'analytics' => 'chart-line',
-        'ai' => 'robot',
-        'admin' => 'user-shield',
-        'taxes' => 'file-invoice-dollar',
-        'reports' => 'file-alt',
-        'leads' => 'user-tie',
-        'documents' => 'file',
-        'contracts' => 'handshake',
-        'auctions' => 'gavel',
-        'ads' => 'bullhorn',
-        'financial' => 'calculator',
-        'api' => 'cog',
-        'general' => 'globe'
-    ];
-    return $icons[$category] ?? 'circle';
-}
-
-function getCategoryTitle($category) {
-    $titles = [
-        'properties' => 'العقارات',
-        'users' => 'المستخدمون والملفات الشخصية',
-        'analytics' => 'التحليلات والإحصائيات',
-        'ai' => 'الذكاء الاصطناعي',
-        'admin' => 'لوحة التحكم',
-        'taxes' => 'الضرائب',
-        'reports' => 'التقارير',
-        'leads' => 'العملاء المحتملون',
-        'documents' => 'الوثائق',
-        'contracts' => 'العقود',
-        'auctions' => 'المزادات',
-        'ads' => 'الإعلانات',
-        'financial' => 'التحليل المالي',
-        'api' => 'واجهة برمجة التطبيقات',
-        'general' => 'روتات عامة'
-    ];
-    return $titles[$category] ?? 'غير مصنف';
-}
-
-function getMethodColor($method) {
-    $colors = [
-        'GET' => 'success',
-        'POST' => 'primary',
-        'PUT' => 'warning',
-        'PATCH' => 'info',
-        'DELETE' => 'danger',
-        'OPTIONS' => 'secondary',
-        'HEAD' => 'light'
-    ];
-    return $colors[$method] ?? 'secondary';
-}
-
-function getRouteDescription($route) {
-    $uri = $route->uri;
-    $name = $route->name ?? '';
-    
-    // Properties routes
-    if (str_contains($uri, 'properties/create')) return 'إضافة عقار جديد';
-    if (str_contains($uri, 'properties') && str_contains($uri, '{property}')) return 'عرض تفاصيل العقار';
-    if (str_contains($uri, 'properties') && str_contains($uri, 'edit')) return 'تعديل بيانات العقار';
-    
-    // User routes
-    if (str_contains($uri, 'profile')) return 'الملف الشخصي للمستخدم';
-    if (str_contains($uri, 'kyc')) return 'التحقق من الهوية';
-    if (str_contains($uri, 'wallet')) return 'المحفظة المالية';
-    if (str_contains($uri, 'settings')) return 'إعدادات المستخدم';
-    
-    // Analytics routes
-    if (str_contains($uri, 'analytics/dashboard')) return 'لوحة تحليلات البيانات';
-    if (str_contains($uri, 'analytics/overview')) return 'نظرة عامة على التحليلات';
-    
-    // AI routes
-    if (str_contains($uri, 'ai/valuation')) return 'تقييم العقارات بالذكاء الاصطناعي';
-    if (str_contains($uri, 'ai/description')) return 'وصف العقارات بالذكاء الاصطناعي';
-    
-    // Admin routes
-    if (str_contains($uri, 'admin')) return 'لوحة تحكم المشرف';
-    
-    // Tax routes
-    if (str_contains($uri, 'taxes')) return 'إدارة الضرائب';
-    
-    // Reports routes
-    if (str_contains($uri, 'reports')) return 'التقارير والإحصائيات';
-    
-    // Lead routes
-    if (str_contains($uri, 'leads')) return 'إدارة العملاء المحتملين';
-    
-    // Document routes
-    if (str_contains($uri, 'documents')) return 'إدارة الوثائق';
-    
-    // Contract routes
-    if (str_contains($uri, 'contracts')) return 'إدارة العقود';
-    
-    // Auction routes
-    if (str_contains($uri, 'auctions')) return 'إدارة المزادات';
-    
-    // Ad routes
-    if (str_contains($uri, 'ads')) return 'إدارة الإعلانات';
-    
-    // Financial routes
-    if (str_contains($uri, 'financial')) return 'التحليل المالي';
-    
-    // API routes
-    if (str_contains($uri, 'api')) return 'واجهة برمجة التطبيقات';
-    
-    // General routes
-    if ($uri === '/') return 'الصفحة الرئيسية';
-    if (str_contains($uri, 'login')) return 'تسجيل الدخول';
-    if (str_contains($uri, 'register')) return 'إنشاء حساب جديد';
-    if (str_contains($uri, 'logout')) return 'تسجيل الخروج';
-    
-    return 'وظيفة غير محددة';
-}
-?>

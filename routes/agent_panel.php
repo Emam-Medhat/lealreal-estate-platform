@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Agent\AgentDashboardController;
+use App\Http\Controllers\Agent\AgentProfileController;
 use App\Http\Controllers\Agent\AgentPropertyController;
 use App\Http\Controllers\Agent\CrmController;
 use App\Http\Controllers\Agent\AppointmentController;
@@ -20,6 +21,16 @@ Route::middleware(['auth', 'verified', 'agent'])->prefix('agent')->name('agent.'
     
     // Agent Dashboard
     Route::get('/dashboard', [AgentDashboardController::class, 'index'])->name('dashboard');
+    
+    // Agent Profile
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [AgentProfileController::class, 'show'])->name('show');
+        Route::get('/edit', [AgentProfileController::class, 'edit'])->name('edit');
+        Route::put('/update', [AgentProfileController::class, 'update'])->name('update');
+        Route::post('/photo/upload', [AgentProfileController::class, 'uploadPhoto'])->name('photo.upload');
+        Route::delete('/photo/remove', [AgentProfileController::class, 'removePhoto'])->name('photo.remove');
+        Route::get('/stats', [AgentProfileController::class, 'getProfileStats'])->name('stats');
+    });
     
     // Properties
     Route::prefix('properties')->name('properties.')->group(function () {

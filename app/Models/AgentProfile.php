@@ -12,7 +12,7 @@ class AgentProfile extends Model
 
     protected $fillable = [
         'agent_id',
-        'bio',
+        'about_me',
         'photo',
         'phone',
         'email',

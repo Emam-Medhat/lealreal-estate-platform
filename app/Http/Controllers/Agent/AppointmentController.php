@@ -12,66 +12,25 @@ use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
+use App\Services\AgentAppointmentService;
+
 class AppointmentController extends Controller
 {
-    public function __construct()
+    protected $agentAppointmentService;
+
+    public function __construct(AgentAppointmentService $agentAppointmentService)
     {
         $this->middleware('auth');
         $this->middleware('agent');
+        $this->agentAppointmentService = $agentAppointmentService;
     }
 
     public function index(Request $request)
     {
-        $agent = Auth::user();
+        $agent = Auth::user()->agent;
         
-        $appointments = Appointment::where('agent_id', $agent->id)
-            ->with(['lead', 'property'])
-            ->when($request->status, function($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->type, function($query, $type) {
-                $query->where('appointment_type', $type);
-            })
-            ->when($request->date_range, function($query, $range) {
-                switch ($range) {
-                    case 'today':
-                        $query->whereDate('start_datetime', today());
-                        break;
-                    case 'tomorrow':
-                        $query->whereDate('start_datetime', today()->addDay());
-                        break;
-                    case 'this_week':
-                        $query->whereBetween('start_datetime', [now()->startOfWeek(), now()->endOfWeek()]);
-                        break;
-                    case 'this_month':
-                        $query->whereMonth('start_datetime', now()->month)
-                              ->whereYear('start_datetime', now()->year);
-                        break;
-                }
-            })
-            ->when($request->search, function($query, $search) {
-                $query->where(function($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhereHas('lead', function($subQuery) use ($search) {
-                          $subQuery->where('full_name', 'like', "%{$search}%");
-                      })
-                      ->orWhereHas('property', function($subQuery) use ($search) {
-                          $subQuery->where('title', 'like', "%{$search}%");
-                      });
-                });
-            })
-            ->orderBy('start_datetime', 'desc')
-            ->paginate(20);
-
-        $stats = [
-            'total_appointments' => Appointment::where('agent_id', $agent->id)->count(),
-            'today_appointments' => Appointment::where('agent_id', $agent->id)->whereDate('start_datetime', today())->count(),
-            'upcoming_appointments' => Appointment::where('agent_id', $agent->id)->where('start_datetime', '>', now())->count(),
-            'completed_appointments' => Appointment::where('agent_id', $agent->id)->where('status', 'completed')->count(),
-            'pending_appointments' => Appointment::where('agent_id', $agent->id)->where('status', 'pending')->count(),
-            'confirmed_appointments' => Appointment::where('agent_id', $agent->id)->where('status', 'confirmed')->count(),
-        ];
+        $appointments = $this->agentAppointmentService->getAgentAppointments($agent, $request);
+        $stats = $this->agentAppointmentService->getAppointmentStats($agent);
 
         return view('agent.appointments.index', compact('appointments', 'stats'));
     }
@@ -152,6 +111,7 @@ class AppointmentController extends Controller
         $validated['created_by'] = $agent->id;
 
         $appointment = Appointment::create($validated);
+        $this->agentAppointmentService->invalidateCache($agent->id);
 
         return redirect()
             ->route('agent.appointments.show', $appointment)
@@ -242,6 +202,7 @@ class AppointmentController extends Controller
         $validated['updated_by'] = Auth::id();
 
         $appointment->update($validated);
+        $this->agentAppointmentService->invalidateCache($appointment->agent_id);
 
         return redirect()
             ->route('agent.appointments.show', $appointment)
@@ -254,7 +215,9 @@ class AppointmentController extends Controller
             abort(403);
         }
 
+        $agentId = $appointment->agent_id;
         $appointment->delete();
+        $this->agentAppointmentService->invalidateCache($agentId);
 
         return redirect()
             ->route('agent.appointments.index')
@@ -268,6 +231,7 @@ class AppointmentController extends Controller
         }
 
         $appointment->confirm();
+        $this->agentAppointmentService->invalidateCache($appointment->agent_id);
 
         return redirect()
             ->route('agent.appointments.show', $appointment)
@@ -285,6 +249,7 @@ class AppointmentController extends Controller
         ]);
 
         $appointment->cancel($request->reason);
+        $this->agentAppointmentService->invalidateCache($appointment->agent_id);
 
         return redirect()
             ->route('agent.appointments.show', $appointment)
@@ -334,6 +299,7 @@ class AppointmentController extends Controller
         ]);
 
         $appointment->reschedule($request->new_start_datetime, $request->new_end_datetime, $request->reason);
+        $this->agentAppointmentService->invalidateCache($appointment->agent_id);
 
         return redirect()
             ->route('agent.appointments.show', $appointment)

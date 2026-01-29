@@ -20,6 +20,14 @@ class AgentObserver
             
             // Send welcome notification
             $this->sendWelcomeNotification($agent);
+
+            // Send notification to admins and managers
+            try {
+                $admins = \App\Models\User::whereIn('role', ['admin', 'manager'])->get();
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AgentCreated($agent));
+            } catch (\Exception $e) {
+                \Log::warning('Could not send agent creation notification: ' . $e->getMessage());
+            }
             
             Log::info('Agent created with initial setup', [
                 'agent_id' => $agent->id,

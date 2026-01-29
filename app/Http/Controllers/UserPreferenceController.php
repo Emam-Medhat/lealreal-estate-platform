@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\User\UpdatePreferencesRequest;
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Models\UserActivityLog;
@@ -20,37 +20,65 @@ class UserPreferenceController extends Controller
         return view('user.preferences', compact('preferences'));
     }
 
-    public function update(UpdatePreferencesRequest $request)
+    public function update(Request $request)
     {
+        // Validate the request
+        $validated = $request->validate([
+            'email_notifications' => 'sometimes|boolean',
+            'sms_notifications' => 'sometimes|boolean',
+            'push_notifications' => 'sometimes|boolean',
+            'marketing_emails' => 'sometimes|boolean',
+            'newsletter_subscription' => 'sometimes|boolean',
+            'property_alerts' => 'sometimes|boolean',
+            'price_drop_alerts' => 'sometimes|boolean',
+            'new_listing_alerts' => 'sometimes|boolean',
+            'preferred_contact' => 'sometimes|string|in:email,phone,sms,whatsapp',
+            'communication_frequency' => 'sometimes|string|in:immediately,daily,weekly,monthly',
+            'language' => 'sometimes|string|in:en,ar,fr',
+            'timezone' => 'sometimes|string',
+            'currency' => 'sometimes|string|in:USD,EUR,GBP,SAR',
+            'profile_visibility' => 'sometimes|string|in:public,private,friends',
+            'show_contact_info' => 'sometimes|boolean',
+            'allow_friend_requests' => 'sometimes|boolean',
+            'two_factor_auth' => 'sometimes|boolean',
+            'session_timeout' => 'sometimes|integer|min:5|max:1440',
+            'auto_save_searches' => 'sometimes|boolean',
+            'search_results_per_page' => 'sometimes|integer|min:10|max:100',
+            'map_default_view' => 'sometimes|string|in:map,satellite,hybrid',
+            'preferred_property_types' => 'sometimes|array',
+            'price_range_min' => 'sometimes|numeric|min:0',
+            'price_range_max' => 'sometimes|numeric|min:0',
+            'preferred_locations' => 'sometimes|array',
+        ]);
+
         $user = Auth::user();
         
         $preferenceData = [
-            'language' => $request->language,
-            'timezone' => $request->timezone,
-            'currency' => $request->currency,
-            'date_format' => $request->date_format,
-            'time_format' => $request->time_format,
-            'theme' => $request->theme,
-            'email_notifications' => $request->boolean('email_notifications'),
-            'sms_notifications' => $request->boolean('sms_notifications'),
-            'push_notifications' => $request->boolean('push_notifications'),
-            'marketing_emails' => $request->boolean('marketing_emails'),
-            'newsletter_subscription' => $request->boolean('newsletter_subscription'),
-            'property_alerts' => $request->boolean('property_alerts'),
-            'price_drop_alerts' => $request->boolean('price_drop_alerts'),
-            'new_listing_alerts' => $request->boolean('new_listing_alerts'),
-            'profile_visibility' => $request->profile_visibility,
-            'show_contact_info' => $request->boolean('show_contact_info'),
-            'allow_friend_requests' => $request->boolean('allow_friend_requests'),
-            'two_factor_auth' => $request->boolean('two_factor_auth'),
-            'session_timeout' => $request->session_timeout,
-            'auto_save_searches' => $request->boolean('auto_save_searches'),
-            'search_results_per_page' => $request->search_results_per_page,
-            'map_default_view' => $request->map_default_view,
-            'preferred_property_types' => $request->preferred_property_types,
-            'price_range_min' => $request->price_range_min,
-            'price_range_max' => $request->price_range_max,
-            'preferred_locations' => $request->preferred_locations,
+            'email_notifications' => $request->boolean('email_notifications', true),
+            'sms_notifications' => $request->boolean('sms_notifications', false),
+            'push_notifications' => $request->boolean('push_notifications', true),
+            'marketing_emails' => $request->boolean('marketing_emails', false),
+            'newsletter_subscription' => $request->boolean('newsletter_subscription', false),
+            'property_alerts' => $request->boolean('property_alerts', true),
+            'price_drop_alerts' => $request->boolean('price_drop_alerts', true),
+            'new_listing_alerts' => $request->boolean('new_listing_alerts', false),
+            'preferred_contact' => $request->get('preferred_contact', 'email'),
+            'communication_frequency' => $request->get('communication_frequency', 'immediately'),
+            'language' => $request->get('language', 'en'),
+            'timezone' => $request->get('timezone', 'UTC'),
+            'currency' => $request->get('currency', 'USD'),
+            'profile_visibility' => $request->get('profile_visibility', 'public'),
+            'show_contact_info' => $request->boolean('show_contact_info', true),
+            'allow_friend_requests' => $request->boolean('allow_friend_requests', true),
+            'two_factor_auth' => $request->boolean('two_factor_auth', false),
+            'session_timeout' => $request->get('session_timeout', 30),
+            'auto_save_searches' => $request->boolean('auto_save_searches', true),
+            'search_results_per_page' => $request->get('search_results_per_page', 20),
+            'map_default_view' => $request->get('map_default_view', 'map'),
+            'preferred_property_types' => $request->get('preferred_property_types', []),
+            'price_range_min' => $request->get('price_range_min'),
+            'price_range_max' => $request->get('price_range_max'),
+            'preferred_locations' => $request->get('preferred_locations', []),
         ];
 
         $user->preference()->updateOrCreate(['user_id' => $user->id], $preferenceData);
@@ -62,8 +90,16 @@ class UserPreferenceController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديث التفضيلات بنجاح'
+            ]);
+        }
+
         return redirect()->route('user.preferences.index')
-            ->with('success', 'Preferences updated successfully.');
+            ->with('success', 'تم تحديث التفضيلات بنجاح');
     }
 
     public function updateNotificationSettings(Request $request): JsonResponse

@@ -14,39 +14,37 @@ class ProjectDocument extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'documentable_type',
-        'documentable_id',
-        'filename',
-        'original_filename',
-        'path',
-        'size',
-        'mime_type',
-        'description',
-        'version',
-        'status',
+        'project_id',
         'uploaded_by',
-        'approved_by',
-        'approved_at',
+        'title',
+        'description',
+        'file_path',
+        'file_name',
+        'file_type',
+        'file_size',
+        'category',
+        'status',
+        'document_date',
+        'expiry_date',
+        'tags',
+        'notes',
     ];
 
     protected $casts = [
-        'size' => 'integer',
-        'approved_at' => 'datetime',
+        'file_size' => 'integer',
+        'document_date' => 'date',
+        'expiry_date' => 'date',
+        'tags' => 'array',
     ];
 
-    public function documentable(): MorphTo
+    public function project(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(Project::class);
     }
 
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
-    }
-
-    public function approver(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approved_by');
     }
 
     public function scopeApproved($query)

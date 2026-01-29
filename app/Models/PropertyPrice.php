@@ -30,6 +30,7 @@ class PropertyPrice extends Model
         'effective_date',
         'expiry_date',
         'is_active',
+        'set_by',
     ];
 
     protected $casts = [

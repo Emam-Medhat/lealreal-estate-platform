@@ -17,28 +17,25 @@ class ProjectTask extends Model
     protected $fillable = [
         'project_id',
         'phase_id',
-        'name',
+        'assigned_to',
+        'created_by',
+        'title',
         'description',
-        'assignee_id',
         'priority',
         'status',
-        'start_date',
         'due_date',
         'estimated_hours',
         'actual_hours',
-        'progress_percentage',
+        'progress',
         'tags',
         'notes',
-        'created_by',
-        'updated_by',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
         'due_date' => 'date',
-        'estimated_hours' => 'decimal:2',
-        'actual_hours' => 'decimal:2',
-        'progress_percentage' => 'integer',
+        'estimated_hours' => 'integer',
+        'actual_hours' => 'integer',
+        'progress' => 'decimal:2',
         'tags' => 'array',
     ];
 
@@ -49,12 +46,17 @@ class ProjectTask extends Model
 
     public function phase(): BelongsTo
     {
-        return $this->belongsTo(ProjectPhase::class);
+        return $this->belongsTo(ProjectPhase::class, 'phase_id');
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function creator(): BelongsTo
@@ -79,22 +81,22 @@ class ProjectTask extends Model
 
     public function comments(): HasMany
     {
-        return $this->hasMany(ProjectTaskComment::class);
+        return $this->hasMany(ProjectTaskComment::class, 'task_id');
     }
 
     public function attachments(): HasMany
     {
-        return $this->hasMany(ProjectTaskAttachment::class);
+        return $this->hasMany(ProjectTaskAttachment::class, 'task_id');
     }
 
     public function timeLogs(): HasMany
     {
-        return $this->hasMany(ProjectTaskTimeLog::class);
+        return $this->hasMany(ProjectTaskTimeLog::class, 'task_id');
     }
 
     public function checklists(): HasMany
     {
-        return $this->hasMany(ProjectTaskChecklist::class);
+        return $this->hasMany(ProjectTaskChecklist::class, 'task_id');
     }
 
     public function scopeByStatus($query, $status)

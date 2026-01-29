@@ -14,7 +14,7 @@
                 </div>
                 @auth
                     <div class="mt-4 md:mt-0">
-                        <a href="{{ route('properties.create') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <a href="{{ route('optimized.properties.create') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                             <i class="fas fa-plus mr-2"></i>Add Property
                         </a>
                     </div>
@@ -25,8 +25,8 @@
 
     <!-- Search & Filters -->
     <div class="container mx-auto px-6 py-8">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-            <form method="GET" action="{{ route('properties.index') }}" id="searchForm">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+            <form method="GET" action="{{ route('optimized.properties.index') }}" id="searchForm">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
                     <!-- Basic Search -->
                     <div class="lg:col-span-2">
@@ -45,8 +45,7 @@
                     <div>
                         <label for="property_type" class="block text-sm font-semibold text-gray-700 mb-2">Type</label>
                         <select name="property_type" id="property_type" 
-                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none bg-no-repeat bg-right pr-8"
-                                style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-size: 1.25rem;">
+                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none">
                             <option value="">All Types</option>
                             @foreach($propertyTypes as $type)
                                 <option value="{{ $type->slug }}" {{ request('property_type') == $type->slug ? 'selected' : '' }}>
@@ -60,8 +59,7 @@
                     <div>
                         <label for="listing_type" class="block text-sm font-semibold text-gray-700 mb-2">For</label>
                         <select name="listing_type" id="listing_type" 
-                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none bg-no-repeat bg-right pr-8"
-                                style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-size: 1.25rem;">
+                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none">
                             <option value="">All</option>
                             <option value="sale" {{ request('listing_type') == 'sale' ? 'selected' : '' }}>Sale</option>
                             <option value="rent" {{ request('listing_type') == 'rent' ? 'selected' : '' }}>Rent</option>
@@ -143,7 +141,7 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-900 mb-2">No Properties Found</h3>
                         <p class="text-gray-500 mb-8">We couldn't find any properties matching your current filters.</p>
-                        <a href="{{ route('properties.index') }}" class="text-blue-600 font-semibold hover:text-blue-800 transition-colors">
+                        <a href="{{ route('optimized.properties.index') }}" class="text-blue-600 font-semibold hover:text-blue-800 transition-colors">
                             Clear all filters
                         </a>
                     </div>

@@ -233,13 +233,12 @@ class ReportExport extends Model
         $timestamp = now()->format('Y-m-d_H-i-s');
         $safeTitle = str()->slug($report->title, '_');
         
-        return "{$safeTitle}_{$timestamp}.{$meter";
+        return "{$safeTitle}_{$timestamp}.{$this->format}";
     }
 
-    public function getPublicUrl():roperty string
+    public function getPublicUrl(): string
     {
         return asset("storage/baath/reports/{$this->file_name}");
- savers");
     }
 
     public function getRemainingDownloads(): int
@@ -270,7 +269,7 @@ class ReportExport extends Model
             return 'success';
         }
 
-       iges        ifeko        return $thisrazil->is correspondences->uf->isExpired() ? 'danger' : 'warning';
+        return $this->isExpired() ? 'danger' : 'warning';
     }
 
     public function canBeDeleted(): bool

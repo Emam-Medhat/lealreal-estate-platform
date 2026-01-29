@@ -14,9 +14,7 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $reports = Report::with(['template', 'generator'])
-            ->where('generated_by', Auth::id())
-            ->latest()
+        $reports = Report::latest()
             ->paginate(15);
             
         return view('reports.index', compact('reports'));
@@ -27,26 +25,23 @@ class ReportController extends Controller
         $user = Auth::user();
         
         // Quick stats
-        $totalReports = Report::where('user_id', $user->id)->count();
-        $recentReportsCount = Report::where('user_id', $user->id)
-            ->where('created_at', '>=', now()->subDays(30))
+        $totalReports = Report::count();
+        $recentReportsCount = Report::where('created_at', '>=', now()->subDays(30))
             ->count();
-        $scheduledReports = $user->reportSchedules()->where('is_active', true)->count();
+        $scheduledReports = 0; // $user->reportSchedules()->where('is_active', true)->count();
         
         // Recent reports
-        $recentReports = Report::with('template')
-            ->where('user_id', $user->id)
-            ->latest()
+        $recentReports = Report::latest()
             ->take(5)
             ->get();
             
         // Popular templates
-        $popularTemplates = ReportTemplate::withCount(['reports' => function($query) use ($user) {
-            $query->where('user_id', $user->id);
-        }])
-        ->orderBy('reports_count', 'desc')
-        ->take(5)
-        ->get();
+        $popularTemplates = []; // ReportTemplate::withCount(['reports' => function($query) use ($user) {
+        //     $query->where('user_id', $user->id);
+        // }])
+        // ->orderBy('reports_count', 'desc')
+        // ->take(5)
+        // ->get();
         
         return view('reports.dashboard', compact(
             'totalReports', 'recentReportsCount', 'scheduledReports',
@@ -65,7 +60,6 @@ class ReportController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'template_id' => 'required|exists:report_templates,id',
             'parameters' => 'nullable|array',
             'filters' => 'nullable|array',
             'date_range' => 'nullable|array',
@@ -75,12 +69,12 @@ class ReportController extends Controller
         $report = Report::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
-            'template_id' => $validated['template_id'],
-            'generated_by' => Auth::id(),
+            'type' => 'custom',
+            'generated_by' => Auth::user()->email,
             'user_id' => Auth::id(),
             'parameters' => $validated['parameters'] ?? [],
             'filters' => $validated['filters'] ?? [],
-            'date_range' => $validated['date_range'] ?? [],
+            'data' => $validated['date_range'] ?? [],
             'format' => $validated['format'],
             'status' => 'pending',
             'generated_at' => null
@@ -95,9 +89,7 @@ class ReportController extends Controller
 
     public function show(Report $report)
     {
-        $this->authorize('view', $report);
-        
-        $report->load(['template', 'user', 'exports']);
+        $report->load(['exports']);
         
         return view('reports.show', compact('report'));
     }

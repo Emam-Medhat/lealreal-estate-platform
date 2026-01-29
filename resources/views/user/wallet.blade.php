@@ -51,7 +51,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Total Deposits</p>
-                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('type', 'deposit')->sum('amount'), 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('transaction_type', 'deposit')->sum('amount'), 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Total Withdrawals</p>
-                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('type', 'withdrawal')->sum('amount'), 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('transaction_type', 'withdrawal')->sum('amount'), 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -216,22 +216,23 @@
             @csrf
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                <input type="number" name="amount" step="0.01" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="number" name="amount" step="0.01" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required autocomplete="off">
             </div>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
                 <select name="payment_method" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     <option value="">Select Payment Method</option>
-                    <option value="stripe">Credit Card</option>
+                    <option value="credit_card">Credit Card</option>
                     <option value="paypal">PayPal</option>
                     <option value="bank_transfer">Bank Transfer</option>
+                    <option value="crypto">Cryptocurrency</option>
                 </select>
             </div>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
-                <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off"></textarea>
             </div>
             
             <div class="flex justify-end space-x-3">
@@ -261,7 +262,7 @@
             
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Withdrawal Method</label>
-                <select name="withdrawal_method" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <select name="payment_method" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     <option value="">Select Withdrawal Method</option>
                     <option value="bank_transfer">Bank Transfer</option>
                     <option value="paypal">PayPal</option>
@@ -304,7 +305,18 @@
 
 <script>
 function showAddFundsModal() {
-    document.getElementById('addFundsModal').classList.remove('hidden');
+    const modal = document.getElementById('addFundsModal');
+    modal.classList.remove('hidden');
+    
+    // Enable all input fields
+    const inputs = modal.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.disabled = false;
+        input.readOnly = false;
+    });
+    
+    // Reset form
+    document.getElementById('addFundsForm').reset();
 }
 
 function closeAddFundsModal() {
@@ -313,7 +325,18 @@ function closeAddFundsModal() {
 }
 
 function showWithdrawModal() {
-    document.getElementById('withdrawModal').classList.remove('hidden');
+    const modal = document.getElementById('withdrawModal');
+    modal.classList.remove('hidden');
+    
+    // Enable all input fields
+    const inputs = modal.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.disabled = false;
+        input.readOnly = false;
+    });
+    
+    // Reset form
+    document.getElementById('withdrawForm').reset();
 }
 
 function closeWithdrawModal() {
@@ -360,7 +383,7 @@ document.getElementById('addFundsForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     
-    fetch('/wallet/add-funds', {
+    fetch('/wallet/deposit', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),

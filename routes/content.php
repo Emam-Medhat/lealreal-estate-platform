@@ -132,20 +132,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{mediaFile}/download', [MediaLibraryController::class, 'download'])->name('download');
     });
 
-    // SEO Management
-    Route::prefix('seo')->name('seo.')->group(function () {
-        Route::get('/', [SeoController::class, 'index'])->name('index');
-        Route::get('/create', [SeoController::class, 'create'])->name('create');
-        Route::post('/', [SeoController::class, 'store'])->name('store');
-        Route::get('/{seoMeta}', [SeoController::class, 'show'])->name('show');
-        Route::get('/{seoMeta}/edit', [SeoController::class, 'edit'])->name('edit');
-        Route::put('/{seoMeta}', [SeoController::class, 'update'])->name('update');
-        Route::delete('/{seoMeta}', [SeoController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-update', [SeoController::class, 'bulkUpdate'])->name('bulk-update');
-        Route::post('/generate-sitemap', [SeoController::class, 'generateSitemap'])->name('generate-sitemap');
-        Route::get('/analyze', [SeoController::class, 'analyzeSeo'])->name('analyze');
-    });
-
     // Menu Management
     Route::prefix('menus')->name('menus.')->group(function () {
         Route::get('/', [MenuController::class, 'index'])->name('index');

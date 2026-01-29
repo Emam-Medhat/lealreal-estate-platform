@@ -21,10 +21,10 @@ return new class extends Migration
             $table->string('browser_version')->nullable();
             $table->string('ip_address');
             $table->text('user_agent');
-            $table->string('fingerprint')->nullable();
+            $table->string('fingerprint')->nullable()->after('user_agent');
             $table->boolean('is_trusted')->default(false);
             $table->boolean('is_active')->default(true);
-            $table->timestamp('last_used_at');
+            $table->timestamp('last_used_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->json('location')->nullable(); // country, city, coordinates
             $table->json('metadata')->nullable();

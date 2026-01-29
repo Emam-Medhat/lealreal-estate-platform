@@ -44,15 +44,20 @@ class OptimizedPropertyController extends Controller
      */
     public function index(Request $request)
     {
-        // Generate cache key based on filters
+        // Generate cache key based on request parameters
         $cacheKey = $this->generateCacheKey($request);
 
-        // Try to get from cache first
-        $cachedData = Cache::remember($cacheKey, 300, function () use ($request) {
-            return $this->getPropertiesData($request);
-        });
+        // Don't cache when there are filters applied
+        if ($request->hasAny(['q', 'property_type', 'listing_type', 'min_price', 'max_price', 'city', 'bedrooms', 'bathrooms', 'featured', 'premium'])) {
+            $data = $this->getPropertiesData($request);
+        } else {
+            // Try to get from cache first for unfiltered results
+            $data = Cache::remember($cacheKey, 300, function () use ($request) {
+                return $this->getPropertiesData($request);
+            });
+        }
 
-        return view('properties.index', $cachedData);
+        return view('properties.index', $data);
     }
 
     /**
@@ -61,12 +66,14 @@ class OptimizedPropertyController extends Controller
     private function generateCacheKey(Request $request): string
     {
         $params = $request->only([
+            'q',
             'property_type',
             'listing_type',
             'min_price',
             'max_price',
             'city',
             'bedrooms',
+            'bathrooms',
             'featured',
             'premium',
             'sort',
@@ -84,15 +91,18 @@ class OptimizedPropertyController extends Controller
     {
         // Use eager loading with specific columns only
         $query = Property::select([
-            'id',
-            'title',
-            'slug',
-            'description',
-            'listing_type',
-            'featured',
-            'premium',
-            'views_count',
-            'created_at'
+            'properties.id',
+            'properties.agent_id',
+            'properties.property_type',
+            'properties.title',
+            'properties.description',
+            'properties.listing_type',
+            'properties.bedrooms',
+            'properties.bathrooms',
+            'properties.featured',
+            'properties.premium',
+            'properties.views_count',
+            'properties.created_at'
         ])->with([
                     'propertyType:id,name,slug',
                     'location:id,city,country,address',
@@ -134,6 +144,21 @@ class OptimizedPropertyController extends Controller
      */
     private function applyFilters($query, Request $request): void
     {
+        // Keyword search (q)
+        if ($request->q) {
+            $searchTerm = $request->q;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('properties.title', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('properties.description', 'like', '%' . $searchTerm . '%')
+                    ->orWhereHas('location', function ($loc) use ($searchTerm) {
+                        $loc->where('city', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('country', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('address', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('state', 'like', '%' . $searchTerm . '%');
+                    });
+            });
+        }
+
         // Property type filter
         if ($request->property_type) {
             $query->whereHas('propertyType', function ($q) use ($request) {
@@ -143,12 +168,19 @@ class OptimizedPropertyController extends Controller
 
         // Listing type filter
         if ($request->listing_type) {
-            $query->where('listing_type', $request->listing_type);
+            $query->where('properties.listing_type', $request->listing_type);
         }
 
-        // Price filters - use joins instead of whereHas for better performance
+        // Price filters
         if ($request->min_price || $request->max_price) {
-            $query->join('property_prices', 'properties.id', '=', 'property_prices.property_id');
+            // Check if we already joined pricing (for sorting)
+            $hasPricingJoin = collect($query->getQuery()->joins)->contains(function ($join) {
+                return $join->table === 'property_prices';
+            });
+
+            if (!$hasPricingJoin) {
+                $query->join('property_prices', 'properties.id', '=', 'property_prices.property_id');
+            }
 
             if ($request->min_price) {
                 $query->where('property_prices.price', '>=', $request->min_price);
@@ -159,7 +191,7 @@ class OptimizedPropertyController extends Controller
             }
         }
 
-        // City filter
+        // City filter (specific)
         if ($request->city) {
             $query->whereHas('location', function ($q) use ($request) {
                 $q->where('city', 'like', '%' . $request->city . '%');
@@ -168,18 +200,21 @@ class OptimizedPropertyController extends Controller
 
         // Bedrooms filter
         if ($request->bedrooms) {
-            $query->whereHas('details', function ($q) use ($request) {
-                $q->where('bedrooms', '>=', $request->bedrooms);
-            });
+            $query->where('properties.bedrooms', '>=', $request->bedrooms);
+        }
+
+        // Bathrooms filter
+        if ($request->bathrooms) {
+            $query->where('properties.bathrooms', '>=', $request->bathrooms);
         }
 
         // Featured and premium filters
         if ($request->featured) {
-            $query->where('featured', true);
+            $query->where('properties.featured', true);
         }
 
         if ($request->premium) {
-            $query->where('premium', true);
+            $query->where('properties.premium', true);
         }
     }
 
@@ -193,25 +228,25 @@ class OptimizedPropertyController extends Controller
         switch ($sort) {
             case 'price_low':
                 if (!$request->min_price && !$request->max_price) {
-                    $query->leftJoin('property_prices', 'properties.id', '=', 'property_prices.property_id')
-                        ->orderByRaw('property_prices.price ASC NULLS LAST');
+                    $query->leftJoin('property_prices', 'properties.id', '=', 'property_prices.property_id');
                 }
+                $query->orderByRaw('property_prices.price ASC NULLS LAST');
                 break;
             case 'price_high':
                 if (!$request->min_price && !$request->max_price) {
-                    $query->leftJoin('property_prices', 'properties.id', '=', 'property_prices.property_id')
-                        ->orderByRaw('property_prices.price DESC NULLS LAST');
+                    $query->leftJoin('property_prices', 'properties.id', '=', 'property_prices.property_id');
                 }
+                $query->orderByRaw('property_prices.price DESC NULLS LAST');
                 break;
             case 'area':
                 $query->join('property_details', 'properties.id', '=', 'property_details.property_id')
                     ->orderBy('property_details.area', 'desc');
                 break;
             case 'views':
-                $query->orderBy('views_count', 'desc');
+                $query->orderBy('properties.views_count', 'desc');
                 break;
             default:
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('properties.created_at', 'desc');
         }
     }
 
@@ -235,59 +270,82 @@ class OptimizedPropertyController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'listing_type' => 'required|in:sale,rent',
-            'property_type' => 'required|string|in:apartment,villa,house,land,commercial',
-            'price' => 'nullable|numeric|min:0',
-            'currency' => 'nullable|string|size:3',
+            'listing_type' => 'required|in:sale,rent,lease',
+            'property_type_id' => 'required|exists:property_types,id',
+            'status' => 'required|in:draft,active,inactive',
+            'price' => 'required|numeric|min:0',
+            'currency' => 'required|string|size:3',
+            'address' => 'required|string|max:500',
             'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:500',
+            'postal_code' => 'nullable|string|max:20',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'neighborhood' => 'nullable|string|max:255',
+            'district' => 'nullable|string|max:255',
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
-            'area' => 'nullable|integer|min:0',
-            'area_unit' => 'nullable|string',
-            'land_area' => 'nullable|integer|min:0',
-            'land_area_unit' => 'nullable|string',
+            'floors' => 'nullable|integer|min:0',
+            'parking_spaces' => 'nullable|integer|min:0',
+            'year_built' => 'nullable|integer|min:1800|max:' . date('Y'),
+            'area' => 'nullable|numeric|min:0',
+            'area_unit' => 'nullable|string|in:sq_m,sq_ft,acre,hectare',
+            'land_area' => 'nullable|numeric|min:0',
+            'land_area_unit' => 'nullable|string|in:sq_m,sq_ft,acre,hectare',
+            'is_negotiable' => 'boolean',
+            'includes_vat' => 'boolean',
+            'vat_rate' => 'nullable|numeric|min:0|max:100',
             'featured' => 'boolean',
-                'premium' => 'boolean',
-                'images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.living_room.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.kitchen.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.bedrooms.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.bathrooms.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.entrance.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.outdoor.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.garage.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-                'room_images.amenities.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
-            ]);
+            'premium' => 'boolean',
+            'images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.living_room.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.kitchen.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.bedrooms.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.bathrooms.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.entrance.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.outdoor.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.garage.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.amenities.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+        ]);
 
-            DB::beginTransaction();
-
-            $property = Property::create([
+        try {
+            // Map request data to service structure
+            $data = [
                 'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
+                'description' => $validated['description'],
                 'listing_type' => $validated['listing_type'],
-                'property_type' => $validated['property_type'],
-                'agent_id' => Auth::user()->id,
-                'property_code' => 'PROP-' . strtoupper(uniqid()),
-                'price' => $validated['price'] ?? 0,
+                'property_type_id' => $validated['property_type_id'],
+                'status' => $validated['status'] ?? 'draft',
+                'price' => $validated['price'],
                 'currency' => $validated['currency'] ?? 'SAR',
-                'address' => $validated['address'] ?? null,
-                'city' => $validated['city'] ?? 'Unknown',
-                'country' => $validated['country'] ?? 'Saudi Arabia',
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
-                'status' => 'draft',
-                'featured' => $validated['featured'] ?? false,
-                'premium' => $validated['premium'] ?? false,
-                'views_count' => 0,
-                'area' => $validated['area'] ?? null,
-                'area_unit' => $validated['area_unit'] ?? 'sq_m',
-                'bedrooms' => $validated['bedrooms'] ?? null,
-                'bathrooms' => $validated['bathrooms'] ?? null,
-            ]);
+                'featured' => $request->has('featured'),
+                'premium' => $request->has('premium'),
+                'location' => [
+                    'address' => $validated['address'],
+                    'city' => $validated['city'],
+                    'state' => $validated['state'],
+                    'country' => $validated['country'],
+                    'postal_code' => $validated['postal_code'],
+                    'latitude' => $validated['latitude'],
+                    'longitude' => $validated['longitude'],
+                    'neighborhood' => $validated['neighborhood'],
+                    'district' => $validated['district'],
+                ],
+                'details' => [
+                    'bedrooms' => $validated['bedrooms'],
+                    'bathrooms' => $validated['bathrooms'],
+                    'floors' => $validated['floors'],
+                    'parking_spaces' => $validated['parking_spaces'],
+                    'year_built' => $validated['year_built'],
+                    'area' => $validated['area'],
+                    'area_unit' => $validated['area_unit'],
+                    'land_area' => $validated['land_area'],
+                    'land_area_unit' => $validated['land_area_unit'],
+                ]
+            ];
+
+            $property = $this->propertyService->createProperty($data, Auth::user());
 
             // Handle main images
             if ($request->hasFile('images')) {
@@ -313,7 +371,7 @@ class OptimizedPropertyController extends Controller
             foreach ($roomTypes as $roomType) {
                 if ($request->hasFile("room_images.{$roomType}")) {
                     foreach ($request->file("room_images.{$roomType}") as $index => $image) {
-                        $path = $image->store('properties/images/' . $roomType, 'public');
+                        $path = $image->store("properties/images/{$roomType}", 'public');
 
                         PropertyMedia::create([
                             'property_id' => $property->id,
@@ -322,6 +380,7 @@ class OptimizedPropertyController extends Controller
                             'file_name' => $image->getClientOriginalName(),
                             'file_size' => $image->getSize(),
                             'file_type' => $image->getMimeType(),
+                            'room_type' => $roomType,
                             'sort_order' => $index,
                             'is_featured' => false,
                             'uploaded_by' => Auth::user()->id,
@@ -330,13 +389,11 @@ class OptimizedPropertyController extends Controller
                 }
             }
 
-            DB::commit();
-
             return redirect()
                 ->route('optimized.properties.show', $property)
                 ->with('success', 'Property created successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
+
+        } catch (Exception $e) {
             return back()
                 ->withInput()
                 ->with('error', 'Error creating property: ' . $e->getMessage());
@@ -368,26 +425,56 @@ class OptimizedPropertyController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'listing_type' => 'required|in:sale,rent',
+            'listing_type' => 'required|in:sale,rent,lease',
             'property_type_id' => 'required|exists:property_types,id',
             'price' => 'required|numeric|min:0',
             'currency' => 'required|string|size:3',
-            'location' => 'required|array',
-            'location.city' => 'required|string|max:255',
-            'location.country' => 'required|string|max:255',
-            'location.address' => 'nullable|string|max:500',
-            'location.latitude' => 'nullable|numeric',
-            'location.longitude' => 'nullable|numeric',
-            'details' => 'nullable|array',
-            'details.bedrooms' => 'nullable|integer|min:0',
-            'details.bathrooms' => 'nullable|integer|min:0',
-            'details.area' => 'nullable|integer|min:0',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'bedrooms' => 'nullable|integer|min:0',
+            'bathrooms' => 'nullable|integer|min:0',
+            'floors' => 'nullable|integer|min:0',
+            'parking_spaces' => 'nullable|integer|min:0',
+            'year_built' => 'nullable|integer|min:1800|max:' . date('Y'),
+            'area' => 'nullable|numeric|min:0',
+            'area_unit' => 'nullable|string|in:sq_m,sq_ft',
             'featured' => 'boolean',
             'premium' => 'boolean',
         ]);
 
         try {
-            $property = $this->propertyService->updateProperty($property, $validated);
+            // Map request data to database columns
+            $updateData = [
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'listing_type' => $validated['listing_type'],
+                'property_type' => $validated['property_type_id'],
+                'price' => $validated['price'],
+                'currency' => $validated['currency'],
+                'address' => $validated['address'],
+                'city' => $validated['city'],
+                'state' => $validated['state'],
+                'country' => $validated['country'],
+                'postal_code' => $validated['postal_code'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'bedrooms' => $validated['bedrooms'],
+                'bathrooms' => $validated['bathrooms'],
+                'floors' => $validated['floors'],
+                'parking_spaces' => $validated['parking_spaces'],
+                'year_built' => $validated['year_built'],
+                'area' => $validated['area'],
+                'area_unit' => $validated['area_unit'],
+                'featured' => $request->has('featured'),
+                'premium' => $request->has('premium'),
+            ];
+
+            $property = $this->propertyService->updateProperty($property, $updateData);
 
             return redirect()
                 ->route('optimized.properties.show', $property)
@@ -501,6 +588,8 @@ class OptimizedPropertyController extends Controller
         $results = Cache::remember($cacheKey, 600, function () use ($searchTerm, $request) {
             return Property::select([
                 'id',
+                'agent_id',
+                'property_type',
                 'title',
                 'description',
                 'listing_type',
@@ -544,7 +633,14 @@ class OptimizedPropertyController extends Controller
      */
     public function clearCache()
     {
-        Cache::tags(['properties'])->flush();
+        try {
+            if (config('cache.default') !== 'file' && config('cache.default') !== 'database') {
+                Cache::tags(['properties'])->flush();
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Cache tagging not supported in clearCache: ' . $e->getMessage());
+        }
+        
         return response()->json(['message' => 'Cache cleared successfully']);
     }
 

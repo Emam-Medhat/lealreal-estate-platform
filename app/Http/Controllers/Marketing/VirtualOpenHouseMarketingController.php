@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Marketing;
 use App\Http\Controllers\Controller;
 use App\Models\Marketing\VirtualOpenHouseMarketing;
 use App\Models\Property\Property;
+use App\Services\MarketingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -13,25 +14,21 @@ use Carbon\Carbon;
 
 class VirtualOpenHouseMarketingController extends Controller
 {
+    protected $marketingService;
+
+    public function __construct(MarketingService $marketingService)
+    {
+        $this->marketingService = $marketingService;
+    }
+
     /**
      * Display a listing of virtual open house marketing campaigns.
      */
     public function index()
     {
-        $campaigns = VirtualOpenHouseMarketing::with(['property'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
         return Inertia::render('Marketing/VirtualOpenHouse/Index', [
-            'campaigns' => $campaigns,
-            'stats' => [
-                'total_campaigns' => VirtualOpenHouseMarketing::count(),
-                'active_campaigns' => VirtualOpenHouseMarketing::where('status', 'active')->count(),
-                'scheduled_campaigns' => VirtualOpenHouseMarketing::where('status', 'scheduled')->count(),
-                'completed_campaigns' => VirtualOpenHouseMarketing::where('status', 'completed')->count(),
-                'total_attendees' => VirtualOpenHouseMarketing::sum('total_attendees'),
-                'total_views' => VirtualOpenHouseMarketing::sum('total_views'),
-            ]
+            'campaigns' => $this->marketingService->getVirtualOpenHouseCampaigns(),
+            'stats' => $this->marketingService->getVirtualOpenHouseStats()
         ]);
     }
 
@@ -40,10 +37,8 @@ class VirtualOpenHouseMarketingController extends Controller
      */
     public function create()
     {
-        $properties = Property::where('status', 'active')->get();
-        
         return Inertia::render('Marketing/VirtualOpenHouse/Create', [
-            'properties' => $properties,
+            'properties' => $this->marketingService->getActiveProperties(),
             'platforms' => ['zoom', 'teams', 'google_meet', 'skype', 'custom'],
             'event_types' => ['live_tour', 'recorded_tour', 'qna_session', 'webinar', 'presentation'],
         ]);
@@ -153,6 +148,8 @@ class VirtualOpenHouseMarketingController extends Controller
             }
             $campaign->update(['floor_plans' => json_encode($planPaths)]);
         }
+
+        $this->marketingService->clearCache();
 
         return redirect()->route('marketing.virtual-open-house.index')
             ->with('success', 'تم إنشاء حملة البيت المفتوح الافتراضي بنجاح');
@@ -310,6 +307,8 @@ class VirtualOpenHouseMarketingController extends Controller
             $virtualOpenHouseMarketing->update(['floor_plans' => json_encode($planPaths)]);
         }
 
+        $this->marketingService->clearCache();
+
         return redirect()->route('marketing.virtual-open-house.index')
             ->with('success', 'تم تحديث حملة البيت المفتوح الافتراضي بنجاح');
     }
@@ -337,6 +336,8 @@ class VirtualOpenHouseMarketingController extends Controller
         }
 
         $virtualOpenHouseMarketing->delete();
+
+        $this->marketingService->clearCache();
 
         return redirect()->route('marketing.virtual-open-house.index')
             ->with('success', 'تم حذف حملة البيت المفتوح الافتراضي بنجاح');

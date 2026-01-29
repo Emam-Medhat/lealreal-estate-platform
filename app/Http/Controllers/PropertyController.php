@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Property;
@@ -11,129 +12,60 @@ use App\Models\PropertyLocation;
 use App\Models\PropertyMedia;
 use App\Models\PropertyPrice;
 use App\Models\PropertyPriceHistory;
-use App\Models\PropertyAmenity;
-use App\Models\PropertyFeature;
-use App\Models\PropertyDocument;
-use App\Models\PropertyVirtualTour;
-use App\Models\PropertyFloorPlan;
-use App\Models\PropertyNeighborhood;
-use App\Models\PropertyView;
 use App\Models\PropertyAnalytic;
 use App\Models\PropertyStatusHistory;
+use App\Models\PropertyAmenity;
+use App\Models\PropertyFeature;
+use App\Services\OptimizedPropertyService;
+use App\Helpers\RealTimeNotificationHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PropertyController extends Controller
 {
-    public function __construct()
+    protected $propertyService;
+
+    public function __construct(OptimizedPropertyService $propertyService)
     {
+        $this->propertyService = $propertyService;
         $this->middleware('auth')->except(['index', 'show', 'search']);
     }
 
     public function index(Request $request)
     {
-        $query = Property::with([
-            'agent.profile',
-            'location',
-            'propertyType',
-            'media' => function ($query) {
-                $query->where('media_type', 'image')->orderBy('sort_order');
-            },
-            'propertyAmenities',
-            'features'
+        $filters = $request->only([
+            'property_type', 'listing_type', 'min_price', 'max_price', 
+            'city', 'bedrooms', 'featured', 'premium', 'sort', 'order'
         ]);
 
-        // Apply filters
-        if ($request->property_type) {
-            $query->whereHas('propertyType', function ($q) use ($request) {
-                $q->where('slug', $request->property_type);
-            });
-        }
-
-        if ($request->listing_type) {
-            $query->where('listing_type', $request->listing_type);
-        }
-
-        if ($request->min_price) {
-            $query->where('price', '>=', $request->min_price);
-        }
-
-        if ($request->max_price) {
-            $query->where('price', '<=', $request->max_price);
-        }
-
-        if ($request->city) {
-            $query->where('city', 'like', '%' . $request->city . '%');
-        }
-
-        if ($request->bedrooms) {
-            $query->where('bedrooms', '>=', $request->bedrooms);
-        }
-
-        if ($request->featured) {
-            $query->where('featured', true);
-        }
-
-        if ($request->premium) {
-            $query->where('premium', true);
-        }
-
-        // Sort
-        $sort = $request->sort ?? 'created_at';
-        $order = $request->order ?? 'desc';
-
-        switch ($sort) {
-            case 'price_low':
-                $query->orderBy('price', 'asc');
-                break;
-            case 'price_high':
-                $query->orderBy('price', 'desc');
-                break;
-            case 'area':
-                $query->orderBy('area', 'desc');
-                break;
-            case 'views':
-                $query->orderBy('views_count', 'desc');
-                break;
-            default:
-                $query->orderBy($sort, $order);
-        }
-
-        $properties = $query->paginate(12);
-        $propertyTypes = PropertyType::active()->ordered()->get();
+        $properties = $this->propertyService->getProperties($filters, 12);
+        
+        // Use caching for property types as they don't change often
+        $propertyTypes = \Illuminate\Support\Facades\Cache::remember('property_types_active', 3600, function() {
+            return PropertyType::active()->ordered()->get();
+        });
 
         return view('properties.index', compact('properties', 'propertyTypes'));
     }
 
     public function show(Property $property)
     {
-        $property->load([
-            'propertyType',
-            'media' => function ($query) {
-                $query->orderBy('sort_order');
-            },
-            'propertyAmenities.amenity',
-            'features',
-            'agent'
-        ]);
+        // Use optimized service for details
+        $property = $this->propertyService->getPropertyDetails($property->id);
 
-        // Increment views
-        $property->incrementViews();
+        if (!$property) {
+            abort(404);
+        }
 
-        // Get similar properties
-        $similarProperties = Property::where('id', '!=', $property->id)
-            ->where('property_type', $property->property_type)
-            ->where('status', 'active')
-            ->with([
-                'media' => function ($query) {
-                    $query->where('media_type', 'image')->limit(1);
-                }
-            ])
-            ->limit(6)
-            ->get();
+        // Increment views asynchronously
+        $this->propertyService->incrementViewCount($property->id);
+
+        // Get similar properties efficiently
+        $similarProperties = $this->propertyService->getSimilarProperties($property->id);
 
         return view('properties.show', compact('property', 'similarProperties'));
     }
@@ -154,10 +86,10 @@ class PropertyController extends Controller
 
             $user = Auth::user();
 
-            // Create property
+            // Create property with all data in single table
             $property = Property::create([
                 'agent_id' => $user->id,
-                'property_type' => $request->property_type,
+                'property_type' => $request->property_type_id,
                 'title' => $request->title,
                 'description' => $request->description,
                 'listing_type' => $request->listing_type,
@@ -169,6 +101,7 @@ class PropertyController extends Controller
                 'favorites_count' => 0,
                 'inquiries_count' => 0,
                 'price' => $request->price,
+                'currency' => $request->currency,
                 'address' => $request->address,
                 'city' => $request->city,
                 'state' => $request->state,
@@ -176,11 +109,17 @@ class PropertyController extends Controller
                 'postal_code' => $request->postal_code,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
+                'bedrooms' => $request->bedrooms,
+                'bathrooms' => $request->bathrooms,
+                'floors' => $request->floors,
+                'year_built' => $request->year_built,
+                'area' => $request->area,
+                'area_unit' => $request->area_unit,
+                'virtual_tour_url' => $request->virtual_tour_url,
             ]);
 
-            // Create property details
-            PropertyDetail::create([
-                'property_id' => $property->id,
+            // Create related records
+            $property->details()->create([
                 'bedrooms' => $request->bedrooms,
                 'bathrooms' => $request->bathrooms,
                 'floors' => $request->floors,
@@ -196,9 +135,7 @@ class PropertyController extends Controller
                 'exterior_features' => $request->exterior_features,
             ]);
 
-            // Create property location
-            PropertyLocation::create([
-                'property_id' => $property->id,
+            $property->location()->create([
                 'address' => $request->address,
                 'city' => $request->city,
                 'state' => $request->state,
@@ -213,9 +150,7 @@ class PropertyController extends Controller
                 'transportation' => $request->transportation,
             ]);
 
-            // Create property price
-            PropertyPrice::create([
-                'property_id' => $property->id,
+            $property->pricing()->create([
                 'price' => $request->price,
                 'currency' => $request->currency,
                 'price_type' => $request->listing_type,
@@ -227,35 +162,54 @@ class PropertyController extends Controller
                 'maintenance_fees' => $request->maintenance_fees,
                 'payment_frequency' => $request->payment_frequency,
                 'payment_terms' => $request->payment_terms,
-                'effective_date' => now(),
+                'effective_date' => now()->toDateString(),
                 'is_active' => true,
             ]);
 
-            // Attach amenities
+            // Attach amenities and features if they exist
             if ($request->amenities) {
                 $property->amenities()->attach($request->amenities);
             }
 
-            // Attach features
             if ($request->features) {
                 $property->features()->attach($request->features);
             }
 
-            // Upload images
+            // Upload images if they exist
             if ($request->hasFile('images')) {
                 $this->uploadImages($property, $request->file('images'));
             }
 
-            // Upload documents
+            // Upload documents if they exist
             if ($request->hasFile('documents')) {
                 $this->uploadDocuments($property, $request->file('documents'));
             }
 
             DB::commit();
 
+            // Send real-time notifications
+            try {
+                RealTimeNotificationHelper::propertyCreated(
+                    $property->id,
+                    $property->title,
+                    $user->id
+                );
+                \Log::info('Property notification sent successfully', [
+                    'property_id' => $property->id,
+                    'agent_id' => $user->id,
+                    'title' => $property->title
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send property notification', [
+                    'error' => $e->getMessage(),
+                    'property_id' => $property->id,
+                    'agent_id' => $user->id
+                ]);
+            }
+
             return redirect()
                 ->route('properties.show', $property)
-                ->with('success', 'Property created successfully!');
+                ->with('success', 'تم إنشاء العقار بنجاح!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -300,13 +254,15 @@ class PropertyController extends Controller
 
             // Update property
             $property->update([
-                'property_type' => $request->property_type,
+                'property_type' => $request->property_type_id,
                 'title' => $request->title,
                 'description' => $request->description,
                 'listing_type' => $request->listing_type,
                 'status' => $request->status,
                 'featured' => $request->featured ?? false,
                 'premium' => $request->premium ?? false,
+                'price' => $request->price,
+                'currency' => $request->currency,
                 'address' => $request->address,
                 'city' => $request->city,
                 'state' => $request->state,
@@ -314,6 +270,13 @@ class PropertyController extends Controller
                 'postal_code' => $request->postal_code,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
+                'bedrooms' => $request->bedrooms,
+                'bathrooms' => $request->bathrooms,
+                'floors' => $request->floors,
+                'year_built' => $request->year_built,
+                'area' => $request->area,
+                'area_unit' => $request->area_unit,
+                'virtual_tour_url' => $request->virtual_tour_url,
             ]);
 
             // Update details
@@ -539,5 +502,65 @@ class PropertyController extends Controller
         } while (Property::where('property_code', $code)->exists());
 
         return $code;
+    }
+
+    public function recommendations(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Get user's preferences and history
+        $userFavorites = $user->favoriteProperties()->pluck('properties.id')->toArray();
+        
+        // Get user views safely - handle missing table
+        $userViews = [];
+        try {
+            if (Schema::hasTable('property_views')) {
+                $userViews = \App\Models\PropertyView::where('user_id', $user->id)->pluck('property_id')->toArray();
+            }
+        } catch (\Exception $e) {
+            // Table doesn't exist, continue with empty views
+            $userViews = [];
+        }
+        
+        // Get properties user has interacted with
+        $interactedProperties = array_unique(array_merge($userFavorites, $userViews));
+        
+        // Get recommended properties based on user behavior
+        $recommendedProperties = Property::with([
+            'agent.profile',
+            'location',
+            'propertyType',
+            'media' => function ($query) {
+                $query->where('media_type', 'image')->orderBy('sort_order');
+            },
+            'propertyAmenities',
+            'features'
+        ])
+        ->where('status', 'active')
+        ->whereNotIn('id', $interactedProperties) // Exclude already interacted properties
+        ->inRandomOrder()
+        ->limit(12)
+        ->get();
+        
+        // If user has no history, get featured properties
+        if ($recommendedProperties->isEmpty()) {
+            $recommendedProperties = Property::with([
+                'agent.profile',
+                'location',
+                'propertyType',
+                'media' => function ($query) {
+                    $query->where('media_type', 'image')->orderBy('sort_order');
+                },
+                'propertyAmenities',
+                'features'
+            ])
+            ->where('status', 'active')
+            ->where('featured', true)
+            ->latest()
+            ->limit(12)
+            ->get();
+        }
+        
+        return view('properties.recommendations', compact('recommendedProperties'));
     }
 }

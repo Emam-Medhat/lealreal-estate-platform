@@ -70,26 +70,61 @@ class ProjectTaskController extends Controller
     public function store(Request $request, Project $project)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'phase_id' => 'required|exists:project_phases,id',
-            'assignee_id' => 'nullable|exists:users,id',
-            'priority' => 'required|in:low,medium,high,critical',
-            'status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
-            'start_date' => 'required|date',
-            'due_date' => 'required|date|after:start_date',
-            'estimated_hours' => 'nullable|integer|min:0',
-            'actual_hours' => 'nullable|integer|min:0',
-            'progress_percentage' => 'required|integer|min:0|max:100',
+            'assigned_to' => 'nullable|exists:users,id',
+            'priority' => 'required|in:critical,high,medium,low',
+            'status' => 'required|in:todo,in_progress,review,completed',
+            'due_date' => 'required|date',
+            'progress' => 'required|integer|min:0|max:100',
+            'estimated_hours' => 'nullable|numeric|min:0',
+            'actual_hours' => 'nullable|numeric|min:0',
             'dependencies' => 'nullable|array',
             'dependencies.*' => 'exists:project_tasks,id',
-            'tags' => 'nullable|array',
+            'tags' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
 
-        $validated['created_by'] = Auth::id();
+        // Convert tags string to array
+        if (!empty($validated['tags'])) {
+            $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = array_filter($validated['tags']);
+        } else {
+            $validated['tags'] = [];
+        }
 
-        $task = $project->tasks()->create($validated);
+        // Create task with validated data
+$taskData = [
+    'title' => $validated['title'],
+    'description' => $validated['description'],
+    'assigned_to' => $validated['assigned_to'],
+    'priority' => $validated['priority'],
+    'status' => $validated['status'],
+    'due_date' => $validated['due_date'],
+    'progress' => $validated['progress'],
+    'estimated_hours' => $validated['estimated_hours'],
+    'actual_hours' => $validated['actual_hours'],
+    'tags' => $validated['tags'],
+    'notes' => $validated['notes'],
+    'created_by' => Auth::id(),
+];
+
+$task = $project->tasks()->create($taskData);
+
+        // Send notification to admin, project manager, and current user
+        try {
+            // Get admin users
+            $adminUsers = \App\Models\User::where('role', 'admin')->orWhere('role', 'manager')->get();
+            
+            // Add current user to notifications
+            $allUsers = $adminUsers->push(auth()->user());
+            
+            foreach ($allUsers as $user) {
+                $user->notify(new \App\Notifications\TaskCreated($task, $project));
+            }
+        } catch (\Exception $e) {
+            // Continue even if notification fails
+        }
 
         // Add dependencies
         if (!empty($validated['dependencies'])) {
@@ -146,9 +181,17 @@ class ProjectTaskController extends Controller
             'progress_percentage' => 'required|integer|min:0|max:100',
             'dependencies' => 'nullable|array',
             'dependencies.*' => 'exists:project_tasks,id',
-            'tags' => 'nullable|array',
+            'tags' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        // Convert tags string to array
+        if (!empty($validated['tags'])) {
+            $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = array_filter($validated['tags']);
+        } else {
+            $validated['tags'] = [];
+        }
 
         $validated['updated_by'] = Auth::id();
 

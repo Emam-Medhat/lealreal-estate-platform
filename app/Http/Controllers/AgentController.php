@@ -14,103 +14,39 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Services\AgentService;
 
 class AgentController extends Controller
 {
+    protected $agentService;
+
+    public function __construct(AgentService $agentService)
+    {
+        $this->agentService = $agentService;
+    }
+
     public function directory(Request $request)
     {
-        $agents = Agent::with(['profile', 'user', 'company'])
-            ->where('status', 'active')
-            ->when($request->search, function ($query, $search) {
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orWhereHas('profile', function ($q) use ($search) {
-                    $q->where('license_number', 'like', "%{$search}%")
-                      ->orWhere('bio', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->specialization, function ($query, $specialization) {
-                $query->whereHas('profile', function ($q) use ($specialization) {
-                    $q->whereJsonContains('specializations', $specialization);
-                });
-            })
-            ->when($request->location, function ($query, $location) {
-                $query->whereHas('profile', function ($q) use ($location) {
-                    $q->whereJsonContains('service_areas', $location);
-                });
-            })
-            ->when($request->rating, function ($query, $rating) {
-                $query->whereHas('reviews', function ($q) use ($rating) {
-                    $q->havingRaw('AVG(rating) >= ?', [$rating]);
-                });
-            })
-            ->orderByRaw('(
-                SELECT AVG(rating) FROM agent_reviews WHERE agent_id = agents.id
-            ) DESC')
-            ->paginate(12);
-
-        // Get available specializations for filters
-        $specializations = AgentProfile::whereNotNull('specializations')
-            ->get()
-            ->flatMap(function ($profile) {
-                return $profile->specializations ?? [];
-            })
-            ->unique()
-            ->sort()
-            ->values();
+        $filters = $request->only(['search', 'specialization', 'location', 'rating']);
+        $agents = $this->agentService->getAgentsPaginated($filters, 12, true);
+        $specializations = $this->agentService->getAgentSpecializations();
 
         return view('agents.directory', compact('agents', 'specializations'));
     }
 
     public function index(Request $request)
     {
-        $agents = Agent::with(['profile', 'user', 'company'])
-            ->when($request->search, function ($query, $search) {
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orWhereHas('profile', function ($q) use ($search) {
-                    $q->where('license_number', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->specialization, function ($query, $specialization) {
-                $query->whereHas('profile', function ($q) use ($specialization) {
-                    $q->whereJsonContains('specializations', $specialization);
-                });
-            })
-            ->when($request->company_id, function ($query, $companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->latest()
-            ->paginate(20);
+        $filters = $request->only(['search', 'status', 'specialization', 'company_id']);
+        $agents = $this->agentService->getAgentsPaginated($filters, 20, false);
 
         return view('agents.index', compact('agents'));
     }
 
     public function show(Agent $agent)
     {
-        $agent->load(['profile', 'user', 'company', 'properties' => function ($query) {
-            $query->latest()->limit(10);
-        }, 'reviews' => function ($query) {
-            $query->latest()->limit(5);
-        }]);
-
-        // Calculate agent statistics
-        $stats = [
-            'total_properties' => $agent->properties()->count(),
-            'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-            'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-            'total_reviews' => $agent->reviews()->count(),
-            'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
-        ];
-
-        return view('agents.show', compact('agent', 'stats'));
+        $data = $this->agentService->getAgentDetails($agent);
+        return view('agents.show', $data);
     }
 
     public function create()
@@ -121,68 +57,136 @@ class AgentController extends Controller
 
     public function store(StoreAgentRequest $request)
     {
+        // Debug: Log request data
+        \Log::info('Agent creation attempt', [
+            'request_data' => $request->all(),
+            'files' => $request->hasFile('profile_photo') ? 'has_photo' : 'no_photo'
+        ]);
+        
         DB::beginTransaction();
         
         try {
             // Create or find user
+            $nameParts = explode(' ', $request->name, 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
+            
             $user = User::firstOrCreate(
                 ['email' => $request->email],
                 [
-                    'name' => $request->name,
+                    'username' => strtolower(str_replace(' ', '', $request->name)) . '_' . time(),
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'full_name' => $request->name,
                     'phone' => $request->phone,
                     'password' => bcrypt($request->password ?? 'password'),
                     'email_verified_at' => now(),
+                    'user_type' => 'agent',
+                    'account_status' => 'active',
                 ]
             );
 
             // Create agent record
             $agent = Agent::create([
                 'user_id' => $user->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
                 'company_id' => $request->company_id,
                 'license_number' => $request->license_number,
+                'experience_years' => $request->experience_years,
                 'status' => $request->status ?? 'active',
                 'commission_rate' => $request->commission_rate,
+                'hire_date' => now(),
                 'created_by' => Auth::id(),
             ]);
 
+            $this->agentService->invalidateCache($agent->id);
+
             // Create agent profile
             $profileData = [
-                'bio' => $request->bio,
-                'experience_years' => $request->experience_years,
+                'about_me' => $request->bio,
                 'specializations' => $request->specializations ?? [],
                 'languages' => $request->languages ?? [],
                 'service_areas' => $request->service_areas ?? [],
                 'achievements' => $request->achievements ?? [],
                 'education' => $request->education ?? [],
                 'certifications' => $request->certifications ?? [],
-                'social_links' => $request->social_links ?? [],
+                'social_media' => $request->social_links ?? [],
                 'office_address' => $request->office_address,
                 'office_phone' => $request->office_phone,
                 'working_hours' => $request->working_hours,
+                'phone' => $request->phone,
+                'email' => $request->email,
             ];
 
             if ($request->hasFile('profile_photo')) {
                 $photo = $request->file('profile_photo');
                 $path = $photo->store('agent-photos', 'public');
-                $profileData['profile_photo'] = $path;
+                $profileData['photo'] = $path;
             }
 
             $agent->profile()->create($profileData);
 
-            UserActivityLog::create([
+            // Create activity log using available fields
+            \DB::table('user_activities')->insert([
                 'user_id' => Auth::id(),
-                'action' => 'created_agent',
-                'details' => "Created agent: {$user->name}",
+                'session_id' => session()->getId() ?? 'web_' . Str::random(40),
+                'activity_type' => 'agent_management',
+                'activity_category' => 'agent_creation',
+                'activity_description' => "Created agent: {$user->full_name}",
                 'ip_address' => $request->ip(),
+                'method' => 'POST',
+                'url' => $request->path(),
+                'full_url' => $request->fullUrl(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             DB::commit();
+
+            // Send notification to admin users and current user
+            try {
+                // Get admin users
+                $adminUsers = \App\Models\User::where('role', 'admin')->orWhere('role', 'manager')->get();
+                
+                // Add current user to notifications
+                $allUsers = $adminUsers->push(auth()->user());
+                
+                foreach ($allUsers as $user) {
+                    $user->notify(new \App\Notifications\AgentCreated($agent));
+                }
+            } catch (\Exception $e) {
+                // Continue even if notification fails
+            }
+
+            // Check if request is AJAX
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Agent created successfully.',
+                    'agent' => [
+                        'id' => $agent->id,
+                        'name' => $agent->name,
+                        'email' => $agent->email,
+                        'phone' => $agent->phone,
+                        'license_number' => $agent->license_number,
+                    ]
+                ]);
+            }
 
             return redirect()->route('agents.show', $agent)
                 ->with('success', 'Agent created successfully.');
 
         } catch (\Exception $e) {
             DB::rollback();
+            
+            // Debug: Log error details
+            \Log::error('Agent creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             
             return redirect()->back()
                 ->withInput()
@@ -218,34 +222,36 @@ class AgentController extends Controller
             $agent->update([
                 'company_id' => $request->company_id,
                 'license_number' => $request->license_number,
+                'experience_years' => $request->experience_years,
                 'status' => $request->status,
                 'commission_rate' => $request->commission_rate,
             ]);
 
+            $this->agentService->invalidateCache($agent->id);
+
             // Update profile
             $profileData = [
-                'bio' => $request->bio,
-                'experience_years' => $request->experience_years,
+                'about_me' => $request->bio,
                 'specializations' => $request->specializations ?? [],
                 'languages' => $request->languages ?? [],
                 'service_areas' => $request->service_areas ?? [],
                 'achievements' => $request->achievements ?? [],
                 'education' => $request->education ?? [],
                 'certifications' => $request->certifications ?? [],
-                'social_links' => $request->social_links ?? [],
+                'social_media' => $request->social_links ?? [],
                 'office_address' => $request->office_address,
                 'office_phone' => $request->office_phone,
                 'working_hours' => $request->working_hours,
             ];
 
             if ($request->hasFile('profile_photo')) {
-                if ($agent->profile && $agent->profile->profile_photo) {
-                    Storage::disk('public')->delete($agent->profile->profile_photo);
+                if ($agent->profile && $agent->profile->photo) {
+                    Storage::disk('public')->delete($agent->profile->photo);
                 }
                 
                 $photo = $request->file('profile_photo');
                 $path = $photo->store('agent-photos', 'public');
-                $profileData['profile_photo'] = $path;
+                $profileData['photo'] = $path;
             }
 
             $agent->profile()->updateOrCreate(['agent_id' => $agent->id], $profileData);
@@ -277,11 +283,12 @@ class AgentController extends Controller
         
         $agentName = $agent->user->name;
         
-        if ($agent->profile && $agent->profile->profile_photo) {
-            Storage::disk('public')->delete($agent->profile->profile_photo);
+        if ($agent->profile && $agent->profile->photo) {
+            Storage::disk('public')->delete($agent->profile->photo);
         }
         
         $agent->delete();
+        $this->agentService->invalidateCache($agent->id);
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -300,6 +307,7 @@ class AgentController extends Controller
         
         $newStatus = $agent->status === 'active' ? 'inactive' : 'active';
         $agent->update(['status' => $newStatus]);
+        $this->agentService->invalidateCache($agent->id);
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -317,17 +325,8 @@ class AgentController extends Controller
 
     public function getAgents(Request $request): JsonResponse
     {
-        $agents = Agent::with(['user', 'company'])
-            ->when($request->search, function ($query, $search) {
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->company_id, function ($query, $companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->where('status', 'active')
-            ->get(['id', 'user_id', 'company_id', 'license_number']);
+        $filters = $request->only(['search', 'company_id']);
+        $agents = $this->agentService->getFilteredAgents($filters);
 
         return response()->json([
             'success' => true,
@@ -339,16 +338,7 @@ class AgentController extends Controller
     {
         $this->authorize('view', $agent);
         
-        $stats = [
-            'total_properties' => $agent->properties()->count(),
-            'active_listings' => $agent->properties()->where('status', 'published')->count(),
-            'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-            'total_reviews' => $agent->reviews()->count(),
-            'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-            'total_commissions' => $agent->commissions()->sum('amount'),
-            'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
-            'member_since' => $agent->created_at->format('M d, Y'),
-        ];
+        $stats = $this->agentService->getAgentStatistics($agent);
 
         return response()->json([
             'success' => true,
@@ -372,6 +362,7 @@ class AgentController extends Controller
                     Storage::disk('public')->delete($agent->profile->profile_photo);
                 }
                 $agent->delete();
+                $this->agentService->invalidateCache($agent->id);
             }
 
             UserActivityLog::create([
@@ -396,20 +387,7 @@ class AgentController extends Controller
 
     public function publicProfile(Agent $agent)
     {
-        $agent->load(['profile', 'company', 'properties' => function ($query) {
-            $query->where('status', 'published')->latest()->limit(9);
-        }, 'reviews' => function ($query) {
-            $query->latest()->limit(10);
-        }]);
-
-        $stats = [
-            'total_properties' => $agent->properties()->count(),
-            'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-            'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-            'total_reviews' => $agent->reviews()->count(),
-            'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
-        ];
-
-        return view('agents.public-profile', compact('agent', 'stats'));
+        $data = $this->agentService->getPublicAgentProfile($agent);
+        return view('agents.public-profile', $data);
     }
 }

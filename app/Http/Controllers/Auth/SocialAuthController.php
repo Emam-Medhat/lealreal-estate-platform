@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\UserSocialAccount;
+use App\Models\Auth\UserSocialAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -39,33 +39,20 @@ class SocialAuthController extends Controller
 
     public function unlink(Request $request, $provider)
     {
-        // Existing unlink logic might be okay, or move to Service too.
-        // For now, let's keep it here or simplify.
-        // The previous implementation was direct DB access.
+        $result = $this->socialAuthService->unlinkSocialAccount(Auth::user(), $provider);
 
-        $socialAccount = \App\Models\UserSocialAccount::where('user_id', auth()->id())
-            ->where('provider', $provider)
-            ->firstOrFail();
-
-        // Check if user has other social accounts or password
-        $hasOtherAuth = \App\Models\UserSocialAccount::where('user_id', auth()->id())
-            ->where('provider', '!=', $provider)
-            ->exists() || auth()->user()->password;
-
-        if (!$hasOtherAuth) {
+        if (!$result['success']) {
             return back()->withErrors([
-                'social' => 'You cannot unlink your only authentication method. Please set a password first.',
+                'social' => $result['message'],
             ]);
         }
 
-        $socialAccount->delete();
-
-        return back()->with('status', ucfirst($provider) . ' account unlinked successfully');
+        return back()->with('status', $result['message']);
     }
 
     public function linkedAccounts()
     {
-        $socialAccounts = \App\Models\UserSocialAccount::where('user_id', auth()->id())->get();
+        $socialAccounts = $this->socialAuthService->getLinkedAccounts(Auth::id());
 
         return view('auth.social-accounts', compact('socialAccounts'));
     }

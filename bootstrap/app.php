@@ -9,12 +9,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
+        channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
         then: function () {
             // Register custom route files with web middleware
             $routeFiles = [
                 'properties.php',
                 'optimized_properties.php',
+                'projects.php',
                 'agents.php',
                 'agent_panel.php',
                 'leads.php',
@@ -24,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'taxes.php',
                 'analytics.php',
                 'maintenance.php',
+                'inventory.php',
                 'companies.php',
                 'rentals.php',
                 'insurance.php',
@@ -45,9 +48,12 @@ return Application::configure(basePath: dirname(__DIR__))
             foreach ($routeFiles as $file) {
                 $path = base_path("routes/{$file}");
                 if (file_exists($path)) {
-                    Route::middleware('web')->group($path);
+                    Route::middleware(['web', 'request.logger'])->group($path);
                 }
             }
+            
+            // Also apply to main web.php routes
+            Route::middleware(['web', 'request.logger'])->group(base_path('routes/web.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -56,8 +62,33 @@ return Application::configure(basePath: dirname(__DIR__))
             'agent' => \App\Http\Middleware\AgentMiddleware::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'trackactivity' => \App\Http\Middleware\TrackUserActivity::class,
+            'banned' => \App\Http\Middleware\CheckBannedUser::class,
+            '2fa' => \App\Http\Middleware\CheckTwoFactor::class,
+            'fingerprint' => \App\Http\Middleware\TrackDeviceFingerprint::class,
+            'request.logger' => \App\Http\Middleware\RequestLogger::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->reportable(function (Throwable $e) {
+            try {
+                \Illuminate\Support\Facades\DB::table('system_error_logs')->insert([
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                    'url' => request()->fullUrl(),
+                    'method' => request()->method(),
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'user_id' => auth()->id(),
+                    'request_data' => json_encode(request()->all()),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $ex) {
+                // Fail silently to avoid infinite loops if DB fails
+            }
+        });
     })->create();

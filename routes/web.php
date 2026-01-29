@@ -10,6 +10,9 @@ use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\BiometricAuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Analytics\AnalyticsController;
+use App\Http\Controllers\RequestController;
+use App\Http\Controllers\SystemErrorLogController;
 // use App\Http\Controllers\ProfileController;
 // use App\Http\Controllers\SettingsController;
 // use App\Http\Controllers\KYCController;
@@ -43,8 +46,77 @@ Route::get('/test-properties', function () {
 // - insurance.php, documents.php, inspections.php
 // - appraisals.php, warranties.php
 
+// Public test route (no auth required)
+Route::get('/public-test', function () {
+    return 'Public route works! User: ' . (auth()->check() ? auth()->user()->name : 'Not logged in');
+});
+
+// Test SEO route
+Route::get('/test-seo', function () {
+    return 'SEO route test works!';
+})->middleware(['auth', 'admin']);
+
+// Direct SEO test route
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/seo-test', function () {
+        return 'Direct SEO route works!';
+    })->name('seo.test');
+    
+    // SEO Management Routes (moved from content.php)
+    Route::prefix('seo')->name('seo.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SeoController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\SeoController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\SeoController::class, 'store'])->name('store');
+        Route::get('/{seoMeta}', [\App\Http\Controllers\SeoController::class, 'show'])->name('show');
+        Route::get('/{seoMeta}/edit', [\App\Http\Controllers\SeoController::class, 'edit'])->name('edit');
+        Route::put('/{seoMeta}', [\App\Http\Controllers\SeoController::class, 'update'])->name('update');
+        Route::delete('/{seoMeta}', [\App\Http\Controllers\SeoController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-update', [\App\Http\Controllers\SeoController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::post('/generate-sitemap', [\App\Http\Controllers\SeoController::class, 'generateSitemap'])->name('generate-sitemap');
+        Route::get('/analyze', [\App\Http\Controllers\SeoController::class, 'analyzeSeo'])->name('analyze');
+    });
+});
+
 // Include content routes
 require __DIR__ . '/content.php';
+
+// Include API routes
+// Test Notifications Route
+Route::get('/test-notifications', function () {
+    return view('test-notifications');
+})->middleware('auth')->name('test.notifications');
+
+// Clear Cache Route (for testing)
+Route::get('/clear-cache', function () {
+    \Cache::flush();
+    return 'Cache cleared!';
+});
+
+require __DIR__.'/api_notifications.php';
+
+// Agent Reviews
+Route::post('/agent-reviews', function (\Illuminate\Http\Request $request) {
+    try {
+        $review = \App\Models\AgentReview::create([
+            'agent_id' => $request->agent_id,
+            'rating' => $request->rating,
+            'review_text' => $request->review_text,
+            'reviewer_name' => $request->reviewer_name,
+            'reviewer_email' => $request->reviewer_email,
+            'status' => 'pending', // Requires admin approval
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Review submitted successfully!'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error submitting review: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('agent.reviews.store');
 
 // Home page
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -67,7 +139,7 @@ Route::middleware('guest')->group(function () {
 
     // Registration Routes
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
+    Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 
     // Password Reset Routes
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -92,7 +164,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // Authenticated Routes
-Route::middleware(['auth', 'trackactivity', 'banned', '2fa', 'fingerprint'])->group(function () {
+Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function () {
     // Logout Routes
     Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
     Route::post('/logout-all', [LogoutController::class, 'logoutAll'])->name('logout.all');
@@ -121,8 +193,18 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa', 'fingerprint'])->gr
     Route::get('/dashboard/settings', [DashboardController::class, 'settings'])->name('dashboard.settings');
     Route::put('/dashboard/settings', [DashboardController::class, 'updateSettings'])->name('dashboard.settings.update');
 
-    // Agent Routes are handled in routes/agent_panel.php (registered in bootstrap/app.php)
-});
+    // Analytics Routes
+    Route::get('/analytics/dashboard', [AnalyticsController::class, 'dashboard'])->name('analytics.dashboard');
+
+    // Test route for debugging
+    Route::get('/debug-favorites', function() {
+        return 'Debug: Favorites system is working!';
+    });
+
+    // Notification API routes
+    Route::put('/notifications/{notification}/read', [App\Http\Controllers\UserController::class, 'markNotificationRead'])->name('notifications.read');
+    Route::put('/notifications/read-all', [App\Http\Controllers\UserController::class, 'markAllNotificationsRead'])->name('notifications.read.all');
+    Route::get('/notifications/count', [App\Http\Controllers\UserController::class, 'getNotificationCount'])->name('notifications.count');
 
     // User Profile Management
 // Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -583,22 +665,54 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa', 'fingerprint'])->gr
             return redirect()->route('admin.dashboard');
         })->name('agents.index');
 
-        Route::get('/activity', function () {
-            return response()->json(['recent_activity' => []]);
-        })->name('activity');
+        Route::get('/activity', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity');
     });
 
     // User Management (Admin only)
-// Route::middleware('admin')->group(function () {
-//     Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
-//     Route::get('/admin/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show');
-//     Route::put('/admin/users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('admin.users.status');
-//     Route::post('/admin/users/{user}/ban', [AdminUserController::class, 'ban'])->name('admin.users.ban');
-//     Route::post('/admin/users/{user}/unban', [AdminUserController::class, 'unban'])->name('admin.users.unban');
-//     Route::get('/admin/users/{user}/kyc', [AdminKYCController::class, 'review'])->name('admin.kyc.review');
-//     Route::put('/admin/users/{user}/kyc', [AdminKYCController::class, 'approve'])->name('admin.kyc.approve');
-//     Route::delete('/admin/users/{user}/kyc', [AdminKYCController::class, 'reject'])->name('admin.kyc.reject');
-// });
+    Route::prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\AdminUserController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\AdminUserController::class, 'store'])->name('store');
+        Route::get('/{user}', [App\Http\Controllers\Admin\AdminUserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [App\Http\Controllers\Admin\AdminUserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [App\Http\Controllers\Admin\AdminUserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('destroy');
+    });
+
+    // Properties Management (Admin only)
+    Route::prefix('admin/properties')->name('admin.properties.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AdminPropertyController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\AdminPropertyController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\AdminPropertyController::class, 'store'])->name('store');
+        Route::get('/{property}', [App\Http\Controllers\Admin\AdminPropertyController::class, 'show'])->name('show');
+        Route::get('/{property}/edit', [App\Http\Controllers\Admin\AdminPropertyController::class, 'edit'])->name('edit');
+        Route::put('/{property}', [App\Http\Controllers\Admin\AdminPropertyController::class, 'update'])->name('update');
+        Route::delete('/{property}', [App\Http\Controllers\Admin\AdminPropertyController::class, 'destroy'])->name('destroy');
+    });
+
+    // Companies Management (Admin only)
+    Route::prefix('admin/companies')->name('admin.companies.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AdminCompanyController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\AdminCompanyController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\AdminCompanyController::class, 'store'])->name('store');
+        Route::get('/{company}', [App\Http\Controllers\Admin\AdminCompanyController::class, 'show'])->name('show');
+        Route::get('/{company}/edit', [App\Http\Controllers\Admin\AdminCompanyController::class, 'edit'])->name('edit');
+        Route::put('/{company}', [App\Http\Controllers\Admin\AdminCompanyController::class, 'update'])->name('update');
+        Route::delete('/{company}', [App\Http\Controllers\Admin\AdminCompanyController::class, 'destroy'])->name('destroy');
+    });
+
+    // System Management (Admin only)
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/settings', [App\Http\Controllers\Admin\AdminSettingsController::class, 'index'])->name('settings');
+        Route::put('/settings', [App\Http\Controllers\Admin\AdminSettingsController::class, 'update'])->name('settings.update');
+        
+        Route::get('/maintenance', [App\Http\Controllers\Admin\AdminMaintenanceController::class, 'index'])->name('maintenance');
+        Route::post('/maintenance/run', [App\Http\Controllers\Admin\AdminMaintenanceController::class, 'runMaintenance'])->name('maintenance.run');
+        
+        Route::get('/backups', [App\Http\Controllers\Admin\AdminBackupController::class, 'index'])->name('backups');
+        Route::post('/backups/create', [App\Http\Controllers\Admin\AdminBackupController::class, 'create'])->name('backups.create');
+        Route::get('/backups/{backup}/download', [App\Http\Controllers\Admin\AdminBackupController::class, 'download'])->name('backups.download');
+    });
 
 // Investors Management Routes
 Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(function () {
@@ -774,6 +888,8 @@ Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(functi
         Route::get('/{staking}/performance', [App\Http\Controllers\Investor\DefiStakingController::class, 'getStakingPerformance'])->name('performance');
         Route::get('/export', [App\Http\Controllers\Investor\DefiStakingController::class, 'exportStaking'])->name('export');
     });
+});
+
 });
 
 // Payments System Routes
@@ -1904,14 +2020,14 @@ Route::prefix('analytics-alt')->name('analytics-alt.')->middleware(['auth'])->gr
         Route::get('/behavior/patterns', [App\Http\Controllers\UserBehaviorController::class, 'behaviorPatterns'])->name('patterns');
         Route::get('/behavior/segments', [App\Http\Controllers\UserBehaviorController::class, 'segmentAnalysis'])->name('segments');
         Route::get('/behavior/retention', [App\Http\Controllers\UserBehaviorController::class, 'retentionAnalysis'])->name('retention');
-        Route::get('/behavior/real-time', [App\Http\Controllers\UserBehaviorController::class, 'realTimeBehavior'])->name('real-time');
+        Route::get('/behavior/real-time', [App\Http\Controllers\UserBehaviorController::class, 'realTimeBehavior'])->name('behavior.real-time');
         Route::get('/predictions/accuracy', [App\Http\Controllers\PredictiveAnalyticsController::class, 'modelAccuracy'])->name('accuracy');
         Route::get('/ai-insights', [App\Http\Controllers\AiInsightsController::class, 'generateInsights'])->name('insights');
         Route::get('/predictions', [App\Http\Controllers\PredictiveAnalyticsController::class, 'generatePredictiveInsights'])->name('predictions');
         Route::get('/market/trends', [App\Http\Controllers\MarketAnalyticsController::class, 'marketOverview'])->name('trends');
         Route::get('/market/competitors', [App\Http\Controllers\MarketAnalyticsController::class, 'competitorAnalysis'])->name('competitors');
         Route::get('/market/pricing', [App\Http\Controllers\MarketAnalyticsController::class, 'priceAnalysis'])->name('pricing');
-        Route::get('/market/segments', [App\Http\Controllers\MarketAnalyticsController::class, 'marketSegmentation'])->name('segments');
+        Route::get('/market/segments', [App\Http\Controllers\MarketAnalyticsController::class, 'marketSegmentation'])->name('market.segments');
         Route::get('/market/opportunities', [App\Http\Controllers\MarketAnalyticsController::class, 'opportunityAnalysis'])->name('opportunities');
         Route::get('/heatmaps/realtime', [App\Http\Controllers\HeatmapController::class, 'getHeatmap'])->name('heatmap-realtime');
         Route::post('/heatmaps/generate', [App\Http\Controllers\HeatmapController::class, 'generateHeatmap'])->name('generate-heatmap');
@@ -1919,4 +2035,23 @@ Route::prefix('analytics-alt')->name('analytics-alt.')->middleware(['auth'])->gr
         Route::post('/heatmaps/compare', [App\Http\Controllers\HeatmapController::class, 'compareHeatmaps'])->name('compare-heatmaps');
         Route::get('/heatmaps/export', [App\Http\Controllers\HeatmapController::class, 'exportHeatmap'])->name('export-heatmap');
     });
+});
+
+// Request Monitoring Routes
+Route::prefix('requests')->name('requests.')->group(function () {
+    Route::get('/', [RequestController::class, 'index'])->name('index')->middleware('auth');
+    Route::get('/get', [RequestController::class, 'getRequests'])->name('get')->middleware('auth');
+    Route::get('/stats', [RequestController::class, 'getStats'])->name('stats')->middleware('auth');
+    Route::get('/{request}', [RequestController::class, 'show'])->name('show')->middleware('auth');
+    Route::post('/export', [RequestController::class, 'export'])->name('export')->middleware('auth');
+    Route::post('/clear-old', [RequestController::class, 'clearOld'])->name('clear-old')->middleware('auth');
+});
+
+// System Error Monitoring Routes
+Route::prefix('admin/errors')->name('admin.errors.')->middleware('auth')->group(function () {
+    Route::get('/', [SystemErrorLogController::class, 'index'])->name('index');
+    Route::get('/show/{id}', [SystemErrorLogController::class, 'show'])->name('show');
+    Route::post('/resolve/{id}', [SystemErrorLogController::class, 'resolve'])->name('resolve');
+    Route::post('/clear', [SystemErrorLogController::class, 'clear'])->name('clear');
+    Route::get('/scan', [SystemErrorLogController::class, 'scanRoutes'])->name('scan');
 });

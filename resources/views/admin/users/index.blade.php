@@ -1,23 +1,42 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
-@section('title', 'Users Management')
+@section('title', 'إدارة المستخدمين')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg shadow-lg p-6 mb-6 text-white">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Users Management</h1>
-                    <p class="text-gray-600">Manage all system users</p>
+                    <h1 class="text-3xl font-bold mb-2">إدارة المستخدمين</h1>
+                    <p class="text-blue-100">إدارة جميع مستخدمي النظام</p>
                 </div>
-                <a href="{{ route('admin.users.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Add User
+                <a href="{{ route('admin.users.create') }}" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center">
+                    <i class="fas fa-user-plus ml-2"></i>
+                    إضافة مستخدم جديد
                 </a>
             </div>
         </div>
+
+        <!-- Success and Error Messages -->
+        @if(session('success'))
+            <div class="bg-green-50 border-r-4 border-green-500 p-4 mb-6 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 ml-3"></i>
+                    <p class="text-green-700">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-50 border-r-4 border-red-500 p-4 mb-6 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 ml-3"></i>
+                    <p class="text-red-700">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
 
         <!-- Users Table -->
         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -86,7 +105,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                    <form action="{{ route('admin.users.delete', $user) }}" method="POST" class="inline">
+                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure?')">Delete</button>

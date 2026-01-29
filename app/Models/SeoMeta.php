@@ -11,6 +11,8 @@ class SeoMeta extends Model
 {
     use HasFactory;
 
+    protected $table = 'seo_meta';
+
     protected $fillable = [
         'model_type',
         'model_id',
@@ -27,6 +29,11 @@ class SeoMeta extends Model
     protected $casts = [
         'structured_data' => 'array',
     ];
+
+    public function seoable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 
     public function model(): MorphTo
     {

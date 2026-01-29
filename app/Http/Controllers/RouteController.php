@@ -20,6 +20,7 @@ class RouteController extends Controller
             
             foreach ($routeCollection as $route) {
                 $uri = $route->uri();
+                $methods = $route->methods();
                 
                 // Filter out internal Laravel routes
                 if (str_contains($uri, '_ignition') 
@@ -28,12 +29,46 @@ class RouteController extends Controller
                     continue;
                 }
                 
+                $action = $route->getActionName();
+                $controllerAction = '';
+                $viewName = '';
+                
+                // Extract controller and method from action
+                if ($action !== 'Closure') {
+                    if (str_contains($action, '@')) {
+                        list($controller, $method) = explode('@', $action);
+                        $controllerClass = class_basename($controller);
+                        $controllerAction = $controllerClass . '@' . $method;
+                        
+                        // Try to extract view name from controller method
+                        if (str_contains($method, 'index')) {
+                            $viewName = 'index';
+                        } elseif (str_contains($method, 'create')) {
+                            $viewName = 'create';
+                        } elseif (str_contains($method, 'edit')) {
+                            $viewName = 'edit';
+                        } elseif (str_contains($method, 'show')) {
+                            $viewName = 'show';
+                        } else {
+                            $viewName = $method;
+                        }
+                    }
+                }
+                
                 $routes[] = [
                     'uri' => $uri,
-                    'methods' => $route->methods(),
+                    'methods' => $methods,
                     'name' => $route->getName(),
-                    'action' => $route->getActionName(),
+                    'action' => $action,
+                    'controller_action' => $controllerAction,
+                    'view_name' => $viewName,
                     'middleware' => $route->middleware(),
+                    'is_get' => in_array('GET', $methods),
+                    'is_post' => in_array('POST', $methods),
+                    'is_put' => in_array('PUT', $methods),
+                    'is_delete' => in_array('DELETE', $methods),
+                    'is_patch' => in_array('PATCH', $methods),
+                    'is_api' => str_starts_with($uri, 'api/'),
                 ];
             }
             

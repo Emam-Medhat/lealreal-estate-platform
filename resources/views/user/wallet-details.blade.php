@@ -41,7 +41,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Total Deposits</p>
-                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('type', 'deposit')->sum('amount'), 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('transaction_type', 'deposit')->sum('amount'), 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Total Withdrawals</p>
-                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('type', 'withdrawal')->sum('amount'), 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-800">${{ number_format($wallet->transactions()->where('transaction_type', 'withdrawal')->sum('amount'), 2) }}</p>
                     </div>
                 </div>
             </div>

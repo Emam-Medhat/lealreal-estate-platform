@@ -14,71 +14,55 @@ use App\Models\LeadConversion;
 use App\Http\Requests\StoreLeadRequest;
 use App\Http\Requests\ConvertLeadRequest;
 use App\Http\Requests\ScoreLeadRequest;
+use App\Services\LeadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class LeadController extends Controller
 {
-    public function index()
+    protected $leadService;
+
+    public function __construct(LeadService $leadService)
     {
-        $leads = Lead::with(['source', 'status', 'assignedUser'])
-            ->filter(request(['search', 'status', 'source', 'assigned_to', 'date_range']))
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $this->leadService = $leadService;
+    }
+
+    public function index(Request $request)
+    {
+        $leads = $this->leadService->getLeads($request->only(['search', 'status', 'source', 'assigned_to', 'date_range']));
             
-        $sources = LeadSource::active()->get();
-        $statuses = LeadStatus::active()->get();
-        $users = \App\Models\User::where('role', 'agent')->orWhere('role', 'admin')->get();
+        $sources = $this->leadService->getActiveSources();
+        $statuses = $this->leadService->getActiveStatuses();
+        $users = $this->leadService->getAvailableAgents();
         
         return view('leads.index', compact('leads', 'sources', 'statuses', 'users'));
     }
     
     public function dashboard()
     {
-        $stats = [
-            'total_leads' => Lead::count(),
-            'new_leads' => Lead::where('status_id', LeadStatus::where('name', 'جديد')->first()->id)->count(),
-            'qualified_leads' => Lead::where('status_id', LeadStatus::where('name', 'مؤهل')->first()->id)->count(),
-            'converted_leads' => Lead::where('converted_at', '!=', null)->count(),
-            'conversion_rate' => Lead::where('converted_at', '!=', null)->count() / max(Lead::count(), 1) * 100,
-        ];
-        
-        $recentLeads = Lead::with(['source', 'status', 'assignedUser'])
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get();
-            
-        $leadSources = LeadSource::withCount('leads')
-            ->orderBy('leads_count', 'desc')
-            ->take(5)
-            ->get();
-            
-        $leadStatuses = LeadStatus::withCount('leads')
-            ->orderBy('leads_count', 'desc')
-            ->get();
+        $stats = $this->leadService->getDashboardStats();
+        $recentLeads = $this->leadService->getRecentLeads(10);
+        $leadSources = $this->leadService->getLeadSourcesStats(5);
+        $leadStatuses = $this->leadService->getLeadStatusesStats();
             
         return view('leads.dashboard', compact('stats', 'recentLeads', 'leadSources', 'leadStatuses'));
     }
     
     public function pipeline()
     {
-        $statuses = LeadStatus::with(['leads' => function($query) {
-            $query->with(['source', 'assignedUser'])
-                  ->orderBy('priority', 'desc')
-                  ->orderBy('created_at', 'desc');
-        }])->orderBy('order')->get();
+        $statuses = $this->leadService->getPipelineData();
         
         return view('leads.pipeline', compact('statuses'));
     }
     
     public function create()
     {
-        $sources = LeadSource::active()->get();
-        $statuses = LeadStatus::active()->get();
+        $sources = $this->leadService->getActiveSources();
+        $statuses = $this->leadService->getActiveStatuses();
         $campaigns = LeadCampaign::active()->get();
         $tags = LeadTag::all();
-        $users = \App\Models\User::where('role', 'agent')->orWhere('role', 'admin')->get();
+        $users = $this->leadService->getAvailableAgents();
         
         return view('leads.create', compact('sources', 'statuses', 'campaigns', 'tags', 'users'));
     }
@@ -135,7 +119,7 @@ class LeadController extends Controller
     
     public function show(Lead $lead)
     {
-        $lead->load(['source', 'status', 'assignedUser', 'tags', 'activities.user', 'notes.user', 'conversions']);
+        $lead->load(['source', 'status', 'assignedTo', 'tags', 'activities.user', 'notes.user', 'conversions']);
         
         $score = $lead->scores()->latest()->first();
         $activities = $lead->activities()->with('user')->orderBy('created_at', 'desc')->get();
@@ -146,11 +130,11 @@ class LeadController extends Controller
     
     public function edit(Lead $lead)
     {
-        $sources = LeadSource::active()->get();
-        $statuses = LeadStatus::active()->get();
+        $sources = $this->leadService->getActiveSources();
+        $statuses = $this->leadService->getActiveStatuses();
         $campaigns = LeadCampaign::active()->get();
         $tags = LeadTag::all();
-        $users = \App\Models\User::where('role', 'agent')->orWhere('role', 'admin')->get();
+        $users = $this->leadService->getAvailableAgents();
         
         return view('leads.edit', compact('lead', 'sources', 'statuses', 'campaigns', 'tags', 'users'));
     }
@@ -192,6 +176,9 @@ class LeadController extends Controller
         
         // Recalculate score
         $this->calculateLeadScore($lead);
+
+        // Clear cache
+        $this->leadService->clearCache();
         
         return redirect()->route('leads.show', $lead)
             ->with('success', 'تم تحديث العميل المحتمل بنجاح');
@@ -200,6 +187,9 @@ class LeadController extends Controller
     public function destroy(Lead $lead)
     {
         $lead->delete();
+
+        // Clear cache
+        $this->leadService->clearCache();
         
         return redirect()->route('leads.index')
             ->with('success', 'تم حذف العميل المحتمل بنجاح');

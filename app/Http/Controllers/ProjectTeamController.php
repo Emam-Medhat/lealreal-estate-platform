@@ -38,26 +38,50 @@ class ProjectTeamController extends Controller
 
     public function store(Request $request, Project $project)
     {
+        // Handle AJAX request for adding members
+        if ($request->ajax()) {
+            $validated = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'role' => 'required|string|max:255',
+                'hourly_rate' => 'nullable|numeric|min:0',
+            ]);
+
+            $team = $project->team()->first();
+            
+            if (!$team) {
+                return response()->json(['error' => 'الفريق غير موجود'], 404);
+            }
+
+            // Check if user is already a member
+            if ($team->members()->where('user_id', $validated['user_id'])->exists()) {
+                return response()->json(['error' => 'المستخدم بالفعل عضو في الفريق'], 422);
+            }
+
+            $team->members()->create([
+                'project_id' => $project->id,
+                'user_id' => $validated['user_id'],
+                'role' => $validated['role'],
+                'hourly_rate' => $validated['hourly_rate'],
+                'status' => 'active',
+                'joined_at' => now(),
+            ]);
+
+            return response()->json(['success' => 'تم إضافة العضو بنجاح']);
+        }
+
+        // Handle regular team creation
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'leader_id' => 'required|exists:users,id',
+            'team_leader_id' => 'nullable|exists:users,id',
         ]);
 
         $validated['created_by'] = Auth::id();
 
         $team = $project->team()->create($validated);
 
-        // Add leader as team member
-        $team->members()->create([
-            'user_id' => $validated['leader_id'],
-            'role_id' => 1, // Assuming role_id 1 is team leader
-            'joined_at' => now(),
-            'created_by' => Auth::id(),
-        ]);
-
         return redirect()
-            ->route('projects.teams.show', [$project, $team])
+            ->route('projects.teams.index', $project)
             ->with('success', 'تم إنشاء الفريق بنجاح');
     }
 

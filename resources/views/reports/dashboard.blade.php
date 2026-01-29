@@ -6,18 +6,21 @@
 
 <div class="max-w-7xl mx-auto">
     <!-- Reports Header -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-8 mb-8 text-white">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">لوحة التقارير</h1>
-                <p class="text-gray-600">إدارة وتحليل تقارير العقارات</p>
+                <h1 class="text-3xl font-bold mb-3 flex items-center">
+                    <i class="fas fa-chart-line ml-3 text-blue-200"></i>
+                    لوحة التقارير
+                </h1>
+                <p class="text-blue-100 text-lg">إدارة وتحليل تقارير العقارات</p>
             </div>
-            <div class="flex items-center space-x-2 space-x-reverse">
-                <a href="{{ route('reports.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <a href="{{ route('reports.create') }}" class="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
                     <i class="fas fa-plus ml-2"></i>
                     تقرير جديد
                 </a>
-                <a href="{{ route('reports.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                <a href="{{ route('reports.index') }}" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-400 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
                     <i class="fas fa-list ml-2"></i>
                     كل التقارير
                 </a>
@@ -26,89 +29,119 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border-l-4 border-blue-500 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">إجمالي التقارير</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ $reportStats['total_reports'] ?? 0 }}</h3>
-                    <p class="text-xs text-green-600">+5 هذا الشهر</p>
+                    <p class="text-sm text-gray-500 font-medium">إجمالي التقارير</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $reportStats['total_reports'] ?? 0 }}</h3>
+                    <div class="flex items-center mt-2">
+                        <i class="fas fa-arrow-up text-green-500 text-xs ml-1"></i>
+                        <p class="text-xs text-green-600 font-medium">+5 هذا الشهر</p>
+                    </div>
                 </div>
-                <div class="bg-blue-100 text-blue-600 p-3 rounded-full">
-                    <i class="fas fa-file-alt text-xl"></i>
+                <div class="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 p-4 rounded-xl shadow-inner">
+                    <i class="fas fa-file-alt text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border-l-4 border-green-500 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">التقارير المنجزة</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ $reportStats['completed_reports'] ?? 0 }}</h3>
-                    <p class="text-xs text-green-600">+3 هذا الأسبوع</p>
+                    <p class="text-sm text-gray-500 font-medium">التقارير المنجزة</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $reportStats['completed_reports'] ?? 0 }}</h3>
+                    <div class="flex items-center mt-2">
+                        <i class="fas fa-arrow-up text-green-500 text-xs ml-1"></i>
+                        <p class="text-xs text-green-600 font-medium">+3 هذا الأسبوع</p>
+                    </div>
                 </div>
-                <div class="bg-green-100 text-green-600 p-3 rounded-full">
-                    <i class="fas fa-check-circle text-xl"></i>
+                <div class="bg-gradient-to-br from-green-100 to-green-200 text-green-600 p-4 rounded-xl shadow-inner">
+                    <i class="fas fa-check-circle text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border-l-4 border-purple-500 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">قيد المعالجة</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ $reportStats['pending_reports'] ?? 0 }}</h3>
-                    <p class="text-xs text-orange-600">2 عاجل</p>
+                    <p class="text-sm text-gray-500 font-medium">قيد المعالجة</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $reportStats['pending_reports'] ?? 0 }}</h3>
+                    <div class="flex items-center mt-2">
+                        <i class="fas fa-exclamation-circle text-orange-500 text-xs ml-1"></i>
+                        <p class="text-xs text-orange-600 font-medium">2 عاجل</p>
+                    </div>
                 </div>
-                <div class="bg-purple-100 text-purple-600 p-3 rounded-full">
-                    <i class="fas fa-clock text-xl"></i>
+                <div class="bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600 p-4 rounded-xl shadow-inner">
+                    <i class="fas fa-clock text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border-l-4 border-orange-500 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">معدل النجاح</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ $reportStats['success_rate'] ?? 0 }}%</h3>
-                    <p class="text-xs text-green-600">+2% هذا الشهر</p>
+                    <p class="text-sm text-gray-500 font-medium">معدل النجاح</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ $reportStats['success_rate'] ?? 0 }}%</h3>
+                    <div class="flex items-center mt-2">
+                        <i class="fas fa-arrow-up text-green-500 text-xs ml-1"></i>
+                        <p class="text-xs text-green-600 font-medium">+2% هذا الشهر</p>
+                    </div>
                 </div>
-                <div class="bg-orange-100 text-orange-600 p-3 rounded-full">
-                    <i class="fas fa-chart-line text-xl"></i>
+                <div class="bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600 p-4 rounded-xl shadow-inner">
+                    <i class="fas fa-chart-line text-2xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Recent Reports -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">التقارير الحديثة</h2>
-        <div class="space-y-4">
+    <div class="bg-white rounded-xl shadow-lg p-7 mb-8">
+        <div class="flex items-center justify-between mb-6 border-b pb-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-history ml-3 text-blue-600"></i>
+                التقارير الحديثة
+            </h2>
+            <a href="{{ route('reports.index') }}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                عرض الكل <i class="fas fa-arrow-left mr-1"></i>
+            </a>
+        </div>
+        <div class="space-y-3">
             @forelse ($recentReports as $report)
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-blue-50 hover:to-blue-100 transition-all duration-200 border border-gray-200 hover:border-blue-300">
                     <div class="flex items-center">
-                        <div class="bg-blue-100 text-blue-600 p-2 rounded-full ml-3">
-                            <i class="fas fa-file-alt text-sm"></i>
+                        <div class="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 p-3 rounded-xl ml-4 shadow-inner">
+                            <i class="fas fa-file-alt text-lg"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900">{{ $report->title ?? 'تقرير غير مسمى' }}</p>
-                            <p class="text-sm text-gray-500">{{ $report->type ?? 'عام' }} • {{ $report->created_at->diffForHumans() }}</p>
+                            <p class="font-semibold text-gray-900 text-lg">{{ $report->title ?? 'تقرير غير مسمى' }}</p>
+                            <div class="flex items-center mt-1 text-sm text-gray-600">
+                                <span class="bg-gray-200 px-2 py-1 rounded-md text-xs font-medium ml-2">{{ $report->type ?? 'عام' }}</span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-clock ml-1 text-gray-400"></i>
+                                    {{ $report->created_at->diffForHumans() }}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2 space-x-reverse">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full {{ $report->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <span class="px-3 py-1 text-xs font-bold rounded-full {{ $report->status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200' }}">
                             {{ $report->status === 'completed' ? 'مكتمل' : 'قيد المعالجة' }}
                         </span>
-                        <a href="{{ route('reports.show', $report->id) }}" class="text-blue-600 hover:text-blue-800">
+                        <a href="{{ route('reports.show', $report->id) }}" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg">
                             <i class="fas fa-eye"></i>
                         </a>
                     </div>
                 </div>
             @empty
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-file-alt text-4xl mb-4 text-gray-300"></i>
-                    <p>لا توجد تقارير حديثة</p>
-                    <a href="{{ route('reports.create') }}" class="text-blue-600 hover:text-blue-800 mt-2 inline-block">
+                <div class="text-center py-12 text-gray-500">
+                    <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-file-alt text-3xl text-gray-400"></i>
+                    </div>
+                    <p class="text-lg font-medium text-gray-600 mb-2">لا توجد تقارير حديثة</p>
+                    <p class="text-sm text-gray-500 mb-4">ابدأ بإنشاء أول تقرير لك</p>
+                    <a href="{{ route('reports.create') }}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center shadow-md hover:shadow-lg">
+                        <i class="fas fa-plus ml-2"></i>
                         إنشاء أول تقرير
                     </a>
                 </div>
@@ -117,42 +150,45 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 transform hover:-translate-y-2 border border-gray-100">
             <div class="text-center">
-                <div class="bg-blue-100 text-blue-600 p-4 rounded-full inline-block mb-4">
-                    <i class="fas fa-chart-bar text-2xl"></i>
+                <div class="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 p-6 rounded-2xl inline-block mb-6 shadow-lg">
+                    <i class="fas fa-chart-bar text-3xl"></i>
                 </div>
-                <h3 class="font-semibold text-gray-800 mb-2">تقارير المبيعات</h3>
-                <p class="text-sm text-gray-600 mb-4">تحليلات شاملة للمبيعات</p>
-                <a href="{{ route('reports.sales.index') }}" class="text-blue-600 font-medium hover:text-blue-800">
-                    عرض التقارير ←
+                <h3 class="font-bold text-gray-800 mb-3 text-xl">تقارير المبيعات</h3>
+                <p class="text-gray-600 mb-6 leading-relaxed">تحليلات شاملة للمبيعات والأداء المالي</p>
+                <a href="{{ route('reports.sales.index') }}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg inline-flex items-center">
+                    عرض التقارير
+                    <i class="fas fa-arrow-left mr-2"></i>
                 </a>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 transform hover:-translate-y-2 border border-gray-100">
             <div class="text-center">
-                <div class="bg-green-100 text-green-600 p-4 rounded-full inline-block mb-4">
-                    <i class="fas fa-tachometer-alt text-2xl"></i>
+                <div class="bg-gradient-to-br from-green-100 to-green-200 text-green-600 p-6 rounded-2xl inline-block mb-6 shadow-lg">
+                    <i class="fas fa-tachometer-alt text-3xl"></i>
                 </div>
-                <h3 class="font-semibold text-gray-800 mb-2">تقارير الأداء</h3>
-                <p class="text-sm text-gray-600 mb-4">قياسات الأداء والكفاءة</p>
-                <a href="{{ route('reports.performance.index') }}" class="text-green-600 font-medium hover:text-green-800">
-                    عرض التقارير ←
+                <h3 class="font-bold text-gray-800 mb-3 text-xl">تقارير الأداء</h3>
+                <p class="text-gray-600 mb-6 leading-relaxed">قياسات الأداء والكفاءة التشغيلية</p>
+                <a href="{{ route('reports.performance.index') }}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg inline-flex items-center">
+                    عرض التقارير
+                    <i class="fas fa-arrow-left mr-2"></i>
                 </a>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 transform hover:-translate-y-2 border border-gray-100">
             <div class="text-center">
-                <div class="bg-purple-100 text-purple-600 p-4 rounded-full inline-block mb-4">
-                    <i class="fas fa-chart-line text-2xl"></i>
+                <div class="bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600 p-6 rounded-2xl inline-block mb-6 shadow-lg">
+                    <i class="fas fa-chart-line text-3xl"></i>
                 </div>
-                <h3 class="font-semibold text-gray-800 mb-2">تقارير السوق</h3>
-                <p class="text-sm text-gray-600 mb-4">تحليلات السوق والاتجاهات</p>
-                <a href="{{ route('reports.market.index') }}" class="text-purple-600 font-medium hover:text-purple-800">
-                    عرض التقارير ←
+                <h3 class="font-bold text-gray-800 mb-3 text-xl">تقارير السوق</h3>
+                <p class="text-gray-600 mb-6 leading-relaxed">تحليلات السوق والاتجاهات العقارية</p>
+                <a href="{{ route('reports.market.index') }}" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg inline-flex items-center">
+                    عرض التقارير
+                    <i class="fas fa-arrow-left mr-2"></i>
                 </a>
             </div>
         </div>

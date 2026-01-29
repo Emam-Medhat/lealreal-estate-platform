@@ -19,7 +19,7 @@
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-semibold text-gray-800">Profile Information</h2>
-                    <a href="{{ route('user.profile.edit') }}"
+                    <a href="/profile/edit"
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-edit mr-2"></i>
                         Edit Profile
@@ -114,8 +114,7 @@
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" class="sr-only peer" {{ $user->sms_notifications ? 'checked' : '' }}>
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray lax-gray-oken after:border after entertainer roundedekk rounded-full datum after:h articulation和尚 after: Boundary after: 
-                                after:h-葵 after:w- UL after:transition-all peer-checked:bg-blue-600"></div>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                     </div>
 
@@ -142,7 +141,7 @@
                             <h3 class="font-medium text-gray-800">Change Password</h3>
                             <p class="text-sm text-gray-600">Update your account password</p>
                         </div>
-                        <a href="{{ route('password.change') }}"
+                        <a href="{{ route('password.request') }}"
                             class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                             Change Password
                         </a>
@@ -153,7 +152,7 @@
                             <h3 class="font-medium text-gray-800">Login Activity</h3>
                             <p class="text-sm text-gray-600">View your recent login history</p>
                         </div>
-                        <a href="{{ route('user.activity') }}"
+                        <a href="/profile/activity"
                             class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                             View Activity
                         </a>
@@ -164,7 +163,7 @@
                             <h3 class="font-medium text-gray-800">Biometric Devices</h3>
                             <p class="text-sm text-gray-600">Manage your biometric authentication devices</p>
                         </div>
-                        <a href="{{ route('biometric.devices') }}"
+                        <a href="{{ route('biometric.index') }}"
                             class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                             Manage Devices
                         </a>
@@ -190,11 +189,11 @@
                             <div>
                                 <h3 class="font-medium text-gray-800">Google</h3>
                                 <p class="text-sm text-gray-600">
-                                    {{ $user->socialAccounts()->where('provider', 'google')->exists() ? 'Connected' : 'Not connected' }}
+                                    {{ $user->socialAccounts->where('provider', 'google')->isNotEmpty() ? 'Connected' : 'Not connected' }}
                                 </p>
                             </div>
                         </div>
-                        @if($user->socialAccounts()->where('provider', 'google')->exists())
+                        @if($user->socialAccounts->where('provider', 'google')->isNotEmpty())
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                 Connected
                             </span>
@@ -214,11 +213,11 @@
                             <div>
                                 <h3 class="font-medium text-gray-800">Facebook</h3>
                                 <p class="text-sm text-gray-600">
-                                    {{ $user->socialAccounts()->where('provider', 'facebook')->exists() ? 'Connected' : 'Not connected' }}
+                                    {{ $user->socialAccounts->where('provider', 'facebook')->isNotEmpty() ? 'Connected' : 'Not connected' }}
                                 </p>
                             </div>
                         </div>
-                        @if($user->socialAccounts()->where('provider', 'facebook')->exists())
+                        @if($user->socialAccounts->where('provider', 'facebook')->isNotEmpty())
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                 Connected
                             </span>
@@ -267,7 +266,7 @@
                 </ul>
             </div>
 
-            <form action="{{ route('user.delete') }}" method="POST" onsubmit="return confirmDelete()">
+            <form action="/profile/delete" method="POST" onsubmit="return confirmDelete()">
                 @csrf
                 @method('DELETE')
 

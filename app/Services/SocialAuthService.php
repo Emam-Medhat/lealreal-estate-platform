@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Services;
-
-use App\Models\UserSocialAccount;
+ 
+use App\Models\Auth\UserSocialAccount;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -39,11 +39,39 @@ class SocialAuthService
     /**
      * Find existing user or create a new one based on social data.
      */
-    protected function findOrCreateUser($socialUser, $provider)
+    protected function getSocialAccount($socialUser, string $provider): ?UserSocialAccount
     {
-        $account = UserSocialAccount::where('provider', $provider)
+        return UserSocialAccount::where('provider', $provider)
             ->where('provider_id', $socialUser->getId())
             ->first();
+    }
+
+    protected function getUserByEmail(string $email): ?User
+    {
+        return User::where('email', $email)->first();
+    }
+
+    protected function createNewUserFromSocialite($socialUser): User
+    {
+        return User::create([
+            'username' => $this->generateUniqueUsername($socialUser->getName()),
+            'email' => $socialUser->getEmail(),
+            'first_name' => $socialUser->getName(),
+            'last_name' => '',
+            'password' => Hash::make(Str::random(24)),
+            'email_verified_at' => now(),
+            'avatar' => $socialUser->getAvatar(),
+            'user_type' => 'user',
+            'account_status' => 'active',
+        ]);
+    }
+
+    /**
+     * Find existing user or create a new one based on social data.
+     */
+    protected function findOrCreateUser($socialUser, $provider)
+    {
+        $account = $this->getSocialAccount($socialUser, $provider);
 
         if ($account) {
             $account->update([
@@ -56,28 +84,66 @@ class SocialAuthService
             return $account->user;
         }
 
-        // Check if user with same email exists
-        $user = User::where('email', $socialUser->getEmail())->first();
+        $user = $this->getUserByEmail($socialUser->getEmail());
 
         if (!$user) {
-            // Register new user
-            $user = User::create([
-                'username' => $this->generateUniqueUsername($socialUser->getName()),
-                'email' => $socialUser->getEmail(),
-                'first_name' => $socialUser->getName(),
-                'last_name' => '',
-                'password' => Hash::make(Str::random(24)),
-                'email_verified_at' => now(),
-                'avatar' => $socialUser->getAvatar(),
-                'user_type' => 'user',
-                'account_status' => 'active',
-            ]);
+            $user = $this->createNewUserFromSocialite($socialUser);
         }
 
-        // Link social account
         $this->linkSocialAccount($user, $socialUser, $provider);
 
         return $user;
+    }
+
+    /**
+     * Get linked accounts for a user.
+     *
+     * @param int $userId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getLinkedAccounts(int $userId)
+    {
+        return UserSocialAccount::where('user_id', $userId)->get();
+    }
+
+    /**
+     * Unlink a social account from a user.
+     *
+     * @param User $user
+     * @param string $provider
+     * @return array
+     */
+    public function unlinkSocialAccount(User $user, string $provider): array
+    {
+        $socialAccount = UserSocialAccount::where('user_id', $user->id)
+            ->where('provider', $provider)
+            ->first();
+
+        if (!$socialAccount) {
+            return [
+                'success' => false,
+                'message' => 'Social account not found'
+            ];
+        }
+
+        // Check if user has other social accounts or password
+        $hasOtherAuth = UserSocialAccount::where('user_id', $user->id)
+            ->where('provider', '!=', $provider)
+            ->exists() || $user->password;
+
+        if (!$hasOtherAuth) {
+            return [
+                'success' => false,
+                'message' => 'You cannot unlink your only authentication method. Please set a password first.'
+            ];
+        }
+
+        $socialAccount->delete();
+
+        return [
+            'success' => true,
+            'message' => ucfirst($provider) . ' account unlinked successfully'
+        ];
     }
 
     /**
@@ -106,12 +172,5 @@ class SocialAuthService
         return $count ? "{$username}-{$count}" : $username;
     }
 
-    public function authenticateWithGoogle()
-    {
-        return $this->redirect('google');
-    }
-    public function authenticateWithFacebook()
-    {
-        return $this->redirect('facebook');
-    }
+
 }

@@ -53,17 +53,17 @@
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <h5 class="card-title">الميزانية</h5>
-                    <h3>{{ number_format($stats['spent_budget'], 0) }}</h3>
-                    <small>من {{ number_format($stats['total_budget'], 0) }} ريال</small>
+                    <h3>{{ number_format($stats['total_spent'], 0) }}</h3>
+                    <small>من {{ number_format($project->budget, 0) }} ريال</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card bg-danger text-white">
                 <div class="card-body">
-                    <h5 class="card-title">المخاطر</h5>
-                    <h3>{{ $stats['active_risks'] }}</h3>
-                    <small>مخاطر نشطة</small>
+                    <h5 class="card-title">المراحل</h5>
+                    <h3>{{ $stats['completed_milestones'] }}/{{ $stats['total_milestones'] }}</h3>
+                    <small>مراحل مكتملة / الإجمالي</small>
                 </div>
             </div>
         </div>
@@ -192,7 +192,7 @@
                         @if($project->total_area)
                             <tr>
                                 <td><strong>المساحة الإجمالية:</strong></td>
-                                <td>{{ number_format($project->total_area, 2) }م²</td>
+                                <td>{{ number_format($project->total_area, 2) }} م²</td>
                             </tr>
                         @endif
                     </table>

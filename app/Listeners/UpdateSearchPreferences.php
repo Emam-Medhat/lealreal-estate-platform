@@ -16,11 +16,27 @@ class UpdateSearchPreferences
         $preferences = $event->preferences;
         
         // Update search preferences cache
-        Cache::tags(['user', 'user.' . $user->id, 'search_preferences'])->remember(
-            'user.search_preferences.' . $user->id,
-            now()->addDays(30),
-            fn() => array_merge($user->search_preferences ?? [], $preferences)
-        );
+        try {
+            if (config('cache.default') !== 'file' && config('cache.default') !== 'database') {
+                Cache::tags(['user', 'user.' . $user->id, 'search_preferences'])->remember(
+                    'user.search_preferences.' . $user->id,
+                    now()->addDays(30),
+                    fn() => array_merge($user->search_preferences ?? [], $preferences)
+                );
+            } else {
+                Cache::put(
+                    'user.search_preferences.' . $user->id,
+                    array_merge($user->search_preferences ?? [], $preferences),
+                    now()->addDays(30)
+                );
+            }
+        } catch (\Exception $e) {
+            Cache::put(
+                'user.search_preferences.' . $user->id,
+                array_merge($user->search_preferences ?? [], $preferences),
+                now()->addDays(30)
+            );
+        }
         
         // Update user preferences in database
         $user->update([
@@ -60,7 +76,13 @@ class UpdateSearchPreferences
         $user->update(['search_filters' => $validatedFilters]);
         
         // Clear search cache for this user
-        Cache::tags(['user_search', 'user.' . $user->id])->flush();
+        try {
+            if (config('cache.default') !== 'file' && config('cache.default') !== 'database') {
+                Cache::tags(['user_search', 'user.' . $user->id])->flush();
+            }
+        } catch (\Exception $e) {
+            // Ignore if tags not supported
+        }
     }
     
     /**

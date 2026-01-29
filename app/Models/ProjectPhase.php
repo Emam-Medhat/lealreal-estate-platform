@@ -20,18 +20,21 @@ class ProjectPhase extends Model
         'order',
         'start_date',
         'end_date',
-        'duration_days',
         'status',
         'progress_percentage',
+        'budget_allocated',
+        'budget_spent',
+        'deliverables',
         'notes',
-        'created_by',
-        'updated_by',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'progress_percentage' => 'integer',
+        'budget_allocated' => 'decimal:2',
+        'budget_spent' => 'decimal:2',
+        'deliverables' => 'array',
     ];
 
     public function project(): BelongsTo

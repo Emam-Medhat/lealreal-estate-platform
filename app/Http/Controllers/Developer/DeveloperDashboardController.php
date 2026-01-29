@@ -8,6 +8,7 @@ use App\Models\DeveloperProject;
 use App\Models\DeveloperProjectPhase;
 use App\Models\DeveloperProjectUnit;
 use App\Models\UserActivityLog;
+use App\Services\DeveloperDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,53 +16,34 @@ use Carbon\Carbon;
 
 class DeveloperDashboardController extends Controller
 {
+    protected $dashboardService;
+
+    public function __construct(DeveloperDashboardService $dashboardService)
+    {
+        $this->dashboardService = $dashboardService;
+    }
+
     public function index()
     {
-        $developer = Auth::user()->developer;
+        $user = Auth::user();
+        $developer = $user->developer;
         
         if (!$developer) {
             return redirect()->route('developer.create')
                 ->with('error', 'Please create your developer profile first.');
         }
 
-        // Quick stats
-        $stats = [
-            'total_projects' => $developer->projects()->count(),
-            'active_projects' => $developer->projects()->where('status', 'active')->count(),
-            'completed_projects' => $developer->projects()->where('status', 'completed')->count(),
-            'total_units' => $developer->projects()->withCount('units')->get()->sum('units_count'),
-            'sold_units' => $developer->projects()->withCount(['units' => function ($query) {
-                $query->where('status', 'sold');
-            }])->get()->sum('units_count'),
-            'total_revenue' => $developer->projects()->sum('total_value'),
-            'ongoing_phases' => $developer->projects()
-                ->whereHas('phases', function ($query) {
-                    $query->where('status', 'in_progress');
-                })
-                ->count(),
-        ];
+        // Get optimized stats from service
+        $stats = $this->dashboardService->getQuickStats($developer);
 
         // Recent activities
-        $recentActivities = UserActivityLog::where('user_id', Auth::id())
-            ->latest()
-            ->limit(10)
-            ->get();
+        $recentActivities = $this->dashboardService->getRecentActivities($user->id);
 
         // Recent projects
-        $recentProjects = $developer->projects()
-            ->latest()
-            ->limit(5)
-            ->get();
+        $recentProjects = $this->dashboardService->getRecentProjects($developer);
 
         // Upcoming milestones
-        $upcomingMilestones = $developer->projects()
-            ->whereHas('phases', function ($query) {
-                $query->where('end_date', '>', now())
-                    ->where('end_date', '<=', now()->addDays(30));
-            })
-            ->with(['phases'])
-            ->limit(5)
-            ->get();
+        $upcomingMilestones = $this->dashboardService->getUpcomingMilestones($developer);
 
         return view('developer.dashboard.index', compact(
             'developer',
@@ -83,20 +65,7 @@ class DeveloperDashboardController extends Controller
             ]);
         }
 
-        $stats = [
-            'total_projects' => $developer->projects()->count(),
-            'active_projects' => $developer->projects()->where('status', 'active')->count(),
-            'completed_projects' => $developer->projects()->where('status', 'completed')->count(),
-            'total_units' => $developer->projects()->withCount('units')->get()->sum('units_count'),
-            'sold_units' => $developer->projects()->withCount(['units' => function ($query) {
-                $query->where('status', 'sold');
-            }])->get()->sum('units_count'),
-            'total_revenue' => $developer->projects()->sum('total_value'),
-            'this_month_revenue' => $developer->projects()
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('total_value'),
-        ];
+        $stats = $this->dashboardService->getQuickStats($developer);
 
         return response()->json([
             'success' => true,
@@ -106,10 +75,7 @@ class DeveloperDashboardController extends Controller
 
     public function getRecentActivities(): JsonResponse
     {
-        $activities = UserActivityLog::where('user_id', Auth::id())
-            ->latest()
-            ->limit(20)
-            ->get(['action', 'details', 'created_at']);
+        $activities = $this->dashboardService->getRecentActivities(Auth::id(), 20);
 
         return response()->json([
             'success' => true,
@@ -121,31 +87,7 @@ class DeveloperDashboardController extends Controller
     {
         $developer = Auth::user()->developer;
         
-        $projects = $developer->projects()
-            ->with(['phases' => function ($query) {
-                $query->orderBy('start_date');
-            }])
-            ->get()
-            ->map(function ($project) {
-                $totalPhases = $project->phases->count();
-                $completedPhases = $project->phases->where('status', 'completed')->count();
-                $inProgressPhases = $project->phases->where('status', 'in_progress')->count();
-                
-                return [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'status' => $project->status,
-                    'total_phases' => $totalPhases,
-                    'completed_phases' => $completedPhases,
-                    'in_progress_phases' => $inProgressPhases,
-                    'progress_percentage' => $totalPhases > 0 
-                        ? round(($completedPhases / $totalPhases) * 100, 2)
-                        : 0,
-                    'current_phase' => $project->phases
-                        ->where('status', 'in_progress')
-                        ->first(),
-                ];
-            });
+        $projects = $this->dashboardService->getProjectProgress($developer);
 
         return response()->json([
             'success' => true,
@@ -153,36 +95,12 @@ class DeveloperDashboardController extends Controller
         ]);
     }
 
+
     public function getUpcomingDeadlines(): JsonResponse
     {
         $developer = Auth::user()->developer;
         
-        $deadlines = $developer->projects()
-            ->whereHas('phases', function ($query) {
-                $query->where('end_date', '>', now())
-                    ->where('end_date', '<=', now()->addDays(60));
-            })
-            ->with(['phases' => function ($query) {
-                $query->where('end_date', '>', now())
-                    ->where('end_date', '<=', now()->addDays(60))
-                    ->orderBy('end_date');
-            }])
-            ->get()
-            ->map(function ($project) {
-                return [
-                    'project_id' => $project->id,
-                    'project_name' => $project->name,
-                    'phases' => $project->phases->map(function ($phase) {
-                        return [
-                            'id' => $phase->id,
-                            'name' => $phase->name,
-                            'end_date' => $phase->end_date,
-                            'days_remaining' => now()->diffInDays($phase->end_date, false),
-                            'status' => $phase->status,
-                        ];
-                    }),
-                ];
-            });
+        $deadlines = $this->dashboardService->getUpcomingDeadlines($developer);
 
         return response()->json([
             'success' => true,
@@ -194,26 +112,7 @@ class DeveloperDashboardController extends Controller
     {
         $developer = Auth::user()->developer;
         
-        $projects = $developer->projects()->get();
-        
-        $overview = [
-            'total_project_value' => $projects->sum('total_value'),
-            'total_investment' => $projects->sum('total_investment'),
-            'expected_roi' => $projects->avg('expected_roi'),
-            'total_units_sold' => $projects->sum('units_sold'),
-            'total_revenue' => $projects->sum('total_revenue'),
-            'monthly_revenue' => $projects
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('total_revenue'),
-            'revenue_by_month' => $projects
-                ->groupBy(function ($project) {
-                    return $project->created_at->format('Y-m');
-                })
-                ->map(function ($group) {
-                    return $group->sum('total_revenue');
-                }),
-        ];
+        $overview = $this->dashboardService->getFinancialOverview($developer);
 
         return response()->json([
             'success' => true,
@@ -225,22 +124,7 @@ class DeveloperDashboardController extends Controller
     {
         $developer = Auth::user()->developer;
         
-        $units = $developer->projects()
-            ->with(['units'])
-            ->get()
-            ->pluck('units')
-            ->flatten();
-
-        $stats = [
-            'total_units' => $units->count(),
-            'available_units' => $units->where('status', 'available')->count(),
-            'reserved_units' => $units->where('status', 'reserved')->count(),
-            'sold_units' => $units->where('status', 'sold')->count(),
-            'under_construction_units' => $units->where('status', 'under_construction')->count(),
-            'ready_units' => $units->where('status', 'ready')->count(),
-            'total_sold_value' => $units->where('status', 'sold')->sum('price'),
-            'average_unit_price' => $units->where('status', 'sold')->avg('price'),
-        ];
+        $stats = $this->dashboardService->getUnitSalesStats($developer);
 
         return response()->json([
             'success' => true,
@@ -252,16 +136,7 @@ class DeveloperDashboardController extends Controller
     {
         $developer = Auth::user()->developer;
         
-        $updates = $developer->projects()
-            ->whereHas('constructionUpdates')
-            ->with(['constructionUpdates' => function ($query) {
-                $query->latest()->limit(10);
-            }])
-            ->get()
-            ->pluck('constructionUpdates')
-            ->flatten()
-            ->sortByDesc('created_at')
-            ->take(20);
+        $updates = $this->dashboardService->getConstructionUpdates($developer);
 
         return response()->json([
             'success' => true,

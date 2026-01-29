@@ -225,7 +225,7 @@ class User extends Authenticatable
     // Relationships
     public function socialAccounts()
     {
-        return $this->hasMany(\App\Models\UserSocialAccount::class);
+        return $this->hasMany(\App\Models\Auth\UserSocialAccount::class);
     }
 
     public function hasRole(string|array $roles): bool
@@ -238,6 +238,11 @@ class User extends Authenticatable
     }
 
     public function getIsAdminAttribute(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    public function isAdmin(): bool
     {
         return $this->hasRole('admin');
     }
@@ -295,6 +300,16 @@ class User extends Authenticatable
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function savedProperties(): HasMany
+    {
+        return $this->hasMany(\App\Models\UserFavorite::class);
+    }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(\App\Models\UserActivityLog::class);
     }
 
     public function agent(): HasOne
@@ -409,6 +424,22 @@ class User extends Authenticatable
         ]);
     }
 
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(UserWallet::class);
+    }
+
+    public function favoriteProperties()
+    {
+        return $this->morphedByMany(Property::class, 'favoritable', 'user_favorites')
+            ->withTimestamps();
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany(\Illuminate\Notifications\DatabaseNotification::class, 'notifiable');
+    }
+
     public function updateWalletBalance(float $amount, string $operation = 'add'): void
     {
         if ($operation === 'add') {
@@ -458,8 +489,8 @@ class User extends Authenticatable
         $preferences[$key] = $value;
         $this->update(['notifications_preferences' => $preferences]);
     }
-      public function profile()
+    public function profile()
     {
-        return $this->hasOne(Profile::class);
+        return $this->hasOne(UserProfile::class);
     }
 }

@@ -3,534 +3,346 @@
 namespace App\Services;
 
 use App\Models\Agent;
-use App\Models\Lead;
-use App\Models\Client;
-use App\Models\Appointment;
-use App\Models\Commission;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class AgentService
 {
+    protected $cacheTTL = 3600; // 1 hour
+
     /**
-     * Register a new agent
+     * Get agent profile data with eager loaded relationships.
      */
-    public function registerAgent(array $data): Agent
+    public function getAgentProfile(Agent $agent): Agent
     {
-        DB::beginTransaction();
-        try {
-            // Create user account for agent
-            $user = $this->createUserAccount($data);
+        return $agent->load(['profile', 'certifications', 'licenses', 'reviews' => function ($query) {
+            $query->latest()->limit(5);
+        }, 'company']);
+    }
 
-            // Create agent profile
-            $agent = Agent::create([
-                'user_id' => $user->id,
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
-                'bio' => $data['bio'] ?? null,
-                'license_number' => $data['license_number'] ?? $this->generateLicenseNumber(),
-                'specializations' => $data['specializations'] ?? null,
-                'experience_years' => $data['experience_years'] ?? 0,
-                'languages' => $data['languages'] ?? null,
-                'areas_of_expertise' => $data['areas_of_expertise'] ?? [],
-                'achievements' => $data['achievements'] ?? [],
-                'status' => 'active'
-            ]);
+    /**
+     * Get agent dashboard/profile stats with caching.
+     */
+    public function getAgentStats(Agent $agent): array
+    {
+        $cacheKey = "agent_stats_{$agent->id}";
 
-            // Generate license number
-            if (!$data['license_number']) {
-                $agent->update(['license_number' => $this->generateLicenseNumber()]);
+        return Cache::remember($cacheKey, 600, function () use ($agent) {
+            return [
+                'total_properties' => $agent->properties()->count(),
+                'active_properties' => $agent->properties()->where('status', 'active')->count(),
+                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
+                'total_reviews' => $agent->reviews()->count(),
+                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
+                'total_commissions' => $agent->commissions()->sum('amount'),
+                'this_month_commissions' => $agent->commissions()
+                    ->whereMonth('created_at', now()->month)
+                    ->sum('amount'),
+                'properties_sold' => $agent->properties()->where('status', 'sold')->count(),
+                'total_revenue' => $agent->commissions()->sum('amount'),
+                'active_clients' => $agent->clients()->count(),
+                'rating' => $agent->reviews()->avg('rating') ?? 0,
+            ];
+        });
+    }
+
+    /**
+     * Get recent activities for the agent.
+     */
+    public function getRecentActivities(Agent $agent): array
+    {
+        $cacheKey = "agent_activities_{$agent->id}";
+
+        return Cache::remember($cacheKey, 300, function () use ($agent) {
+            $activities = [];
+            
+            // Recent properties
+            $properties = $agent->properties()->latest()->limit(3)->get();
+            foreach ($properties as $property) {
+                $activities[] = [
+                    'icon' => 'home',
+                    'message' => "Added new property: {$property->title}",
+                    'time' => $property->created_at->diffForHumans(),
+                    'timestamp' => $property->created_at
+                ];
             }
 
-            // Create agent license
-            $agent->license()->create([
-                'number' => $agent->license_number,
-                'type' => $data['license_type'] ?? 'real_estate',
-                'issued_at' => now(),
-                'expires_at' => now()->addYears(2),
-                'status' => 'active'
-            ]);
-
-            // Create commission structure
-            $agent->commissionStructure()->create([
-                'base_rate' => $data['commission_rate'] ?? 2.5,
-                'sale_rate' => $data['sale_rate'] ?? 0.025,
-                'rental_rate' => $data['rental_rate'] ?? 0.10,
-                'referral_rate' => $data['referral_rate'] ?? 0.05,
-                'bonus_structure' => $data['bonus_structure'] ?? json_encode([
-                    'performance_bonus' => 1000,
-                    'referral_bonus' => 500,
-                    'team_bonus' => 2000,
-                    'leadership_bonus' => 3000
-                'training_bonus' => 1000
-                'retention_bonus' => 500
-                'productivity_bonus' => 2000
-                'attendance_bonus' => 1000
-                'quality_bonus' => 1000
-                'innovation_bonus' => 1000
-                'customer_service_bonus' => 1000
-                'sales_target_bonus' => 1000
-                'team_leadership_bonus' => 1000
-                'company_growth_bonus' => 1000
-                'year_end_bonus' => 1000
-                'quarter_end_bonus' => 1000
-                'month_end_bonus' => 1000
-                'week_end_bonus' => 1000
-                'daily_target_bonus' => 1000
-            ])
-                ])
-            ]);
-
-            // Create initial commission record
-            $agent->commissions()->create([
-                'type' => 'registration',
-                'amount' => 0,
-                'rate' => $agent->commissionStructure->base_rate,
-                'agent_id' => $agent->id,
-                'created_by' => $user->id
-            ]);
-
-            Log::info('Agent registered successfully', [
-                'agent_id' => $agent->id,
-                'user_id' => $agent->id
-            ]);
-
-            DB::commit();
-
-            Log::info('Agent registered', [
-                'agent_name' => $data['first_name'] . ' ' . $data['last_name'],
-                'email' => $data['email'],
-                'license_number' => $agent->license_number
-            ]);
-
-            return $agent->refresh();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to register agent', [
-                'error' => $e->getMessage(),
-                'data' => $data
-            ]);
-            
-            throw $e;
-        }
-    }
-
-    /**
-     * Assign lead to agent
-     */
-    public function assignLead(int $agentId, int $leadId, string $note = null): bool
-    {
-        DB::beginTransaction();
-        try {
-            $lead = Lead::findOrFail($leadId);
-            $agent = Agent::findOrFail($agentId);
-
-            // Check if lead is already assigned
-            if ($lead->assigned_agent_id) !== null) {
-                throw new \Exception('Lead is already assigned to another agent');
+            // Recent reviews
+            $reviews = $agent->reviews()->latest()->limit(3)->get();
+            foreach ($reviews as $review) {
+                $activities[] = [
+                    'icon' => 'star',
+                    'message' => "Received a {$review->rating}-star review from {$review->client_name}",
+                    'time' => $review->created_at->diffForHumans(),
+                    'timestamp' => $review->created_at
+                ];
             }
 
-            // Assign lead to agent
-            $lead->update([
-                'assigned_agent_id' => $agent->id,
-                'assigned_at' => now(),
-                'assigned_note' => $note,
-                'status' => 'assigned'
-            ]);
-
-            // Create assignment record
-            $lead->assignments()->create([
-                'lead_id' => $leadId,
-                'agent_id' => $agentId,
-                'assigned_by' => auth()->id(),
-                'assigned_at' => now(),
-                'note' => $note,
-                'status' => 'assigned'
-            ]);
-
-            // Update lead status
-            $lead->update([
-                'status' => 'assigned',
-                'assigned_at' => now()
-            ]);
-
-            // Create notification for agent
-            $agent->notifications()->create([
-                'title' => 'عميل جديد مخصص لك',
-                'message' => "تم تخصيص العميل {$lead->title} لك.",
-                'type' => 'lead_assigned',
-                'data' => [
-                    'lead_id' => $leadId,
-                    'lead_title' => $lead->title,
-                    'client_name' => $lead->client->name,
-                    'client_phone' => $lead->client->phone,
-                    'client_email' => $lead->client->email,
-                    'assigned_by' => auth()->name,
-                    'assigned_at' => now()
-                ]
-            ]);
-
-            // Create notification for client if exists
-            if ($lead->client) {
-                $lead->client->notifications()->create([
-                    'title' => 'تم تخصيص عميلك',
-                    'message' => "تم تخصيص عميلك {$lead->title} للوكيل {$agent->name}.",
-                    'type' => 'lead_assigned_to_client',
-                    'data' => [
-                        'agent_id' => $agent->id,
-                        'agent_name' => $agent->name,
-                        'lead_id' => $leadId,
-                        'lead_title' => $lead->title,
-                        'client_name' => $lead->client->name,
-                        'assigned_to' => auth()->name
-                    ]
-                ]);
+            // Recent commissions
+            $commissions = $agent->commissions()->latest()->limit(3)->get();
+            foreach ($commissions as $commission) {
+                $activities[] = [
+                    'icon' => 'dollar-sign',
+                    'message' => "Earned commission of " . number_format($commission->amount, 2) . " SAR",
+                    'time' => $commission->created_at->diffForHumans(),
+                    'timestamp' => $commission->created_at
+                ];
             }
 
-            Log::info('Lead assigned to agent', [
-                'agent_id' => $agent->id,
-                'lead_id' => $leadId,
-                'assigned_by_id' => auth()->id()
-            ]);
+            // Sort by timestamp
+            usort($activities, function ($a, $b) {
+                return $b['timestamp'] <=> $a['timestamp'];
+            });
 
-            DB::commit();
+            return array_slice($activities, 0, 5);
+        });
+    }
 
-            return true;
+    /**
+     * Invalidate agent cache.
+     */
+    public function invalidateCache(int $agentId): void
+    {
+        Cache::forget("agent_stats_{$agentId}");
+        Cache::forget("agent_activities_{$agentId}");
+        Cache::forget("agent_public_profile_{$agentId}"); // Invalidate public profile cache
+    }
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to assign lead to agent', [
-                'agent_id' => $agentId,
-                'lead_id' => $leadId,
-                'error' => $e->getMessage(),
-                'data' => $data
-            ]);
-            
-            throw $e;
+    /**
+     * Update agent profile data and handle photo uploads.
+     */
+    public function updateAgentProfile(Agent $agent, array $profileData, $profilePhoto = null, $coverImage = null): Agent
+    {
+        if ($profilePhoto) {
+            if ($agent->profile && $agent->profile->profile_photo) {
+                Storage::disk('public')->delete($agent->profile->profile_photo);
+            }
+            $profileData['profile_photo'] = $profilePhoto->store('agent-photos', 'public');
+        }
+
+        if ($coverImage) {
+            if ($agent->profile && $agent->profile->cover_image) {
+                Storage::disk('public')->delete($agent->profile->cover_image);
+            }
+            $profileData['cover_image'] = $coverImage->store('agent-covers', 'public');
+        }
+
+        $agent->profile()->updateOrCreate(['agent_id' => $agent->id], $profileData);
+        $this->invalidateCache($agent->id); // Invalidate cache after update
+        return $this->getAgentProfile($agent);
+    }
+
+    /**
+     * Upload agent profile photo.
+     */
+    public function uploadAgentPhoto(Agent $agent, $photo): string
+    {
+        if ($agent->profile && $agent->profile->profile_photo) {
+            Storage::disk('public')->delete($agent->profile->profile_photo);
+        }
+        $path = $photo->store('agent-photos', 'public');
+        $agent->profile()->updateOrCreate(['agent_id' => $agent->id], ['profile_photo' => $path]);
+        $this->invalidateCache($agent->id);
+        return asset('storage/' . $path);
+    }
+
+    /**
+     * Remove agent profile photo.
+     */
+    public function removeAgentPhoto(Agent $agent): void
+    {
+        if ($agent->profile && $agent->profile->profile_photo) {
+            Storage::disk('public')->delete($agent->profile->profile_photo);
+            $agent->profile->update(['profile_photo' => null]);
+            $this->invalidateCache($agent->id);
         }
     }
 
     /**
-     * Convert lead to client
+     * Get public agent profile data with eager loaded relationships and stats.
      */
-    public function convertLeadToClient(int $agentId, int $leadId, float $salePrice, array $saleData = []): bool
+    public function getPublicAgentProfile(Agent $agent): array
     {
-        DB::beginTransaction();
-        try {
-            $lead = Lead::findOrFail($leadId);
-            $agent = Agent::findOrFail($agentId);
+        $cacheKey = "agent_public_profile_{$agent->id}";
 
-            // Check if lead is already converted
-            if ($lead->status === 'converted') {
-                throw new \Exception('Lead is already converted');
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            $agent->load([
+                'profile',
+                'properties' => function ($query) {
+                    $query->where('status', 'active')->latest()->limit(6);
+                },
+                'reviews' => function ($query) {
+                    $query->latest()->limit(10);
+                },
+                'certifications',
+                'licenses'
+            ]);
+
+            $stats = [
+                'total_properties' => $agent->properties()->count(),
+                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
+                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
+                'total_reviews' => $agent->reviews()->count(),
+                'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
+            ];
+
+            return compact('agent', 'stats');
+        });
+    }
+
+    /**
+     * Get paginated agents with filters and caching.
+     */
+    public function getAgentsPaginated(array $filters, int $perPage = 12, bool $forDirectory = false)
+    {
+        $cacheKey = 'agents_paginated_' . md5(json_encode($filters) . $perPage . $forDirectory);
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($filters, $perPage, $forDirectory) {
+            $query = Agent::with(['profile', 'user', 'company']);
+
+            if ($forDirectory) {
+                $query->where('status', 'active');
             }
 
-            // Create client if not exists
-            $client = $this->createClientFromLead($lead, $salePrice, $saleData);
+            if (isset($filters['search'])) {
+                $search = $filters['search'];
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhereHas('profile', function ($q) use ($search) {
+                    $q->where('license_number', 'like', "%{$search}%")
+                      ->orWhere('bio', 'like', "%{$search}%");
+                });
+            }
 
-            // Create sale record
-            $sale = $agent->sales()->create([
-                'agent_id' => $agentId,
-                'client_id' => $client->id,
-                'property_id' => $lead->property_id,
-                'sale_price' => $salePrice,
-                'commission_rate' => $agent->commissionStructure->sale_rate,
-                'commission_amount' => $salePrice * ($agent->commissionStructure->sale_rate / 100),
-                'agent_id' => $agent->id,
-                'created_by' => auth()->id(),
-                'created_at' => now()
-            ]);
+            if (isset($filters['specialization'])) {
+                $specialization = $filters['specialization'];
+                $query->whereHas('profile', function ($q) use ($specialization) {
+                    $q->whereJsonContains('specializations', $specialization);
+                });
+            }
 
-            // Update lead status
-            $lead->update([
-                'status' => 'converted',
-                'converted_at' => now(),
-                'converted_by' => $agent->id,
-                'client_id' => $client->id,
-                'sale_id' => $sale->id,
-                'sale_price' => $salePrice,
-                'commission_amount' => $salePrice * ($agent->commissionStructure->sale_rate / 100)
-            ]);
+            if (isset($filters['location'])) {
+                $location = $filters['location'];
+                $query->whereHas('profile', function ($q) use ($location) {
+                    $q->whereJsonContains('service_areas', $location);
+                });
+            }
 
-            // Create commission record
-            $agent->commissions()->create([
-                'type' => 'sale',
-                'amount' => $salePrice * ($agent->commissionStructure->sale_rate / 100),
-                'rate' => $agent->commissionStructure->sale_rate,
-                'agent_id' => $agent->id,
-                'sale_id' => $sale->id,
-                'client_id' => $client->id,
-                'created_by' => auth()->id(),
-                'created_at' => now()
-            ]);
+            if (isset($filters['rating'])) {
+                $rating = $filters['rating'];
+                $query->whereHas('reviews', function ($q) use ($rating) {
+                    $q->havingRaw('AVG(rating) >= ?', [$rating]);
+                });
+            }
 
-            // Create notification for agent
-            $agent->notifications()->create([
-                'title' => 'بيع ناجح',
-                'message' => "تهانينا! تم بيع العقار {$lead->property->title} للعميل {$client->name} بقيمة {$salePrice}",
-                'type' => 'lead_converted_to_client',
-                'data' => [
-                    'sale_id' => $sale->id,
-                    'property_title' => $lead->property->title,
-                    'client_name' => $client->name,
-                    'sale_price' => $salePrice,
-                    'commission_amount' => $salePrice * ($agent->commissionStructure->sale_rate / 100),
-                    'client_id' => $client->id,
-                    'sale_id' => $sale_id,
-                    'commission_id' => $commission->id,
-                    'earned_by' => $agent->id
-                ]
-                ]
-            ]);
+            if (isset($filters['status']) && !$forDirectory) {
+                $query->where('status', $filters['status']);
+            }
 
-            // Create notification for client
-            $client->notifications()->create([
-                'title' => 'تهانينا! تم شراء العقار',
-                'message' => "تهانينا! تم شراء العقار {$lead->property->title} من قبل {$agent->name}.",
-                'type' => 'property_purchased',
-                'data' => [
-                    'property_id' => $lead->property_id,
-                    'property_title' => $lead->property->title',
-                    'agent_id' => $agent->id,
-                    'sale_id' => $sale->id,
-                    'sale_price' => $salePrice,
-                    'purchase_price' => $salePrice,
-                    'agent_id' => $agent->id,
-                    'earned_by' => $agent->id
-                ]
-                ]
-            ]);
+            if (isset($filters['company_id'])) {
+                $query->where('company_id', $filters['company_id']);
+            }
 
-            Log::info('Lead converted to client', [
-                'agent_id' => $agent->id,
-                'lead_id' => $leadId,
-                'client_id' => $client->id,
-                'sale_id' => $sale->id,
-                'property_id' => $lead->property_id,
-                'agent_id' => $agent->id,
-                'earned_by' => $agent->id
-                ]);
-            ]);
+            if ($forDirectory) {
+                $query->orderByRaw('(SELECT AVG(rating) FROM agent_reviews WHERE agent_id = agents.id) DESC');
+            } else {
+                $query->latest();
+            }
 
-            DB::commit();
-
-            return true;
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to convert lead to client', [
-                'agent_id' => $agentId,
-                'lead_id' => $leadId,
-                'sale_price' => $salePrice,
-                'error' => $e->getMessage(),
-                'data' => $saleData
-            ]);
-            
-            throw $e;
-        }
+            return $query->paginate($perPage);
+        });
     }
 
     /**
-     * Schedule appointment with client
+     * Get agent specializations with caching.
      */
-    public function scheduleAppointment(int $agentId, int $leadId, string $dateTime, string $location, string $note = null): bool
+    public function getAgentSpecializations(): \Illuminate\Support\Collection
     {
-        DB::beginTransaction();
-        try {
-            $lead = Lead::findOrFail($leadId);
-            $client = $lead->client;
-
-            // Create appointment record
-            $appointment = $agent->appointments()->create([
-                'agent_id' => $agentId,
-                'client_id' => $client->id,
-                'property_id' => $lead->property_id,
-                'start_time' => $dateTime,
-                'end_time' => null,
-                'location' => $location,
-                'status' => 'scheduled',
-                'note' => $note,
-                'created_at' => now(),
-                'created_by' => $agent->id
-            ]);
-
-            // Update lead status
-            $lead->update([
-                'status' => 'appointment_scheduled',
-                'appointment_scheduled_at' => now()
-            ]);
-
-            // Create notification for agent
-            $agent->notifications()->create([
-                'title' => 'موعد مجدول مع العميل',
-                'message' => "تم تحديد موعد مع العميل {$client->name} في {$dateTime} في {$location}",
-                'type' => 'appointment_scheduled',
-                'data' => [
-                    'appointment_id' => $appointment->id,
-                    'client_id' => $client->id,
-                    'property_id' => $lead->property_id,
-                    'start_time' => $dateTime,
-                    'location' => $location,
-                    'scheduled_by' => $agent->name,
-                    'appointment_time' => $dateTime
-                ]
-                ]
-            ]);
-
-            // Create notification for client
-            $client->notifications()->create([
-                'title' => 'موعد مجدول جديد',
-                'message' => "تم تحديد موعد مع العميل {$client->name} في {$dateTime} في {$location}",
-                'type' => 'appointment_scheduled',
-                'data' => [
-                    'appointment_id' => $appointment->id,
-                    'client_id' => $client->id,
-                    'property_id' => $lead->property_id,
-                    'start_time' => $dateTime,
-                    'location' => $location,
-                    'scheduled_by' => $agent->name,
-                    'appointment_time' => $dateTime
-                ]
-                ]
-            ]);
-
-            Log::info('Appointment scheduled with client', [
-                'agent_id' => $agentId,
-                'lead_id' => $leadId,
-                'client_id' => $client->id,
-                'property_id' => $lead->property_id,
-                'appointment_id' => $appointment_id,
-                'start_time' => $dateTime,
-                'location' => $location,
-                'scheduled_by' => $agent->name
-                ]
-            ]);
-
-            DB::commit();
-
-            return true;
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to schedule appointment', [
-                'agent_id' => $agentId,
-                'lead_id' => $leadId,
-                'client_id' => $client->id,
-                'property_id' => $lead->property_id,
-                'appointment_time' => $dateTime,
-                'location' => $location,
-                'error' => $e->getMessage(),
-                'data' => [
-                    'dateTime' => $dateTime,
-                    'location' => $location
-                ]
-            ]);
-            
-            throw $e;
-        }
+        return Cache::remember('agent_specializations', $this->cacheTTL, function () {
+            return \App\Models\AgentProfile::whereNotNull('specializations')
+                ->get()
+                ->flatMap(function ($profile) {
+                    return $profile->specializations ?? [];
+                })
+                ->unique()
+                ->sort()
+                ->values();
+        });
     }
 
     /**
-     * The job failed to process.
+     * Get agent details with eager loaded relationships and stats for show page.
      */
-    public function failed(\Throwable $exception): void
+    public function getAgentDetails(Agent $agent): array
     {
-        Log::error('Appointment scheduling job failed', [
-                'agent_id' => $this->agentId,
-                'lead_id' => $leadId,
-                'client_id' => $client->id,
-                'property_id' => $lead->property_id,
-                'appointment_time' => $dateTime,
-                'location' => $location,
-                'error' => $exception->getMessage()
-            ]);
-        }
-    }
+        $cacheKey = "agent_details_{$agent->id}";
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            $agent->load(['profile', 'user', 'company', 'properties' => function ($query) {
+                $query->latest()->limit(10);
+            }, 'reviews' => function ($query) {
+                $query->latest()->limit(5);
+            }]);
+
+            $stats = [
+                'total_properties' => $agent->properties()->count(),
+                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
+                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
+                'total_reviews' => $agent->reviews()->count(),
+                'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
+            ];
+
+            return compact('agent', 'stats');
+        });
     }
 
     /**
-     * Create user account for agent
+     * Get filtered agents for dropdowns/APIs with caching.
      */
-    private function createUserAccount(array $data): User
+    public function getFilteredAgents(array $filters): \Illuminate\Database\Eloquent\Collection
     {
-        return User::create([
-            'name' => $data['first_name'] . ' ' . $data['last_name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role' => 'agent',
-            'email_verified_at' => now(),
-            'status' => 'active'
-            'created_at' => now()
-        ]);
+        $cacheKey = 'filtered_agents_' . md5(json_encode($filters));
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($filters) {
+            $query = Agent::with(['user', 'company'])
+                ->where('status', 'active');
+
+            if (isset($filters['search'])) {
+                $search = $filters['search'];
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            }
+
+            if (isset($filters['company_id'])) {
+                $query->where('company_id', $filters['company_id']);
+            }
+
+            return $query->get(['id', 'user_id', 'company_id', 'license_number']);
+        });
     }
 
     /**
-     * Create client from lead data
+     * Get agent statistics with caching.
      */
-    private function createClientFromLead(Lead $lead, float $salePrice, array $saleData): Client
+    public function getAgentStatistics(Agent $agent): array
     {
-        return Client::create([
-            'name' => $saleData['client_name'] ?? 'Unknown Client',
-            'email' => $saleData['client_email'] ?? null,
-            'phone' => $saleData['client_phone'] ?? null,
-            'address' => $saleData['client_address'] ?? null,
-            'type' => 'buyer',
-            'source' => 'lead->source->name ?? 'direct',
-            'created_at' => now(),
-            'created_by' => $lead->assigned_agent_id
-            ]);
-    }
+        $cacheKey = "agent_statistics_{$agent->id}";
 
-    /**
-     * Generate license number
-     */
-    private function generateLicenseNumber(): string
-    {
-        $lastLicense = Agent::max('license_number') + 1;
-        return 'AG' . str_pad($lastLicense, 6, '0, '0);
-    }
-
-    /**
-     * Calculate commission ranking
-     */
-    private function calculateCommissionRanking(Agent $agent, float $totalAmount): int
-    {
-        // This would compare with other agents in the company
-        // Placeholder implementation
-        
-        $companyAgents = $agent->company ? $agent->company->agents()->count() : 0;
-        
-        if ($companyAgents > 0) {
-            $averageAmount = $totalAmount / $companyAgents;
-            return $this->getRankingScore($averageAmount);
-        }
-        
-        return $this->getRankingScore($totalAmount);
-    }
-
-    /**
-     * Get ranking score based on amount
-     */
-    private function getRankingScore(float $amount): int
-    {
-        if ($amount >= 10000) {
-            return 5; // Top performer
-        } elseif ($amount >= 5000) {
-            return 4; // Excellent performer
-        } elseif ($amount >= 2500) {
-            return 3; // Very good performer
-        } elseif ($amount >= 1000) {
-            return 2; // Good performer
-        } elseif ($amount >= 500) {
-            return 1; // Average performer
-        } else {
-            return 0; // Needs improvement
-        }
-    }
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            return [
+                'total_properties' => $agent->properties()->count(),
+                'active_listings' => $agent->properties()->where('status', 'published')->count(),
+                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
+                'total_reviews' => $agent->reviews()->count(),
+                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
+                'total_commissions' => $agent->commissions()->sum('amount'),
+                'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
+                'member_since' => $agent->created_at->format('M d, Y'),
+            ];
+        });
     }
 }

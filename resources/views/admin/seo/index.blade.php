@@ -152,7 +152,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="flex items-center space-x-4">
                         <span class="text-sm text-gray-600">
-                            Showing {{ $metaData->firstItem() ?? 0 }} to {{ $metaData->lastItem() ?? 0 }} of {{ $metaData->total() ?? 0 }} entries
+                            Showing {{ $seoMetas->firstItem() ?? 0 }} to {{ $seoMetas->lastItem() ?? 0 }} of {{ $seoMetas->total() ?? 0 }} entries
                         </span>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -177,7 +177,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse ($metaData ?? [] as $meta)
+                        @forelse ($seoMetas ?? [] as $meta)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ $meta->page_type }}</div>
@@ -232,9 +232,9 @@
             </div>
 
             <!-- Pagination -->
-            @if (isset($metaData) && $metaData->hasPages())
+            @if (isset($seoMetas) && $seoMetas->hasPages())
                 <div class="px-6 py-4 border-t border-gray-200">
-                    {{ $metaData->links() }}
+                    {{ $seoMetas->links() }}
                 </div>
             @endif
         </div>

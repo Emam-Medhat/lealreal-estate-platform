@@ -12,39 +12,24 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Services\AgentPropertyService;
 
 class PropertyController extends Controller
 {
-    public function __construct()
+    protected $agentPropertyService;
+
+    public function __construct(AgentPropertyService $agentPropertyService)
     {
         $this->middleware('auth');
         $this->middleware('agent');
+        $this->agentPropertyService = $agentPropertyService;
     }
 
     public function index(Request $request)
     {
         $agent = Auth::user();
         
-        $properties = Property::where('agent_id', $agent->id)
-            ->with(['media'])
-            ->when($request->boolean('featured'), function($query) {
-                $query->where('featured', true);
-            })
-            ->when($request->status, function($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->type, function($query, $type) {
-                $query->where('property_type', $type);
-            })
-            ->when($request->search, function($query, $search) {
-                $query->where(function($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('property_code', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
+        $properties = $this->agentPropertyService->getAgentProperties($agent, $request);
 
         return view('agent.properties.index', compact('properties'));
     }
@@ -111,13 +96,7 @@ class PropertyController extends Controller
             $validated['nearby_places'] = [];
         }
 
-        $validated['agent_id'] = $agent->id;
-        $validated['property_code'] = $this->generatePropertyCode();
-        $validated['views_count'] = 0;
-        $validated['inquiries_count'] = 0;
-        $validated['favorites_count'] = 0;
-
-        $property = Property::create($validated);
+        $property = $this->agentPropertyService->createProperty($agent, $validated);
 
         return redirect()
             ->route('agent.properties.show', $property)
@@ -192,24 +171,11 @@ class PropertyController extends Controller
             $validated['nearby_places'] = [];
         }
 
-        $property->update($validated);
+        $this->agentPropertyService->updateProperty($property, $validated);
 
         // Handle images upload
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('properties/images', 'public');
-                PropertyMedia::create([
-                    'property_id' => $property->id,
-                    'file_path' => $path,
-                    'file_name' => $image->getClientOriginalName(),
-                    'file_type' => $image->getMimeType(),
-                    'file_size' => $image->getSize(),
-                    'media_type' => 'image',
-                    'is_primary' => $index === 0 && $property->images()->count() === 0,
-                    'is_featured' => false,
-                    'uploaded_by' => Auth::id(),
-                ]);
-            }
+            $this->agentPropertyService->uploadPropertyImages($property, $request->file('images'));
         }
 
         return redirect()
@@ -223,13 +189,7 @@ class PropertyController extends Controller
             abort(403);
         }
 
-        // Delete associated media files
-        foreach ($property->media as $media) {
-            Storage::disk('public')->delete($media->file_path);
-            $media->delete();
-        }
-
-        $property->delete();
+        $this->agentPropertyService->deleteProperty($property);
 
         return redirect()
             ->route('agent.properties.index')
@@ -242,14 +202,7 @@ class PropertyController extends Controller
             abort(403);
         }
 
-        $newProperty = $property->replicate();
-        $newProperty->title = $property->title . ' (Copy)';
-        $newProperty->property_code = $this->generatePropertyCode();
-        $newProperty->status = 'draft';
-        $newProperty->views_count = 0;
-        $newProperty->inquiries_count = 0;
-        $newProperty->favorites_count = 0;
-        $newProperty->save();
+        $newProperty = $this->agentPropertyService->duplicateProperty($property);
 
         return redirect()
             ->route('agent.properties.edit', $newProperty)
@@ -262,7 +215,7 @@ class PropertyController extends Controller
             abort(403);
         }
 
-        $property->update(['status' => 'active']);
+        $this->agentPropertyService->publishProperty($property);
 
         return redirect()
             ->route('agent.properties.show', $property)
@@ -275,7 +228,7 @@ class PropertyController extends Controller
             abort(403);
         }
 
-        $property->update(['status' => 'inactive']);
+        $this->agentPropertyService->archiveProperty($property);
 
         return redirect()
             ->route('agent.properties.show', $property)
@@ -293,26 +246,7 @@ class PropertyController extends Controller
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        $uploadedImages = [];
-
-        foreach ($request->file('images') as $image) {
-            $path = $image->store('properties/images', 'public');
-            $media = PropertyMedia::create([
-                'property_id' => $property->id,
-                'file_path' => $path,
-                'file_name' => $image->getClientOriginalName(),
-                'file_type' => $image->getMimeType(),
-                'file_size' => $image->getSize(),
-                'media_type' => 'image',
-                'uploaded_by' => Auth::id(),
-            ]);
-
-            $uploadedImages[] = [
-                'id' => $media->id,
-                'url' => Storage::url($path),
-                'name' => $image->getClientOriginalName(),
-            ];
-        }
+        $uploadedImages = $this->agentPropertyService->uploadPropertyImages($property, $request->file('images'));
 
         return response()->json(['images' => $uploadedImages]);
     }
@@ -323,8 +257,7 @@ class PropertyController extends Controller
             abort(403);
         }
 
-        Storage::disk('public')->delete($media->file_path);
-        $media->delete();
+        $this->agentPropertyService->deletePropertyImage($media);
 
         return response()->json(['success' => true]);
     }
@@ -335,23 +268,10 @@ class PropertyController extends Controller
             abort(403);
         }
 
-        // Remove primary status from all other images
-        PropertyMedia::where('property_id', $property->id)
-            ->where('media_type', 'image')
-            ->update(['is_primary' => false]);
-
-        // Set this image as primary
-        $media->update(['is_primary' => true]);
+        $this->agentPropertyService->setPrimaryPropertyImage($property, $media);
 
         return response()->json(['success' => true]);
     }
 
-    private function generatePropertyCode()
-    {
-        do {
-            $code = 'PROP-' . strtoupper(uniqid());
-        } while (Property::where('property_code', $code)->exists());
 
-        return $code;
-    }
 }

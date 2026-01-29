@@ -12,7 +12,7 @@ class SeoController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:manage-seo');
+        $this->middleware('admin');
     }
 
     public function index(): View

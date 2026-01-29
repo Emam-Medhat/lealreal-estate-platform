@@ -33,7 +33,7 @@ class CheckProfileComplete
             $message = $this->getCompletionMessage($user->profile_completion_percentage);
 
             if ($request->ajax() || $request->wantsJson()) {
-                $redirectUrl = Route::has('profile.edit') ? route('profile.edit') : route('home');
+                $redirectUrl = Route::has('user.profile.edit') ? route('user.profile.edit') : route('home');
                 return response()->json([
                     'success' => false,
                     'message' => $message,
@@ -46,17 +46,17 @@ class CheckProfileComplete
 
             // Allow access to profile completion pages
             $allowedRoutes = [
-                'profile.edit',
-                'profile.update',
-                'avatar.upload',
-                'preferences.edit',
+                'user.profile.edit',
+                'user.profile.update',
+                'user.profile.avatar.upload',
+                'settings.index',
                 'kyc.create',
                 'kyc.store',
                 'kyc.status'
             ];
 
             if (!in_array($request->route()?->getName(), $allowedRoutes)) {
-                $route = Route::has('profile.edit') ? 'profile.edit' : 'home';
+                $route = Route::has('user.profile.edit') ? 'user.profile.edit' : 'home';
                 return redirect()->route($route)
                     ->with('info', $message);
             }

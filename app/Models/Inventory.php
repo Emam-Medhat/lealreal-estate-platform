@@ -11,37 +11,32 @@ class Inventory extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'item_code',
         'name',
         'description',
         'sku',
         'category_id',
         'supplier_id',
-        'unit',
+        'unit_price',
         'quantity',
         'reorder_level',
-        'max_stock_level',
-        'unit_cost',
-        'selling_price',
-        'location',
+        'max_stock',
+        'unit_of_measure',
         'status',
-        'total_value',
-        'last_stock_in',
-        'last_stock_out',
+        'location',
         'notes',
-        'attachments',
+        'created_by',
+        'attributes',
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:2',
-        'reorder_level' => 'decimal:2',
-        'max_stock_level' => 'decimal:2',
-        'unit_cost' => 'decimal:2',
-        'selling_price' => 'decimal:2',
-        'total_value' => 'decimal:2',
-        'last_stock_in' => 'datetime',
-        'last_stock_out' => 'datetime',
-        'attachments' => 'array',
+        'quantity' => 'integer',
+        'reorder_level' => 'integer',
+        'max_stock' => 'integer',
+        'unit_price' => 'decimal:2',
+        'unit_of_measure' => 'string',
+        'status' => 'string',
+        'created_by' => 'integer',
+        'attributes' => 'array',
     ];
 
     public function category()
@@ -51,7 +46,7 @@ class Inventory extends Model
 
     public function supplier()
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(InventorySupplier::class);
     }
 
     public function transactions()

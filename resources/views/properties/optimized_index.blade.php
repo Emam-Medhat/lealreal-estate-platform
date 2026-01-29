@@ -5,12 +5,17 @@
 @section('head')
     @parent
     <style>
-        /* Optimized CSS for better performance */
+        /* Modern Tailwind-inspired styling */
         .property-card {
-            transition: transform 0.2s ease;
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
         }
         .property-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -28,24 +33,83 @@
         .lazy-image.loaded {
             opacity: 1;
         }
+        .filter-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-1px);
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .property-stats {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+        }
     </style>
 @endsection
 
 @section('content')
-<div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-1">Properties</h1>
-                    <p class="text-muted mb-0">Browse our comprehensive property listings</p>
-                </div>
+<div class="container py-6">
+    <!-- Modern Page Header -->
+    <div class="page-header mb-6">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold mb-3">Discover Your Dream Property</h1>
+                <p class="lead mb-0 opacity-90">Browse our comprehensive collection of premium properties</p>
+            </div>
+            <div class="col-md-4 text-md-end">
                 @auth
-                    <a href="{{ route('optimized.properties.create') }}" class="btn btn-primary">
+                    <a href="{{ route('optimized.properties.create') }}" class="btn btn-light btn-lg">
                         <i class="fas fa-plus me-2"></i>Add Property
                     </a>
                 @endauth
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="row mt-4">
+            <div class="col-md-3 col-6">
+                <div class="property-stats text-center">
+                    <h3 class="h2 mb-1">{{ $properties->total() }}</h3>
+                    <small class="opacity-75">Total Properties</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="property-stats text-center">
+                    <h3 class="h2 mb-1">{{ $propertyTypes->count() }}</h3>
+                    <small class="opacity-75">Property Types</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="property-stats text-center">
+                    <h3 class="h2 mb-1">24/7</h3>
+                    <small class="opacity-75">Support</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="property-stats text-center">
+                    <h3 class="h2 mb-1">5★</h3>
+                    <small class="opacity-75">Service</small>
+                </div>
             </div>
         </div>
     </div>
@@ -53,20 +117,25 @@
     <!-- Search Filters -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body">
+            <div class="card filter-card">
+                <div class="card-body p-4">
                     <form method="GET" action="{{ route('optimized.properties.index') }}" id="searchForm">
                         <div class="row g-3">
                             <!-- Basic Search -->
-                            <div class="col-md-3">
-                                <label for="q" class="form-label">Search</label>
-                                <input type="text" class="form-control" id="q" name="q" 
-                                       value="{{ request('q') }}" placeholder="Keywords, location...">
+                            <div class="col-lg-4 col-md-6">
+                                <label for="q" class="form-label fw-semibold">Search Properties</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" id="q" name="q" 
+                                           value="{{ request('q') }}" placeholder="Keywords, location...">
+                                </div>
                             </div>
 
                             <!-- Property Type -->
-                            <div class="col-md-2">
-                                <label for="property_type" class="form-label">Type</label>
+                            <div class="col-lg-2 col-md-6">
+                                <label for="property_type" class="form-label fw-semibold">Property Type</label>
                                 <select class="form-select" id="property_type" name="property_type">
                                     <option value="">All Types</option>
                                     @foreach($propertyTypes as $type)
@@ -78,8 +147,8 @@
                             </div>
 
                             <!-- Listing Type -->
-                            <div class="col-md-2">
-                                <label for="listing_type" class="form-label">For</label>
+                            <div class="col-lg-2 col-md-6">
+                                <label for="listing_type" class="form-label fw-semibold">Listing Type</label>
                                 <select class="form-select" id="listing_type" name="listing_type">
                                     <option value="">All</option>
                                     <option value="sale" {{ request('listing_type') == 'sale' ? 'selected' : '' }}>Sale</option>
@@ -88,15 +157,18 @@
                             </div>
 
                             <!-- Price Range -->
-                            <div class="col-md-2">
-                                <label for="max_price" class="form-label">Max Price</label>
-                                <input type="number" class="form-control" id="max_price" name="max_price" 
-                                       value="{{ request('max_price') }}" placeholder="Max price">
+                            <div class="col-lg-2 col-md-6">
+                                <label for="max_price" class="form-label fw-semibold">Max Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0">$</span>
+                                    <input type="number" class="form-control border-start-0" id="max_price" name="max_price" 
+                                           value="{{ request('max_price') }}" placeholder="Max">
+                                </div>
                             </div>
 
                             <!-- Bedrooms -->
-                            <div class="col-md-1">
-                                <label for="bedrooms" class="form-label">Beds</label>
+                            <div class="col-lg-2 col-md-6">
+                                <label for="bedrooms" class="form-label fw-semibold">Bedrooms</label>
                                 <select class="form-select" id="bedrooms" name="bedrooms">
                                     <option value="">Any</option>
                                     @for($i = 1; $i <= 10; $i++)
@@ -105,41 +177,46 @@
                                 </select>
                             </div>
 
-                            <!-- Search Button -->
-                            <div class="col-md-2">
-                                <label class="form-label">&nbsp;</label>
+                            <!-- Search Buttons -->
+                            <div class="col-lg-2 col-md-6">
+                                <label class="form-label fw-semibold">&nbsp;</label>
                                 <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary flex-fill" id="searchBtn">
-                                        <i class="fas fa-search me-1"></i>Search
+                                    <button type="button" class="btn btn-outline-secondary flex-fill" onclick="toggleAdvancedFilters()">
+                                        <i class="fas fa-sliders-h me-2"></i>Advanced
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleAdvancedFilters()">
-                                        <i class="fas fa-sliders-h"></i>
+                                    <button type="submit" class="btn btn-primary flex-fill" id="searchBtn">
+                                        <i class="fas fa-search me-2"></i>Search
                                     </button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Advanced Filters (Hidden by default) -->
-                        <div id="advancedFilters" class="row g-3 mt-3" style="display: none;">
-                            <div class="col-md-3">
-                                <label for="min_price" class="form-label">Min Price</label>
-                                <input type="number" class="form-control" id="min_price" name="min_price" 
-                                       value="{{ request('min_price') }}" placeholder="Min price">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" name="city" 
-                                       value="{{ request('city') }}" placeholder="City">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="min_area" class="form-label">Min Area (m²)</label>
-                                <input type="number" class="form-control" id="min_area" name="min_area" 
-                                       value="{{ request('min_area') }}" placeholder="Min area">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="max_area" class="form-label">Max Area (m²)</label>
-                                <input type="number" class="form-control" id="max_area" name="max_area" 
-                                       value="{{ request('max_area') }}" placeholder="Max area">
+                        <div id="advancedFilters" class="mt-4 pt-4 border-top" style="display: none;">
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="min_price" class="form-label fw-semibold">Min Price</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">$</span>
+                                        <input type="number" class="form-control border-start-0" id="min_price" name="min_price" 
+                                               value="{{ request('min_price') }}" placeholder="Min">
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="city" class="form-label fw-semibold">City</label>
+                                    <input type="text" class="form-control" id="city" name="city" 
+                                           value="{{ request('city') }}" placeholder="Enter city">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="min_area" class="form-label fw-semibold">Min Area (m²)</label>
+                                    <input type="number" class="form-control" id="min_area" name="min_area" 
+                                           value="{{ request('min_area') }}" placeholder="Min area">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="max_area" class="form-label fw-semibold">Max Area (m²)</label>
+                                    <input type="number" class="form-control" id="max_area" name="max_area" 
+                                           value="{{ request('max_area') }}" placeholder="Max area">
+                                </div>
                             </div>
                         </div>
                     </form>

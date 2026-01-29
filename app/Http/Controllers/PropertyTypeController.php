@@ -15,14 +15,22 @@ class PropertyTypeController extends Controller
 
     public function index()
     {
-        $propertyTypes = PropertyType::withCount(['properties' => function($query) {
-            $query->where('status', 'active');
-        }])
-        ->active()
-        ->ordered()
-        ->get();
+        // Get property types with count using raw query since property_type is enum
+        $propertyTypes = PropertyType::active()->ordered()->get();
+        
+        // Add properties count manually
+        $propertyTypes->each(function($type) {
+            $type->properties_count = \App\Models\Property::where('property_type', $type->name)
+                ->where('status', 'active')
+                ->count();
+        });
 
         return view('property-types.index', compact('propertyTypes'));
+    }
+
+    public function create()
+    {
+        return view('property-types.create');
     }
 
     public function show(PropertyType $propertyType)

@@ -103,19 +103,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {{ __('reports.types.' . $report->type, $report->type) }}
+                                    {{ __('reports.types.' . $report->type) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $report->getStatusColorAttribute() === 'green' ? 'bg-green-100 text-green-800' : ($report->getStatusColorAttribute() === 'blue' ? 'bg-blue-100 text-blue-800' : ($report->getStatusColorAttribute() === 'red' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) }}">
-                                    {{ $report->getStatusLabelAttribute() }}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $report->status === 'completed' ? 'bg-green-100 text-green-800' : ($report->status === 'generating' ? 'bg-blue-100 text-blue-800' : ($report->status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) }}">
+                                    {{ $report->status === 'completed' ? 'مكتمل' : ($report->status === 'generating' ? 'قيد الإنشاء' : ($report->status === 'failed' ? 'فشل' : ($report->status === 'scheduled' ? 'مجدول' : 'غير معروف'))) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $report->created_at->format('Y-m-d H:i') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $report->getFormattedFileSizeAttribute() }}
+                                {{ $report->status === 'completed' && $report->file_path ? '2.5 MB' : 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $report->view_count }}

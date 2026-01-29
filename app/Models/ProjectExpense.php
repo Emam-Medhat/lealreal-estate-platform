@@ -12,36 +12,28 @@ class ProjectExpense extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'project_budget_id',
+        'project_id',
         'category_id',
-        'name',
+        'approved_by',
         'description',
         'amount',
-        'currency',
         'expense_date',
-        'receipt_number',
-        'vendor',
-        'payment_method',
+        'type',
         'status',
-        'approved_by',
-        'approved_at',
-        'created_by',
+        'vendor',
+        'receipt_number',
+        'notes',
+        'receipt_image',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'expense_date' => 'date',
-        'approved_at' => 'datetime',
     ];
 
-    public function budget(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(ProjectBudget::class);
-    }
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(ExpenseCategory::class);
+        return $this->belongsTo(Project::class);
     }
 
     public function approver(): BelongsTo

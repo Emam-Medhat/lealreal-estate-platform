@@ -691,6 +691,19 @@
             @csrf
 
             <!-- Success/Error Messages -->
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Please fix the following errors:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle me-2"></i>
@@ -790,20 +803,17 @@
                                     </label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-building"></i>
-                                        <select class="form-select @error('property_type') is-invalid @enderror"
-                                            id="property_type" name="property_type" required>
+                                        <select class="form-select @error('property_type_id') is-invalid @enderror"
+                                            id="property_type" name="property_type_id" required>
                                             <option value="">Select Property Type</option>
-                                            <option value="apartment" {{ old('property_type') == 'apartment' ? 'selected' : '' }}>Apartment</option>
-                                            <option value="villa" {{ old('property_type') == 'villa' ? 'selected' : '' }}>
-                                                Villa</option>
-                                            <option value="house" {{ old('property_type') == 'house' ? 'selected' : '' }}>
-                                                House</option>
-                                            <option value="land" {{ old('property_type') == 'land' ? 'selected' : '' }}>Land
-                                            </option>
-                                            <option value="commercial" {{ old('property_type') == 'commercial' ? 'selected' : '' }}>Commercial</option>
+                                            @foreach($propertyTypes as $type)
+                                                <option value="{{ $type->id }}" {{ old('property_type_id') == $type->id ? 'selected' : '' }}>
+                                                    {{ $type->name }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
-                                    @error('property_type')
+                                    @error('property_type_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -1043,10 +1053,30 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="btn-location" onclick="getCurrentLocation()">
-                                    <i class="fas fa-crosshairs"></i>
-                                    <span>Get Current Location</span>
-                                </button>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn-location" onclick="getCurrentLocation()">
+                                        <i class="fas fa-crosshairs"></i>
+                                        <span>Get Current Location</span>
+                                    </button>
+                                    <button type="button" class="btn-location" onclick="geocodeAddress()">
+                                        <i class="fas fa-search-location"></i>
+                                        <span>Verify Address & Get Coordinates</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Address Verification Status -->
+                                <div id="addressVerification" class="mt-3" style="display: none;">
+                                    <div class="alert alert-info d-flex align-items-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <div>Verifying address and getting coordinates...</div>
+                                    </div>
+                                </div>
+                                
+                                <div id="addressResult" class="mt-3" style="display: none;">
+                                    <!-- Results will be shown here -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1579,7 +1609,7 @@
                                 <span>Save Draft</span>
                             </button>
                         </div>
-                        <button type="button" class="btn-nav btn-next" id="nextBtn" onclick="handleNextClick()">
+                        <button type="button" class="btn-nav btn-next" id="nextBtn">
                             <span>Next</span>
                             <i class="fas fa-arrow-right"></i>
                         </button>
@@ -1592,16 +1622,14 @@
             </div>
 
             <!-- Hidden fields to ensure data is always sent -->
-            <!-- Hidden fields to ensure data is always sent - REMOVED to avoid overwriting user inputs -->
+            <input type="hidden" name="hidden_field_1" value="value_1">
+            <input type="hidden" name="hidden_field_2" value="value_2">
             <!-- Inputs hidden by CSS tabs are still submitted by the browser. -->
         </form>
     </div>
 
     <!-- Toast Notification -->
     <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Room Uploads Script -->
-    <script src="{{ asset('js/room-uploads.js') }}"></script>
 
     <script>
         // Prevent global pollution - wrap everything
@@ -1794,6 +1822,214 @@
                 }
             };
 
+            // Geocode address to get coordinates
+            window.geocodeAddress = function () {
+                const address = document.getElementById('address').value;
+                const city = document.getElementById('city').value;
+                const state = document.getElementById('state').value;
+                const country = document.getElementById('country').value;
+                
+                if (!address || !city || !country) {
+                    showToast('Please fill in Address, City, and Country fields first.', 'warning');
+                    return;
+                }
+                
+                // Show loading
+                const verificationDiv = document.getElementById('addressVerification');
+                const resultDiv = document.getElementById('addressResult');
+                
+                verificationDiv.style.display = 'block';
+                resultDiv.style.display = 'none';
+                
+                // Build full address
+                const fullAddress = `${address}, ${city}, ${state ? state + ', ' : ''}${country}`;
+                
+                // Use Nominatim API (OpenStreetMap) for geocoding
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1&addressdetails=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        verificationDiv.style.display = 'none';
+                        
+                        if (data && data.length > 0) {
+                            const result = data[0];
+                            const lat = parseFloat(result.lat);
+                            const lng = parseFloat(result.lon);
+                            
+                            // Update coordinates
+                            document.getElementById('latitude').value = lat.toFixed(6);
+                            document.getElementById('longitude').value = lng.toFixed(6);
+                            
+                            // Show success result
+                            resultDiv.innerHTML = `
+                                <div class="alert alert-success">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-check-circle me-3 mt-1"></i>
+                                        <div class="flex-grow-1">
+                                            <h6 class="alert-heading mb-2">Address Verified Successfully!</h6>
+                                            <p class="mb-2"><strong>Found Location:</strong> ${result.display_name}</p>
+                                            <div class="row small">
+                                                <div class="col-md-6">
+                                                    <strong>Coordinates:</strong><br>
+                                                    Latitude: ${lat.toFixed(6)}<br>
+                                                    Longitude: ${lng.toFixed(6)}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <strong>Address Details:</strong><br>
+                                                    ${result.address.road || 'N/A'}<br>
+                                                    ${result.address.city || result.address.town || result.address.village || 'N/A'}
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="showLocationPreview(${lat}, ${lng})">
+                                                    <i class="fas fa-map me-1"></i>Preview Location
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="clearAddressResult()">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            resultDiv.style.display = 'block';
+                            
+                            showToast('Address verified and coordinates updated!', 'success');
+                        } else {
+                            // Try alternative search with less strict format
+                            const simpleAddress = `${address}, ${city}, ${country}`;
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(simpleAddress)}&limit=3`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data && data.length > 0) {
+                                        // Show multiple options
+                                        let optionsHtml = `
+                                            <div class="alert alert-warning">
+                                                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Multiple Locations Found</h6>
+                                                <p class="mb-3">Please select the correct location:</p>
+                                                <div class="list-group">
+                                        `;
+                                        
+                                        data.forEach((result, index) => {
+                                            const lat = parseFloat(result.lat);
+                                            const lng = parseFloat(result.lon);
+                                            optionsHtml += `
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <h6 class="mb-1">${result.display_name}</h6>
+                                                            <small class="text-muted">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</small>
+                                                        </div>
+                                                        <button type="button" class="btn btn-sm btn-primary" onclick="selectLocation(${lat}, ${lng}, '${result.display_name.replace(/'/g, "\\'")}')">
+                                                            Select
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                        
+                                        optionsHtml += `
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary mt-3" onclick="clearAddressResult()">
+                                                    <i class="fas fa-times me-1"></i>Cancel
+                                                </button>
+                                            </div>
+                                        `;
+                                        
+                                        resultDiv.innerHTML = optionsHtml;
+                                        resultDiv.style.display = 'block';
+                                    } else {
+                                        // No results found
+                                        resultDiv.innerHTML = `
+                                            <div class="alert alert-danger">
+                                                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Address Not Found</h6>
+                                                <p class="mb-2">Could not find coordinates for the entered address.</p>
+                                                <div class="small">
+                                                    <strong>Tips:</strong><br>
+                                                    • Check spelling and try again<br>
+                                                    • Include more specific address details<br>
+                                                    • Try using nearby landmarks<br>
+                                                    • Use "Get Current Location" if you're at the property
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAddressResult()">
+                                                        <i class="fas fa-redo me-1"></i>Try Again
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
+                                        resultDiv.style.display = 'block';
+                                        
+                                        showToast('Address not found. Please check the address and try again.', 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Geocoding error:', error);
+                                    resultDiv.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Geocoding Error</h6>
+                                            <p>Unable to verify address. Please check your internet connection and try again.</p>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAddressResult()">
+                                                <i class="fas fa-redo me-1"></i>Try Again
+                                            </button>
+                                        </div>
+                                    `;
+                                    resultDiv.style.display = 'block';
+                                });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Geocoding error:', error);
+                        verificationDiv.style.display = 'none';
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Geocoding Error</h6>
+                                <p>Unable to verify address. Please check your internet connection and try again.</p>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAddressResult()">
+                                    <i class="fas fa-redo me-1"></i>Try Again
+                                </button>
+                            </div>
+                        `;
+                        resultDiv.style.display = 'block';
+                        showToast('Error verifying address. Please try again.', 'error');
+                    });
+            };
+
+            // Select location from multiple options
+            window.selectLocation = function(lat, lng, displayName) {
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
+                
+                const resultDiv = document.getElementById('addressResult');
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Location Selected!</h6>
+                        <p class="mb-2"><strong>${displayName}</strong></p>
+                        <p class="mb-0 small">Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+                    </div>
+                `;
+                
+                showToast('Location selected successfully!', 'success');
+            };
+
+            // Clear address result
+            window.clearAddressResult = function() {
+                document.getElementById('addressVerification').style.display = 'none';
+                document.getElementById('addressResult').style.display = 'none';
+            };
+
+            // Show location preview (optional - could open a modal with map)
+            window.showLocationPreview = function(lat, lng) {
+                // For now, just show a simple preview
+                const resultDiv = document.getElementById('addressResult');
+                resultDiv.innerHTML += `
+                    <div class="alert alert-info mt-2">
+                        <h6 class="alert-heading"><i class="fas fa-map me-2"></i>Location Preview</h6>
+                        <p class="mb-0">Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+                        <small class="text-muted">You can see the exact location on the map after creating the property.</small>
+                    </div>
+                `;
+            };
+
             // Save draft
             window.saveDraft = function () {
                 showToast('Draft saved successfully!', 'success');
@@ -1834,6 +2070,43 @@
                     item.style.animation = 'scaleIn 0.3s ease reverse';
                     setTimeout(() => item.remove(), 300);
                 }
+            };
+
+            // Room upload functions
+            window.openRoomFileInput = function (roomType) {
+                console.log(' DIRECT CLICK for room:', roomType);
+                const input = document.querySelector(`input[name="room_images[${roomType}][]"]`);
+                if (input) {
+                    input.click();
+                } else {
+                    console.error('Input not found for room:', roomType);
+                }
+            };
+
+            window.handleRoomFileSelect = function (roomType, input) {
+                const files = input.files;
+                const card = input.closest('.room-upload-card');
+                if (card && files.length > 0) {
+                    card.style.borderColor = '#10b981';
+                    card.style.background = '#f0fdf4';
+                    showToast(`${files.length} ${roomType} image(s) selected`, 'success');
+                }
+            };
+
+            window.setupRoomUploads = function () {
+                console.log(' Setting up room uploads...');
+                const roomInputs = document.querySelectorAll('.room-file-input');
+                console.log(' Found', roomInputs.length, 'room inputs');
+                
+                roomInputs.forEach(input => {
+                    const roomType = input.name.match(/room_images\[(.*?)\]/)?.[1];
+                    if (roomType) {
+                        console.log(` Setting up ${roomType} input`);
+                        input.addEventListener('change', function () {
+                            handleRoomFileSelect(roomType, this);
+                        });
+                    }
+                });
             };
 
             // Image preview handler
@@ -2037,197 +2310,15 @@
             // Initialize first step
             updateNavigationButtons();
             updateProgressLine();
+        })();
     </script>
 
     <script>
-            // Global functions outside IIFE
-            function handleNextClick() {
-                console.log('Next button clicked directly!');
-                console.log('Current step:', currentStep);
-
-                const isValid = validateCurrentStep();
-                console.log('Validation result:', isValid);
-
-                if (isValid) {
-                    console.log('Moving to next step...');
-                    changeStep(1);
-                } else {
-                    console.log('Validation failed, staying on current step');
-                    showToast('Please fill in all required fields', 'warning');
-                }
+        // Setup room uploads on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof setupRoomUploads === 'function') {
+                setupRoomUploads();
             }
-
-            function validateCurrentStep() {
-                return validateStep(currentStep);
-            }
-
-            function changeStep(direction) {
-                console.log('Changing step:', currentStep, 'Direction:', direction);
-
-                // Validate before moving forward
-                if (direction > 0 && !validateStep(currentStep)) {
-                    return;
-                }
-
-                // Hide current step
-                const currentStepContent = document.querySelector(`.step-content[data-step="${currentStep}"]`);
-                const currentStepIndicator = document.querySelector(`.step-item[data-step="${currentStep}"]`);
-
-                if (currentStepContent) {
-                    currentStepContent.classList.remove('active');
-                }
-                if (currentStepIndicator) {
-                    currentStepIndicator.classList.remove('active');
-                    if (direction > 0) {
-                        currentStepIndicator.classList.add('completed');
-                    }
-                }
-
-                // Update step
-                currentStep += direction;
-                console.log('New step:', currentStep);
-
-                // Show new step
-                const newStepContent = document.querySelector(`.step-content[data-step="${currentStep}"]`);
-                const newStepIndicator = document.querySelector(`.step-item[data-step="${currentStep}"]`);
-
-                if (newStepContent) {
-                    newStepContent.classList.add('active');
-                }
-                if (newStepIndicator) {
-                    newStepIndicator.classList.add('active');
-                }
-
-                // Update navigation
-                updateNavigationButtons();
-                updateProgressLine();
-
-                // Scroll to top
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-
-            function showToast(message, type = 'info') {
-                // Create toast element if it doesn't exist
-                let toastContainer = document.getElementById('toastContainer');
-                if (!toastContainer) {
-                    toastContainer = document.createElement('div');
-                    toastContainer.id = 'toastContainer';
-                    toastContainer.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        z-index: 9999;
-                    `;
-                    document.body.appendChild(toastContainer);
-                }
-
-                const toast = document.createElement('div');
-                toast.className = `alert alert-${type === 'warning' ? 'warning' : 'info'} alert-dismissible fade show`;
-                toast.style.cssText = `
-                    margin-bottom: 10px;
-                    min-width: 300px;
-                    animation: slideInRight 0.3s ease;
-                `;
-                toast.innerHTML = `
-                    ${message}
-                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-                `;
-
-                toastContainer.appendChild(toast);
-
-                // Auto remove after 3 seconds
-                setTimeout(() => {
-                    if (toast.parentElement) {
-                        toast.remove();
-                    }
-                }, 3000);
-            }
-
-            function validateStep(step) {
-                const stepContent = document.querySelector(`.step-content[data-step="${step}"]`);
-                if (!stepContent) return false;
-
-                const requiredFields = stepContent.querySelectorAll('[required]');
-                let isValid = true;
-
-                requiredFields.forEach(field => {
-                    if (!field.value || field.value.trim() === '') {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-
-                if (!isValid) {
-                    showToast('Please fill in all required fields', 'warning');
-                }
-
-                return isValid;
-            }
-
-            function updateNavigationButtons() {
-                const prevBtn = document.getElementById('prevBtn');
-                const nextBtn = document.getElementById('nextBtn');
-                const submitBtn = document.getElementById('submitBtn');
-
-                if (prevBtn) {
-                    prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-flex';
-                }
-
-                if (currentStep === totalSteps) {
-                    if (nextBtn) nextBtn.style.display = 'none';
-                    if (submitBtn) submitBtn.style.display = 'inline-flex';
-                } else {
-                    if (nextBtn) nextBtn.style.display = 'inline-flex';
-                    if (submitBtn) submitBtn.style.display = 'none';
-                }
-            }
-
-            function updateProgressLine() {
-                const progressLine = document.getElementById('progressLine');
-                if (progressLine) {
-                    const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
-                    progressLine.style.background = `linear-gradient(90deg, var(--primary-color) ${percentage}%, var(--gray-200) ${percentage}%)`;
-                }
-            }
-
-            // Global variables
-            let currentStep = 1;
-            const totalSteps = 5;
-
-            // Initialize when DOM is ready
-            document.addEventListener('DOMContentLoaded', function () {
-                console.log('Property form initialized');
-
-                // Setup sync between visible fields and hidden fields
-                function setupFieldSync(visibleId, hiddenId) {
-                    const visibleField = document.getElementById(visibleId);
-                    const hiddenField = document.getElementById(hiddenId);
-
-                    if (visibleField && hiddenField) {
-                        // Update hidden field when visible field changes
-                        visibleField.addEventListener('input', function () {
-                            hiddenField.value = this.value || hiddenField.defaultValue;
-                        });
-
-                        visibleField.addEventListener('change', function () {
-                            hiddenField.value = this.value || hiddenField.defaultValue;
-                        });
-
-                        // Initialize hidden field with current value
-                        hiddenField.value = visibleField.value || hiddenField.defaultValue;
-                    }
-                }
-
-                // Setup field synchronization
-                setupFieldSync('price', 'hidden_price');
-                setupFieldSync('currency', 'hidden_currency');
-                setupFieldSync('city', 'hidden_city');
-                setupFieldSync('country', 'hidden_country');
-
-                updateNavigationButtons();
-                updateProgressLine();
-            });
+        });
     </script>
 @endsection

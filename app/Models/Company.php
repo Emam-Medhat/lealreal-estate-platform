@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Company extends Model
@@ -81,9 +82,9 @@ class Company extends Model
         'subscription_plan' => 'basic',
     ];
 
-    public function profile(): HasMany
+    public function profile(): HasOne
     {
-        return $this->hasMany(CompanyProfile::class);
+        return $this->hasOne(CompanyProfile::class);
     }
 
     public function settings(): HasMany

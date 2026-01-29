@@ -21,7 +21,6 @@ Route::middleware(['auth', 'verified'])->prefix('agents')->group(function () {
     
     // Agent Dashboard
     Route::get('/', [AgentController::class, 'dashboard'])->name('agents.dashboard');
-    Route::get('/profile', [AgentController::class, 'profile'])->name('agents.profile');
     Route::get('/performance', [AgentController::class, 'performance'])->name('agents.performance');
     Route::get('/ranking', [AgentController::class, 'ranking'])->name('agents.ranking');
     Route::get('/goals', [AgentController::class, 'goals'])->name('agents.goals');

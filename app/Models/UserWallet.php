@@ -79,17 +79,17 @@ class UserWallet extends Model
 
     public function transactions(): HasMany
     {
-        return $this->hasMany(UserTransaction::class);
+        return $this->hasMany(UserTransaction::class, 'wallet_id');
     }
 
     public function deposits(): HasMany
     {
-        return $this->hasMany(UserTransaction::class)->where('transaction_type', 'deposit');
+        return $this->hasMany(UserTransaction::class, 'wallet_id')->where('transaction_type', 'deposit');
     }
 
     public function withdrawals(): HasMany
     {
-        return $this->hasMany(UserTransaction::class)->where('transaction_type', 'withdrawal');
+        return $this->hasMany(UserTransaction::class, 'wallet_id')->where('transaction_type', 'withdrawal');
     }
 
     public function getAvailableBalanceAttribute(): float

@@ -7,6 +7,7 @@ use App\Http\Requests\Agent\UpdateAgentProfileRequest;
 use App\Models\Agent;
 use App\Models\AgentProfile;
 use App\Models\UserActivityLog;
+use App\Services\AgentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,12 +15,17 @@ use Illuminate\Support\Facades\Storage;
 
 class AgentProfileController extends Controller
 {
+    protected $agentService;
+
+    public function __construct(AgentService $agentService)
+    {
+        $this->agentService = $agentService;
+    }
+
     public function show()
     {
         $agent = Auth::user()->agent;
-        $agent->load(['profile', 'certifications', 'licenses', 'reviews' => function ($query) {
-            $query->latest()->limit(5);
-        }]);
+        $agent = $this->agentService->getAgentProfile($agent);
 
         return view('agent.profile.show', compact('agent'));
     }
@@ -27,7 +33,7 @@ class AgentProfileController extends Controller
     public function edit()
     {
         $agent = Auth::user()->agent;
-        $agent->load('profile');
+        $agent = $this->agentService->getAgentProfile($agent);
         
         return view('agent.profile.edit', compact('agent'));
     }
@@ -60,27 +66,12 @@ class AgentProfileController extends Controller
             'continuing_education' => $request->continuing_education ?? [],
         ];
 
-        if ($request->hasFile('profile_photo')) {
-            if ($agent->profile && $agent->profile->profile_photo) {
-                Storage::disk('public')->delete($agent->profile->profile_photo);
-            }
-            
-            $photo = $request->file('profile_photo');
-            $path = $photo->store('agent-photos', 'public');
-            $profileData['profile_photo'] = $path;
-        }
-
-        if ($request->hasFile('cover_image')) {
-            if ($agent->profile && $agent->profile->cover_image) {
-                Storage::disk('public')->delete($agent->profile->cover_image);
-            }
-            
-            $cover = $request->file('cover_image');
-            $path = $cover->store('agent-covers', 'public');
-            $profileData['cover_image'] = $path;
-        }
-
-        $agent->profile()->updateOrCreate(['agent_id' => $agent->id], $profileData);
+        $this->agentService->updateAgentProfile(
+            $agent,
+            $profileData,
+            $request->file('profile_photo'),
+            $request->file('cover_image')
+        );
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -101,39 +92,19 @@ class AgentProfileController extends Controller
 
         $agent = Auth::user()->agent;
         
-        if ($request->hasFile('photo')) {
-            if ($agent->profile && $agent->profile->profile_photo) {
-                Storage::disk('public')->delete($agent->profile->profile_photo);
-            }
-            
-            $photo = $request->file('photo');
-            $path = $photo->store('agent-photos', 'public');
-            
-            $agent->profile()->updateOrCreate(['agent_id' => $agent->id], [
-                'profile_photo' => $path
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'photo_url' => asset('storage/' . $path),
-                'message' => 'Photo uploaded successfully'
-            ]);
-        }
+        $photoUrl = $this->agentService->uploadAgentPhoto($agent, $request->file('photo'));
 
         return response()->json([
-            'success' => false,
-            'message' => 'No photo uploaded'
+            'success' => true,
+            'photo_url' => $photoUrl,
+            'message' => 'Photo uploaded successfully'
         ]);
     }
 
     public function removePhoto(): JsonResponse
     {
         $agent = Auth::user()->agent;
-        
-        if ($agent->profile && $agent->profile->profile_photo) {
-            Storage::disk('public')->delete($agent->profile->profile_photo);
-            $agent->profile->update(['profile_photo' => null]);
-        }
+        $this->agentService->removeAgentPhoto($agent);
 
         return response()->json([
             'success' => true,
@@ -144,20 +115,8 @@ class AgentProfileController extends Controller
     public function getProfileStats(): JsonResponse
     {
         $agent = Auth::user()->agent;
-        $agent->load(['properties', 'reviews', 'commissions']);
-
-        $stats = [
-            'total_properties' => $agent->properties()->count(),
-            'active_properties' => $agent->properties()->where('status', 'active')->count(),
-            'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-            'total_reviews' => $agent->reviews()->count(),
-            'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-            'total_commissions' => $agent->commissions()->sum('amount'),
-            'this_month_commissions' => $agent->commissions()
-                ->whereMonth('created_at', now()->month)
-                ->sum('amount'),
-            'profile_completion' => $this->calculateProfileCompletion($agent),
-        ];
+        $stats = $this->agentService->getAgentStats($agent);
+        $stats['profile_completion'] = $this->calculateProfileCompletion($agent);
 
         return response()->json([
             'success' => true,
@@ -191,26 +150,7 @@ class AgentProfileController extends Controller
 
     public function publicProfile(Agent $agent)
     {
-        $agent->load([
-            'profile', 
-            'properties' => function ($query) {
-                $query->where('status', 'active')->latest()->limit(6);
-            },
-            'reviews' => function ($query) {
-                $query->latest()->limit(10);
-            },
-            'certifications',
-            'licenses'
-        ]);
-
-        $stats = [
-            'total_properties' => $agent->properties()->count(),
-            'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-            'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-            'total_reviews' => $agent->reviews()->count(),
-            'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
-        ];
-
-        return view('agent.profile.public', compact('agent', 'stats'));
+        $data = $this->agentService->getPublicAgentProfile($agent);
+        return view('agent.profile.public', $data);
     }
 }

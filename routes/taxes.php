@@ -59,7 +59,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::post('/calculate', [TaxCalculatorController::class, 'calculate'])->name('calculate');
         Route::post('/property-tax', [TaxCalculatorController::class, 'calculatePropertyTax'])->name('propertyTax');
         Route::post('/capital-gains', [TaxCalculatorController::class, 'calculateCapitalGains'])->name('capitalGains');
-        Route::post('/vat', [TaxCalculatorController::class, 'calculateVat'])->name('vat');
+        Route::post('/vat', [TaxCalculatorController::class, 'calculateVat'])->name('vat.calculate');
         Route::post('/stamp-duty', [TaxCalculatorController::class, 'calculateStampDuty'])->name('stampDuty');
         Route::get('/estimate/{property}', [TaxCalculatorController::class, 'estimate'])->name('estimate');
         Route::get('/comparison', [TaxCalculatorController::class, 'comparison'])->name('comparison');
@@ -203,7 +203,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::put('/{taxReport}', [TaxReportController::class, 'update'])->name('update');
         Route::delete('/{taxReport}', [TaxReportController::class, 'destroy'])->name('destroy');
         Route::get('/{taxReport}/download', [TaxReportController::class, 'download'])->name('download');
-        Route::get('/{taxReport}/export', [TaxReportController::class, 'export'])->name('export');
+        Route::get('/{taxReport}/export', [TaxReportController::class, 'export'])->name('export.report');
         Route::post('/{taxReport}/generate', [TaxReportController::class, 'generate'])->name('generate');
         Route::post('/{taxReport}/schedule', [TaxReportController::class, 'schedule'])->name('schedule');
         Route::get('/{taxReport}/preview', [TaxReportController::class, 'preview'])->name('preview');
@@ -252,7 +252,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/{vatRecord}/edit', [VatController::class, 'edit'])->name('edit');
         Route::put('/{vatRecord}', [VatController::class, 'update'])->name('update');
         Route::delete('/{vatRecord}', [VatController::class, 'destroy'])->name('destroy');
-        Route::post('/{vatRecord}/calculate', [VatController::class, 'calculate'])->name('calculate');
+        Route::post('/{vatRecord}/calculate', [VatController::class, 'calculate'])->name('calculate.record');
         Route::post('/{vatRecord}/submit', [VatController::class, 'submit'])->name('submit');
         Route::post('/{vatRecord}/approve', [VatController::class, 'approve'])->name('approve');
         Route::post('/{vatRecord}/reject', [VatController::class, 'reject'])->name('reject');

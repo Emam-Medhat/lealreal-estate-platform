@@ -91,12 +91,20 @@
     <section class="py-12">
         <div class="container mx-auto px-4">
             <div class="mb-6 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-900">
-                    {{ $agents->total() }} Professional Agent{{ $agents->total() != 1 ? 's' : '' }} Found
-                </h2>
-                <div class="text-sm text-gray-600">
-                    Showing {{ $agents->firstItem() }} to {{ $agents->lastItem() }} of {{ $agents->total() }}
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        {{ $agents->total() }} Professional Agent{{ $agents->total() != 1 ? 's' : '' }} Found
+                    </h2>
+                    <div class="text-sm text-gray-600">
+                        Showing {{ $agents->firstItem() }} to {{ $agents->lastItem() }} of {{ $agents->total() }}
+                    </div>
                 </div>
+                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <a href="{{ url('agents/create') }}" class="text-white text-decoration-none">
+                        <i class="fas fa-plus mr-2"></i>
+                        إضافة وكيل
+                    </a>
+                </button>
             </div>
 
             @if($agents->count() > 0)

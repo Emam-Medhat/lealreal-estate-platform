@@ -12,7 +12,7 @@ class MaintenanceRequest extends Model
 
     protected $fillable = [
         'property_id',
-        'request_number',
+        'user_id',
         'title',
         'description',
         'priority',
@@ -20,30 +20,18 @@ class MaintenanceRequest extends Model
         'status',
         'estimated_cost',
         'actual_cost',
-        'due_date',
-        'requested_by',
+        'scheduled_date',
+        'completed_date',
         'assigned_to',
-        'assigned_team_id',
-        'service_provider_id',
-        'assigned_at',
-        'assigned_by',
-        'started_at',
-        'completed_at',
-        'cancelled_at',
-        'cancellation_reason',
         'notes',
         'attachments',
-        'emergency_repair_id',
     ];
 
     protected $casts = [
         'estimated_cost' => 'decimal:2',
         'actual_cost' => 'decimal:2',
-        'due_date' => 'datetime',
-        'assigned_at' => 'datetime',
-        'started_at' => 'datetime',
-        'completed_at' => 'datetime',
-        'cancelled_at' => 'datetime',
+        'scheduled_date' => 'date',
+        'completed_date' => 'date',
         'attachments' => 'array',
     ];
 

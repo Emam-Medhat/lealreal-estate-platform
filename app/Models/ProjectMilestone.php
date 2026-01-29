@@ -16,26 +16,23 @@ class ProjectMilestone extends Model
 
     protected $fillable = [
         'project_id',
-        'phase_id',
-        'name',
+        'title',
         'description',
         'due_date',
-        'priority',
         'status',
-        'completion_percentage',
-        'deliverables',
-        'completion_notes',
-        'completed_at',
-        'completed_by',
-        'created_by',
-        'updated_by',
+        'progress_percentage',
+        'budget_allocated',
+        'budget_spent',
+        'dependencies',
+        'notes',
     ];
 
     protected $casts = [
         'due_date' => 'date',
-        'completed_at' => 'datetime',
-        'completion_percentage' => 'integer',
-        'deliverables' => 'array',
+        'progress_percentage' => 'integer',
+        'budget_allocated' => 'decimal:2',
+        'budget_spent' => 'decimal:2',
+        'dependencies' => 'array',
     ];
 
     public function project(): BelongsTo
@@ -43,11 +40,7 @@ class ProjectMilestone extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function phase(): BelongsTo
-    {
-        return $this->belongsTo(ProjectPhase::class);
-    }
-
+    
     public function completer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');

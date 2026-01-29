@@ -11,64 +11,27 @@ use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Services\AgentCrmService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
 class CrmController extends Controller
 {
-    public function __construct()
+    protected $agentCrmService;
+
+    public function __construct(AgentCrmService $agentCrmService)
     {
         $this->middleware('auth');
         $this->middleware('agent');
+        $this->agentCrmService = $agentCrmService;
     }
 
     public function index(Request $request)
     {
-        $agent = Auth::user();
+        $agent = Auth::user()->agent;
         
-        $leads = Lead::where('agent_id', $agent->id)
-            ->when($request->boolean('only_leads'), function($query) {
-                $query->where('lead_type', 'buyer');
-            })
-            ->when($request->status, function($query, $status) {
-                $query->where('lead_status', $status);
-            })
-            ->when($request->type, function($query, $type) {
-                $query->where('lead_type', $type);
-            })
-            ->when($request->priority, function($query, $priority) {
-                $query->where('priority', $priority);
-            })
-            ->when($request->temperature, function($query, $temperature) {
-                if ($temperature === 'hot') {
-                    $query->where('temperature', '>=', 80);
-                } elseif ($temperature === 'warm') {
-                    $query->whereBetween('temperature', [40, 79]);
-                } elseif ($temperature === 'cold') {
-                    $query->where('temperature', '<', 40);
-                }
-            })
-            ->when($request->search, function($query, $search) {
-                $query->where(function($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('full_name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%")
-                      ->orWhere('company', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        $stats = [
-            'total_leads' => Lead::where('agent_id', $agent->id)->count(),
-            'new_leads' => Lead::where('agent_id', $agent->id)->where('lead_status', 'new')->count(),
-            'qualified_leads' => Lead::where('agent_id', $agent->id)->where('lead_status', 'qualified')->count(),
-            'converted_leads' => Lead::where('agent_id', $agent->id)->where('lead_status', 'converted')->count(),
-            'hot_leads' => Lead::where('agent_id', $agent->id)->where('temperature', '>=', 80)->count(),
-            'follow_ups_today' => Lead::where('agent_id', $agent->id)->whereDate('next_follow_up_at', today())->count(),
-        ];
+        $leads = $this->agentCrmService->getAgentLeads($agent, $request);
+        $stats = $this->agentCrmService->getCrmStats($agent);
 
         return view('agent.crm.index', compact('leads', 'stats'));
     }
@@ -135,6 +98,8 @@ class CrmController extends Controller
         $validated['created_by'] = $agent->id;
 
         $lead = Lead::create($validated);
+
+        $this->agentCrmService->invalidateCache($agent->id);
 
         return redirect()
             ->route('agent.crm.show', $lead)
@@ -210,6 +175,8 @@ class CrmController extends Controller
 
         $lead->update($validated);
 
+        $this->agentCrmService->invalidateCache(Auth::id());
+
         return redirect()
             ->route('agent.crm.show', $lead)
             ->with('success', 'Lead updated successfully!');
@@ -223,6 +190,8 @@ class CrmController extends Controller
 
         $lead->delete();
 
+        $this->agentCrmService->invalidateCache(Auth::id());
+
         return redirect()
             ->route('agent.crm.index')
             ->with('success', 'Lead deleted successfully!');
@@ -235,6 +204,8 @@ class CrmController extends Controller
         }
 
         $lead->convert();
+
+        $this->agentCrmService->invalidateCache(Auth::id());
 
         return redirect()
             ->route('agent.crm.show', $lead)
@@ -253,6 +224,8 @@ class CrmController extends Controller
 
         $lead->lose($request->lost_reason);
 
+        $this->agentCrmService->invalidateCache(Auth::id());
+
         return redirect()
             ->route('agent.crm.show', $lead)
             ->with('success', 'Lead marked as lost!');
@@ -265,6 +238,8 @@ class CrmController extends Controller
         }
 
         $lead->archive();
+
+        $this->agentCrmService->invalidateCache(Auth::id());
 
         return redirect()
             ->route('agent.crm.show', $lead)
@@ -284,6 +259,8 @@ class CrmController extends Controller
         ]);
 
         $lead->addActivity($validated['type'], $validated['description'], $validated['details'] ?? []);
+
+        $this->agentCrmService->invalidateCache(Auth::id());
 
         return redirect()
             ->route('agent.crm.show', $lead)
@@ -312,6 +289,8 @@ class CrmController extends Controller
             'is_private' => $validated['is_private'] ?? false,
             'created_by' => Auth::id(),
         ]);
+
+        $this->agentCrmService->invalidateCache(Auth::id());
 
         return redirect()
             ->route('agent.crm.show', $lead)
@@ -346,6 +325,8 @@ class CrmController extends Controller
             'created_by' => Auth::id(),
         ]);
 
+        $this->agentCrmService->invalidateCache(Auth::id());
+
         return redirect()
             ->route('agent.crm.show', $lead)
             ->with('success', 'Task added successfully!');
@@ -363,6 +344,8 @@ class CrmController extends Controller
         ]);
 
         $lead->scheduleFollowUp($request->follow_up_date, $request->notes);
+
+        $this->agentCrmService->invalidateCache(Auth::id());
 
         return redirect()
             ->route('agent.crm.show', $lead)
@@ -382,6 +365,8 @@ class CrmController extends Controller
         ]);
 
         $lead->recordContact($request->contact_type, $request->outcome, $request->notes);
+
+        $this->agentCrmService->invalidateCache(Auth::id());
 
         return redirect()
             ->route('agent.crm.show', $lead)

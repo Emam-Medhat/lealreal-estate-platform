@@ -84,32 +84,32 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-2 mb-3">
-                            <a href="{{ route('maintenance.requests.create') }}" class="btn btn-primary btn-block">
+                            <a href="{{ route('maintenance.create') }}" class="btn btn-primary btn-block">
                                 <i class="fas fa-plus"></i> طلب صيانة جديد
                             </a>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <a href="{{ route('maintenance.schedules.create') }}" class="btn btn-info btn-block">
+                            <a href="{{ route('maintenance.schedule.create') }}" class="btn btn-info btn-block">
                                 <i class="fas fa-calendar"></i> جدولة صيانة
                             </a>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <a href="{{ route('maintenance.emergency-repairs.create') }}" class="btn btn-danger btn-block">
-                                <i class="fas fa-exclamation-triangle"></i> إصلاح طارئ
+                            <a href="{{ route('maintenance.workorders.create') }}" class="btn btn-danger btn-block">
+                                <i class="fas fa-exclamation-triangle"></i> أمر عمل جديد
                             </a>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <a href="{{ route('maintenance.inventory.create') }}" class="btn btn-success btn-block">
+                            <a href="{{ route('inventory.items.create') }}" class="btn btn-success btn-block">
                                 <i class="fas fa-box"></i> إضافة مخزون
                             </a>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <a href="{{ route('maintenance.work-orders.create') }}" class="btn btn-warning btn-block">
+                            <a href="{{ route('maintenance.workorders.create') }}" class="btn btn-warning btn-block">
                                 <i class="fas fa-clipboard"></i> أمر عمل
                             </a>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <a href="{{ route('maintenance.invoices.create') }}" class="btn btn-secondary btn-block">
+                            <a href="{{ route('payments.invoices.create') }}" class="btn btn-secondary btn-block">
                                 <i class="fas fa-file-invoice"></i> فاتورة
                             </a>
                         </div>

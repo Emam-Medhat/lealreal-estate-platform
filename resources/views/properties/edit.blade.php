@@ -13,19 +13,17 @@
                     <p class="text-muted mb-0">Update property information for: {{ $property->title }}</p>
                 </div>
                 <div>
-                    <a href="{{ route('properties.show', $property) }}" class="btn btn-outline-secondary me-2">
-                        <i class="fas fa-eye me-2"></i>View Property
+                    <a href="{{ route('optimized.properties.show', $property) }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-eye me-1"></i>View Property
                     </a>
                     <a href="{{ route('optimized.properties.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Properties
+                        <i class="fas fa-list me-1"></i>Back to List
                     </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Property Form -->
-    <form method="POST" action="{{ route('properties.update', $property) }}" enctype="multipart/form-data" id="propertyForm">
+        <form method="POST" action="{{ route('optimized.properties.update', $property) }}" enctype="multipart/form-data" id="propertyForm">
         @csrf
         @method('PUT')
 

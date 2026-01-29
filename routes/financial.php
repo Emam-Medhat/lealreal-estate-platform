@@ -86,7 +86,7 @@ Route::prefix('financial')->name('financial.')->middleware(['auth'])->group(func
     Route::get('/tax', [TaxBenefitCalculatorController::class, 'index'])->name('tax.index');
     
     // ROI Calculator Routes (outside prefix for specific naming)
-    Route::get('/roi', [RoiCalculatorController::class, 'index'])->name('roi.index');
+    Route::get('/roi', [RoiCalculatorController::class, 'index'])->name('roi.main');
     
     // Property Valuation Routes (outside prefix for specific naming)
     Route::get('/valuation', [PropertyValuationModelController::class, 'index'])->name('valuation.index');

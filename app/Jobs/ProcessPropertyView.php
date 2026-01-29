@@ -40,7 +40,14 @@ class ProcessPropertyView implements ShouldQueue
 
         // Clear relevant caches
         Cache::forget("property_details_{$this->propertyId}");
-        Cache::tags(['properties'])->flush();
+        
+        try {
+            if (config('cache.default') !== 'file' && config('cache.default') !== 'database') {
+                Cache::tags(['properties'])->flush();
+            }
+        } catch (\Exception $e) {
+            // Ignore if tagging not supported
+        }
 
         // Log the view for analytics (optional)
         $this->logView();

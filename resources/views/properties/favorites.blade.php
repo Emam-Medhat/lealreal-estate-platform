@@ -47,7 +47,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Avg. Price</p>
-                            <p class="text-2xl font-bold text-gray-800">${{ number_format($favorites->avg('price'), 0) }}</p>
+                            <p class="text-2xl font-bold text-gray-800">${{ number_format($favorites->avg(fn($f) => $f->favoritable->price ?? 0), 0) }}</p>
                         </div>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Avg. Beds</p>
-                            <p class="text-2xl font-bold text-gray-800">{{ number_format($favorites->avg('bedrooms'), 1) }}</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ number_format($favorites->avg(fn($f) => $f->favoritable->bedrooms ?? 0), 1) }}</p>
                         </div>
                     </div>
                 </div>
@@ -70,8 +70,8 @@
                             <i class="fas fa-ruler-combined text-yellow-600"></i>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Avg. Sqft</p>
-                            <p class="text-2xl font-bold text-gray-800">{{ number_format($favorites->avg('square_feet'), 0) }}</p>
+                            <p class="text-sm text-gray-600">Avg. Area</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ number_format($favorites->avg(fn($f) => $f->favoritable->area ?? 0), 0) }} {{ $favorites->first()->favoritable->area_unit ?? 'sqft' }}</p>
                         </div>
                     </div>
                 </div>
@@ -117,15 +117,15 @@
                         <div class="md:flex">
                             <!-- Checkbox -->
                             <div class="md:w-1/12 flex items-center justify-center p-4">
-                                <input type="checkbox" class="property-checkbox" value="{{ $favorite->property->id }}" 
+                                <input type="checkbox" class="property-checkbox" value="{{ $favorite->favoritable->id }}" 
                                     class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
                             </div>
                             
                             <!-- Property Image -->
                             <div class="md:w-2/6">
                                 <div class="h-48 md:h-full bg-gray-200 relative">
-                                    @if($favorite->property->images->isNotEmpty())
-                                        <img src="{{ $favorite->property->images->first()->url }}" alt="{{ $favorite->property->title }}" class="w-full h-full object-cover">
+                                    @if($favorite->favoritable->images->isNotEmpty())
+                                        <img src="{{ $favorite->favoritable->images->first()->url }}" alt="{{ $favorite->favoritable->title }}" class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full bg-gray-200 flex items-center justify-center">
                                             <i class="fas fa-home text-gray-400 text-4xl"></i>
@@ -133,24 +133,24 @@
                                     @endif
                                     
                                     <!-- Status Badge -->
-                                    @if($favorite->property->status)
+                                    @if($favorite->favoritable->status)
                                         <div class="absolute top-2 left-2">
-                                            <span class="bg-{{ $favorite->property->status === 'for_sale' ? 'green' : ($favorite->property->status === 'for_rent' ? 'blue' : 'gray') }}-500 text-white px-2 py-1 rounded text-xs">
-                                                {{ ucfirst(str_replace('_', ' ', $favorite->property->status)) }}
+                                            <span class="bg-{{ $favorite->favoritable->status === 'for_sale' ? 'green' : ($favorite->favoritable->status === 'for_rent' ? 'blue' : 'gray') }}-500 text-white px-2 py-1 rounded text-xs">
+                                                {{ ucfirst(str_replace('_', ' ', $favorite->favoritable->status)) }}
                                             </span>
                                         </div>
                                     @endif
                                     
                                     <!-- Remove Favorite Button -->
-                                    <button onclick="removeFavorite({{ $favorite->id }})" class="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-red-50">
+                                    <button onclick="removeFavorite({{ $favorite->favoritable->id }})" class="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-red-50">
                                         <i class="fas fa-heart text-red-500"></i>
                                     </button>
                                     
                                     <!-- Price Change Badge -->
-                                    @if($favorite->property->price_changed)
+                                    @if($favorite->favoritable->price_changed)
                                         <div class="absolute bottom-2 left-2">
-                                            <span class="bg-{{ $favorite->property->price_change > 0 ? 'red' : 'green' }}-500 text-white px-2 py-1 rounded text-xs">
-                                                {{ $favorite->property->price_change > 0 ? '+' : '' }}{{ number_format($favorite->property->price_change, 0) }}%
+                                            <span class="bg-{{ $favorite->favoritable->price_change > 0 ? 'red' : 'green' }}-500 text-white px-2 py-1 rounded text-xs">
+                                                {{ $favorite->favoritable->price_change > 0 ? '+' : '' }}{{ number_format($favorite->favoritable->price_change, 0) }}%
                                             </span>
                                         </div>
                                     @endif
@@ -162,22 +162,22 @@
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
                                         <h3 class="text-xl font-semibold text-gray-800 mb-2">
-                                            <a href="{{ route('properties.show', $favorite->property) }}" class="hover:text-blue-600">
-                                                {{ $favorite->property->title }}
+                                            <a href="{{ route('properties.show', $favorite->favoritable) }}" class="hover:text-blue-600">
+                                                {{ $favorite->favoritable->title }}
                                             </a>
                                         </h3>
-                                        <p class="text-gray-600 mb-2">{{ $favorite->property->address }}, {{ $favorite->property->city }}</p>
+                                        <p class="text-gray-600 mb-2">{{ $favorite->favoritable->address }}, {{ $favorite->favoritable->city }}</p>
                                         <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                            <span><i class="fas fa-bed mr-1"></i>{{ $favorite->property->bedrooms }} beds</span>
-                                            <span><i class="fas fa-bath mr-1"></i>{{ $favorite->property->bathrooms }} baths</span>
-                                            <span><i class="fas fa-ruler-combined mr-1"></i>{{ number_format($favorite->property->square_feet) }} sqft</span>
+                                            <span><i class="fas fa-bed mr-1"></i>{{ $favorite->favoritable->bedrooms }} beds</span>
+                                            <span><i class="fas fa-bath mr-1"></i>{{ $favorite->favoritable->bathrooms }} baths</span>
+                                            <span><i class="fas fa-ruler-combined mr-1"></i>{{ number_format($favorite->favoritable->area) }} {{ $favorite->favoritable->area_unit }}</span>
                                         </div>
                                     </div>
                                     <div class="text-right">
                                         <div class="text-2xl font-bold text-gray-800">
-                                            ${{ number_format($favorite->property->price, 0) }}
+                                            {{ $favorite->favoritable->currency }} {{ number_format($favorite->favoritable->price, 0) }}
                                         </div>
-                                        @if($favorite->property->status === 'for_rent')
+                                        @if($favorite->favoritable->status === 'for_rent')
                                             <div class="text-sm text-gray-600">/month</div>
                                         @endif
                                         <div class="text-xs text-gray-500 mt-1">
@@ -188,19 +188,19 @@
                                 
                                 <!-- Property Description -->
                                 <p class="text-gray-600 mb-4 line-clamp-2">
-                                    {{ Str::limit($favorite->property->description, 150) }}
+                                    {{ Str::limit($favorite->favoritable->description, 150) }}
                                 </p>
                                 
                                 <!-- Features -->
-                                @if($favorite->property->features->isNotEmpty())
+                                @if($favorite->favoritable->features->isNotEmpty())
                                     <div class="flex flex-wrap gap-2 mb-4">
-                                        @foreach ($favorite->property->features->take(3) as $feature)
+                                        @foreach ($favorite->favoritable->features->take(3) as $feature)
                                             <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                                                 {{ $feature->name }}
                                             </span>
                                         @endforeach
-                                        @if($favorite->property->features->count() > 3)
-                                            <span class="text-gray-500 text-xs">+{{ $favorite->property->features->count() - 3 }} more</span>
+                                        @if($favorite->favoritable->features->count() > 3)
+                                            <span class="text-gray-500 text-xs">+{{ $favorite->favoritable->features->count() - 3 }} more</span>
                                         @endif
                                     </div>
                                 @endif
@@ -208,18 +208,18 @@
                                 <!-- Actions -->
                                 <div class="flex justify-between items-center">
                                     <div class="flex space-x-3">
-                                        <a href="{{ route('properties.show', $favorite->property) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                        <a href="{{ route('properties.show', $favorite->favoritable) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                                             View Details
                                         </a>
-                                        <button onclick="scheduleTour({{ $favorite->property->id }})" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                        <button onclick="scheduleTour({{ $favorite->favoritable->id }})" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                                             Schedule Tour
                                         </button>
                                     </div>
                                     <div class="flex space-x-2">
-                                        <button onclick="shareProperty({{ $favorite->property->id }})" class="text-gray-600 hover:text-gray-800">
+                                        <button onclick="shareProperty({{ $favorite->favoritable->id }})" class="text-gray-600 hover:text-gray-800">
                                             <i class="fas fa-share-alt"></i>
                                         </button>
-                                        <button onclick="addToComparison({{ $favorite->property->id }})" class="text-gray-600 hover:text-gray-800">
+                                        <button onclick="addToComparison({{ $favorite->favoritable->id }})" class="text-gray-600 hover:text-gray-800">
                                             <i class="fas fa-balance-scale"></i>
                                         </button>
                                     </div>
@@ -280,12 +280,12 @@ function shareFavorites() {
     window.location.href = '/favorites/share';
 }
 
-function removeFavorite(favoriteId) {
+function removeFavorite(propertyId) {
     if (!confirm('Are you sure you want to remove this property from favorites?')) {
         return;
     }
     
-    fetch('/favorites/' + favoriteId, {
+    fetch('/favorites/' + propertyId, {
         method: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
