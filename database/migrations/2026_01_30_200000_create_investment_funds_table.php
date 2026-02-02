@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('investment_funds')) {
         Schema::create('investment_funds', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->timestamp('updated_at')->useCurrent();
             $table->softDeletes();
         });
+        }
     }
 
     public function down(): void

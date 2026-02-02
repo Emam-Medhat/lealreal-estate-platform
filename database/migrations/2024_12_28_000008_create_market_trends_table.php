@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('market_trends')) {
         Schema::create('market_trends', function (Blueprint $table) {
             $table->id();
             $table->string('trend_type', 50);
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index('trend_direction');
             $table->index(['period_start', 'period_end']);
         });
+        }
     }
 
     public function down(): void

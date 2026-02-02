@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_documents')) {
         Schema::create('property_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index(['is_public']);
             $table->index(['expiry_date']);
         });
+        }
     }
 
     /**

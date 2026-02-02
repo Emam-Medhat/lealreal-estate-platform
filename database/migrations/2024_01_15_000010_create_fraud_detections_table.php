@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('fraud_detections')) {
         Schema::create('fraud_detections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

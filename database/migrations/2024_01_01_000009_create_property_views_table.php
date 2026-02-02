@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('property_views')) {
         Schema::create('property_views', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

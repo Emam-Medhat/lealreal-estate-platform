@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('esignatures')) {
         Schema::create('esignatures', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index(['token']);
             $table->index(['expires_at']);
         });
+        }
     }
 
     public function down()

@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('inventories')) {
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('sku')->unique();
             $table->text('description')->nullable();
-            $table->foreignId('category_id')->nullable()->constrained('inventory_categories')->onDelete('set null');
-            $table->foreignId('supplier_id')->nullable()->constrained('inventory_suppliers')->onDelete('set null');
+            $table->foreignId('category_id')->nullable();
+            $table->foreignId('supplier_id')->nullable();
             $table->decimal('unit_price', 10, 2);
             $table->integer('quantity')->default(0);
             $table->integer('reorder_level')->default(10);
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index(['supplier_id']);
             $table->index(['quantity', 'reorder_level']);
         });
+        }
     }
 
     /**

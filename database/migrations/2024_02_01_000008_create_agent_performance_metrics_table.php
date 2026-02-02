@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('agent_performance_metrics')) {
         Schema::create('agent_performance_metrics', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained('agents')->onDelete('cascade');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['agent_id', 'metric_type']);
             $table->index(['period', 'period_start']);
         });
+        }
     }
 
     /**

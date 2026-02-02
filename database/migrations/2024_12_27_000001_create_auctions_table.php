@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('auctions')) {
         Schema::create('auctions', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -42,6 +43,7 @@ return new class extends Migration
             $table->index(['property_id', 'status']);
             $table->index(['seller_id', 'status']);
         });
+        }
     }
 
     public function down(): void

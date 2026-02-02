@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('report_schedules')) {
         Schema::create('report_schedules', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index(['report_type', 'is_active']);
             $table->index('next_run_at');
         });
+        }
     }
 
     /**

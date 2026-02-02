@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_activity_logs')) {
         Schema::create('user_activity_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->json('metadata')->nullable(); // additional data
             $table->timestamps();
         });
+        }
     }
 
     /**

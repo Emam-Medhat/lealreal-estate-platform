@@ -12,9 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('agents', function (Blueprint $table) {
-            $table->integer('experience_years')->nullable()->after('license_number');
-            $table->unsignedBigInteger('created_by')->nullable()->after('user_id');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            if (!Schema::hasColumn('agents', 'experience_years')) {
+                $table->integer('experience_years')->nullable()->after('license_number');
+            }
+            if (!Schema::hasColumn('agents', 'created_by')) {
+                $table->unsignedBigInteger('created_by')->nullable()->after('user_id');
+                $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            }
         });
     }
 

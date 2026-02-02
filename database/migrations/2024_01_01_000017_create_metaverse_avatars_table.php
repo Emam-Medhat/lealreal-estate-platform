@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('metaverse_avatars')) {
         Schema::create('metaverse_avatars', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -66,6 +67,7 @@ return new class extends Migration
             $table->index('name');
             $table->index('display_name');
         });
+        }
     }
 
     /**

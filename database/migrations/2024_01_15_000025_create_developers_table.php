@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('developers')) {
         Schema::create('developers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
@@ -37,6 +38,7 @@ return new class extends Migration
             $table->index(['status', 'is_verified']);
             $table->index(['developer_type']);
         });
+        }
     }
 
     public function down(): void

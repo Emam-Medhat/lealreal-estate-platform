@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('lead_campaigns')) {
         Schema::create('lead_campaigns', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -26,7 +27,9 @@ return new class extends Migration
             $table->index(['is_active']);
             $table->index(['start_date', 'end_date']);
         });
+        }
 
+        if (!Schema::hasTable('campaign_lead_pivot')) {
         Schema::create('campaign_lead_pivot', function (Blueprint $table) {
             $table->foreignId('campaign_id')->constrained('lead_campaigns')->onDelete('cascade');
             $table->foreignId('lead_id')->constrained()->onDelete('cascade');
@@ -36,6 +39,7 @@ return new class extends Migration
             
             $table->primary(['campaign_id', 'lead_id']);
         });
+        }
     }
 
     public function down()

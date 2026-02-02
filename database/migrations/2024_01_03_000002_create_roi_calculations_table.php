@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('roi_calculations')) {
         Schema::create('roi_calculations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_financial_analysis_id')->constrained()->onDelete('cascade');
@@ -37,6 +38,7 @@ return new class extends Migration
             $table->index('scenario_type');
             $table->index('calculation_method');
         });
+        }
     }
 
     public function down(): void

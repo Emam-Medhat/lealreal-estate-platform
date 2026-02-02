@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('building_permits')) {
         Schema::create('building_permits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('cascade');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
+        }
     }
 
     public function down()

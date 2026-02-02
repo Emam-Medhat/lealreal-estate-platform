@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_floor_plans')) {
         Schema::create('property_floor_plans', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->index(['is_primary']);
             $table->index(['sort_order']);
         });
+        }
     }
 
     /**

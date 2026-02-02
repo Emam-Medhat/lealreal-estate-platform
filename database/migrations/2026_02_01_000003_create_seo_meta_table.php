@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('seo_meta')) {
         Schema::create('seo_meta', function (Blueprint $table) {
             $table->id();
             $table->string('metaable_type');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index('title');
             $table->index('keywords');
         });
+        }
     }
 
     /**

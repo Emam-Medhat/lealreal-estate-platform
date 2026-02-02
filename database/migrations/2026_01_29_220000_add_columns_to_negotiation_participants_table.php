@@ -12,11 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('negotiation_participants', function (Blueprint $table) {
-            $table->foreignId('negotiation_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->timestamp('joined_at')->nullable();
-            $table->string('status')->default('active');
-            $table->timestamp('last_read_at')->nullable();
+            if (!Schema::hasColumn('negotiation_participants', 'negotiation_id')) {
+                $table->foreignId('negotiation_id')->constrained()->onDelete('cascade');
+            }
+            if (!Schema::hasColumn('negotiation_participants', 'user_id')) {
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            }
+            if (!Schema::hasColumn('negotiation_participants', 'joined_at')) {
+                $table->timestamp('joined_at')->nullable();
+            }
+            if (!Schema::hasColumn('negotiation_participants', 'status')) {
+                $table->string('status')->default('active');
+            }
+            if (!Schema::hasColumn('negotiation_participants', 'last_read_at')) {
+                $table->timestamp('last_read_at')->nullable();
+            }
         });
     }
 

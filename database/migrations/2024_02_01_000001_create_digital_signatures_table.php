@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('digital_signatures')) {
         Schema::create('digital_signatures', function (Blueprint $table) {
             $table->id();
             $table->string('document_title');
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->index(['status', 'created_at']);
             $table->index(['signer_name']);
         });
+        }
     }
 
     /**

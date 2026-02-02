@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('funnel_steps')) {
         Schema::create('funnel_steps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('funnel_id')->constrained()->onDelete('cascade');
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->index(['funnel_id', 'order']);
             $table->index('event_name');
         });
+        }
     }
 
     public function down(): void

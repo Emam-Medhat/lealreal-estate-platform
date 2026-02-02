@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('complaints')) {
-            Schema::create('complaints', function (Blueprint $table) {
+            if (!Schema::hasTable('complaints')) {
+        Schema::create('complaints', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->morphs('complaintable');
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->index('reference_number');
             $table->index('last_activity_at');
         });
+        }
         }
     }
 

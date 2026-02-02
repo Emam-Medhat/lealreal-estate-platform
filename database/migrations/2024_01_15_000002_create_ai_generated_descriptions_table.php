@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_generated_descriptions')) {
         Schema::create('ai_generated_descriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -44,6 +45,7 @@ return new class extends Migration
             $table->index('language');
             $table->index('quality_score');
         });
+        }
     }
 
     /**

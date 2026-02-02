@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('media_library')) {
         Schema::create('media_library', function (Blueprint $table) {
             $table->id();
             $table->string('filename');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['type', 'uploaded_by']);
             $table->index(['mime_type']);
         });
+        }
     }
 
     public function down()

@@ -12,10 +12,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Insert real agent activities
-        $activities = [
+        // Check if agents table has any records
+        $agentCount = DB::table('agents')->count();
+        
+        // Only insert activities if agents exist
+        if ($agentCount > 0) {
+            // Get the first agent ID
+            $agentId = DB::table('agents')->first()->id;
+            
+            // Insert real agent activities
+            $activities = [
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'title' => 'بيع شقة في الرياض',
                 'description' => 'تم بيع شقة 3 غرف نوم في حي النخيل',
                 'value' => '$450,000',
@@ -30,7 +38,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'title' => 'اجتماع مع عميل مستثمر',
                 'description' => 'مناقشة فرص الاستثمار في العقارات التجارية',
                 'value' => 'اجتماع',
@@ -45,7 +53,7 @@ return new class extends Migration
                 'updated_at' => now()->subDays(1),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'title' => 'عرض سعر لفيلا',
                 'description' => 'تقديم عرض سعر لفيلا في حي الياسمين',
                 'value' => '$1,200,000',
@@ -60,7 +68,7 @@ return new class extends Migration
                 'updated_at' => now()->subDays(2),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'title' => 'إضافة عقار جديد',
                 'description' => 'إضافة شقة جديدة للعرض في السوق',
                 'value' => 'إدراج',
@@ -75,7 +83,7 @@ return new class extends Migration
                 'updated_at' => now()->subDays(3),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'title' => 'مكالمة متابعة مع عميل',
                 'description' => 'متابعة اهتمام العميل بالعقار المعروض',
                 'value' => 'مكالمة',
@@ -96,7 +104,7 @@ return new class extends Migration
         // Insert real performance metrics
         $metrics = [
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'metric_type' => 'total_sales',
                 'value' => 25,
                 'period' => 'monthly',
@@ -111,7 +119,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'metric_type' => 'commission_earned',
                 'value' => 156750.00,
                 'period' => 'monthly',
@@ -126,7 +134,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'metric_type' => 'properties_listed',
                 'value' => 12,
                 'period' => 'monthly',
@@ -141,7 +149,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
-                'agent_id' => 1,
+                'agent_id' => $agentId,
                 'metric_type' => 'satisfaction_rate',
                 'value' => 94.5,
                 'period' => 'monthly',
@@ -158,7 +166,9 @@ return new class extends Migration
             ],
         ];
 
+        DB::table('agent_activities')->insert($activities);
         DB::table('agent_performance_metrics')->insert($metrics);
+        }
     }
 
     /**
@@ -166,7 +176,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::table('agent_activities')->where('agent_id', 1)->delete();
-        DB::table('agent_performance_metrics')->where('agent_id', 1)->delete();
+        // Clean up sample activities
+        DB::table('agent_activities')->delete();
+        DB::table('agent_performance_metrics')->delete();
     }
 };

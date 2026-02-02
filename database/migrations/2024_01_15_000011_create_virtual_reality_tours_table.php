@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('virtual_reality_tours')) {
         Schema::create('virtual_reality_tours', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('cascade');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->boolean('is_featured')->default(false);
             $table->timestamps();
         });
+        }
     }
 
     public function down()

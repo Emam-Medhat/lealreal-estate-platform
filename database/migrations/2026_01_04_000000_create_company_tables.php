@@ -12,7 +12,8 @@ return new class extends Migration {
     {
         // Companies Table
         if (!Schema::hasTable('companies')) {
-            Schema::create('companies', function (Blueprint $table) {
+            if (!Schema::hasTable('companies')) {
+        Schema::create('companies', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
                 $table->string('slug')->unique()->nullable();
@@ -66,10 +67,12 @@ return new class extends Migration {
                 $table->softDeletes();
             });
         }
+        }
 
         // Company Members Table
         if (!Schema::hasTable('company_members')) {
-            Schema::create('company_members', function (Blueprint $table) {
+            if (!Schema::hasTable('company_members')) {
+        Schema::create('company_members', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained()->cascadeOnDelete();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -89,10 +92,12 @@ return new class extends Migration {
                 $table->unique(['company_id', 'user_id']);
             });
         }
+        }
 
         // Company Branches Table
         if (!Schema::hasTable('company_branches')) {
-            Schema::create('company_branches', function (Blueprint $table) {
+            if (!Schema::hasTable('company_branches')) {
+        Schema::create('company_branches', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained()->cascadeOnDelete();
                 $table->string('name');
@@ -111,10 +116,12 @@ return new class extends Migration {
                 $table->softDeletes();
             });
         }
+        }
 
         // Company Settings Table (New)
         if (!Schema::hasTable('company_settings')) {
-            Schema::create('company_settings', function (Blueprint $table) {
+            if (!Schema::hasTable('company_settings')) {
+        Schema::create('company_settings', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained()->cascadeOnDelete();
                 $table->string('key');
@@ -130,10 +137,12 @@ return new class extends Migration {
                 $table->unique(['company_id', 'key']);
             });
         }
+        }
 
         // Company Analytics Table
         if (!Schema::hasTable('company_analytics')) {
-            Schema::create('company_analytics', function (Blueprint $table) {
+            if (!Schema::hasTable('company_analytics')) {
+        Schema::create('company_analytics', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained()->cascadeOnDelete();
                 $table->string('type')->default('daily'); // daily, monthly, yearly
@@ -145,10 +154,12 @@ return new class extends Migration {
                 $table->timestamps();
             });
         }
+        }
 
         // Company Subscriptions Table
         if (!Schema::hasTable('company_subscriptions')) {
-            Schema::create('company_subscriptions', function (Blueprint $table) {
+            if (!Schema::hasTable('company_subscriptions')) {
+        Schema::create('company_subscriptions', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained()->cascadeOnDelete();
                 $table->string('plan_name');
@@ -162,6 +173,7 @@ return new class extends Migration {
 
                 $table->timestamps();
             });
+        }
         }
     }
 

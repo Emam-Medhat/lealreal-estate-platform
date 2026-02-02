@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('metaverse_coordinates')) {
         Schema::create('metaverse_coordinates', function (Blueprint $table) {
             $table->id();
             $table->string('coordinate_type');
@@ -42,6 +43,7 @@ return new class extends Migration
             // $table->index('coordinate_value');
             // $table->index('description');
         });
+        }
     }
 
     /**

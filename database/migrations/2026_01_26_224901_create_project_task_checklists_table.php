@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('project_task_checklists')) {
         Schema::create('project_task_checklists', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('task_id');
@@ -26,6 +27,7 @@ return new class extends Migration
 
             $table->index(['task_id', 'is_completed']);
         });
+        }
     }
 
     /**

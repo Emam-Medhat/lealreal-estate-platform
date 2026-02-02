@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('cryptocurrencies')) {
         Schema::create('cryptocurrencies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->timestamp('last_updated')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

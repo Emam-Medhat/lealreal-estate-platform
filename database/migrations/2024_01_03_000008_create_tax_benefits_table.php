@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('tax_benefits')) {
         Schema::create('tax_benefits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_financial_analysis_id')->constrained()->onDelete('cascade');
@@ -63,6 +64,7 @@ return new class extends Migration
             $table->index(['property_financial_analysis_id', 'tax_year']);
             $table->index('tax_year');
         });
+        }
     }
 
     public function down(): void

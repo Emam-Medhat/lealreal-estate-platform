@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_features')) {
         Schema::create('property_features', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index(['is_active', 'category']);
             $table->index(['sort_order']);
         });
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('price_predictions')) {
         Schema::create('price_predictions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('cascade');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->decimal('accuracy_score', 5, 2)->nullable(); // calculated after actual price known
             $table->timestamps();
         });
+        }
     }
 
     public function down()

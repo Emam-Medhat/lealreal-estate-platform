@@ -8,9 +8,10 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('review_sentiment_analyses')) {
         Schema::create('review_sentiment_analyses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('review_id')->constrained()->onDelete('cascade');
+            $table->foreignId('review_id');
             $table->string('sentiment');
             $table->decimal('confidence', 3, 3);
             $table->decimal('positive_score', 3, 3);
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index('confidence');
             $table->unique('review_id', 'review_sentiment_analyses_unique');
         });
+        }
     }
 
     public function down()

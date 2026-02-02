@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('agents')) {
         Schema::create('agents', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
     }
 
     public function down(): void

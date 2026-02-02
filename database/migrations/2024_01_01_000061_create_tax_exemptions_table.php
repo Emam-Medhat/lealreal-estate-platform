@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tax_exemptions')) {
         Schema::create('tax_exemptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_tax_id')->nullable()->constrained()->onDelete('cascade');
@@ -129,6 +130,7 @@ return new class extends Migration
             $table->index(['cancelled_by']);
             $table->index(['verified_by']);
         });
+        }
     }
 
     /**

@@ -1,0 +1,198 @@
+﻿Table 'property_locations' is created in:
+  - 2024_01_01_000003_create_property_locations_table.php
+  - 2026_01_25_205343_create_property_locations_table.php
+Table 'property_amenities' is created in:
+  - 2024_01_01_000004_create_property_amenities_table.php
+  - 2026_01_25_204537_create_property_amenities_table.php
+Table 'property_amenity_property' is created in:
+  - 2024_01_01_000004_create_property_amenities_table.php
+  - 2026_01_25_210452_create_property_amenity_property_table.php
+Table 'complaints' is created in:
+  - 2024_01_01_000005_create_complaints_table.php
+  - 2024_01_15_000020_create_complaints_table.php
+Table 'property_features' is created in:
+  - 2024_01_01_000005_create_property_features_table.php
+  - 2026_01_25_204924_create_property_features_table.php
+Table 'property_feature_property' is created in:
+  - 2024_01_01_000005_create_property_features_table.php
+  - 2026_01_25_210710_create_property_feature_property_table.php
+Table 'property_documents' is created in:
+  - 2024_01_01_000006_create_property_documents_table.php
+  - 2026_01_25_210814_create_property_documents_table.php
+Table 'property_prices' is created in:
+  - 2024_01_01_000007_create_property_prices_table.php
+  - 2026_01_25_210322_create_property_prices_table.php
+Table 'property_virtual_tours' is created in:
+  - 2024_01_01_000013_create_property_virtual_tours_table.php
+  - 2026_01_25_211228_create_property_virtual_tours_table.php
+Table 'property_floor_plans' is created in:
+  - 2024_01_01_000014_create_property_floor_plans_table.php
+  - 2026_01_25_211006_create_property_floor_plans_table.php
+Table 'contracts' is created in:
+  - 2024_01_01_000019_create_contracts_table.php
+  - 2024_12_27_000008_create_contracts_table.php.php
+Table 'maintenance_requests' is created in:
+  - 2024_01_01_000026_create_maintenance_requests_table.php
+  - 2026_01_25_200743_create_maintenance_requests_table.php
+Table 'compliance_checks' is created in:
+  - 2024_01_01_000032_create_compliance_checks_table.php
+  - 2024_02_01_000004_create_compliance_tables.php
+Table 'service_providers' is created in:
+  - 2024_01_01_000035_create_service_providers_table.php
+  - 2026_01_25_203039_create_service_providers_table.php
+Table 'maintenance_teams' is created in:
+  - 2024_01_01_000036_create_maintenance_teams_table.php
+  - 2026_01_25_202734_create_maintenance_teams_table.php
+Table 'warranties' is created in:
+  - 2024_01_01_000040_create_warranties_table.php
+  - 2026_01_30_115505_create_warranties_table.php
+Table 'emergency_repairs' is created in:
+  - 2024_01_01_000042_create_emergency_repairs_table.php
+  - 2026_01_25_200923_create_emergency_repairs_table.php
+Table 'rentals' is created in:
+  - 2024_01_01_000044_create_rentals_table.php
+  - 2024_12_28_000001_create_rentals_table.php.php
+Table 'tenants' is created in:
+  - 2024_01_01_000045_create_tenants_table.php
+  - 2024_12_28_000002_create_tenants_table.php
+Table 'leases' is created in:
+  - 2024_01_01_000046_create_leases_table.php
+  - 2024_12_28_000003_create_leases_table.php
+Table 'taxes' is created in:
+  - 2024_01_01_000057_create_taxes_table.php
+  - 2026_01_31_203128_create_taxes_table.php
+  - 2026_01_31_203414_create_taxes_table.php
+  - 2026_01_31_203500_create_taxes_table.php
+Table 'property_taxes' is created in:
+  - 2024_01_01_000058_create_property_taxes_table.php
+  - 2024_12_28_000003_create_property_taxes_table.php
+Table 'tax_filings' is created in:
+  - 2024_01_01_000059_create_tax_filings_table.php
+  - 2024_12_28_000004_create_tax_filings_table.php
+Table 'tax_payments' is created in:
+  - 2024_01_01_000060_create_tax_payments_table.php
+  - 2024_12_28_000005_create_tax_payments_table.php
+Table 'tax_exemptions' is created in:
+  - 2024_01_01_000061_create_tax_exemptions_table.php
+  - 2024_12_28_000006_create_tax_exemptions_table.php
+Table 'tax_assessments' is created in:
+  - 2024_01_01_000062_create_tax_assessments_table.php
+  - 2024_12_28_000007_create_tax_assessments_table.php
+Table 'tax_documents' is created in:
+  - 2024_01_01_000063_create_tax_documents_table.php
+  - 2024_12_28_000008_create_tax_documents_table.php
+Table 'capital_gains_taxes' is created in:
+  - 2024_01_01_000064_create_capital_gains_taxes_table.php
+  - 2024_12_28_000009_create_capital_gains_taxes_table.php
+Table 'vat_records' is created in:
+  - 2024_01_01_000065_create_vat_records_table.php
+  - 2024_12_28_000010_create_vat_records_table.php
+Table 'heatmaps' is created in:
+  - 2024_01_01_000068_create_heatmaps_table.php
+  - 2024_12_28_000003_create_heatmaps_table.php
+Table 'agent_reviews' is created in:
+  - 2024_01_04_000003_create_agent_reviews_table.php
+  - 2026_01_26_210241_create_agent_reviews_table.php
+Table 'defi_loans' is created in:
+  - 2024_01_15_000003_create_defi_loans_table.php
+  - 2024_12_28_000019_create_defi_loans_table.php
+Table 'risk_assessments' is created in:
+  - 2024_01_15_000005_create_risk_assessments_table.php
+  - 2024_02_01_000004_create_compliance_tables.php
+Table 'blog_posts' is created in:
+  - 2024_01_15_000012_create_blog_posts_table.php
+  - 2024_01_16_000003_create_blog_posts_table.php
+Table 'menus' is created in:
+  - 2024_01_15_000013_create_menus_table.php
+  - 2024_01_16_000009_create_menus_table.php
+Table 'offers' is created in:
+  - 2024_01_15_000016_create_offers_table.php
+  - 2024_12_27_000005_create_offers_table.php
+Table 'developers' is created in:
+  - 2024_01_15_000025_create_developers_table.php
+  - 2025_12_23_220620_create_developers_table.php
+Table 'seo_meta' is created in:
+  - 2024_01_16_000011_create_seo_meta_table.php
+  - 2026_02_01_000003_create_seo_meta_table.php
+Table 'projects' is created in:
+  - 2024_01_17_000001_create_projects_table.php
+  - 2026_01_26_211731_create_projects_table.php
+Table 'project_phases' is created in:
+  - 2024_01_17_000002_create_project_phases_table.php
+  - 2026_01_26_215807_create_project_phases_table.php
+Table 'project_tasks' is created in:
+  - 2024_01_17_000003_create_project_tasks_table.php
+  - 2026_01_26_214359_create_project_tasks_table.php
+Table 'project_milestones' is created in:
+  - 2024_01_17_000004_create_project_milestones_table.php
+  - 2026_01_26_215024_create_project_milestones_table.php
+Table 'project_teams' is created in:
+  - 2024_01_17_000005_create_project_teams_table.php
+  - 2026_01_26_214026_create_project_teams_table.php
+Table 'project_members' is created in:
+  - 2024_01_17_000006_create_project_members_table.php
+  - 2026_01_26_220816_create_project_members_table.php
+Table 'project_documents' is created in:
+  - 2024_01_17_000007_create_project_documents_table.php
+  - 2026_01_26_215959_create_project_documents_table.php
+Table 'project_expenses' is created in:
+  - 2024_01_17_000009_create_project_expenses_table.php
+  - 2026_01_26_214755_create_project_expenses_table.php
+Table 'project_task_dependencies' is created in:
+  - 2024_01_17_000013_create_project_dependencies_table.php
+  - 2026_01_26_224043_create_project_task_dependencies_table.php
+Table 'security_logs' is created in:
+  - 2024_02_01_000003_create_security_logs_table.php
+  - 2026_01_03_200004_create_security_logs_table.php
+Table 'user_sessions' is created in:
+  - 2024_12_28_000000_create_user_sessions_table.php
+  - 2025_12_20_091248_create_user_sessions_table.php
+  - 2025_12_20_123506_create_user_sessions_table.php
+Table 'daos' is created in:
+  - 2024_12_28_000018_create_daos_table.php
+  - 2026_01_31_190655_create_daos_table.php
+Table 'user_social_accounts' is created in:
+  - 2025_12_20_083652_create_user_social_accounts_table.php
+  - 2025_12_20_123428_create_user_social_accounts_table.php
+  - 2026_01_27_224319_create_user_social_accounts_table.php
+Table 'user_devices' is created in:
+  - 2025_12_20_091232_create_user_devices_table.php
+  - 2025_12_20_123442_create_user_devices_table.php
+  - 2026_02_01_000004_create_user_devices_table.php
+Table 'property_media' is created in:
+  - 2025_12_22_065640_create_property_media_table.php
+  - 2026_01_25_205137_create_property_media_table.php
+Table 'companies' is created in:
+  - 2026_01_04_000000_create_company_tables.php
+  - 2026_01_26_195314_create_companies_table.php
+Table 'user_activities' is created in:
+  - 2026_01_04_123918_create_user_activities_table.php
+  - 2026_01_31_213820_create_user_activities_table.php
+Table 'requests' is created in:
+  - 2026_01_27_194323_create_requests_table.php
+  - 2026_01_31_212347_create_requests_table.php
+Table 'system_error_logs' is created in:
+  - 2026_01_27_223629_create_system_error_logs_table.php
+  - 2026_01_30_172337_create_system_error_logs_table.php
+Table 'subscriptions' is created in:
+  - 2026_01_30_162926_create_subscriptions_table.php
+  - 2026_01_30_180000_create_proper_subscriptions_table.php
+Table 'subscription_plan_features' is created in:
+  - 2026_01_30_173500_update_subscription_plans_table.php
+  - 2026_01_30_173600_finalize_subscription_plans_table.php
+  - 2026_01_30_173700_create_subscription_plan_features_table.php
+Table 'defi_positions' is created in:
+  - 2026_01_31_182817_create_defi_pools_table.php
+  - 2026_01_31_184141_create_defi_positions_table.php
+Table 'defi_transactions' is created in:
+  - 2026_01_31_182817_create_defi_pools_table.php
+  - 2026_01_31_184115_create_defi_transactions_table.php
+Table 'dao_members' is created in:
+  - 2026_01_31_190655_create_daos_table.php
+  - 2026_01_31_190909_create_dao_members_table.php
+Table 'dao_proposals' is created in:
+  - 2026_01_31_190655_create_daos_table.php
+  - 2026_01_31_190909_create_dao_members_table.php
+Table 'dao_votes' is created in:
+  - 2026_01_31_190655_create_daos_table.php
+  - 2026_01_31_190909_create_dao_members_table.php

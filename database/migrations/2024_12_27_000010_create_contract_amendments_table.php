@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('contract_amendments')) {
         Schema::create('contract_amendments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('contract_id')->constrained()->onDelete('cascade');
@@ -37,6 +38,7 @@ return new class extends Migration
             $table->index(['proposed_by', 'proposed_at']);
             $table->index(['status', 'proposed_at']);
         });
+        }
     }
 
     public function down(): void

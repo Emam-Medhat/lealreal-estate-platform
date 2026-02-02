@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('lead_automations')) {
         Schema::create('lead_automations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -21,6 +22,7 @@ return new class extends Migration
             
             $table->index(['is_active']);
         });
+        }
     }
 
     public function down()

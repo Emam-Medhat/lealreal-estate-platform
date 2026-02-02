@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_virtual_tours')) {
         Schema::create('property_virtual_tours', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->index(['is_featured']);
             $table->index(['sort_order']);
         });
+        }
     }
 
     /**

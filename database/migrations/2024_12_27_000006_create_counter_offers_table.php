@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('counter_offers')) {
         Schema::create('counter_offers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('offer_id')->constrained()->onDelete('cascade');
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index(['countered_to', 'status']);
             $table->index(['expiration_date', 'status']);
         });
+        }
     }
 
     public function down(): void

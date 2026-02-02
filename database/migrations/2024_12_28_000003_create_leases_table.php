@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('leases')) {
         Schema::create('leases', function (Blueprint $table) {
             $table->id();
             $table->string('lease_number')->unique();
@@ -59,6 +60,7 @@ return new class extends Migration
             $table->index('lease_number');
             $table->index('status');
         });
+        }
     }
 
     public function down(): void

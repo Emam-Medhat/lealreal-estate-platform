@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('warranty_claims')) {
         Schema::create('warranty_claims', function (Blueprint $table) {
             $table->id();
             $table->foreignId('warranty_id')->constrained()->onDelete('cascade');
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->index(['warranty_id', 'status']);
             $table->index('claim_date');
         });
+        }
     }
 
     /**

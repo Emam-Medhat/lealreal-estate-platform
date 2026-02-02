@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('news')) {
         Schema::create('news', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->index(['status', 'published_at']);
             $table->index(['author_id', 'status']);
         });
+        }
     }
 
     public function down()

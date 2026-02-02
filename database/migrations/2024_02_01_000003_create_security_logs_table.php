@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('security_logs')) {
         Schema::create('security_logs', function (Blueprint $table) {
             $table->id();
             $table->string('type');
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->index(['type', 'created_at']);
             $table->index(['status']);
         });
+        }
     }
 
     /**

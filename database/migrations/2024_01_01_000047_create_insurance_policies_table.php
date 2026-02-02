@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('insurance_policies')) {
         Schema::create('insurance_policies', function (Blueprint $table) {
             $table->id();
             $table->string('policy_number')->unique();
@@ -62,6 +63,7 @@ return new class extends Migration
             $table->index(['premium_amount']);
             $table->index(['auto_renewal']);
         });
+        }
     }
 
     /**

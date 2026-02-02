@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('agent_performance')) {
         Schema::create('agent_performance', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained()->onDelete('cascade');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->tinyInteger('month');
             $table->timestamps();
         });
+        }
     }
 
     public function down(): void

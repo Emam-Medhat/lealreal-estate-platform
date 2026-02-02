@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('tenants')) {
         Schema::create('tenants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -50,6 +51,7 @@ return new class extends Migration
             $table->index('email');
             $table->index('national_id');
         });
+        }
     }
 
     public function down(): void

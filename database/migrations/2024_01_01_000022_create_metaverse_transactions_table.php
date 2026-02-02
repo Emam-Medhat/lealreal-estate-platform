@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('metaverse_transactions')) {
         Schema::create('metaverse_transactions', function (Blueprint $table) {
             $table->id();
             $table->string('type');
@@ -78,6 +79,7 @@ return new class extends Migration
             $table->index('transaction_hash');
 
         });
+        }
     }
 
     /**

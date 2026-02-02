@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('password_reset_tokens')) {
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->id();
             $table->string('email');
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->index('expires_at');
             $table->unique(['email', 'token']);
         });
+        }
     }
 
     /**

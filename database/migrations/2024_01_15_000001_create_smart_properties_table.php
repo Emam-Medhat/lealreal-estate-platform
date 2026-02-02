@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('smart_properties')) {
         Schema::create('smart_properties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->text('smart_home_description')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

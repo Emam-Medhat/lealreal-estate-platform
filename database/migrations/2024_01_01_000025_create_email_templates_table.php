@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('email_templates')) {
         Schema::create('email_templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -42,6 +43,7 @@ return new class extends Migration
             $table->index('usage_count');
             $table->index(['created_at', 'updated_at']);
         });
+        }
     }
 
     /**

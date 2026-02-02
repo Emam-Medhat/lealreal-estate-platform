@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('project_phases')) {
         Schema::create('project_phases', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('project_id');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index(['project_id', 'order']);
             $table->index(['project_id', 'status']);
         });
+        }
     }
 
     /**

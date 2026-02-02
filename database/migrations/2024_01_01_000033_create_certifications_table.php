@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('certifications')) {
         Schema::create('certifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -56,6 +57,7 @@ return new class extends Migration
             $table->index(['expiry_date']);
             $table->index(['is_active']);
         });
+        }
     }
 
     /**

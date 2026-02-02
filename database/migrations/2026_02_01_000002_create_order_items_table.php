@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('order_items')) {
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['order_id', 'itemable_type', 'itemable_id'], 'order_items_order_itemable_index');
             $table->index(['itemable_type', 'itemable_id'], 'order_items_itemable_index');
         });
+        }
     }
 
     /**

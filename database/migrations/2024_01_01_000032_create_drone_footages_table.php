@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('drone_footages')) {
         Schema::create('drone_footages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
@@ -65,6 +66,7 @@ return new class extends Migration
             $table->index('featured');
             $table->index('published_at');
         });
+        }
     }
 
     /**

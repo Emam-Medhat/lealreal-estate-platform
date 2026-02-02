@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('properties')) {
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained('users')->onDelete('cascade');
@@ -55,6 +56,7 @@ return new class extends Migration
             $table->index('premium');
             $table->index('views_count');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('appointments')) {
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
@@ -141,6 +142,7 @@ return new class extends Migration
             $table->index(['status', 'start_datetime']);
             $table->index(['appointment_type', 'priority']);
         });
+        }
     }
 
     /**

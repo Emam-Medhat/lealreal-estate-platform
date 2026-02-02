@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('login_attempts')) {
         Schema::create('login_attempts', function (Blueprint $table) {
             $table->id();
             $table->string('email_or_phone');
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->index(['ip_address', 'attempted_at']);
             $table->index(['successful', 'attempted_at']);
         });
+        }
     }
 
     public function down(): void

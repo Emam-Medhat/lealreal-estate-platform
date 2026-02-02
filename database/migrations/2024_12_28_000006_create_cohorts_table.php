@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('cohorts')) {
         Schema::create('cohorts', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->index('status');
             $table->index(['start_date', 'end_date']);
         });
+        }
     }
 
     public function down(): void

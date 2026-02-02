@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('environmental_audits')) {
         Schema::create('environmental_audits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('smart_properties')->onDelete('cascade');
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index('audit_type');
             $table->index('audit_status');
         });
+        }
     }
 
     public function down()

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('resident_posts')) {
         Schema::create('resident_posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('community_id')->constrained()->onDelete('cascade');
@@ -64,6 +65,7 @@ return new class extends Migration
             // Regular index for search (removed full-text due to length limit)
             $table->index('title');
         });
+        }
     }
 
     /**

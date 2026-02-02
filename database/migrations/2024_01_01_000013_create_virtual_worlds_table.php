@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('virtual_worlds')) {
         Schema::create('virtual_worlds', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -63,6 +64,7 @@ return new class extends Migration
 
             // Full-text search index removed due to length limitations
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('project_task_time_logs')) {
         Schema::create('project_task_time_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('task_id');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['task_id', 'log_date']);
             $table->index(['user_id', 'log_date']);
         });
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('heatmaps')) {
         Schema::create('heatmaps', function (Blueprint $table) {
             $table->id();
             $table->string('page_url', 500);
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->index('time_range');
             $table->index('created_at');
         });
+        }
     }
 
     public function down(): void

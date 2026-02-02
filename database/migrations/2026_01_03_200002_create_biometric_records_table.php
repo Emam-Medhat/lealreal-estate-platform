@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('biometric_records')) {
         Schema::create('biometric_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -20,6 +21,7 @@ return new class extends Migration
             
             $table->index(['user_id', 'biometric_type', 'active']);
         });
+        }
     }
 
     public function down(): void

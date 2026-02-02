@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('user_behaviors')) {
         Schema::create('user_behaviors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->index('behavior_type');
             $table->index('created_at');
         });
+        }
     }
 
     public function down(): void

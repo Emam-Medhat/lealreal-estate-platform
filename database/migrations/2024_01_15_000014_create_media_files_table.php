@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('media_files')) {
         Schema::create('media_files', function (Blueprint $table) {
             $table->id();
             $table->foreignId('uploaded_by')->nullable()->constrained('users')->onDelete('set null');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->integer('download_count')->default(0);
             $table->timestamps();
         });
+        }
     }
 
     public function down()

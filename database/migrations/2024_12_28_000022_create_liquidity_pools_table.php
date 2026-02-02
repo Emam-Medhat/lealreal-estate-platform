@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('liquidity_pools')) {
         Schema::create('liquidity_pools', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -38,6 +39,7 @@ return new class extends Migration
             $table->index('token_b_address');
             $table->index('is_active');
         });
+        }
     }
 
     /**

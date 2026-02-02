@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('daos')) {
         Schema::create('daos', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -29,7 +30,9 @@ return new class extends Migration
             $table->index(['status', 'creator_id']);
             $table->index('contract_address');
         });
+        }
 
+        if (!Schema::hasTable('dao_members')) {
         Schema::create('dao_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('dao_id')->constrained()->onDelete('cascade');
@@ -43,7 +46,9 @@ return new class extends Migration
             $table->unique(['dao_id', 'user_id']);
             $table->index(['dao_id', 'role']);
         });
+        }
 
+        if (!Schema::hasTable('dao_proposals')) {
         Schema::create('dao_proposals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('dao_id')->constrained()->onDelete('cascade');
@@ -65,10 +70,12 @@ return new class extends Migration
             $table->index(['dao_id', 'status']);
             $table->index(['proposer_id', 'status']);
         });
+        }
 
+        if (!Schema::hasTable('dao_votes')) {
         Schema::create('dao_votes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('proposal_id')->constrained()->onDelete('cascade');
+            $table->foreignId('proposal_id')->constrained('dao_proposals')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->enum('vote', ['for', 'against', 'abstain']);
             $table->decimal('voting_power', 20, 8)->default(0);
@@ -78,6 +85,7 @@ return new class extends Migration
             $table->unique(['proposal_id', 'user_id']);
             $table->index(['proposal_id', 'vote']);
         });
+        }
     }
 
     public function down(): void

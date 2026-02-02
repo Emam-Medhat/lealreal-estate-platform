@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('lead_imports')) {
         Schema::create('lead_imports', function (Blueprint $table) {
             $table->id();
             $table->string('filename');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index(['status']);
             $table->index(['imported_by']);
         });
+        }
     }
 
     public function down()

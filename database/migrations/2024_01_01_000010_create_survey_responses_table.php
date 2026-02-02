@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('survey_responses')) {
         Schema::create('survey_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('survey_id')->constrained()->onDelete('cascade');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index('completed_at');
             $table->unique(['survey_id', 'user_id'], 'survey_responses_unique');
         });
+        }
     }
 
     public function down()

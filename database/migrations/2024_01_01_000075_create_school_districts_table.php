@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('school_districts')) {
         Schema::create('school_districts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->index('district_type');
             $table->index('overall_rating');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('requests')) {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->string('request_id')->unique();
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('status');
         });
+        }
     }
 
     /**

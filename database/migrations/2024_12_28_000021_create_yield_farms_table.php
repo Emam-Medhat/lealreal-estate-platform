@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('yield_farms')) {
         Schema::create('yield_farms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -43,6 +44,7 @@ return new class extends Migration
             $table->index('reward_token_address');
             $table->index('is_active');
         });
+        }
     }
 
     /**

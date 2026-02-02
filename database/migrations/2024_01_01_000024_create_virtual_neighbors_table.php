@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('virtual_neighbors')) {
         Schema::create('virtual_neighbors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('virtual_land_id')->constrained();
@@ -43,6 +44,7 @@ return new class extends Migration
             // Full-text search index
 
         });
+        }
     }
 
     /**

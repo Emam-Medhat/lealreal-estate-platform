@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tax_documents')) {
         Schema::create('tax_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_tax_id')->nullable()->constrained()->onDelete('cascade');
@@ -144,6 +145,7 @@ return new class extends Migration
             $table->index(['verified']);
             $table->index(['electronically_signed']);
         });
+        }
     }
 
     /**

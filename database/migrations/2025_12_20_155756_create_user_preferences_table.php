@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_preferences')) {
         Schema::create('user_preferences', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->json('privacy_settings')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

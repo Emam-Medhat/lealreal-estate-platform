@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('property_prices', function (Blueprint $table) {
-            $table->boolean('is_active')->default(true)->after('price_status');
+            if (!Schema::hasColumn('property_prices', 'is_active')) {
+                $table->boolean('is_active')->default(true);
+            }
         });
     }
 

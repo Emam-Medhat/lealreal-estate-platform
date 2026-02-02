@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('water_conservation_measures')) {
         Schema::create('water_conservation_measures', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('smart_properties')->onDelete('cascade');
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index('conservation_percentage');
             $table->index('conservation_level');
         });
+        }
     }
 
     public function down()

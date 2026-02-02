@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('security_logs')) {
         Schema::create('security_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index(['severity', 'resolved', 'created_at']);
             $table->index(['ip_address', 'created_at']);
         });
+        }
     }
 
     public function down(): void

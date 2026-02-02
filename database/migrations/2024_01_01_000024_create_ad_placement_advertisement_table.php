@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('ad_placement_advertisement')) {
         Schema::create('ad_placement_advertisement', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ad_placement_id')->constrained()->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['advertisement_id', 'is_active']);
             $table->index(['priority']);
         });
+        }
     }
 
     public function down()

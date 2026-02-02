@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('work_orders')) {
         Schema::create('work_orders', function (Blueprint $table) {
             $table->id();
             $table->string('work_order_number')->unique();
@@ -79,6 +80,7 @@ return new class extends Migration
             $table->index(['scheduled_date']);
             $table->index(['created_by']);
         });
+        }
     }
 
     /**

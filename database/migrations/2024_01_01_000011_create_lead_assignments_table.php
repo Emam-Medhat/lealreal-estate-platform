@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('lead_assignments')) {
         Schema::create('lead_assignments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lead_id')->constrained()->onDelete('cascade');
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->index(['assigned_to']);
             $table->index(['assigned_date']);
         });
+        }
     }
 
     public function down()

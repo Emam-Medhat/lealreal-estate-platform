@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('api_rate_limits')) {
         Schema::create('api_rate_limits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('api_key_id')->constrained('api_keys')->onDelete('cascade');
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->timestamp('resets_at');
             $table->timestamps();
         });
+        }
     }
 
     /**

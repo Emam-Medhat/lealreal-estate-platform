@@ -11,6 +11,7 @@ return new class extends Migration
         if (Schema::hasTable('contracts')) {
             return;
         }
+        if (!Schema::hasTable('contracts')) {
         Schema::create('contracts', function (Blueprint $table) {
             $table->id();
             $table->string('contract_number')->unique();
@@ -47,6 +48,7 @@ return new class extends Migration
             $table->index(['contract_number']);
             $table->index(['closing_date', 'status']);
         });
+        }
     }
 
     public function down(): void

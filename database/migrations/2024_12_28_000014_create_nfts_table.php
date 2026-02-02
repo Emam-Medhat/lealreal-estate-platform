@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('nfts')) {
         Schema::create('nfts', function (Blueprint $table) {
             $table->id();
             $table->string('token_id', 78)->unique();
@@ -48,6 +49,7 @@ return new class extends Migration
             $table->index('category');
             $table->index('is_verified');
         });
+        }
     }
 
     /**

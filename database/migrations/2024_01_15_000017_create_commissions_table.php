@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('commissions')) {
         Schema::create('commissions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->nullable()->constrained('users')->onDelete('cascade');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
+        }
     }
 
     public function down()

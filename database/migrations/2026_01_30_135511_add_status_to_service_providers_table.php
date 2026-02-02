@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('service_providers', function (Blueprint $table) {
-            $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->index('status');
+            if (!Schema::hasColumn('service_providers', 'status')) {
+                $table->enum('status', ['active', 'inactive'])->default('active');
+                $table->index('status');
+            }
         });
     }
 

@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('documents')) {
-            Schema::create('documents', function (Blueprint $table) {
+            if (!Schema::hasTable('documents')) {
+        Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index(['expiration_date']);
             $table->index(['is_active']);
         });
+        }
         }
     }
 

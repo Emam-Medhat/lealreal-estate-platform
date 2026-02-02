@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('blockchain_records')) {
         Schema::create('blockchain_records', function (Blueprint $table) {
             $table->id();
             $table->string('hash', 64)->unique();
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('miner');
         });
+        }
     }
 
     /**

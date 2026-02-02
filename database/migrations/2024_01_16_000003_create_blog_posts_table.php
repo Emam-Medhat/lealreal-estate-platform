@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('blog_posts')) {
         Schema::create('blog_posts', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->index(['author_id', 'status']);
             $table->index(['blog_category_id', 'status']);
         });
+        }
     }
 
     public function down()

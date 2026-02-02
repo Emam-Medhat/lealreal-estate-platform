@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // Create subscription_invoices table
+        if (!Schema::hasTable('subscription_invoices')) {
         Schema::create('subscription_invoices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
@@ -28,8 +29,10 @@ return new class extends Migration
             $table->index(['subscription_id', 'status']);
             $table->index(['status', 'due_date']);
         });
+        }
 
         // Create subscription_upgrades table
+        if (!Schema::hasTable('subscription_upgrades')) {
         Schema::create('subscription_upgrades', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
@@ -43,8 +46,10 @@ return new class extends Migration
             
             $table->index(['subscription_id', 'status']);
         });
+        }
 
         // Create subscription_usage table
+        if (!Schema::hasTable('subscription_usage')) {
         Schema::create('subscription_usage', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
@@ -58,8 +63,10 @@ return new class extends Migration
             $table->unique(['subscription_id', 'metric', 'period_start'], 'usage_unique');
             $table->index(['subscription_id', 'metric']);
         });
+        }
 
         // Create subscription_renewals table
+        if (!Schema::hasTable('subscription_renewals')) {
         Schema::create('subscription_renewals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
@@ -76,8 +83,10 @@ return new class extends Migration
             $table->index(['subscription_id', 'status']);
             $table->index(['scheduled_at']);
         });
+        }
 
         // Create subscription_cancellations table
+        if (!Schema::hasTable('subscription_cancellations')) {
         Schema::create('subscription_cancellations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
@@ -92,6 +101,7 @@ return new class extends Migration
             
             $table->index(['subscription_id', 'status']);
         });
+        }
     }
 
     public function down(): void

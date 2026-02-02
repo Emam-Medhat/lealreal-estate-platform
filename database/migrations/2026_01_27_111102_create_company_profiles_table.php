@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         if (!Schema::hasTable('company_profiles')) {
-            Schema::create('company_profiles', function (Blueprint $table) {
+            if (!Schema::hasTable('company_profiles')) {
+        Schema::create('company_profiles', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained()->cascadeOnDelete();
                 $table->text('description')->nullable();
@@ -66,6 +67,7 @@ return new class extends Migration
                 $table->json('metadata')->nullable();
                 $table->timestamps();
             });
+        }
         }
     }
 

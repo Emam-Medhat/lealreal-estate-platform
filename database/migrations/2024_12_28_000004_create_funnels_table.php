@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('funnels')) {
         Schema::create('funnels', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -19,6 +20,7 @@ return new class extends Migration
             $table->index('type');
             $table->index('status');
         });
+        }
     }
 
     public function down(): void

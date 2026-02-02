@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('agent_reviews')) {
         Schema::create('agent_reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained()->onDelete('cascade');
@@ -44,6 +45,7 @@ return new class extends Migration
             $table->index('is_verified');
             $table->index('created_at');
         });
+        }
     }
 
     public function down(): void

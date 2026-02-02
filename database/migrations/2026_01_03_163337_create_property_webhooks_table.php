@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_webhooks')) {
         Schema::create('property_webhooks', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->timestamp('last_triggered_at')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

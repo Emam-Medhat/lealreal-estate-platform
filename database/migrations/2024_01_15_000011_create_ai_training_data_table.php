@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_training_data')) {
         Schema::create('ai_training_data', function (Blueprint $table) {
             $table->id();
             $table->string('data_type', 50); // property_images, market_data, user_behavior, etc.
@@ -49,6 +50,7 @@ return new class extends Migration
             $table->index('quality_score');
             $table->index('created_at');
         });
+        }
     }
 
     /**

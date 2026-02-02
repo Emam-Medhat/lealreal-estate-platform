@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('blog_posts')) {
         Schema::create('blog_posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('author_id')->nullable()->constrained('users')->onDelete('set null');
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->text('meta_description')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

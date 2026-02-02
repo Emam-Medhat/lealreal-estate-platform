@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_lead_scores')) {
         Schema::create('ai_lead_scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lead_id')->constrained()->onDelete('cascade');
@@ -53,6 +54,7 @@ return new class extends Migration
             $table->index('last_scored_at');
             $table->index('conversion_probability');
         });
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('widgets')) {
         Schema::create('widgets', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->index(['location', 'sort_order']);
             $table->index(['type', 'is_active']);
         });
+        }
     }
 
     public function down()

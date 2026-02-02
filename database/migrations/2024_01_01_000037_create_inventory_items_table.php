@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('inventory_items')) {
         Schema::create('inventory_items', function (Blueprint $table) {
             $table->id();
             $table->string('item_code')->unique();
@@ -67,6 +68,7 @@ return new class extends Migration
             $table->index(['quantity']);
             $table->index(['reorder_point']);
         });
+        }
     }
 
     /**

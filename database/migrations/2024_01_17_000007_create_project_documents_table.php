@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('project_documents')) {
         Schema::create('project_documents', function (Blueprint $table) {
             $table->id();
             $table->string('documentable_type');
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->index(['uploaded_by', 'status']);
             $table->index(['mime_type']);
         });
+        }
     }
 
     public function down()

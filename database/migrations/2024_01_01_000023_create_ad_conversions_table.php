@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('ad_conversions')) {
         Schema::create('ad_conversions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('advertisement_id')->constrained()->onDelete('cascade');
@@ -52,6 +53,7 @@ return new class extends Migration
             $table->index(['order_id']);
             $table->index(['created_at']);
         });
+        }
     }
 
     public function down()

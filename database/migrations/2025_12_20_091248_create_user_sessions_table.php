@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_sessions')) {
         Schema::create('user_sessions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
@@ -30,6 +31,7 @@ return new class extends Migration
             // $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             // $table->foreign('device_id')->references('id')->on('user_devices')->onDelete('cascade');
         });
+        }
     }
 
     /**

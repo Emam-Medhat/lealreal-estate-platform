@@ -1,0 +1,68 @@
+﻿
+  Dropping all tables ....... 1s DONE
+
+   INFO  Preparing database.  
+
+  Creating migration table  40.11ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000001_create_cache_table  66.25ms DONE
+  0001_01_01_000002_create_jobs_table  174.68ms DONE
+  0001_01_01_000003_create_users_table  999.30ms DONE
+  0001_01_01_000004_create_properties_table  432.52ms DONE
+  2024_01_01_000001_create_lead_sources_table  59.22ms DONE
+  2024_01_01_000001_create_property_types_table  62.28ms DONE
+  2024_01_01_000002_create_lead_statuses_table  77.93ms DONE
+  2024_01_01_000002_create_property_details_table  173.10ms DONE
+  2024_01_01_000003_create_leads_table  1s DONE
+  2024_01_01_000003_create_property_locations_table  167.87ms DONE
+  2024_01_01_000003_create_ratings_table  343.06ms DONE
+  2024_01_01_000004_create_energy_efficiency_table  444.62ms DONE
+  2024_01_01_000004_create_lead_scores_table  395.41ms DONE
+  2024_01_01_000004_create_property_amenities_table  297.51ms DONE
+  2024_01_01_000004_create_testimonials_table  349.16ms DONE
+  2024_01_01_000005_create_complaints_table  572.91ms DONE
+  2024_01_01_000005_create_lead_activities_table  372.99ms DONE
+  2024_01_01_000005_create_property_features_table  373.34ms DONE
+  2024_01_01_000006_create_disputes_table  719.71ms DONE
+  2024_01_01_000006_create_lead_notes_table  356.21ms DONE
+  2024_01_01_000006_create_property_documents_table  153.84ms DONE
+  2024_01_01_000006_create_water_conservation_table  427.08ms DONE
+  2024_01_01_000007_create_feedbacks_table  1s DONE
+  2024_01_01_000007_create_lead_tags_table  318.80ms DONE
+  2024_01_01_000007_create_property_prices_table  150.04ms DONE
+  2024_01_01_000008_create_lead_campaigns_table  585.75ms DONE
+  2024_01_01_000008_create_property_price_history_table  366.93ms DONE
+  2024_01_01_000008_create_surveys_table  437.34ms DONE
+  2024_01_01_000009_create_lead_conversions_table  411.69ms DONE
+  2024_01_01_000009_create_property_views_table  271.81ms DONE
+  2024_01_01_000009_create_survey_questions_table  281.67ms DONE
+  2024_01_01_000010_create_lead_automations_table  347.37ms DONE
+  2024_01_01_000010_create_property_reviews_table  607.07ms DONE
+  2024_01_01_000010_create_survey_responses_table  592.80ms DONE
+  2024_01_01_000011_create_lead_assignments_table  586.47ms DONE
+  2024_01_01_000011_create_property_analytics_table  239.52ms DONE
+  2024_01_01_000011_create_review_votes_table  45.23ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'reviews' (Connection: mysql, SQL: alter table `review_votes` add constraint `review_votes_review_id_foreign` foreign key (`review_id`) references `reviews` (`id`) on delete cascade)
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:826
+    822▕                     $this->getName(), $query, $this->prepareBindings($bindings), $e
+    823▕                 );
+    824▕             }
+    825▕ 
+  ➜ 826▕             throw new QueryException(
+    827▕                 $this->getName(), $query, $this->prepareBindings($bindings), $e
+    828▕             );
+    829▕         }
+    830▕     }
+
+  1   vendor\laravel\framework\src\Illuminate\Database\Connection.php:570
+      PDOException::("SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'reviews'")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Connection.php:570
+      PDOStatement::execute()
+

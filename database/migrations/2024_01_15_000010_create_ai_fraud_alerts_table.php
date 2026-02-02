@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_fraud_alerts')) {
         Schema::create('ai_fraud_alerts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('set null');
@@ -58,6 +59,7 @@ return new class extends Migration
             $table->index('false_positive');
             $table->index('confidence_score');
         });
+        }
     }
 
     /**

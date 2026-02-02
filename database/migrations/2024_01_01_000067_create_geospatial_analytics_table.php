@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('geospatial_analytics')) {
         Schema::create('geospatial_analytics', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('analysis_date');
         });
+        }
     }
 
     /**

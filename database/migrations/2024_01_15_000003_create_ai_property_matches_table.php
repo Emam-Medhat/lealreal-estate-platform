@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_property_matches')) {
         Schema::create('ai_property_matches', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -53,6 +54,7 @@ return new class extends Migration
             $table->index('offer_made');
             $table->index('deal_closed');
         });
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('document_templates')) {
         Schema::create('document_templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->index(['category']);
             $table->index(['is_active']);
         });
+        }
     }
 
     public function down()

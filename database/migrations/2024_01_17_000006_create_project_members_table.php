@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('project_members')) {
         Schema::create('project_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_team_id')->constrained()->onDelete('cascade');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['user_id', 'status']);
             $table->index(['role_id']);
         });
+        }
     }
 
     public function down()

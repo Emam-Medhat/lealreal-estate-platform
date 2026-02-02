@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('projects')) {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->index(['client_id', 'manager_id']);
             $table->index(['start_date', 'end_date']);
         });
+        }
     }
 
     public function down()

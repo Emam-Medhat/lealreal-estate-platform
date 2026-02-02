@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('two_factor_authentications')) {
         Schema::create('two_factor_authentications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -20,6 +21,7 @@ return new class extends Migration
             
             $table->index(['user_id', 'enabled']);
         });
+        }
     }
 
     public function down(): void

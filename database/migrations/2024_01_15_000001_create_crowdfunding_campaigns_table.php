@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('crowdfunding_campaigns')) {
         Schema::create('crowdfunding_campaigns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('set null');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['status', 'end_date']);
             $table->index(['property_id']);
         });
+        }
     }
 
     public function down()

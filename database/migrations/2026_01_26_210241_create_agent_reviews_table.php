@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('agent_reviews')) {
         Schema::create('agent_reviews', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('agent_id');
@@ -60,6 +61,7 @@ return new class extends Migration
             $table->index(['agent_id', 'rating']);
             $table->index(['agent_id', 'created_at']);
         });
+        }
     }
 
     /**

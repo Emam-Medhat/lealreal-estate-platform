@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('property_features')) {
         Schema::create('property_features', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -21,7 +22,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
 
+        if (!Schema::hasTable('property_feature_property')) {
         Schema::create('property_feature_property', function (Blueprint $table) {
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
             $table->foreignId('property_feature_id')->constrained()->onDelete('cascade');
@@ -29,6 +32,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
     }
 
     public function down()

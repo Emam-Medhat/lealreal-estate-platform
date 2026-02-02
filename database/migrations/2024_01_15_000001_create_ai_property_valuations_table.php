@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_property_valuations')) {
         Schema::create('ai_property_valuations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -37,6 +38,7 @@ return new class extends Migration
             $table->index('valuation_date');
             $table->index('confidence_score');
         });
+        }
     }
 
     /**

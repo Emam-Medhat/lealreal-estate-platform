@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tax_rates')) {
         Schema::create('tax_rates', function (Blueprint $table) {
             $table->id();
             $table->string('rate_name');
@@ -121,6 +122,7 @@ return new class extends Migration
             $table->index(['suspended_by']);
             $table->index(['cancelled_by']);
         });
+        }
     }
 
     /**

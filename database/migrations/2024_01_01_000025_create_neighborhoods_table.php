@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('neighborhoods')) {
         Schema::create('neighborhoods', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255);
@@ -65,6 +66,7 @@ return new class extends Migration
             // Regular index for search (removed full-text due to length limit)
             $table->index('name');
         });
+        }
     }
 
     /**

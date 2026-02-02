@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('defi_pools')) {
         Schema::create('defi_pools', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -31,7 +32,9 @@ return new class extends Migration
             $table->index(['type', 'is_active']);
             $table->index('apy');
         });
+        }
 
+        if (!Schema::hasTable('defi_positions')) {
         Schema::create('defi_positions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -47,7 +50,9 @@ return new class extends Migration
             $table->index(['user_id', 'status']);
             $table->index(['pool_id', 'status']);
         });
+        }
 
+        if (!Schema::hasTable('defi_transactions')) {
         Schema::create('defi_transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -64,6 +69,7 @@ return new class extends Migration
             $table->index(['user_id', 'type']);
             $table->index(['pool_id', 'type']);
         });
+        }
     }
 
     public function down(): void

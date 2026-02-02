@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('ai_predictions')) {
         Schema::create('ai_predictions', function (Blueprint $table) {
             $table->id();
             $table->string('prediction_type', 50);
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index('model_type');
             $table->index('created_at');
         });
+        }
     }
 
     public function down(): void

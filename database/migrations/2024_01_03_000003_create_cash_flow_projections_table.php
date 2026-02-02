@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('cash_flow_projections')) {
         Schema::create('cash_flow_projections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_financial_analysis_id')->constrained()->onDelete('cascade');
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->index('scenario_type');
             $table->index('projection_year');
         });
+        }
     }
 
     public function down(): void

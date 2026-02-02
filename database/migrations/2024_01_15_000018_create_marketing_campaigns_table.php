@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('marketing_campaigns')) {
         Schema::create('marketing_campaigns', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('investment_crowdfundings')) {
         Schema::create('investment_crowdfundings', function (Blueprint $table) {
             $table->id();
             $table->string('campaign_name');
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->index('published_at');
             $table->index('created_by');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('location_intelligence')) {
         Schema::create('location_intelligence', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('intelligence_type');
         });
+        }
     }
 
     /**

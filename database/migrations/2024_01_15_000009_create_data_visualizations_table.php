@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('data_visualizations')) {
         Schema::create('data_visualizations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('report_id')->constrained()->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
 
             $table->index(['report_id', 'position_order']);
         });
+        }
     }
 
     /**

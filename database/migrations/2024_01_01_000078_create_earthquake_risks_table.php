@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('earthquake_risks')) {
         Schema::create('earthquake_risks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->index('seismic_zone');
             $table->index('risk_score');
         });
+        }
     }
 
     /**

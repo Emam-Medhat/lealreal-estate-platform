@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('capital_gains_taxes')) {
         Schema::create('capital_gains_taxes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -164,6 +165,7 @@ return new class extends Migration
             $table->index(['cancelled_by']);
             $table->index(['refunded_by']);
         });
+        }
     }
 
     /**

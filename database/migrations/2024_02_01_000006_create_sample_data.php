@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -11,6 +12,23 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Insert a sample user for foreign key constraints
+        $existingUser = DB::table('users')->where('email', 'sample@example.com')->first();
+        if (!$existingUser) {
+            $userId = DB::table('users')->insertGetId([
+                'first_name' => 'Sample',
+                'last_name' => 'User',
+                'uuid' => Str::uuid(),
+                'username' => 'sampleuser_' . time(),
+                'email' => 'sample@example.com',
+                'password' => Hash::make('password'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $userId = $existingUser->id;
+        }
+
         // Insert sample digital signatures
         DB::table('digital_signatures')->insert([
             [
@@ -106,18 +124,80 @@ return new class extends Migration
         ]);
 
         // Insert sample compliance data
-        DB::table('compliance_checks')->insert([
-            ['status' => 'passed', 'check_type' => 'regulatory', 'description' => 'فحص الامتثال التنظيمي'],
-            ['status' => 'passed', 'check_type' => 'internal', 'description' => 'فحص الامتثال الداخلي'],
-            ['status' => 'failed', 'check_type' => 'security', 'description' => 'فحص أمان البيانات'],
-            ['status' => 'passed', 'check_type' => 'financial', 'description' => 'فحص الامتثال المالي']
-        ]);
+        $existingChecks = DB::table('compliance_checks')->count();
+        if ($existingChecks == 0) {
+            DB::table('compliance_checks')->insert([
+                ['status' => 'passed', 'check_type' => 'building_code', 'description' => 'Building code compliance check', 'check_number' => 'BCC-001', 'title' => 'Building Code Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId],
+                ['status' => 'passed', 'check_type' => 'safety', 'description' => 'Safety compliance check', 'check_number' => 'SCC-002', 'title' => 'Safety Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId],
+                ['status' => 'failed', 'check_type' => 'environmental', 'description' => 'Environmental compliance check', 'check_number' => 'ECC-003', 'title' => 'Environmental Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId],
+                ['status' => 'passed', 'check_type' => 'zoning', 'description' => 'Zoning compliance check', 'check_number' => 'ZCC-004', 'title' => 'Zoning Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId]
+            ]);
+        }
 
-        DB::table('risk_assessments')->insert([
-            ['status' => 'identified', 'risk_level' => 'low', 'title' => 'مخاطر بيانات'],
-            ['status' => 'identified', 'risk_level' => 'medium', 'title' => 'مخاطر تشغيلية'],
-            ['status' => 'mitigated', 'risk_level' => 'high', 'title' => 'مخاطر قانونية']
-        ]);
+        // Check if risk_assessments table exists before inserting
+        if (Schema::hasTable('risk_assessments')) {
+            // Check if it has the expected columns
+            $columns = DB::select('SHOW COLUMNS FROM risk_assessments');
+            $hasStatus = collect($columns)->contains('Field', 'status');
+            
+            if ($hasStatus) {
+                DB::table('risk_assessments')->insert([
+                    ['status' => 'identified', 'risk_level' => 'low', 'title' => 'مخاطر بيانات'],
+                    ['status' => 'identified', 'risk_level' => 'medium', 'title' => 'مخاطر تشغيلية'],
+                    ['status' => 'mitigated', 'risk_level' => 'high', 'title' => 'مخاطر قانونية']
+                ]);
+            } else {
+                // First check if properties table exists and has records
+                $propertyExists = false;
+                if (Schema::hasTable('properties')) {
+                    $propertyCount = DB::table('properties')->count();
+                    if ($propertyCount > 0) {
+                        $propertyExists = true;
+                        // Get existing property IDs
+                        $propertyIds = DB::table('properties')->limit(3)->pluck('id')->toArray();
+                    }
+                }
+                
+                if ($propertyExists && count($propertyIds) >= 3) {
+                    // Insert with existing property IDs
+                    DB::table('risk_assessments')->insert([
+                        [
+                            'property_id' => $propertyIds[0],
+                            'assessment_type' => 'investment',
+                            'criteria' => json_encode(['location' => 85, 'price' => 90]),
+                            'overall_score' => 87.50,
+                            'risk_level' => 'منخفض',
+                            'recommendations' => json_encode(['Recommended for investment']),
+                            'assessed_by' => $userId,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ],
+                        [
+                            'property_id' => $propertyIds[1],
+                            'assessment_type' => 'loan',
+                            'criteria' => json_encode(['credit' => 70, 'collateral' => 80]),
+                            'overall_score' => 75.00,
+                            'risk_level' => 'متوسط',
+                            'recommendations' => json_encode(['Additional documentation required']),
+                            'assessed_by' => $userId,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ],
+                        [
+                            'property_id' => $propertyIds[2],
+                            'assessment_type' => 'crowdfunding',
+                            'criteria' => json_encode(['market' => 60, 'demand' => 65]),
+                            'overall_score' => 62.50,
+                            'risk_level' => 'مرتفع',
+                            'recommendations' => json_encode(['High risk, high potential']),
+                            'assessed_by' => $userId,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]
+                    ]);
+                }
+            }
+        }
 
         DB::table('compliance_documents')->insert([
             ['status' => 'completed', 'document_type' => 'policy', 'title' => 'سياسة الخصوصية'],
@@ -194,5 +274,6 @@ return new class extends Migration
         DB::table('security_logs')->delete();
         DB::table('certificates')->delete();
         DB::table('digital_signatures')->delete();
+        DB::table('users')->where('email', 'sample@example.com')->delete();
     }
 };

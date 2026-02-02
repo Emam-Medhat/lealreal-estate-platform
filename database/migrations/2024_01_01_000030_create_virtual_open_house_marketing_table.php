@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('virtual_open_house_marketing')) {
         Schema::create('virtual_open_house_marketing', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
@@ -70,6 +71,7 @@ return new class extends Migration
             $table->index('started_at');
             $table->index('ended_at');
         });
+        }
     }
 
     /**

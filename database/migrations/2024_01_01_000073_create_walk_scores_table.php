@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('walk_scores')) {
         Schema::create('walk_scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index('transit_score');
             $table->index('bike_score');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('neighborhood_guides')) {
         Schema::create('neighborhood_guides', function (Blueprint $table) {
             $table->id();
             $table->foreignId('neighborhood_id')->constrained()->onDelete('cascade');
@@ -45,6 +46,7 @@ return new class extends Migration
             // Regular index for search (removed full-text due to length limit)
             $table->index('title');
         });
+        }
     }
 
     /**

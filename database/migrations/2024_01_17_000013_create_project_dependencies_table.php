@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('project_task_dependencies')) {
         Schema::create('project_task_dependencies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('task_id')->constrained('project_tasks')->onDelete('cascade');
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->index(['task_id']);
             $table->index(['dependency_task_id']);
         });
+        }
     }
 
     public function down()

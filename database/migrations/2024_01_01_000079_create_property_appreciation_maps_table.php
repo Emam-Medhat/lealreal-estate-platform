@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_appreciation_maps')) {
         Schema::create('property_appreciation_maps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -40,6 +41,7 @@ return new class extends Migration
             $table->index('market_trend');
             $table->index('annual_appreciation_rate');
         });
+        }
     }
 
     /**

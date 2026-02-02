@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('metaverse_properties')) {
         Schema::create('metaverse_properties', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -73,6 +74,7 @@ return new class extends Migration
             // Regular index for search (SQLite doesn't support index)
             $table->index('title');
         });
+        }
     }
 
     /**

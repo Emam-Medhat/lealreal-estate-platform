@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_media')) {
         Schema::create('property_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index('uploaded_by');
             $table->index('sort_order');
         });
+        }
     }
 
     /**

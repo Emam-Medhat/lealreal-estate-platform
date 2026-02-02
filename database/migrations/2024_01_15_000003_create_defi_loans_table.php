@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('defi_loans')) {
         Schema::create('defi_loans', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('set null');
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->index(['borrower_email']);
             $table->index(['property_id']);
         });
+        }
     }
 
     public function down()

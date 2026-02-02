@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('emergency_repairs')) {
         Schema::create('emergency_repairs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index(['severity', 'status']);
             $table->index(['is_urgent', 'status']);
         });
+        }
     }
 
     /**

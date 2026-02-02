@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('crowdfunding_investments')) {
         Schema::create('crowdfunding_investments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('campaign_id')->constrained('crowdfunding_campaigns')->onDelete('cascade');
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->index(['status']);
             $table->index(['user_id']);
         });
+        }
     }
 
     public function down()

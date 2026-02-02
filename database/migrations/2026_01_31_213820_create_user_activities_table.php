@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_activities')) {
         Schema::create('user_activities', function (Blueprint $table) {
             $table->id();
             $table->string('activity_type');
@@ -54,6 +55,7 @@ return new class extends Migration
             $table->index('is_authenticated');
             $table->index('last_activity_at');
         });
+        }
     }
 
     /**

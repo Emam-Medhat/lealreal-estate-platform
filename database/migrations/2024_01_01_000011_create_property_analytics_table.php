@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('property_analytics')) {
         Schema::create('property_analytics', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -19,6 +20,7 @@ return new class extends Migration
             
             $table->unique(['property_id', 'metric_type', 'date']);
         });
+        }
     }
 
     public function down()

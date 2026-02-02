@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('compliance_checks')) {
         Schema::create('compliance_checks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('property_id')->constrained()->onDelete('cascade');
+            $table->foreignId('property_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('inspection_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('check_number')->unique();
             $table->string('title');
@@ -55,6 +56,7 @@ return new class extends Migration
             $table->index(['check_date']);
             $table->index(['priority']);
         });
+        }
     }
 
     /**

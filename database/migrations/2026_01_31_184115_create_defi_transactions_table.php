@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('defi_transactions')) {
         Schema::create('defi_transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['user_id', 'type']);
             $table->index(['pool_id', 'type']);
         });
+        }
     }
 
     public function down(): void

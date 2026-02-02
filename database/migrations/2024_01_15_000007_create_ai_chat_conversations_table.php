@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_chat_conversations')) {
         Schema::create('ai_chat_conversations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('set null');
@@ -53,6 +54,7 @@ return new class extends Migration
             $table->index('human_intervention');
             $table->index('escalation_level');
         });
+        }
     }
 
     /**

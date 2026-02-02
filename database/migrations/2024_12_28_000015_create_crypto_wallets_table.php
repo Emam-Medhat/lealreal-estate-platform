@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('crypto_wallets')) {
         Schema::create('crypto_wallets', function (Blueprint $table) {
             $table->id();
             $table->string('address', 42)->unique();
@@ -43,6 +44,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('is_active');
         });
+        }
     }
 
     /**

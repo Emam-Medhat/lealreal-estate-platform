@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('notary_documents')) {
         Schema::create('notary_documents', function (Blueprint $table) {
             $table->id();
             $table->string('status')->default('signed');
@@ -23,7 +24,9 @@ return new class extends Migration
             $table->index(['status', 'created_at']);
             $table->index(['client_name']);
         });
+        }
 
+        if (!Schema::hasTable('notary_clients')) {
         Schema::create('notary_clients', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -34,7 +37,9 @@ return new class extends Migration
             
             $table->index(['status']);
         });
+        }
 
+        if (!Schema::hasTable('notary_requests')) {
         Schema::create('notary_requests', function (Blueprint $table) {
             $table->id();
             $table->string('request_id');
@@ -48,6 +53,7 @@ return new class extends Migration
             $table->index(['status', 'created_at']);
             $table->index(['request_id']);
         });
+        }
     }
 
     /**

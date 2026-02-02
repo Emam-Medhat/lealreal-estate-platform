@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('analytic_events')) {
         Schema::create('analytic_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_session_id')->nullable()->constrained()->nullOnDelete();
@@ -20,9 +21,10 @@ return new class extends Migration
             
             $table->index(['event_name', 'created_at']);
             $table->index('user_session_id');
-            $table->index('page_url');
+            // Removed index on page_url as it's a TEXT column and can't be indexed directly
             $table->index('created_at');
         });
+        }
     }
 
     public function down(): void

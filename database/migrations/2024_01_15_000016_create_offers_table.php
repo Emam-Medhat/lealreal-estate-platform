@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('offers')) {
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('cascade');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->timestamp('responded_at')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

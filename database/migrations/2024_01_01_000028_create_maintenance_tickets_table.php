@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('maintenance_tickets')) {
         Schema::create('maintenance_tickets', function (Blueprint $table) {
             $table->id();
             $table->string('ticket_number')->unique();
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->index('ticket_number');
             $table->index(['created_at', 'status']);
         });
+        }
     }
 
     public function down()

@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('tax_filings')) {
         Schema::create('tax_filings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_tax_id')->constrained()->onDelete('cascade');
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('submission_date');
         });
+        }
     }
 
     public function down(): void

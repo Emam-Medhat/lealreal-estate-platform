@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('competitor_data')) {
         Schema::create('competitor_data', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->index('market_share');
             $table->index('status');
         });
+        }
     }
 
     /**

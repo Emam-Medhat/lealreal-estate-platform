@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('feedbacks')) {
-            Schema::create('feedbacks', function (Blueprint $table) {
+            if (!Schema::hasTable('feedbacks')) {
+        Schema::create('feedbacks', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->morphs('feedbackable');
@@ -39,6 +40,7 @@ return new class extends Migration
                 $table->index('assigned_to');
                 $table->index('rating');
             });
+        }
         }
     }
 

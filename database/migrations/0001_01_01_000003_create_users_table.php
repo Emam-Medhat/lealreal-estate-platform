@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('users')) {
         Schema::create('users', function (Blueprint $table) {
             // المعرفات الأساسية
             $table->bigIncrements('id');
@@ -234,6 +235,7 @@ return new class extends Migration
             // $table->foreign('developer_id')->references('id')->on('developers')->onDelete('set null');
             // $table->foreign('banned_by')->references('id')->on('users')->onDelete('set null');
         });
+        }
     }
 
     /**

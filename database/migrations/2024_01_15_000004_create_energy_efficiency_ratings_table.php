@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('energy_efficiency_ratings')) {
         Schema::create('energy_efficiency_ratings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('smart_properties')->onDelete('cascade');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index('efficiency_score');
             $table->index('efficiency_level');
         });
+        }
     }
 
     public function down()

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('notifications')) {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
             $table->string('type');
@@ -18,9 +19,9 @@ return new class extends Migration
             $table->text('data');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
-            
-            $table->index(['notifiable_type', 'notifiable_id']);
+            // morphs() automatically creates the index for notifiable_type and notifiable_id
         });
+        }
     }
 
     /**

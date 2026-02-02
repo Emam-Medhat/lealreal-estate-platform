@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_models')) {
         Schema::create('ai_models', function (Blueprint $table) {
             $table->id();
             $table->string('model_name', 100);
@@ -55,6 +56,7 @@ return new class extends Migration
             $table->index('deployed_at');
             $table->index('accuracy');
         });
+        }
     }
 
     /**

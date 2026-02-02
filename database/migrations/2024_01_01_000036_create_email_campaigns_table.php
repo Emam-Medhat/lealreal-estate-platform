@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('email_campaigns')) {
         Schema::create('email_campaigns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
@@ -71,6 +72,7 @@ return new class extends Migration
             $table->index('scheduled_at');
             $table->index('started_at');
         });
+        }
     }
 
     /**

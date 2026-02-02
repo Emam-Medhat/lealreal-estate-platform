@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('virtual_property_events')) {
         Schema::create('virtual_property_events', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -67,6 +68,7 @@ return new class extends Migration
             // Regular index for search (removed full-text due to length limit)
             $table->index('title');
         });
+        }
     }
 
     /**

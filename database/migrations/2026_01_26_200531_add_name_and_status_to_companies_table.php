@@ -12,13 +12,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('companies', function (Blueprint $table) {
-            $table->string('name')->after('id');
-            $table->string('status')->default('active')->after('name');
-            $table->text('description')->nullable()->after('status');
-            $table->string('email')->nullable()->after('description');
-            $table->string('phone')->nullable()->after('email');
-            $table->string('website')->nullable()->after('phone');
-            $table->string('address')->nullable()->after('website');
+            if (!Schema::hasColumn('companies', 'name')) {
+                $table->string('name')->after('id');
+            }
+            if (!Schema::hasColumn('companies', 'status')) {
+                $table->string('status')->default('active')->after('name');
+            }
+            if (!Schema::hasColumn('companies', 'description')) {
+                $table->text('description')->nullable()->after('status');
+            }
+            if (!Schema::hasColumn('companies', 'email')) {
+                $table->string('email')->nullable()->after('description');
+            }
+            if (!Schema::hasColumn('companies', 'phone')) {
+                $table->string('phone')->nullable()->after('email');
+            }
+            if (!Schema::hasColumn('companies', 'website')) {
+                $table->string('website')->nullable()->after('phone');
+            }
+            if (!Schema::hasColumn('companies', 'address')) {
+                $table->string('address')->nullable()->after('website');
+            }
         });
     }
 

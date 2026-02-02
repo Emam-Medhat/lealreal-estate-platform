@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('vat_records')) {
         Schema::create('vat_records', function (Blueprint $table) {
             $table->id();
             $table->string('period'); // Q1-2024, Q2-2024, etc.
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('submitted_at');
         });
+        }
     }
 
     public function down(): void

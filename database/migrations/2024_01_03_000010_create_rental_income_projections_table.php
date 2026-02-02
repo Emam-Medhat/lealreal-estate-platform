@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('rental_income_projections')) {
         Schema::create('rental_income_projections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_financial_analysis_id')->constrained()->onDelete('cascade');
@@ -138,6 +139,7 @@ return new class extends Migration
             $table->index('projection_month');
             $table->index('validation_status');
         });
+        }
     }
 
     public function down(): void

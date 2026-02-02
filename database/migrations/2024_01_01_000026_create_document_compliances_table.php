@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('document_compliances')) {
-            Schema::create('document_compliances', function (Blueprint $table) {
+            if (!Schema::hasTable('document_compliances')) {
+        Schema::create('document_compliances', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('document_id')->constrained('documents')->onDelete('cascade');
                 $table->enum('overall_status', ['compliant', 'non_compliant', 'needs_review'])->default('needs_review');
@@ -28,6 +29,7 @@ return new class extends Migration
                 $table->index(['next_review_date']);
                 $table->index(['compliance_score']);
             });
+        }
         }
     }
 

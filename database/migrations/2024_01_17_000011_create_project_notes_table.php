@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('project_notes')) {
         Schema::create('project_notes', function (Blueprint $table) {
             $table->id();
             $table->string('noteable_type');
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->index(['author_id', 'note_type']);
             $table->index(['is_private']);
         });
+        }
     }
 
     public function down()

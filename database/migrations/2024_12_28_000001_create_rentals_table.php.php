@@ -11,6 +11,7 @@ return new class extends Migration
         if (Schema::hasTable('rentals')) {
             return;
         }
+        if (!Schema::hasTable('rentals')) {
         Schema::create('rentals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -61,6 +62,7 @@ return new class extends Migration
             $table->index(['start_date', 'end_date']);
             $table->index('rental_number');
         });
+        }
     }
 
     public function down(): void

@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('notary_verifications')) {
         Schema::create('notary_verifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['status']);
             $table->index(['expires_at']);
         });
+        }
     }
 
     public function down()

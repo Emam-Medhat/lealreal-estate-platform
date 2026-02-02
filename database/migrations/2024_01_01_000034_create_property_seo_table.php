@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_seo')) {
         Schema::create('property_seo', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->index(['created_at', 'updated_at']);
             $table->index('page_title');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('certificates')) {
         Schema::create('certificates', function (Blueprint $table) {
             $table->id();
             $table->string('certificate_id')->unique();
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['status', 'issued_at']);
             $table->index(['certificate_id']);
         });
+        }
     }
 
     /**

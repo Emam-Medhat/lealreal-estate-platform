@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('preventive_maintenance')) {
         Schema::create('preventive_maintenance', function (Blueprint $table) {
             $table->id();
             $table->string('pm_number')->unique();
@@ -70,6 +71,7 @@ return new class extends Migration
             $table->index(['next_due']);
             $table->index(['is_critical']);
         });
+        }
     }
 
     /**

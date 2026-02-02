@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('service_providers')) {
         Schema::create('service_providers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -43,6 +44,7 @@ return new class extends Migration
             $table->index(['is_verified', 'rating']);
             $table->index(['type', 'is_active']);
         });
+        }
     }
 
     /**

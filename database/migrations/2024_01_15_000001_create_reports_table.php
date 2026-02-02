@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('reports')) {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->index('generated_at');
             $table->index('generated_by');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('warranties')) {
         Schema::create('warranties', function (Blueprint $table) {
             $table->id();
             $table->string('warranty_code')->unique();
@@ -69,6 +70,7 @@ return new class extends Migration
             $table->index(['end_date']);
             $table->index(['expiry_date']);
         });
+        }
     }
 
     /**

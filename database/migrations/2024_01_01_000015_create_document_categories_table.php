@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('document_categories')) {
         Schema::create('document_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
@@ -16,6 +17,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
+        }
     }
 
     public function down()

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_sessions')) {
         Schema::create('user_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->index('last_activity');
             $table->index('expires_at');
         });
+        }
     }
 
     /**

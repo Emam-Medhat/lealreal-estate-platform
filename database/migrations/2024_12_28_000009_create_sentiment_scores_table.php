@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('sentiment_scores')) {
         Schema::create('sentiment_scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index('sentiment_label');
             $table->index('analyzed_at');
         });
+        }
     }
 
     public function down(): void

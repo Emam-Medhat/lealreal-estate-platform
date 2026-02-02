@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('leads')) {
-            Schema::create('leads', function (Blueprint $table) {
+            if (!Schema::hasTable('leads')) {
+        Schema::create('leads', function (Blueprint $table) {
             $table->id();
             $table->string('first_name');
             $table->string('last_name');
@@ -48,6 +49,7 @@ return new class extends Migration
             $table->index(['priority']);
             $table->index(['is_converted']);
         });
+        }
         }
     }
 

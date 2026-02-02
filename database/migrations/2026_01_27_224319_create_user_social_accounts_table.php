@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_social_accounts')) {
         Schema::create('user_social_accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index(['user_id', 'provider']);
             $table->unique(['user_id', 'provider', 'provider_id']);
         });
+        }
     }
 
     /**

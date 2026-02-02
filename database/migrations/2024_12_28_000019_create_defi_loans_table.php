@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('defi_loans')) {
         Schema::create('defi_loans', function (Blueprint $table) {
             $table->id();
             $table->string('loan_hash', 66)->unique();
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('user_id');
         });
+        }
     }
 
     /**

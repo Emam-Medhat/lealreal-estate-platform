@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_image_analyses')) {
         Schema::create('ai_image_analyses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -48,6 +49,7 @@ return new class extends Migration
             $table->index('quality_score');
             $table->index('aesthetic_score');
         });
+        }
     }
 
     /**

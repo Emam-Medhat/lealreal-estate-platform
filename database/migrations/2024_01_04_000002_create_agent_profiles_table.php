@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('agent_profiles')) {
         Schema::create('agent_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained()->onDelete('cascade');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->string('office_phone')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down(): void

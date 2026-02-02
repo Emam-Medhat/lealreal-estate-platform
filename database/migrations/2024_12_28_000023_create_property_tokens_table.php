@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_tokens')) {
         Schema::create('property_tokens', function (Blueprint $table) {
             $table->id();
             $table->string('token_address', 42)->unique();
@@ -51,6 +52,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('is_verified');
         });
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('developer_metaverse_previews')) {
         Schema::create('developer_metaverse_previews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('developer_id')->constrained()->onDelete('cascade');
@@ -88,6 +89,7 @@ return new class extends Migration
             $table->index(['platform']);
             $table->index(['published_at']);
         });
+        }
     }
 
     /**

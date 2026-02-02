@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('ratings')) {
-            Schema::create('ratings', function (Blueprint $table) {
+            if (!Schema::hasTable('ratings')) {
+        Schema::create('ratings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->morphs('ratingable');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index('category');
             $table->unique(['user_id', 'ratingable_type', 'ratingable_id', 'category'], 'ratings_unique');
         });
+        }
         }
     }
 

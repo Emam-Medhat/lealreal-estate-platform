@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('metaverse_property_nfts')) {
         Schema::create('metaverse_property_nfts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('metaverse_property_id')->constrained();
@@ -62,6 +63,7 @@ return new class extends Migration
             // Full-text search index
             $table->index(['token_id', 'contract_address']);
         });
+        }
     }
 
     /**

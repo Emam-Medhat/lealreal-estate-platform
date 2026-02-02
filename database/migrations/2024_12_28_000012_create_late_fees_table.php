@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('late_fees')) {
         Schema::create('late_fees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lease_id')->constrained()->onDelete('cascade');
@@ -42,6 +43,7 @@ return new class extends Migration
             $table->index(['applied_date']);
             $table->index(['days_late']);
         });
+        }
     }
 
     public function down(): void

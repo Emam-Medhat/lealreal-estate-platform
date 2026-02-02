@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('maintenance_requests')) {
         Schema::create('maintenance_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -42,6 +43,7 @@ return new class extends Migration
             $table->index('due_date');
             $table->index('request_number');
         });
+        }
     }
 
     public function down()

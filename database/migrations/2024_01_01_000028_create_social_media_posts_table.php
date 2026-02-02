@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('social_media_posts')) {
         Schema::create('social_media_posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
@@ -69,6 +70,7 @@ return new class extends Migration
             $table->index('published_at');
             $table->index('boost_post');
         });
+        }
     }
 
     /**

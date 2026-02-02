@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('property_conditions')) {
         Schema::create('property_conditions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -47,6 +48,7 @@ return new class extends Migration
             $table->index(['overall_condition']);
             $table->index(['condition_score']);
         });
+        }
     }
 
     /**

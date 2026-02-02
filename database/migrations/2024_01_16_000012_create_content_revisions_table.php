@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('content_revisions')) {
         Schema::create('content_revisions', function (Blueprint $table) {
             $table->id();
             $table->string('model_type'); // blog_post, page, etc.
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->index(['model_type', 'model_id']);
             $table->index(['author_id']);
         });
+        }
     }
 
     public function down()

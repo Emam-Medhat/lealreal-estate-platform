@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('vat_records')) {
         Schema::create('vat_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -166,6 +167,7 @@ return new class extends Migration
             $table->index(['refunded_by']);
             $table->index(['cancelled_by']);
         });
+        }
     }
 
     /**

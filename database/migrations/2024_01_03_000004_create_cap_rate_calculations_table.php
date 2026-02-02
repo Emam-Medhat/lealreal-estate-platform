@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('cap_rate_calculations')) {
         Schema::create('cap_rate_calculations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_financial_analysis_id')->constrained()->onDelete('cascade');
@@ -44,6 +45,7 @@ return new class extends Migration
             $table->index('property_class');
             $table->index('calculation_method');
         });
+        }
     }
 
     public function down(): void

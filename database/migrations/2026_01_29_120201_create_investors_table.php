@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('investors')) {
         Schema::create('investors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
@@ -47,6 +48,7 @@ return new class extends Migration
             $table->index(['risk_tolerance']);
             $table->index(['accredited_investor']);
         });
+        }
     }
 
     /**

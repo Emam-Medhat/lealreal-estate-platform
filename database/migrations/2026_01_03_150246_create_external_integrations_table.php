@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('external_integrations')) {
         Schema::create('external_integrations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->timestamp('last_sync_at')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

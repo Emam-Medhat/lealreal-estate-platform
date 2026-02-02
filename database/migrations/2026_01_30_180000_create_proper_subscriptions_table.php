@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::dropIfExists('subscriptions');
         
         // Create the correct subscriptions table
+        if (!Schema::hasTable('subscriptions')) {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -38,6 +39,7 @@ return new class extends Migration
             $table->index(['plan_id', 'status']);
             $table->index(['status', 'ends_at']);
         });
+        }
     }
 
     public function down(): void

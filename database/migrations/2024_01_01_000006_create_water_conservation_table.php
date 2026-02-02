@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('water_conservation')) {
         Schema::create('water_conservation', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -52,6 +53,7 @@ return new class extends Migration
             $table->index(['assessment_date']);
             $table->index(['assessed_by']);
         });
+        }
     }
 
     /**

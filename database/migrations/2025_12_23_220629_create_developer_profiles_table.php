@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('developer_profiles')) {
         Schema::create('developer_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('developer_id')->unique()->constrained()->onDelete('cascade');
@@ -65,6 +66,7 @@ return new class extends Migration
             
             $table->index(['developer_id']);
         });
+        }
     }
 
     /**

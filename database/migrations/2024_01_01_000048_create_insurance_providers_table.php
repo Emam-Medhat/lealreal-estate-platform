@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('insurance_providers')) {
         Schema::create('insurance_providers', function (Blueprint $table) {
             $table->id();
             $table->string('provider_code')->unique();
@@ -90,6 +91,7 @@ return new class extends Migration
             $table->index(['featured']);
             $table->index(['recommended']);
         });
+        }
     }
 
     /**

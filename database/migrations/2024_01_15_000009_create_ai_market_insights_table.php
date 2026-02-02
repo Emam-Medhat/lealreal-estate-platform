@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('ai_market_insights')) {
         Schema::create('ai_market_insights', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained()->onDelete('set null');
@@ -59,6 +60,7 @@ return new class extends Migration
             $table->index('insight_score');
             $table->index('time_horizon');
         });
+        }
     }
 
     /**

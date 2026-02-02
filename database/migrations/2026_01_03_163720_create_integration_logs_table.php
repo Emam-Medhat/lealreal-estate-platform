@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('integration_logs')) {
         Schema::create('integration_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('external_integration_id')->constrained('external_integrations')->onDelete('cascade');
@@ -19,6 +20,7 @@ return new class extends Migration
             $table->json('payload')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

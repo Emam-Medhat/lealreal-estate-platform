@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('metaverse_showrooms')) {
         Schema::create('metaverse_showrooms', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -58,6 +59,7 @@ return new class extends Migration
             // Regular index for search (removed full-text due to length limit)
             $table->index('title');
         });
+        }
     }
 
     /**

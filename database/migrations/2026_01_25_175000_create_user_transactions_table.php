@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('user_transactions')) {
         Schema::create('user_transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -38,6 +39,7 @@ return new class extends Migration
             $table->index(['transaction_type', 'status']);
             $table->index(['created_at']);
         });
+        }
     }
 
     /**

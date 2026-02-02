@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tenants')) {
         Schema::create('tenants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
@@ -98,6 +99,7 @@ return new class extends Migration
             $table->index(['active']);
             $table->index(['current_lease_id']);
         });
+        }
     }
 
     /**

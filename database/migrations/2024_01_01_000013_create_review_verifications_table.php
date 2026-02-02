@@ -8,10 +8,11 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('review_verifications')) {
         Schema::create('review_verifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('review_id')->constrained()->onDelete('cascade');
-            $table->foreignId('verified_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('review_id');
+            $table->foreignId('verified_by')->nullable();
             $table->string('verification_method');
             $table->string('verification_status')->default('pending');
             $table->timestamp('verified_at')->nullable();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index('verification_method');
             $table->unique('review_id', 'review_verifications_unique');
         });
+        }
     }
 
     public function down()

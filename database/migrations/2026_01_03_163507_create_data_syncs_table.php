@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('data_syncs')) {
         Schema::create('data_syncs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('external_integration_id')->constrained('external_integrations')->onDelete('cascade');
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

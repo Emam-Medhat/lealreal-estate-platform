@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('lead_follow_ups')) {
         Schema::create('lead_follow_ups', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lead_id')->constrained()->onDelete('cascade');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['user_id']);
             $table->index(['status']);
         });
+        }
     }
 
     public function down()

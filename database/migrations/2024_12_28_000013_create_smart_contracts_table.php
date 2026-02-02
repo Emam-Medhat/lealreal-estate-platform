@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('smart_contracts')) {
         Schema::create('smart_contracts', function (Blueprint $table) {
             $table->id();
             $table->string('address', 42)->unique();
@@ -40,6 +41,7 @@ return new class extends Migration
             $table->index('type');
             $table->index('is_verified');
         });
+        }
     }
 
     /**

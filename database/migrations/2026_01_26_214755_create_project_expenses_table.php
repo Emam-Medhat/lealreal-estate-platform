@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('project_expenses')) {
         Schema::create('project_expenses', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('project_id');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index(['expense_date']);
             $table->index(['type']);
         });
+        }
     }
 
     /**

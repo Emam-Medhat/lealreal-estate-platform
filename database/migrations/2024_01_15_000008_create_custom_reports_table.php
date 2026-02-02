@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('custom_reports')) {
         Schema::create('custom_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('report_id')->constrained()->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
 
             $table->index(['is_template', 'created_by']);
         });
+        }
     }
 
     /**

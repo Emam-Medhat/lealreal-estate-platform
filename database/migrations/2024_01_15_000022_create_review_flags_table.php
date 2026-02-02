@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('review_flags')) {
         Schema::create('review_flags', function (Blueprint $table) {
             $table->id();
             $table->foreignId('review_id')->nullable()->constrained()->onDelete('cascade');
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->unique(['review_id', 'user_id'], 'review_flags_review_unique');
             $table->unique(['response_id', 'user_id'], 'review_flags_response_unique');
         });
+        }
     }
 
     public function down()

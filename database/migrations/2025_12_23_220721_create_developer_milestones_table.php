@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('developer_milestones')) {
         Schema::create('developer_milestones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('developer_id')->constrained()->onDelete('cascade');
@@ -79,6 +80,7 @@ return new class extends Migration
             $table->index(['priority']);
             $table->index(['is_critical']);
         });
+        }
     }
 
     /**

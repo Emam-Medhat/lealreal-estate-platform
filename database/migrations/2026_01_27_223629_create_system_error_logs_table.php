@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('system_error_logs')) {
         Schema::create('system_error_logs', function (Blueprint $table) {
             $table->id();
             $table->string('message')->nullable();
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->boolean('is_resolved')->default(false);
             $table->timestamps();
         });
+        }
     }
 
     /**

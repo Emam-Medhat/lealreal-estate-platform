@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('crm_leads')) {
         Schema::create('crm_leads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->nullable()->constrained('users')->onDelete('set null');
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->timestamp('converted_at')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

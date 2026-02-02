@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('seo_meta')) {
         Schema::create('seo_meta', function (Blueprint $table) {
             $table->id();
             $table->string('model_type'); // blog_post, page, news, etc.
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->index('meta_title');
             $table->index('robots');
         });
+        }
     }
 
     public function down()

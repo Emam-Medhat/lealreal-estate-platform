@@ -34,7 +34,7 @@ return new class extends Migration
                 $table->boolean('is_active')->default(true)->after('is_verified');
             }
             if (!Schema::hasColumn('agents', 'territory_id')) {
-                $table->foreignId('territory_id')->nullable()->after('agency_id')->constrained('agent_territories')->onDelete('set null');
+                $table->foreignId('territory_id')->nullable()->after('agency_id');
             }
             if (!Schema::hasColumn('agents', 'join_date')) {
                 $table->date('join_date')->nullable()->after('hire_date');
@@ -54,7 +54,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('agents', function (Blueprint $table) {
-            $table->dropForeign(['territory_id']);
             $table->dropColumn([
                 'specialization',
                 'experience_years',

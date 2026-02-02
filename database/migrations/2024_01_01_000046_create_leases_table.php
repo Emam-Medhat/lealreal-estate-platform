@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('leases')) {
         Schema::create('leases', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
@@ -100,6 +101,7 @@ return new class extends Migration
             $table->index(['rent_amount']);
             $table->index(['is_template']);
         });
+        }
     }
 
     /**

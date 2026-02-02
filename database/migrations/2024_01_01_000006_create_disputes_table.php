@@ -9,7 +9,8 @@ return new class extends Migration
     public function up()
     {
         if (!Schema::hasTable('disputes')) {
-            Schema::create('disputes', function (Blueprint $table) {
+            if (!Schema::hasTable('disputes')) {
+        Schema::create('disputes', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('initiator_id')->constrained('users')->onDelete('cascade');
                 $table->foreignId('respondent_id')->constrained('users')->onDelete('cascade');
@@ -44,6 +45,7 @@ return new class extends Migration
                 $table->index('reference_number');
                 $table->index('last_activity_at');
             });
+        }
         }
     }
 

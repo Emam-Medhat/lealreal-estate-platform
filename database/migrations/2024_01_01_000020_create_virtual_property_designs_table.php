@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('virtual_property_designs')) {
         Schema::create('virtual_property_designs', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -82,6 +83,7 @@ return new class extends Migration
             $table->index('title');
             $table->index('architectural_style');
         });
+        }
     }
 
     /**

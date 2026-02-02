@@ -11,16 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('compliance_checks', function (Blueprint $table) {
-            $table->id();
-            $table->string('status')->default('passed');
-            $table->string('check_type');
-            $table->text('description')->nullable();
-            $table->timestamp('created_at')->useCurrent();
-            
-            $table->index(['status', 'created_at']);
-        });
 
+
+        if (!Schema::hasTable('risk_assessments')) {
         Schema::create('risk_assessments', function (Blueprint $table) {
             $table->id();
             $table->string('status')->default('identified');
@@ -31,7 +24,9 @@ return new class extends Migration
             
             $table->index(['status', 'created_at']);
         });
+        }
 
+        if (!Schema::hasTable('compliance_documents')) {
         Schema::create('compliance_documents', function (Blueprint $table) {
             $table->id();
             $table->string('status')->default('completed');
@@ -41,7 +36,9 @@ return new class extends Migration
             
             $table->index(['status', 'created_at']);
         });
+        }
 
+        if (!Schema::hasTable('compliance_reviews')) {
         Schema::create('compliance_reviews', function (Blueprint $table) {
             $table->id();
             $table->string('status')->default('pending');
@@ -51,7 +48,9 @@ return new class extends Migration
             
             $table->index(['status', 'created_at']);
         });
+        }
 
+        if (!Schema::hasTable('regulatory_compliance')) {
         Schema::create('regulatory_compliance', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -63,7 +62,9 @@ return new class extends Migration
             
             $table->index(['status']);
         });
+        }
 
+        if (!Schema::hasTable('internal_compliance')) {
         Schema::create('internal_compliance', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -74,7 +75,9 @@ return new class extends Migration
             
             $table->index(['status']);
         });
+        }
 
+        if (!Schema::hasTable('compliance_activities')) {
         Schema::create('compliance_activities', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -86,6 +89,7 @@ return new class extends Migration
             
             $table->index(['status', 'created_at']);
         });
+        }
     }
 
     /**
@@ -99,6 +103,6 @@ return new class extends Migration
         Schema::dropIfExists('compliance_reviews');
         Schema::dropIfExists('compliance_documents');
         Schema::dropIfExists('risk_assessments');
-        Schema::dropIfExists('compliance_checks');
+
     }
 };

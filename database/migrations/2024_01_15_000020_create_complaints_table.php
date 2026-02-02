@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('complaints')) {
         Schema::create('complaints', function (Blueprint $table) {
             $table->id();
             $table->foreignId('complainant_id')->nullable()->constrained('users')->onDelete('set null');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->timestamp('last_updated_at')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     public function down()

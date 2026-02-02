@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('property_valuations')) {
         Schema::create('property_valuations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_financial_analysis_id')->constrained()->onDelete('cascade');
@@ -51,6 +52,7 @@ return new class extends Migration
             $table->index('valuation_method');
             $table->index('valuation_purpose');
         });
+        }
     }
 
     public function down(): void

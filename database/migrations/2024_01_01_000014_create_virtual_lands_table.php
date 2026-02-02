@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('virtual_lands')) {
         Schema::create('virtual_lands', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -85,6 +86,7 @@ return new class extends Migration
             $table->index('title');
             $table->index('coordinates');
         });
+        }
     }
 
     /**

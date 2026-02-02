@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('developer_bim_models')) {
         Schema::create('developer_bim_models', function (Blueprint $table) {
             $table->id();
             $table->foreignId('developer_id')->constrained()->onDelete('cascade');
@@ -82,6 +83,7 @@ return new class extends Migration
             $table->index(['model_type']);
             $table->index(['published_at']);
         });
+        }
     }
 
     /**

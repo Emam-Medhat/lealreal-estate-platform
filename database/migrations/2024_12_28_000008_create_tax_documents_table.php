@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('tax_documents')) {
         Schema::create('tax_documents', function (Blueprint $table) {
             $table->id();
             $table->string('document_type'); // tax_certificate, assessment_report, exemption_certificate, payment_receipt, filing_confirmation
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['document_type', 'expires_at']);
             $table->index('user_id');
         });
+        }
     }
 
     public function down(): void

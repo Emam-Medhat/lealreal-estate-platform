@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('dao_members')) {
         Schema::create('dao_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('dao_id')->constrained()->onDelete('cascade');
@@ -24,7 +25,9 @@ return new class extends Migration
             $table->unique(['dao_id', 'user_id']);
             $table->index(['dao_id', 'role']);
         });
+        }
 
+        if (!Schema::hasTable('dao_proposals')) {
         Schema::create('dao_proposals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('dao_id')->constrained()->onDelete('cascade');
@@ -46,7 +49,9 @@ return new class extends Migration
             $table->index(['dao_id', 'status']);
             $table->index(['proposer_id', 'status']);
         });
+        }
 
+        if (!Schema::hasTable('dao_votes')) {
         Schema::create('dao_votes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('proposal_id')->constrained('dao_proposals')->onDelete('cascade');
@@ -59,6 +64,7 @@ return new class extends Migration
             $table->unique(['proposal_id', 'user_id']);
             $table->index(['proposal_id', 'vote']);
         });
+        }
     }
 
     public function down(): void

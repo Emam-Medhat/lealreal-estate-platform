@@ -15,6 +15,7 @@ return new class extends Migration
             return;
         }
 
+        if (!Schema::hasTable('agent_territories')) {
         Schema::create('agent_territories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained()->onDelete('cascade');
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
         });
+        }
     }
 
     /**

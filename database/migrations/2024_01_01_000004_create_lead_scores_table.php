@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        if (!Schema::hasTable('lead_scores')) {
         Schema::create('lead_scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lead_id')->constrained()->onDelete('cascade');
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->index(['lead_id']);
             $table->index(['score']);
         });
+        }
     }
 
     public function down()

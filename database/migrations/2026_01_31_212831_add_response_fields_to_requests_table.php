@@ -12,10 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('requests', function (Blueprint $table) {
-            $table->integer('response_code')->nullable();
-            $table->float('response_time')->nullable();
-            $table->timestamp('completed_at')->nullable();
-            $table->text('error_message')->nullable();
+            if (!Schema::hasColumn('requests', 'response_code')) {
+                $table->integer('response_code')->nullable();
+            }
+            if (!Schema::hasColumn('requests', 'response_time')) {
+                $table->float('response_time')->nullable();
+            }
+            if (!Schema::hasColumn('requests', 'completed_at')) {
+                $table->timestamp('completed_at')->nullable();
+            }
+            if (!Schema::hasColumn('requests', 'error_message')) {
+                $table->text('error_message')->nullable();
+            }
             
             $table->index('response_code');
             $table->index('completed_at');

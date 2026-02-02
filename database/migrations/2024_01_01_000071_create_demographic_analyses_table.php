@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('demographic_analyses')) {
         Schema::create('demographic_analyses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->nullable()->constrained('metaverse_properties')->onDelete('cascade');
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->index('median_income');
             $table->index('employment_rate');
         });
+        }
     }
 
     /**

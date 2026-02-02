@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('inventory_suppliers')) {
         Schema::create('inventory_suppliers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index(['status']);
             $table->index(['email']);
         });
+        }
     }
 
     /**
