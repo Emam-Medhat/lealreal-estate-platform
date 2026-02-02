@@ -24,7 +24,7 @@ class LeadSource extends Model
 
     public function leads(): HasMany
     {
-        return $this->hasMany(Lead::class);
+        return $this->hasMany(Lead::class, 'source_id');
     }
 
     public function scopeActive($query)

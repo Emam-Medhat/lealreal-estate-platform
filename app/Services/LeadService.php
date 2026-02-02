@@ -91,9 +91,9 @@ class LeadService
                 'total_leads' => $totalLeads,
                 'new_leads' => $newStatus ? Lead::where('status_id', $newStatus->id)->count() : 0,
                 'qualified_leads' => $qualifiedStatus ? Lead::where('status_id', $qualifiedStatus->id)->count() : 0,
-                'converted_leads' => Lead::whereNotNull('converted_at')->count(),
+                'converted_leads' => Lead::whereNotNull('converted_date')->count(),
                 'conversion_rate' => $totalLeads > 0 
-                    ? (Lead::whereNotNull('converted_at')->count() / $totalLeads) * 100 
+                    ? (Lead::whereNotNull('converted_date')->count() / $totalLeads) * 100 
                     : 0,
             ];
         });

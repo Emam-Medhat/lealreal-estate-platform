@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 
 class PropertySearchController extends Controller
 {
-    public function index(Request $request)
+    public function search(Request $request)
     {
         $query = Property::with([
             'propertyType',
@@ -25,27 +25,55 @@ class PropertySearchController extends Controller
         ])->where('status', 'active');
 
         // Apply search filters
-        if ($request->q) {
+        if ($request->keywords) {
             $query->where(function($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->q . '%')
-                  ->orWhere('description', 'like', '%' . $request->q . '%')
-                  ->orWhere('property_code', 'like', '%' . $request->q . '%')
-                  ->orWhereHas('location', function($locationQuery) use ($request) {
-                      $locationQuery->where('address', 'like', '%' . $request->q . '%')
-                                   ->orWhere('city', 'like', '%' . $request->q . '%')
-                                   ->orWhere('neighborhood', 'like', '%' . $request->q . '%');
-                  });
+                $q->where('title', 'like', '%' . $request->keywords . '%')
+                  ->orWhere('description', 'like', '%' . $request->keywords . '%')
+                  ->orWhere('property_code', 'like', '%' . $request->keywords . '%');
+            });
+        }
+
+        if ($request->location) {
+            $query->where(function($q) use ($request) {
+                // Search in location fields
+                $q->whereHas('location', function($locationQuery) use ($request) {
+                    $locationQuery->where('address', 'like', '%' . $request->location . '%')
+                                 ->orWhere('city', 'like', '%' . $request->location . '%')
+                                 ->orWhere('neighborhood', 'like', '%' . $request->location . '%')
+                                 ->orWhere('state', 'like', '%' . $request->location . '%')
+                                 ->orWhere('country', 'like', '%' . $request->location . '%');
+                })
+                // Also search in title and description for location field
+                ->orWhere('title', 'like', '%' . $request->location . '%')
+                ->orWhere('description', 'like', '%' . $request->location . '%')
+                ->orWhere('property_code', 'like', '%' . $request->location . '%');
             });
         }
 
         if ($request->property_type) {
             $query->whereHas('propertyType', function($q) use ($request) {
-                $q->where('slug', $request->property_type);
+                $q->where('id', $request->property_type);
             });
         }
 
-        if ($request->listing_type) {
-            $query->where('listing_type', $request->listing_type);
+        if ($request->status) {
+            $query->where('listing_type', $request->status);
+        }
+
+        // Handle price_range filter
+        if ($request->price_range) {
+            if ($request->price_range === '1000000+') {
+                $query->whereHas('price', function($q) {
+                    $q->where('price', '>', 1000000);
+                });
+            } else {
+                $range = explode('-', $request->price_range);
+                if (count($range) === 2) {
+                    $query->whereHas('price', function($q) use ($range) {
+                        $q->whereBetween('price', [(float)$range[0], (float)$range[1]]);
+                    });
+                }
+            }
         }
 
         if ($request->min_price) {
@@ -82,6 +110,22 @@ class PropertySearchController extends Controller
             $query->whereHas('details', function($q) use ($request) {
                 $q->where('bathrooms', '>=', $request->bathrooms);
             });
+        }
+
+        // Handle square_feet filter
+        if ($request->square_feet) {
+            if ($request->square_feet === '5000+') {
+                $query->whereHas('details', function($q) {
+                    $q->where('area', '>', 5000);
+                });
+            } else {
+                $range = explode('-', $request->square_feet);
+                if (count($range) === 2) {
+                    $query->whereHas('details', function($q) use ($range) {
+                        $q->whereBetween('area', [(float)$range[0], (float)$range[1]]);
+                    });
+                }
+            }
         }
 
         if ($request->city) {
@@ -133,6 +177,12 @@ class PropertySearchController extends Controller
         $order = $request->order ?? 'desc';
         
         switch ($sort) {
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
             case 'price_low':
                 $query->join('property_prices', 'properties.id', '=', 'property_prices.property_id')
                       ->orderBy('property_prices.price', 'asc');
@@ -157,7 +207,7 @@ class PropertySearchController extends Controller
                 $query->orderBy('views_count', 'desc');
                 break;
             case 'relevance':
-                if ($request->q) {
+                if ($request->keywords) {
                     $query->orderByRaw(
                         "CASE 
                             WHEN title LIKE ? THEN 1
@@ -165,7 +215,7 @@ class PropertySearchController extends Controller
                             WHEN property_code LIKE ? THEN 3
                             ELSE 4
                         END",
-                        ['%' . $request->q . '%', '%' . $request->q . '%', '%' . $request->q . '%']
+                        ['%' . $request->keywords . '%', '%' . $request->keywords . '%', '%' . $request->keywords . '%']
                     );
                 }
                 $query->orderBy('featured', 'desc')
@@ -173,8 +223,14 @@ class PropertySearchController extends Controller
                       ->orderBy('created_at', 'desc');
                 break;
             default:
-                $query->orderBy($sort, $order);
+                // Default to created_at if sort is invalid
+                $query->orderBy('created_at', 'desc');
         }
+
+        // Debug: Log the SQL query
+        \Log::info('Search SQL: ' . $query->toSql());
+        \Log::info('Search bindings: ' . json_encode($query->getBindings()));
+        \Log::info('Request data: ' . json_encode($request->all()));
 
         $properties = $query->paginate($request->per_page ?? 12);
         
@@ -184,12 +240,11 @@ class PropertySearchController extends Controller
         $features = PropertyFeature::active()->ordered()->get();
 
         // Get cities for autocomplete
-        $cities = Property::whereHas('location')
-            ->distinct()
-            ->pluck('location.city')
-            ->filter()
-            ->sort()
-            ->values();
+        $cities = \App\Models\PropertyLocation::distinct()
+            ->whereNotNull('city')
+            ->where('city', '!=', '')
+            ->orderBy('city')
+            ->pluck('city');
 
         return view('properties.search', compact(
             'properties',

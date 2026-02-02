@@ -1,542 +1,979 @@
 @extends('layouts.app')
 
-@section('title', 'Appointments')
+@section('title', 'المواعيد')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Appointments</h1>
-                    <p class="text-gray-600">Manage your scheduled meetings</p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="createAppointment()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>
-                        New Appointment
-                    </button>
-                    <a href="{{ route('messages.inbox') }}" class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Messages
-                    </a>
-                </div>
-            </div>
-        </div>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Cairo:wght@200;300;400;600;700;900&display=swap');
+    
+    :root {
+        --color-primary: #2C3E50;
+        --color-secondary: #E74C3C;
+        --color-accent: #3498DB;
+        --color-success: #27AE60;
+        --color-warning: #F39C12;
+        --color-muted: #95A5A6;
+        --color-bg: #F8F9FA;
+        --color-card: #FFFFFF;
+        --color-border: #E8ECEF;
+        --color-text: #2C3E50;
+        --color-text-light: #7F8C8D;
+        --shadow-sm: 0 2px 8px rgba(44, 62, 80, 0.04);
+        --shadow-md: 0 4px 16px rgba(44, 62, 80, 0.08);
+        --shadow-lg: 0 8px 32px rgba(44, 62, 80, 0.12);
+        --radius: 16px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    body {
+        font-family: 'Cairo', 'Almarai', sans-serif;
+        background: linear-gradient(135deg, #F8F9FA 0%, #E8ECEF 100%);
+        color: var(--color-text);
+        line-height: 1.8;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, var(--color-primary) 0%, #34495E 100%);
+        padding: 4rem 0 8rem;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: -4rem;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(231, 76, 60, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%);
+        animation: headerPulse 8s ease-in-out infinite;
+    }
+    
+    @keyframes headerPulse {
+        0%, 100% { opacity: 0.5; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    .page-header .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header h1 {
+        font-family: 'Almarai', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: white;
+        margin: 0 0 1rem;
+        letter-spacing: -0.02em;
+        animation: slideDown 0.6s ease-out;
+    }
+    
+    .page-header p {
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0 0 2rem;
+        animation: slideDown 0.6s ease-out 0.1s both;
+    }
+    
+    .page-header-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        animation: slideDown 0.6s ease-out 0.2s both;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: var(--radius);
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    .btn-primary {
+        background: white;
+        color: var(--color-primary);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .btn-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .stat-card {
+        background: var(--color-card);
+        border-radius: var(--radius);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+        animation: fadeInUp 0.6s ease-out both;
+    }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--stat-color);
+    }
+    
+    .stat-card:nth-child(1) { --stat-color: var(--color-primary); }
+    .stat-card:nth-child(2) { --stat-color: var(--color-success); }
+    .stat-card:nth-child(3) { --stat-color: var(--color-warning); }
+    .stat-card:nth-child(4) { --stat-color: var(--color-accent); }
+    
+    .stat-value {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--stat-color);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        font-family: 'Almarai', sans-serif;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: var(--color-text-light);
+        font-weight: 500;
+    }
+    
+    /* Appointments Section */
+    .appointments-section {
+        background: var(--color-card);
+        border-radius: var(--radius);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-md);
+        animation: fadeInUp 0.6s ease-out 0.5s both;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+    
+    /* Filters */
+    .filters {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 0.5rem;
+        background: var(--color-bg);
+        padding: 0.5rem;
+        border-radius: var(--radius);
+    }
+    
+    .filter-btn {
+        padding: 0.625rem 1.25rem;
+        background: transparent;
+        border: none;
+        border-radius: calc(var(--radius) - 4px);
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-text-light);
+        cursor: pointer;
+        transition: var(--transition);
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+        background: white;
+        color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    /* Appointment Cards */
+    .appointments-list {
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .appointment-card {
+        background: white;
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .appointment-card:hover {
+        border-color: var(--color-primary);
+        box-shadow: var(--shadow-md);
+        transform: translateX(-4px);
+    }
+    
+    .appointment-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6px;
+        height: 100%;
+        background: var(--appointment-color);
+        transition: var(--transition);
+    }
+    
+    .appointment-card:hover::before {
+        width: 12px;
+    }
+    
+    .appointment-card.status-confirmed { --appointment-color: var(--color-success); }
+    .appointment-card.status-pending { --appointment-color: var(--color-warning); }
+    .appointment-card.status-cancelled { --appointment-color: var(--color-muted); }
+    
+    .appointment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+    
+    .appointment-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        margin: 0 0 0.5rem;
+        line-height: 1.3;
+    }
+    
+    .appointment-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--color-text-light);
+        font-size: 0.95rem;
+    }
+    
+    .meta-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--color-accent);
+    }
+    
+    .participant-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--color-bg);
+        border-radius: calc(var(--radius) - 4px);
+        margin-bottom: 1rem;
+    }
+    
+    .participant-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .avatar-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+    
+    .participant-details h4 {
+        margin: 0 0 0.25rem;
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+    
+    .participant-details p {
+        margin: 0;
+        color: var(--color-text-light);
+        font-size: 0.9rem;
+    }
+    
+    .appointment-notes {
+        background: #FFF9E6;
+        border-right: 4px solid var(--color-warning);
+        padding: 1rem 1.25rem;
+        border-radius: calc(var(--radius) - 4px);
+        margin-bottom: 1rem;
+    }
+    
+    .appointment-notes p {
+        margin: 0;
+        color: var(--color-text);
+        line-height: 1.6;
+    }
+    
+    .appointment-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--color-border);
+    }
+    
+    .appointment-tags {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        background: var(--color-bg);
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text-light);
+    }
+    
+    .tag-icon {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .appointment-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--color-border);
+        background: white;
+        border-radius: calc(var(--radius) - 4px);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-primary);
+        cursor: pointer;
+        transition: var(--transition);
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    .action-btn:hover {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+        transform: translateY(-2px);
+    }
+    
+    .action-btn.btn-confirm {
+        background: var(--color-success);
+        border-color: var(--color-success);
+        color: white;
+    }
+    
+    .action-btn.btn-confirm:hover {
+        background: #229954;
+        border-color: #229954;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-confirmed {
+        background: rgba(39, 174, 96, 0.1);
+        color: var(--color-success);
+    }
+    
+    .status-pending {
+        background: rgba(243, 156, 18, 0.1);
+        color: var(--color-warning);
+    }
+    
+    .status-cancelled {
+        background: rgba(149, 165, 166, 0.1);
+        color: var(--color-muted);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2rem;
+        opacity: 0.3;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: var(--color-text);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: var(--color-text-light);
+        margin-bottom: 2rem;
+    }
+    
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(44, 62, 80, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: var(--radius);
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .modal-header {
+        padding: 2rem;
+        border-bottom: 2px solid var(--color-border);
+    }
+    
+    .modal-header h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        margin: 0;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--color-primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1.25rem;
+        border: 2px solid var(--color-border);
+        border-radius: calc(var(--radius) - 4px);
+        font-size: 1rem;
+        font-family: 'Cairo', sans-serif;
+        transition: var(--transition);
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 4px rgba(44, 62, 80, 0.1);
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 2px solid var(--color-border);
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header h1 {
+            font-size: 2.5rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filters {
+            flex-direction: column;
+        }
+        
+        .filter-group {
+            width: 100%;
+        }
+        
+        .appointment-footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .appointment-actions {
+            width: 100%;
+            justify-content: stretch;
+        }
+        
+        .action-btn {
+            flex: 1;
+        }
+    }
+</style>
 
-        <!-- Calendar View -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-semibold text-gray-800">Calendar</h2>
-                <div class="flex items-center space-x-3">
-                    <button onclick="previousMonth()" class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <span id="currentMonth" class="font-medium text-gray-800">{{ now()->format('F Y') }}</span>
-                    <button onclick="nextMonth()" class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                    <button onclick="todayView()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm hover:bg-gray-300">
-                        Today
-                    </button>
-                </div>
-            </div>
-
-            <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 gap-1 mb-4">
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Sun</div>
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Mon</div>
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Tue</div>
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Wed</div>
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Thu</div>
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Fri</div>
-                <div class="text-center text-sm font-medium text-gray-600 py-2">Sat</div>
-            </div>
-
-            <div class="grid grid-cols-7 gap-1" id="calendarGrid">
-                <!-- Calendar days will be generated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Upcoming Appointments -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-semibold text-gray-800">Upcoming Appointments</h2>
-                <div class="flex items-center space-x-3">
-                    <select onchange="filterAppointments(this.value)" class="px-3 py-2 border rounded-lg text-sm">
-                        <option value="all">All</option>
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                    </select>
-                    <select onchange="sortAppointments(this.value)" class="px-3 py-2 border rounded-lg text-sm">
-                        <option value="date">Sort by Date</option>
-                        <option value="name">Sort by Name</option>
-                        <option value="status">Sort by Status</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                @forelse ($appointments as $appointment)
-                    <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div class="flex items-start justify-between">
-                            <div class="flex items-start space-x-4">
-                                <div class="bg-{{ $appointment->status === 'confirmed' ? 'green' : ($appointment->status === 'pending' ? 'yellow' : 'gray') }}-100 rounded-lg p-3">
-                                    <i class="fas fa-calendar text-{{ $appointment->status === 'confirmed' ? 'green' : ($appointment->status === 'pending' ? 'yellow' : 'gray') }}-600"></i>
-                                </div>
-                                
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-gray-800">{{ $appointment->title }}</h3>
-                                    <div class="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                                        <span><i class="fas fa-calendar-alt mr-1"></i>{{ $appointment->date->format('M j, Y') }}</span>
-                                        <span><i class="fas fa-clock mr-1"></i>{{ $appointment->time->format('h:i A') }}</span>
-                                        <span><i class="fas fa-hourglass-half mr-1"></i>{{ $appointment->duration }} minutes</span>
-                                    </div>
-                                    
-                                    @if($appointment->participant)
-                                        <div class="flex items-center space-x-2 mt-2">
-                                            @if($appointment->participant->avatar)
-                                                <img src="{{ $appointment->participant->avatar }}" alt="" class="w-6 h-6 rounded-full">
-                                            @else
-                                                <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                                                    <i class="fas fa-user text-gray-500 text-xs"></i>
-                                                </div>
-                                            @endif
-                                            <span class="text-sm text-gray-600">{{ $appointment->participant->name }}</span>
-                                        </div>
-                                    @endif
-                                    
-                                    @if($appointment->notes)
-                                        <p class="text-sm text-gray-600 mt-2">{{ $appointment->notes }}</p>
-                                    @endif
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center space-x-2">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    @if($appointment->status === 'confirmed')
-                                        bg-green-100 text-green-800
-                                    @elseif($appointment->status === 'pending')
-                                        bg-yellow-100 text-yellow-800
-                                    @elseif($appointment->status === 'cancelled')
-                                        bg-red-100 text-red-800
-                                    @else
-                                        bg-gray-100 text-gray-800
-                                    @endif
-                                ">
-                                    {{ ucfirst($appointment->status) }}
-                                </span>
-                                
-                                <div class="relative">
-                                    <button onclick="showAppointmentActions({{ $appointment->id }})" class="text-gray-600 hover:text-gray-800">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    
-                                    <div id="appointmentActions{{ $appointment->id }}" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border hidden z-10">
-                                        <button onclick="editAppointment({{ $appointment->id }})" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">
-                                            <i class="fas fa-edit mr-2"></i>Edit
-                                        </button>
-                                        <button onclick="rescheduleAppointment({{ $appointment->id }})" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">
-                                            <i class="fas fa-calendar-alt mr-2"></i>Reschedule
-                                        </button>
-                                        <button onclick="cancelAppointment({{ $appointment->id }})" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600">
-                                            <i class="fas fa-times mr-2"></i>Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="flex space-x-3 mt-4">
-                            @if($appointment->status === 'pending')
-                                <button onclick="confirmAppointment({{ $appointment->id }})" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
-                                    Confirm
-                                </button>
-                            @endif
-                            
-                            <button onclick="joinVideoCall({{ $appointment->id }})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-video mr-1"></i>Join Call
-                            </button>
-                            
-                            <button onclick="sendReminder({{ $appointment->id }})" class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
-                                <i class="fas fa-bell mr-1"></i>Send Reminder
-                            </button>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-12">
-                        <i class="fas fa-calendar text-6xl text-gray-300 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No appointments scheduled</h3>
-                        <p class="text-gray-500 mb-4">Schedule your first appointment to get started</p>
-                        <button onclick="createAppointment()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i class="fas fa-plus mr-2"></i>
-                            Create Appointment
-                        </button>
-                    </div>
-                @endforelse
-            </div>
-        </div>
-
-        <!-- Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="bg-blue-100 rounded-full p-3 mr-4">
-                        <i class="fas fa-calendar-alt text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Total</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $stats['total'] }}</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="bg-green-100 rounded-full p-3 mr-4">
-                        <i class="fas fa-check text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Confirmed</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $stats['confirmed'] }}</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="bg-yellow-100 rounded-full p-3 mr-4">
-                        <i class="fas fa-clock text-yellow-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Pending</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $stats['pending'] }}</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="bg-purple-100 rounded-full p-3 mr-4">
-                        <i class="fas fa-video text-purple-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Today</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $stats['today'] }}</p>
-                    </div>
-                </div>
-            </div>
+<div class="page-header">
+    <div class="container">
+        <h1>المواعيد</h1>
+        <p>إدارة اجتماعاتك المجدولة بكفاءة وسهولة</p>
+        <div class="page-header-actions">
+            <button class="btn btn-primary" onclick="openModal()">
+                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                موعد جديد
+            </button>
+            <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                الرجوع
+            </a>
+            <button class="btn btn-secondary">
+                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                تصدير
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Create Appointment Modal -->
-<div id="appointmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg p-6 max-w-md mx-4 w-full">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Create Appointment</h3>
-        
-        <form onsubmit="saveAppointment(event)">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                    <input type="text" id="appointmentTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+<div class="container" style="margin-top: 2rem; margin-bottom: 4rem;">
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ $stats['total'] }}</div>
+            <div class="stat-label">إجمالي المواعيد</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ $stats['confirmed'] }}</div>
+            <div class="stat-label">مؤكد</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ $stats['pending'] }}</div>
+            <div class="stat-label">في الانتظار</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ $stats['today'] }}</div>
+            <div class="stat-label">اليوم</div>
+        </div>
+    </div>
+
+    <!-- Appointments Section -->
+    <div class="appointments-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                قائمة المواعيد
+            </h2>
+            <div class="filters">
+                <div class="filter-group">
+                    <button class="filter-btn active">كل المواعيد</button>
+                    <button class="filter-btn">اليوم</button>
+                    <button class="filter-btn">هذا الأسبوع</button>
+                    <button class="filter-btn">هذا الشهر</button>
+                </div>
+                <div class="filter-group">
+                    <button class="filter-btn active">ترتيب حسب التاريخ</button>
+                    <button class="filter-btn">ترتيب حسب العنوان</button>
+                    <button class="filter-btn">ترتيب حسب الحالة</button>
+                </div>
+            </div>
+        </div>
+
+        @if($appointments->count() > 0)
+            <div class="appointments-list">
+                @foreach($appointments as $appointment)
+                    <div class="appointment-card status-{{ $appointment->status }}">
+                        <div class="appointment-header">
+                            <div>
+                                <h3 class="appointment-title">{{ $appointment->title }}</h3>
+                                <div class="appointment-meta">
+                                    <div class="meta-item">
+                                        <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span>{{ $appointment->start_datetime->format('Y-m-d') }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span>{{ $appointment->start_datetime->format('h:i A') }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span>{{ $appointment->duration }} دقيقة</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="status-badge status-{{ $appointment->status }}">
+                                @if($appointment->status == 'confirmed')
+                                    مؤكد
+                                @elseif($appointment->status == 'pending')
+                                    قيد الانتظار
+                                @else
+                                    ملغي
+                                @endif
+                            </span>
+                        </div>
+
+                        @if($appointment->participant)
+                            <div class="participant-info">
+                                @if($appointment->participant->avatar)
+                                    <img src="{{ $appointment->participant->avatar }}" alt="{{ $appointment->participant->full_name }}" class="participant-avatar">
+                                @else
+                                    <div class="avatar-placeholder">
+                                        {{ substr($appointment->participant->full_name, 0, 1) }}
+                                    </div>
+                                @endif
+                                <div class="participant-details">
+                                    <h4>{{ $appointment->participant->full_name }}</h4>
+                                    <p>{{ $appointment->participant->email }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($appointment->notes)
+                            <div class="appointment-notes">
+                                <p>{{ $appointment->notes }}</p>
+                            </div>
+                        @endif
+
+                        <div class="appointment-footer">
+                            <div class="appointment-tags">
+                                <span class="tag">
+                                    @if($appointment->appointment_type == 'video')
+                                        <svg class="tag-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        </svg>
+                                        فيديو
+                                    @elseif($appointment->appointment_type == 'voice')
+                                        <svg class="tag-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                        </svg>
+                                        صوتي
+                                    @elseif($appointment->appointment_type == 'in-person')
+                                        <svg class="tag-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                        شخصي
+                                    @else
+                                        <svg class="tag-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                        </svg>
+                                        هاتفي
+                                    @endif
+                                </span>
+                                @if($appointment->location)
+                                    <span class="tag">
+                                        <svg class="tag-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                        {{ $appointment->location }}
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="appointment-actions">
+                                @if($appointment->status == 'pending' && $appointment->participant_id == Auth::id())
+                                    <button class="action-btn btn-confirm">تأكيد</button>
+                                @endif
+                                <button class="action-btn">تعديل</button>
+                                <button class="action-btn">إلغاء</button>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="pagination">
+                {{ $appointments->links() }}
+            </div>
+        @else
+            <div class="empty-state">
+                <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <h3>لا توجد مواعيد</h3>
+                <p>ابدأ بإنشاء موعد جديد</p>
+                <button class="btn btn-primary" onclick="openModal()">
+                    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    إنشاء موعد جديد
+                </button>
+            </div>
+        @endif
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="appointmentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>موعد جديد</h3>
+        </div>
+        <div class="modal-body">
+            <form>
+                <div class="form-group">
+                    <label class="form-label">عنوان الموعد</label>
+                    <input type="text" class="form-control" placeholder="أدخل عنوان الموعد">
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Participant</label>
-                    <select id="appointmentParticipant" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="">Select participant</option>
+                <div class="form-group">
+                    <label class="form-label">المشارك</label>
+                    <select class="form-control">
+                        <option>اختر المشارك</option>
                         @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            <option value="{{ $user->id }}">{{ $user->full_name }}</option>
                         @endforeach
                     </select>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                        <input type="date" id="appointmentDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                        <input type="time" id="appointmentTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">التاريخ</label>
+                    <input type="date" class="form-control">
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-                    <select id="appointmentDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="30">30 minutes</option>
-                        <option value="60">1 hour</option>
-                        <option value="90">1.5 hours</option>
-                        <option value="120">2 hours</option>
+                <div class="form-group">
+                    <label class="form-label">الوقت</label>
+                    <input type="time" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">المدة (دقائق)</label>
+                    <select class="form-control">
+                        <option value="30">30 دقيقة</option>
+                        <option value="60">60 دقيقة</option>
+                        <option value="90">90 دقيقة</option>
+                        <option value="120">120 دقيقة</option>
                     </select>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                    <select id="appointmentType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="video">Video Call</option>
-                        <option value="voice">Voice Call</option>
-                        <option value="in-person">In Person</option>
-                        <option value="phone">Phone Call</option>
+                <div class="form-group">
+                    <label class="form-label">نوع الموعد</label>
+                    <select class="form-control">
+                        <option value="video">مكالمة فيديو</option>
+                        <option value="voice">مكالمة صوتية</option>
+                        <option value="in-person">لقاء شخصي</option>
+                        <option value="phone">مكالمة هاتفية</option>
                     </select>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                    <textarea id="appointmentNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                <div class="form-group">
+                    <label class="form-label">ملاحظات</label>
+                    <textarea class="form-control" placeholder="أضف ملاحظات إضافية (اختياري)"></textarea>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Reminder</label>
-                    <select id="appointmentReminder" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="15">15 minutes before</option>
-                        <option value="30">30 minutes before</option>
-                        <option value="60">1 hour before</option>
-                        <option value="1440">1 day before</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" onclick="closeAppointmentModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                    Create Appointment
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+            <button class="btn btn-primary">حفظ الموعد</button>
+        </div>
     </div>
 </div>
 
 <script>
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
-
-function generateCalendar() {
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const today = new Date();
-    
-    const grid = document.getElementById('calendarGrid');
-    grid.innerHTML = '';
-    
-    // Empty cells for days before month starts
-    for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += '<div class="p-2"></div>';
+    function openModal() {
+        document.getElementById('appointmentModal').classList.add('active');
     }
     
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const isToday = today.getDate() === day && today.getMonth() === currentMonth && today.getFullYear() === currentYear;
-        const hasAppointments = checkAppointmentsForDay(day);
-        
-        grid.innerHTML += `
-            <div class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer ${isToday ? 'bg-blue-50 border-blue-500' : 'border-gray-200'}" onclick="selectDate(${day})">
-                <div class="text-sm ${isToday ? 'font-bold text-blue-600' : 'text-gray-800'}">${day}</div>
-                ${hasAppointments ? '<div class="w-2 h-2 bg-purple-500 rounded-full mx-auto mt-1"></div>' : ''}
-            </div>
-        `;
+    function closeModal() {
+        document.getElementById('appointmentModal').classList.remove('active');
     }
     
-    // Update month display
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    document.getElementById('currentMonth').textContent = monthNames[currentMonth] + ' ' + currentYear;
-}
-
-function checkAppointmentsForDay(day) {
-    // Check if there are appointments for this day
-    // This would typically check against your appointments data
-    return Math.random() > 0.8; // Random for demo
-}
-
-function previousMonth() {
-    currentMonth--;
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-    generateCalendar();
-}
-
-function nextMonth() {
-    currentMonth++;
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
-    generateCalendar();
-}
-
-function todayView() {
-    currentMonth = new Date().getMonth();
-    currentYear = new Date().getFullYear();
-    generateCalendar();
-}
-
-function selectDate(day) {
-    // Set the date in the appointment form
-    const date = new Date(currentYear, currentMonth, day);
-    document.getElementById('appointmentDate').value = date.toISOString().split('T')[0];
-    
-    // Open appointment modal
-    createAppointment();
-}
-
-function createAppointment() {
-    document.getElementById('appointmentModal').classList.remove('hidden');
-}
-
-function closeAppointmentModal() {
-    document.getElementById('appointmentModal').classList.add('hidden');
-}
-
-function saveAppointment(event) {
-    event.preventDefault();
-    
-    const title = document.getElementById('appointmentTitle').value;
-    const participant = document.getElementById('appointmentParticipant').value;
-    const date = document.getElementById('appointmentDate').value;
-    const time = document.getElementById('appointmentTime').value;
-    const duration = document.getElementById('appointmentDuration').value;
-    const type = document.getElementById('appointmentType').value;
-    const notes = document.getElementById('appointmentNotes').value;
-    const reminder = document.getElementById('appointmentReminder').value;
-    
-    fetch('/messages/appointments', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            title: title,
-            participant_id: participant,
-            date: date,
-            time: time,
-            duration: duration,
-            type: type,
-            notes: notes,
-            reminder_minutes: reminder
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            closeAppointmentModal();
-            location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
-function showAppointmentActions(appointmentId) {
-    const actions = document.getElementById('appointmentActions' + appointmentId);
-    
-    // Hide all other action menus
-    document.querySelectorAll('[id^="appointmentActions"]').forEach(menu => {
-        if (menu.id !== 'appointmentActions' + appointmentId) {
-            menu.classList.add('hidden');
+    // Close modal on outside click
+    document.getElementById('appointmentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
         }
     });
     
-    actions.classList.toggle('hidden');
-}
-
-function editAppointment(appointmentId) {
-    window.location.href = '/messages/appointments/' + appointmentId + '/edit';
-}
-
-function rescheduleAppointment(appointmentId) {
-    window.location.href = '/messages/appointments/' + appointmentId + '/reschedule';
-}
-
-function cancelAppointment(appointmentId) {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-        fetch('/messages/appointments/' + appointmentId + '/cancel', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
+    // Filter buttons functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.filter-group').querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
         });
-    }
-}
-
-function confirmAppointment(appointmentId) {
-    fetch('/messages/appointments/' + appointmentId + '/confirm', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
     });
-}
-
-function joinVideoCall(appointmentId) {
-    window.location.href = '/messages/video-call/appointment/' + appointmentId;
-}
-
-function sendReminder(appointmentId) {
-    fetch('/messages/appointments/' + appointmentId + '/reminder', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Reminder sent successfully!');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
-function filterAppointments(filter) {
-    window.location.href = '?filter=' + filter;
-}
-
-function sortAppointments(sort) {
-    window.location.href = '?sort=' + sort;
-}
-
-// Initialize calendar
-generateCalendar();
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(event) {
-    if (!event.target.matches('[onclick*="showAppointmentActions"]')) {
-        document.querySelectorAll('[id^="appointmentActions"]').forEach(menu => {
-            menu.classList.add('hidden');
-        });
-    }
-});
 </script>
-@endsection
+
+@endsection````

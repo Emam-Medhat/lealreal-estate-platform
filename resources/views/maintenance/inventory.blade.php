@@ -173,7 +173,7 @@
                                     </td>
                                     <td>
                                         @if($item->category)
-                                            {{ $item->category->name }}
+                                            {{ $item->getCategoryName() }}
                                         @else
                                             <span class="text-muted">No Category</span>
                                         @endif

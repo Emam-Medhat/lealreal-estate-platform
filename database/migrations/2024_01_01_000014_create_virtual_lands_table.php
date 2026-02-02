@@ -83,7 +83,6 @@ return new class extends Migration
 
             // Regular index for search (SQLite doesn't support full-text index)
             $table->index('title');
-            $table->index('description');
             $table->index('coordinates');
         });
     }

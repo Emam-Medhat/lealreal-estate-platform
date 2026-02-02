@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use App\Models\SubscriptionFeature;
 use App\Models\SubscriptionTier;
+use App\Models\Subscription;
+use App\Models\SubscriptionUpgrade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,6 +21,103 @@ class SubscriptionPlanController extends Controller
             ->paginate(15);
 
         return view('subscriptions.plans.index', compact('plans'));
+    }
+
+    public function publicIndex()
+    {
+        try {
+            $plans = SubscriptionPlan::with(['tier', 'features'])
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('price', 'asc')
+                ->get();
+
+            return view('subscriptions.plans.public', compact('plans'));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
+    }
+
+    public function subscribe(Request $request, SubscriptionPlan $plan)
+    {
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('message', 'Please login to subscribe to a plan.');
+        }
+
+        try {
+            $user = auth()->user();
+            
+            // Check if user already has an active subscription
+            $activeSubscription = Subscription::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($activeSubscription) {
+                return back()->with('error', 'You already have an active subscription. Please cancel it first or upgrade your plan.');
+            }
+
+            // Create new subscription
+            $subscription = Subscription::create([
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'status' => 'pending',
+                'amount' => $plan->price,
+                'currency' => $plan->currency,
+                'billing_cycle' => $plan->billing_cycle,
+                'auto_renew' => true,
+                'payment_method' => 'stripe', // Default payment method
+                'payment_status' => 'pending',
+            ]);
+
+            // Redirect to payment page
+            return redirect()->route('subscriptions.payment', $subscription)
+                ->with('success', 'Subscription created! Please complete the payment.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to create subscription: ' . $e->getMessage());
+        }
+    }
+
+    public function upgrade(Request $request, SubscriptionPlan $plan)
+    {
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('message', 'Please login to upgrade your plan.');
+        }
+
+        try {
+            $user = auth()->user();
+            $currentSubscription = Subscription::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if (!$currentSubscription) {
+                return redirect()->route('subscriptions.plans.public')
+                    ->with('error', 'You need an active subscription to upgrade.');
+            }
+
+            if ($plan->price <= $currentSubscription->plan->price) {
+                return back()->with('error', 'Please select a higher-priced plan to upgrade.');
+            }
+
+            // Create upgrade record
+            $upgrade = SubscriptionUpgrade::create([
+                'subscription_id' => $currentSubscription->id,
+                'from_plan_id' => $currentSubscription->plan_id,
+                'to_plan_id' => $plan->id,
+                'status' => 'pending',
+                'price_difference' => $plan->price - $currentSubscription->plan->price,
+            ]);
+
+            return redirect()->route('subscriptions.payment.upgrade', $upgrade)
+                ->with('success', 'Upgrade initiated! Please complete the payment.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to process upgrade: ' . $e->getMessage());
+        }
     }
 
     public function create()

@@ -12,27 +12,29 @@ class BlockchainRecord extends Model
     use HasFactory;
 
     protected $fillable = [
-        'block_hash',
-        'block_number',
-        'transaction_hash',
-        'from_address',
-        'to_address',
-        'value',
-        'gas_used',
-        'gas_price',
-        'nonce',
-        'block_timestamp',
-        'status',
+        'hash',
+        'previous_hash',
+        'height',
         'data',
+        'type',
+        'difficulty',
+        'nonce',
+        'miner',
+        'timestamp',
+        'transaction_count',
+        'size',
+        'merkle_root',
+        'metadata',
+        'status',
+        'created_by',
         'created_at',
         'updated_at'
     ];
 
     protected $casts = [
-        'value' => 'decimal:18',
-        'gas_price' => 'decimal:18',
         'data' => 'array',
-        'block_timestamp' => 'datetime',
+        'metadata' => 'array',
+        'timestamp' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
@@ -45,13 +47,13 @@ class BlockchainRecord extends Model
 
     public function scopeByAddress($query, $address)
     {
-        return $query->where('from_address', $address)
-                    ->orWhere('to_address', $address);
+        // This scope doesn't apply to blocks, but to transactions
+        return $query;
     }
 
     public function scopeByBlockRange($query, $from, $to)
     {
-        return $query->whereBetween('block_number', [$from, $to]);
+        return $query->whereBetween('height', [$from, $to]);
     }
 
     public function scopeRecent($query, $hours = 24)
@@ -60,34 +62,14 @@ class BlockchainRecord extends Model
     }
 
     // Accessors
-    public function getValueAttribute($value)
+    public function getFormattedSizeAttribute()
     {
-        return $value ? number_format($value, 18, '.', '') : '0';
+        return number_format($this->size, 2) . ' KB';
     }
 
-    public function getGasPriceAttribute($value)
+    public function getFormattedDifficultyAttribute()
     {
-        return $value ? number_format($value, 18, '.', '') : '0';
-    }
-
-    public function getFormattedValueAttribute()
-    {
-        return $this->value ? number_format($this->value, 8) : '0';
-    }
-
-    public function getFormattedGasPriceAttribute()
-    {
-        return $this->gas_price ? number_format($this->gas_price, 9) : '0';
-    }
-
-    public function getGasCostAttribute()
-    {
-        return $this->gas_used * $this->gas_price;
-    }
-
-    public function getFormattedGasCostAttribute()
-    {
-        return number_format($this->gas_cost, 8);
+        return number_format($this->difficulty);
     }
 
     public function getStatusLabelAttribute()
@@ -95,20 +77,14 @@ class BlockchainRecord extends Model
         $labels = [
             'pending' => 'قيد الانتظار',
             'confirmed' => 'مؤكد',
-            'failed' => 'فشل',
-            'reverted' => 'تم الرجوع'
+            'orphaned' => 'يتيم'
         ];
         return $labels[$this->status] ?? $this->status;
     }
 
-    public function getTransactionUrlAttribute()
-    {
-        return "https://etherscan.io/tx/{$this->transaction_hash}";
-    }
-
     public function getBlockUrlAttribute()
     {
-        return "https://etherscan.io/block/{$this->block_number}";
+        return "https://etherscan.io/block/{$this->height}";
     }
 
     // Methods
@@ -122,19 +98,19 @@ class BlockchainRecord extends Model
         return $this->status === 'confirmed';
     }
 
-    public function isFailed()
+    public function isOrphaned()
     {
-        return in_array($this->status, ['failed', 'reverted']);
+        return $this->status === 'orphaned';
     }
 
-    public function getConfirmationTime()
+    public function getMiningTime()
     {
-        return $this->created_at->diffInSeconds($this->block_timestamp);
+        return $this->created_at->diffInSeconds($this->timestamp);
     }
 
-    public function getFormattedConfirmationTime()
+    public function getFormattedMiningTime()
     {
-        $seconds = $this->getConfirmationTime();
+        $seconds = $this->getMiningTime();
         if ($seconds < 60) {
             return "{$seconds} ثانية";
         } elseif ($seconds < 3600) {
@@ -167,56 +143,48 @@ class BlockchainRecord extends Model
             'total_records' => self::count(),
             'pending_records' => self::byStatus('pending')->count(),
             'confirmed_records' => self::byStatus('confirmed')->count(),
-            'failed_records' => self::byStatus('failed')->count(),
-            'total_value' => self::where('status', 'confirmed')->sum('value'),
-            'total_gas_cost' => self::where('status', 'confirmed')->sumRaw('gas_used * gas_price'),
-            'avg_gas_price' => self::where('status', 'confirmed')->avg('gas_price'),
-            'latest_block' => self::max('block_number'),
+            'orphaned_records' => self::byStatus('orphaned')->count(),
+            'total_transactions' => self::sum('transaction_count'),
+            'total_size' => self::sum('size'),
+            'average_size' => self::avg('size'),
+            'average_difficulty' => self::avg('difficulty'),
+            'latest_height' => self::max('height'),
+            'total_miners' => self::distinct('miner')->count('miner'),
             'records_today' => self::whereDate('created_at', today())->count(),
             'records_this_week' => self::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
             'records_this_month' => self::whereMonth('created_at', now()->month)->count(),
         ];
     }
 
-    public static function getTopTransactions($limit = 10)
+    public static function getTopBlocks($limit = 10)
     {
         return self::where('status', 'confirmed')
-                   ->orderBy('value', 'desc')
+                   ->orderBy('transaction_count', 'desc')
                    ->limit($limit)
                    ->get();
     }
 
-    public static function getRecentTransactions($limit = 20)
+    public static function getRecentBlocks($limit = 20)
     {
         return self::orderBy('created_at', 'desc')
                    ->limit($limit)
                    ->get();
     }
 
-    public static function getTransactionsByAddress($address, $limit = 50)
+    public static function getBlocksByMiner($miner, $limit = 50)
     {
-        return self::byAddress($address)
+        return self::where('miner', $miner)
                    ->orderBy('created_at', 'desc')
                    ->limit($limit)
                    ->get();
     }
 
-    public static function getBlockTransactions($blockNumber)
+    public static function getBlockByHeight($height)
     {
-        return self::where('block_number', $blockNumber)
-                   ->orderBy('nonce')
-                   ->get();
+        return self::where('height', $height)->first();
     }
 
-    public static function getFailedTransactions($limit = 20)
-    {
-        return self::where('status', 'failed')
-                   ->orderBy('created_at', 'desc')
-                   ->limit($limit)
-                   ->get();
-    }
-
-    public static function getPendingTransactions($limit = 20)
+    public static function getPendingBlocks($limit = 20)
     {
         return self::where('status', 'pending')
                    ->orderBy('created_at', 'desc')
@@ -224,28 +192,36 @@ class BlockchainRecord extends Model
                    ->get();
     }
 
-    public static function getHighGasTransactions($limit = 20)
+    public static function getOrphanedBlocks($limit = 20)
     {
-        return self::where('status', 'confirmed')
-                   ->orderBy('gas_price', 'desc')
+        return self::where('status', 'orphaned')
+                   ->orderBy('created_at', 'desc')
                    ->limit($limit)
                    ->get();
     }
 
-    public static function searchTransactions($query, $limit = 50)
+    public static function getHighDifficultyBlocks($limit = 20)
+    {
+        return self::where('status', 'confirmed')
+                   ->orderBy('difficulty', 'desc')
+                   ->limit($limit)
+                   ->get();
+    }
+
+    public static function searchBlocks($query, $limit = 50)
     {
         return self::where(function($q) use ($query) {
-                    $q->where('transaction_hash', 'like', "%{$query}%")
-                      ->orWhere('block_hash', 'like', "%{$query}%")
-                      ->orWhere('from_address', 'like', "%{$query}%")
-                      ->orWhere('to_address', 'like', "%{$query}%");
+                    $q->where('hash', 'like', "%{$query}%")
+                      ->orWhere('previous_hash', 'like', "%{$query}%")
+                      ->orWhere('miner', 'like', "%{$query}%")
+                      ->orWhere('height', 'like', "%{$query}%");
                 })
                 ->orderBy('created_at', 'desc')
                 ->limit($limit)
                 ->get();
     }
 
-    public static function getDailyTransactionCount($days = 30)
+    public static function getDailyBlockCount($days = 30)
     {
         return self::where('created_at', '>=', now()->subDays($days))
                    ->groupBy('date')
@@ -254,7 +230,7 @@ class BlockchainRecord extends Model
                    ->get();
     }
 
-    public static function getHourlyTransactionCount($hours = 24)
+    public static function getHourlyBlockCount($hours = 24)
     {
         return self::where('created_at', '>=', now()->subHours($hours))
                    ->groupBy('hour')
@@ -263,21 +239,19 @@ class BlockchainRecord extends Model
                    ->get();
     }
 
-    public static function getAddressStats($address)
+    public static function getMinerStats($miner)
     {
-        $sent = self::where('from_address', $address)->sum('value');
-        $received = self::where('to_address', $address)->sum('value');
-        $transactions = self::byAddress($address)->count();
+        $blocks = self::where('miner', $miner)->count();
+        $transactions = self::where('miner', $miner)->sum('transaction_count');
+        $totalSize = self::where('miner', $miner)->sum('size');
         
         return [
-            'total_sent' => $sent,
-            'total_received' => $received,
-            'net_balance' => $received - $sent,
+            'total_blocks' => $blocks,
             'total_transactions' => $transactions,
-            'sent_transactions' => self::where('from_address', $address)->count(),
-            'received_transactions' => self::where('to_address', $address)->count(),
-            'first_transaction' => self::byAddress($address)->min('created_at'),
-            'last_transaction' => self::byAddress($address)->max('created_at'),
+            'total_size' => $totalSize,
+            'average_transactions_per_block' => $blocks > 0 ? $transactions / $blocks : 0,
+            'first_block' => self::where('miner', $miner)->min('height'),
+            'last_block' => self::where('miner', $miner)->max('height'),
         ];
     }
 
@@ -285,23 +259,23 @@ class BlockchainRecord extends Model
     public static function exportToCsv($records)
     {
         $headers = [
-            'Block Hash', 'Block Number', 'Transaction Hash', 'From Address', 
-            'To Address', 'Value', 'Gas Used', 'Gas Price', 'Status', 
-            'Block Timestamp', 'Created At'
+            'Hash', 'Previous Hash', 'Height', 'Type', 'Miner', 
+            'Transaction Count', 'Size', 'Difficulty', 'Status', 
+            'Timestamp', 'Created At'
         ];
 
         $rows = $records->map(function ($record) {
             return [
-                $record->block_hash,
-                $record->block_number,
-                $record->transaction_hash,
-                $record->from_address,
-                $record->to_address,
-                $record->formatted_value,
-                $record->gas_used,
-                $record->formatted_gas_price,
+                $record->hash,
+                $record->previous_hash,
+                $record->height,
+                $record->type,
+                $record->miner,
+                $record->transaction_count,
+                $record->formatted_size,
+                $record->formatted_difficulty,
                 $record->status_label,
-                $record->block_timestamp,
+                $record->timestamp,
                 $record->created_at
             ];
         });
@@ -310,32 +284,32 @@ class BlockchainRecord extends Model
     }
 
     // Validation Methods
-    public function validateTransaction()
+    public function validateBlock()
     {
         $errors = [];
         
-        if (empty($this->transaction_hash)) {
-            $errors[] = 'Transaction hash is required';
+        if (empty($this->hash)) {
+            $errors[] = 'Block hash is required';
         }
         
-        if (empty($this->from_address)) {
-            $errors[] = 'From address is required';
+        if (empty($this->previous_hash) && $this->height > 1) {
+            $errors[] = 'Previous hash is required for blocks other than genesis';
         }
         
-        if (empty($this->to_address)) {
-            $errors[] = 'To address is required';
+        if ($this->height < 1) {
+            $errors[] = 'Height must be positive';
         }
         
-        if ($this->value < 0) {
-            $errors[] = 'Value must be positive';
+        if ($this->difficulty < 0) {
+            $errors[] = 'Difficulty must be positive';
         }
         
-        if ($this->gas_used < 0) {
-            $errors[] = 'Gas used must be positive';
+        if ($this->transaction_count < 0) {
+            $errors[] = 'Transaction count must be positive';
         }
         
-        if ($this->gas_price < 0) {
-            $errors[] = 'Gas price must be positive';
+        if ($this->size < 0) {
+            $errors[] = 'Size must be positive';
         }
         
         return $errors;
@@ -348,26 +322,30 @@ class BlockchainRecord extends Model
         // For now, return simulated verification
         return [
             'verified' => true,
-            'block_number' => $this->block_number,
-            'transaction_hash' => $this->transaction_hash,
-            'status' => $this->status,
-            'gas_used' => $this->gas_used,
-            'gas_price' => $this->gas_price
+            'height' => $this->height,
+            'hash' => $this->hash,
+            'previous_hash' => $this->previous_hash,
+            'difficulty' => $this->difficulty,
+            'transaction_count' => $this->transaction_count
         ];
     }
 
-    public function getTransactionReceipt()
+    public function getBlockInfo()
     {
-        // This would get actual transaction receipt from blockchain
+        // This would get actual block info from blockchain
         return [
-            'transaction_hash' => $this->transaction_hash,
-            'block_hash' => $this->block_hash,
-            'block_number' => $this->block_number,
-            'gas_used' => $this->gas_used,
-            'gas_price' => $this->gas_price,
+            'hash' => $this->hash,
+            'previous_hash' => $this->previous_hash,
+            'height' => $this->height,
+            'miner' => $this->miner,
+            'transaction_count' => $this->transaction_count,
+            'size' => $this->size,
+            'difficulty' => $this->difficulty,
+            'timestamp' => $this->timestamp,
             'status' => $this->status,
-            'logs' => $this->data['logs'] ?? [],
-            'contract_address' => $this->data['contract_address'] ?? null
+            'merkle_root' => $this->merkle_root,
+            'nonce' => $this->nonce,
+            'data' => $this->data ?? []
         ];
     }
 }

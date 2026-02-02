@@ -19,7 +19,7 @@ class StoreInvestorRequest extends FormRequest
             'email' => 'required|email|max:255|unique:investors,email',
             'phone' => 'required|string|max:20',
             'company_name' => 'nullable|string|max:255',
-            'investor_type' => 'required|in:individual,institutional,corporate,retail',
+            'investor_type' => 'required|in:individual,company,fund,bank,government,institution',
             'status' => 'nullable|in:active,inactive,suspended,verified',
             'total_invested' => 'nullable|numeric|min:0',
             'total_returns' => 'nullable|numeric|min:0',

@@ -22,17 +22,21 @@ class AdminController extends Controller
     public function dashboard()
     {
         $stats = [
-            'total_users' => User::count(),
-            'new_users_today' => User::whereDate('created_at', today())->count(),
-            'total_properties' => Property::count(),
-            'new_properties_today' => Property::whereDate('created_at', today())->count(),
-            'total_agents' => User::where('user_type', 'agent')->count(),
-            'total_companies' => Company::count(),
-            'new_companies_today' => Company::whereDate('created_at', today())->count(),
-            'active_properties' => Property::where('status', 'active')->count(),
-            'sold_properties' => Property::where('status', 'sold')->count(),
-            'total_revenue' => 0,
-            'revenue_today' => 0,
+            'site' => [
+                'total_users' => User::count(),
+                'new_users_today' => User::whereDate('created_at', today())->count(),
+                'total_properties' => Property::count(),
+                'new_properties_today' => Property::whereDate('created_at', today())->count(),
+                'total_agents' => User::where('user_type', 'agent')->count(),
+                'total_companies' => Company::count(),
+                'new_companies_today' => Company::whereDate('created_at', today())->count(),
+                'active_properties' => Property::where('status', 'active')->count(),
+                'sold_properties' => Property::where('status', 'sold')->count(),
+                'total_investors' => \App\Models\Investor::count(),
+                'new_investors_today' => \App\Models\Investor::whereDate('created_at', today())->count(),
+                'total_revenue' => 0,
+                'revenue_today' => 0,
+            ],
             'recent_users' => User::latest()->take(5)->get(),
             'recent_properties' => Property::with('agent')->latest()->take(5)->get(),
             'recent_activity' => [

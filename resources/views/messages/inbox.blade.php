@@ -34,27 +34,35 @@
                     
                     <div class="divide-y">
                         @forelse ($conversations as $conversation)
-                            <div onclick="openConversation({{ $conversation->id }})" class="p-4 hover:bg-gray-50 cursor-pointer {{ $conversation->id == $activeConversation ? 'bg-blue-50' : '' }}">
+                            <div onclick="openConversation({{ $conversation->id }})" class="p-4 hover:bg-gray-50 cursor-pointer">
                                 <div class="flex items-start space-x-3">
                                     <div class="relative">
-                                        @if($conversation->other_user->avatar)
-                                            <img src="{{ $conversation->other_user->avatar }}" alt="" class="w-10 h-10 rounded-full">
+                                        @if($conversation->sender_id == auth()->id() && $conversation->receiver->avatar)
+                                            <img src="{{ $conversation->receiver->avatar }}" alt="" class="w-10 h-10 rounded-full">
+                                        @elseif($conversation->receiver_id == auth()->id() && $conversation->sender->avatar)
+                                            <img src="{{ $conversation->sender->avatar }}" alt="" class="w-10 h-10 rounded-full">
                                         @else
                                             <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                                                 <i class="fas fa-user text-gray-500 text-sm"></i>
                                             </div>
                                         @endif
-                                        @if($conversation->unread_count > 0)
+                                        @if($conversation->hasUnreadMessagesForUser(auth()->id()))
                                             <div class="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full"></div>
                                         @endif
                                     </div>
                                     
                                     <div class="flex-1 min-w-0">
                                         <div class="flex justify-between items-start">
-                                            <h4 class="font-medium text-gray-900 truncate">{{ $conversation->other_user->name }}</h4>
-                                            <span class="text-xs text-gray-500">{{ $conversation->last_message_time }}</span>
+                                            <h4 class="font-medium text-gray-900 truncate">
+                                                {{ $conversation->sender_id == auth()->id() ? $conversation->receiver->full_name : $conversation->sender->full_name }}
+                                            </h4>
+                                            <span class="text-xs text-gray-500">
+                                                {{ $conversation->last_message_at ? $conversation->last_message_at->diffForHumans() : 'Never' }}
+                                            </span>
                                         </div>
-                                        <p class="text-sm text-gray-600 truncate">{{ $conversation->last_message }}</p>
+                                        <p class="text-sm text-gray-600 truncate">
+                                            {{ $conversation->last_message_preview ?? 'No messages yet' }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -74,99 +82,13 @@
 
             <!-- Conversation View -->
             <div class="lg:col-span-2">
-                @if($activeConversation)
-                    <div class="bg-white rounded-lg shadow-sm h-96 flex flex-col">
-                        <!-- Conversation Header -->
-                        <div class="p-4 border-b flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                @if($activeConversation->other_user->avatar)
-                                    <img src="{{ $activeConversation->other_user->avatar }}" alt="" class="w-8 h-8 rounded-full">
-                                @else
-                                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                        <i class="fas fa-user text-gray-500 text-xs"></i>
-                                    </div>
-                                @endif
-                                <div>
-                                    <h3 class="font-medium text-gray-900">{{ $activeConversation->other_user->name }}</h3>
-                                    <p class="text-xs text-gray-500">{{ $activeConversation->other_user->status ?? 'Active' }}</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center space-x-2">
-                                <button onclick="startVideoCall({{ $activeConversation->id }})" class="text-gray-600 hover:text-gray-800">
-                                    <i class="fas fa-video"></i>
-                                </button>
-                                <button onclick="startVoiceCall({{ $activeConversation->id }})" class="text-gray-600 hover:text-gray-800">
-                                    <i class="fas fa-phone"></i>
-                                </button>
-                                <button onclick="deleteConversation({{ $activeConversation->id }})" class="text-red-600 hover:text-red-800">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Messages -->
-                        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messagesContainer">
-                            @foreach ($messages as $message)
-                                <div class="flex {{ $message->sender_id == auth()->id() ? 'justify-end' : 'justify-start' }}">
-                                    <div class="max-w-xs lg:max-w-md">
-                                        <div class="{{ $message->sender_id == auth()->id() ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800' } rounded-lg px-4 py-2">
-                                            <p>{{ $message->content }}</p>
-                                            @if($message->attachment)
-                                                <div class="mt-2">
-                                                    @if(str_contains($message->attachment->mime_type, 'image'))
-                                                        <img src="{{ $message->attachment->url }}" alt="" class="rounded max-w-full">
-                                                    @else
-                                                        <div class="flex items-center space-x-2 text-sm">
-                                                            <i class="fas fa-file"></i>
-                                                            <span>{{ $message->attachment->name }}</span>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1 {{ $message->sender_id == auth()->id() ? 'text-right' : 'text-left' }}">
-                                            {{ $message->created_at->format('h:i A') }}
-                                            @if($message->sender_id == auth()->id())
-                                                <span class="ml-2">
-                                                    @if($message->read_at) <i class="fas fa-check-double text-blue-500"></i>
-                                                    @else <i class="fas fa-check text-gray-400"></i>
-                                                    @endif
-                                                </span>
-                                            @endif
-                                        </p>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <!-- Message Input -->
-                        <div class="p-4 border-t">
-                            <form onsubmit="sendMessage(event)" class="flex items-center space-x-2">
-                                <div class="flex-1 flex items-center space-x-2">
-                                    <button type="button" onclick="attachFile()" class="text-gray-600 hover:text-gray-800">
-                                        <i class="fas fa-paperclip"></i>
-                                    </button>
-                                    <input type="text" id="messageInput" placeholder="Type a message..." class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <button type="button" onclick="insertEmoji()" class="text-gray-600 hover:text-gray-800">
-                                        <i class="fas fa-smile"></i>
-                                    </button>
-                                </div>
-                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
-                            </form>
-                        </div>
+                <div class="bg-white rounded-lg shadow-sm h-96 flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
+                        <p class="text-gray-500">Choose a conversation from the list to start messaging</p>
                     </div>
-                @else
-                    <div class="bg-white rounded-lg shadow-sm h-96 flex items-center justify-center">
-                        <div class="text-center">
-                            <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-                            <p class="text-gray-500">Choose a conversation from the list to start messaging</p>
-                        </div>
-                    </div>
-                @endif
+                </div>
             </div>
         </div>
     </div>
@@ -184,7 +106,7 @@
                     <select id="recipientSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Select recipient</option>
                         @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            <option value="{{ $user->id }}">{{ $user->full_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -256,30 +178,8 @@ function sendMessage(event) {
     
     if (!content) return;
     
-    const conversationId = {{ $activeConversation->id ?? 'null' }};
-    
-    fetch('/messages/send', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            conversation_id: conversationId,
-            content: content
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            input.value = '';
-            // Refresh messages
-            location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+    // This function is for the conversation view, not inbox
+    alert('Please select a conversation first to send messages');
 }
 
 function startVideoCall(conversationId) {

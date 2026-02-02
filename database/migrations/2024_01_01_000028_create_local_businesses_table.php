@@ -60,7 +60,6 @@ return new class extends Migration
 
             // Regular index for search (removed full-text due to length limit)
             $table->index('name');
-            $table->index('description');
         });
     }
 

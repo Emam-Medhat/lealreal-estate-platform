@@ -1,218 +1,219 @@
-@extends('layouts.app')
+@extends('admin.layouts.admin')
 
 @section('title', 'مسار المبيعات')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">مسار المبيعات</h5>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary" onclick="addLead()">
-                            <i class="fas fa-plus"></i> إضافة عميل
-                        </button>
-                        <button class="btn btn-info" onclick="refreshPipeline()">
-                            <i class="fas fa-sync"></i> تحديث
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Pipeline Statistics -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ $totalLeads }}</h3>
-                                    <p>إجمالي العملاء</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ $convertedLeads }}</h3>
-                                    <p>العملاء المحولين</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ $totalValue }}</h3>
-                                    <p>القيمة الإجمالية</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ $conversionRate }}%</h3>
-                                    <p>معدل التحويل</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">مسار المبيعات</h1>
+            <p class="text-gray-600 mt-1">إدارة وتتبع مسار تحويل العملاء</p>
+        </div>
+        <div class="flex items-center space-x-3 space-x-reverse">
+            <button onclick="refreshPipeline()" 
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 space-x-reverse">
+                <i class="fas fa-sync-alt"></i>
+                <span>تحديث</span>
+            </button>
+            <a href="{{ route('leads.create') }}" 
+               class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 space-x-reverse transition-all duration-200 shadow-lg hover:shadow-xl">
+                <i class="fas fa-plus"></i>
+                <span>إضافة عميل</span>
+            </a>
+        </div>
+    </div>
+</div>
 
-                    <!-- Pipeline Kanban Board -->
-                    <div class="pipeline-board">
-                        <div class="row">
-                            @foreach($statuses as $status)
-                                <div class="col-md-3">
-                                    <div class="pipeline-column">
-                                        <div class="pipeline-header" style="background-color: {{ $status->color }}">
-                                            <h6>{{ $status->name }}</h6>
-                                            <span class="badge bg-light text-dark">{{ $status->leads->count() }}</span>
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600">إجمالي العملاء</p>
+                <p class="text-2xl font-bold text-blue-600">{{ $totalLeads }}</p>
+            </div>
+            <div class="bg-blue-100 rounded-full p-3">
+                <i class="fas fa-users text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600">العملاء المحولين</p>
+                <p class="text-2xl font-bold text-green-600">{{ $convertedLeads }}</p>
+            </div>
+            <div class="bg-green-100 rounded-full p-3">
+                <i class="fas fa-check-circle text-green-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600">القيمة الإجمالية</p>
+                <p class="text-2xl font-bold text-orange-600">{{ number_format($totalValue, 2) }}</p>
+            </div>
+            <div class="bg-orange-100 rounded-full p-3">
+                <i class="fas fa-dollar-sign text-orange-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600">معدل التحويل</p>
+                <p class="text-2xl font-bold text-purple-600">{{ number_format($conversionRate, 2) }}%</p>
+            </div>
+            <div class="bg-purple-100 rounded-full p-3">
+                <i class="fas fa-chart-line text-purple-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pipeline -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">مسار المبيعات</h3>
+    </div>
+    <div class="p-6">
+        <div class="overflow-x-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-6 gap-6 min-w-max">
+                @foreach($statuses as $status)
+                    <div class="bg-gray-50 rounded-lg p-4 min-h-[400px] flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-semibold text-gray-900">{{ $status->name }}</h4>
+                            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                                {{ $status->leads->count() }}
+                            </span>
+                        </div>
+                        
+                        <div class="flex-1 space-y-3 overflow-y-auto">
+                            @forelse($status->leads as $lead)
+                                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                                     onclick="viewLead({{ $lead->id }})">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <h5 class="text-sm font-medium text-gray-900 truncate">
+                                                {{ $lead->first_name }} {{ $lead->last_name }}
+                                            </h5>
+                                            <p class="text-xs text-gray-500 truncate">{{ $lead->email }}</p>
+                                            @if($lead->company)
+                                                <p class="text-xs text-gray-500 truncate">{{ $lead->company }}</p>
+                                            @endif
                                         </div>
-                                        <div class="pipeline-content" data-status="{{ $status->id }}">
-                                            @foreach($status->leads as $lead)
-                                                <div class="pipeline-card" draggable="true" data-lead-id="{{ $lead->id }}">
-                                                    <div class="card-body">
-                                                        <h6 class="card-title">{{ $lead->first_name }} {{ $lead->last_name }}</h6>
-                                                        <p class="card-text small">{{ $lead->email }}</p>
-                                                        <p class="card-text small">{{ $lead->phone ?? '-' }}</p>
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="badge bg-primary">{{ $lead->estimated_value ? number_format($lead->estimated_value, 0) : '-' }}</span>
-                                                            <small class="text-muted">{{ $lead->created_at->format('M d') }}</small>
-                                                        </div>
-                                                        <div class="mt-2">
-                                                            <a href="{{ route('leads.show', $lead) }}" class="btn btn-sm btn-outline-primary">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                            <button class="btn btn-sm btn-outline-success" onclick="convertLead({{ $lead->id }})">
-                                                                <i class="fas fa-exchange-alt"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
+                                        <div class="flex flex-col items-end space-y-1">
+                                            @if($lead->priority)
+                                                <span class="text-xs px-2 py-1 rounded-full
+                                                    @if($lead->priority == 3) bg-red-100 text-red-700
+                                                    @elseif($lead->priority == 2) bg-yellow-100 text-yellow-700
+                                                    @else bg-green-100 text-green-700
+                                                    @endif">
+                                                    @if($lead->priority == 3) عالي
+                                                    @elseif($lead->priority == 2) متوسط
+                                                    @else منخفض
+                                                    @endif
+                                                </span>
+                                            @endif
+                                            @if($lead->estimated_value)
+                                                <span class="text-xs text-gray-600">
+                                                    {{ number_format($lead->estimated_value, 0) }}
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
+                                    
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <span>{{ $lead->created_at->format('M d') }}</span>
+                                        @if($lead->assignedTo)
+                                            <span>{{ $lead->assignedTo->name }}</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="mt-2 flex items-center space-x-1 space-x-reverse">
+                                        <button onclick="event.stopPropagation(); viewLead({{ $lead->id }})" 
+                                                class="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                                                title="عرض">
+                                            <i class="fas fa-eye text-xs"></i>
+                                        </button>
+                                        <button onclick="event.stopPropagation(); editLead({{ $lead->id }})" 
+                                                class="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
+                                                title="تعديل">
+                                            <i class="fas fa-edit text-xs"></i>
+                                        </button>
+                                        <button onclick="event.stopPropagation(); convertLead({{ $lead->id }})" 
+                                                class="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50 transition-colors"
+                                                title="تحويل">
+                                            <i class="fas fa-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            @endforeach
+                            @empty
+                                <div class="text-center py-8">
+                                    <i class="fas fa-inbox text-gray-300 text-2xl mb-2"></i>
+                                    <p class="text-xs text-gray-500">لا توجد عملاء</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </div>
 </div>
 
 <!-- Convert Lead Modal -->
-<div class="modal fade" id="convertLeadModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">تحويل العميل</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="convertLeadForm" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <input type="hidden" name="lead_id" id="convertLeadId">
-                    <div class="mb-3">
-                        <label class="form-label">نوع التحويل</label>
-                        <select name="converted_to_type" class="form-select" required>
-                            <option value="">اختر...</option>
-                            <option value="client">عميل</option>
-                            <option value="opportunity">فرصة</option>
-                            <option value="property">عقار</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">القيمة</label>
-                        <input type="number" name="conversion_value" class="form-control" step="0.01">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ملاحظات</label>
-                        <textarea name="notes" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-primary">تحويل</button>
-                </div>
-            </form>
+<div id="convertLeadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">تحويل العميل</h3>
         </div>
+        <form id="convertLeadForm" method="POST" class="p-6">
+            @csrf
+            <input type="hidden" id="convertLeadId" name="lead_id">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">نوع التحويل</label>
+                    <select name="converted_to_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        <option value="client">عميل</option>
+                        <option value="opportunity">فرصة</option>
+                        <option value="property">عقار</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                    <textarea name="conversion_notes" rows="3" 
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="أدخل ملاحظات التحويل..."></textarea>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-end space-x-3 space-x-reverse mt-6">
+                <button type="button" onclick="closeConvertModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    إلغاء
+                </button>
+                <button type="submit" 
+                        class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    تحويل
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
 
-@push('styles')
-<style>
-.pipeline-board {
-    min-height: 600px;
-}
-
-.pipeline-column {
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.pipeline-header {
-    padding: 15px;
-    border-radius: 8px 8px 0 0;
-    color: white;
-    display: flex;
-    justify-content: between;
-    align-items: center;
-}
-
-.pipeline-content {
-    padding: 15px;
-    min-height: 400px;
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-.pipeline-card {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    cursor: move;
-    transition: all 0.3s ease;
-}
-
-.pipeline-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-}
-
-.pipeline-card.dragging {
-    opacity: 0.5;
-}
-
-.pipeline-content.drag-over {
-    background-color: #e9ecef;
-    border: 2px dashed #007bff;
-}
-</style>
-@endpush
-
 @push('scripts')
 <script>
-let draggedElement = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-    initializeDragAndDrop();
-});
-
-function initializeDragAndDrop() {
-    const cards = document.querySelectorAll('.pipeline-card');
-    const columns = document.querySelectorAll('.pipeline-content');
-
-    cards.forEach(card => {
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragend', handleDragEnd);
-    });
-
-    columns.forEach(column => {
-        column.addEventListener('dragover', handleDragOver);
-        column.addEventListener('drop', handleDrop);
-        column.addEventListener('dragleave', handleDragLeave);
+function viewLead(leadId) {
+    window.location.href = `/leads/${leadId}`;
     });
 }
 

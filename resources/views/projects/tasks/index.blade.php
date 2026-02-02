@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -97,13 +98,29 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="badge badge-{{ getTaskStatusBadgeClass($task->status) }}">
-                                                    {{ getTaskStatusLabel($task->status) }}
+                                                <span class="badge badge-{{ 
+                                                    $task->status == 'todo' ? 'secondary' : 
+                                                    ($task->status == 'in_progress' ? 'primary' : 
+                                                    ($task->status == 'review' ? 'warning' : 
+                                                    ($task->status == 'completed' ? 'success' : 
+                                                    ($task->status == 'cancelled' ? 'danger' : 'secondary')))) }}">
+                                                    {{ 
+                                                    $task->status == 'todo' ? 'قيد الانتظار' : 
+                                                    ($task->status == 'in_progress' ? 'قيد التنفيذ' : 
+                                                    ($task->status == 'review' ? 'قيد المراجعة' : 
+                                                    ($task->status == 'completed' ? 'مكتملة' : 
+                                                    ($task->status == 'cancelled' ? 'ملغاة' : $task->status)))) }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge badge-{{ getPriorityBadgeClass($task->priority) }}">
-                                                    {{ getPriorityLabel($task->priority) }}
+                                                <span class="badge badge-{{ 
+                                                    $task->priority == 'critical' ? 'danger' : 
+                                                    ($task->priority == 'high' ? 'warning' : 
+                                                    ($task->priority == 'medium' ? 'info' : 'secondary')) }}">
+                                                    {{ 
+                                                    $task->priority == 'critical' ? 'حرجة' : 
+                                                    ($task->priority == 'high' ? 'عالية' : 
+                                                    ($task->priority == 'medium' ? 'متوسطة' : 'منخفضة')) }}
                                                 </span>
                                             </td>
                                             <td>
@@ -197,49 +214,6 @@ function deleteTask(taskId) {
             alert('حدث خطأ أثناء حذف المهمة');
         });
     }
-}
-
-// Helper functions for badges
-function getTaskStatusBadgeClass(status) {
-    const classes = {
-        'todo': 'secondary',
-        'in_progress': 'primary',
-        'review': 'warning',
-        'completed': 'success',
-        'cancelled': 'danger'
-    };
-    return classes[status] || 'secondary';
-}
-
-function getTaskStatusLabel(status) {
-    const labels = {
-        'todo': 'قيد الانتظار',
-        'in_progress': 'قيد التنفيذ',
-        'review': 'قيد المراجعة',
-        'completed': 'مكتملة',
-        'cancelled': 'ملغاة'
-    };
-    return labels[status] || status;
-}
-
-function getPriorityBadgeClass(priority) {
-    const classes = {
-        'critical': 'danger',
-        'high': 'warning',
-        'medium': 'info',
-        'low': 'secondary'
-    };
-    return classes[priority] || 'secondary';
-}
-
-function getPriorityLabel(priority) {
-    const labels = {
-        'critical': 'حرجة',
-        'high': 'عالية',
-        'medium': 'متوسطة',
-        'low': 'منخفضة'
-    };
-    return labels[priority] || priority;
 }
 </script>
 @endpush

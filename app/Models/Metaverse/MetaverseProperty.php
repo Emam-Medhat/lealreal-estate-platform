@@ -3,7 +3,7 @@
 namespace App\Models\Metaverse;
 
 use App\Models\User;
-use App\Models\VirtualWorld;
+use App\Models\Metaverse\VirtualWorld;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,6 +22,7 @@ class MetaverseProperty extends Model
         'virtual_world_id',
         'property_type',
         'location_coordinates',
+        'image_path',
         'dimensions',
         'price',
         'currency',
@@ -125,37 +126,51 @@ class MetaverseProperty extends Model
 
     public function images(): HasMany
     {
-        return $this->hasMany(MetaversePropertyImage::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyImage::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function models(): HasMany
     {
-        return $this->hasMany(MetaversePropertyModel::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyModel::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function textures(): HasMany
     {
-        return $this->hasMany(MetaversePropertyTexture::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyTexture::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function tours(): HasMany
     {
-        return $this->hasMany(VirtualPropertyTour::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(VirtualPropertyTour::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function events(): HasMany
     {
-        return $this->hasMany(VirtualPropertyEvent::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(VirtualPropertyEvent::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function visits(): HasMany
     {
-        return $this->hasMany(MetaversePropertyVisit::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyVisit::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function reviews(): HasMany
     {
-        return $this->hasMany(MetaversePropertyReview::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyReview::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function transactions(): HasMany
@@ -165,12 +180,16 @@ class MetaverseProperty extends Model
 
     public function likes(): HasMany
     {
-        return $this->hasMany(MetaversePropertyLike::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyLike::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function shares(): HasMany
     {
-        return $this->hasMany(MetaversePropertyShare::class, 'metaverse_property_id');
+        // Commented out until model is created
+        // return $this->hasMany(MetaversePropertyShare::class, 'metaverse_property_id');
+        return $this->hasMany(\App\Models\Metaverse\MetaverseProperty::class, 'parent_id');
     }
 
     public function tags(): MorphMany
@@ -421,37 +440,60 @@ class MetaverseProperty extends Model
 
     public function getThumbnailUrl(): string
     {
-        $image = $this->images()->first();
-        return $image ? asset('storage/' . $image->path) : asset('images/default-property.jpg');
+        // Use uploaded image if available, otherwise use default
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+        
+        return asset('images/default-property.jpg');
     }
 
     public function getGalleryUrls(): array
     {
-        return $this->images()->pluck('path')->map(function ($path) {
-            return asset('storage/' . $path);
-        })->toArray();
+        // Return empty array for now since images model doesn't exist
+        return [];
+        
+        // Original code (commented out until images model is created):
+        // return $this->images()->pluck('path')->map(function ($path) {
+        //     return asset('storage/' . $path);
+        // })->toArray();
     }
 
     public function hasActiveTours(): bool
     {
-        return $this->tours()->where('is_active', true)->exists();
+        // Return false for now since tours model doesn't exist
+        return false;
+        
+        // Original code (commented out until tours model is created):
+        // return $this->tours()->where('is_active', true)->exists();
     }
 
     public function hasUpcomingEvents(): bool
     {
-        return $this->events()
-            ->where('start_time', '>', now())
-            ->where('status', 'scheduled')
-            ->exists();
+        // Return false for now since events model doesn't exist
+        return false;
+        
+        // Original code (commented out until events model is created):
+        // return $this->events()
+        //     ->where('start_time', '>', now())
+        //     ->where('status', 'scheduled')
+        //     ->exists();
     }
 
     public function getRecentActivity(): array
     {
         return [
-            'visits' => $this->visits()->latest()->limit(5)->get(),
-            'reviews' => $this->reviews()->latest()->limit(5)->get(),
+            'visits' => collect(), // Empty collection since visits model doesn't exist
+            'reviews' => collect(), // Empty collection since reviews model doesn't exist
             'transactions' => $this->transactions()->latest()->limit(5)->get(),
         ];
+        
+        // Original code (commented out until models are created):
+        // return [
+        //     'visits' => $this->visits()->latest()->limit(5)->get(),
+        //     'reviews' => $this->reviews()->latest()->limit(5)->get(),
+        //     'transactions' => $this->transactions()->latest()->limit(5)->get(),
+        // ];
     }
 
     public function getAnalytics(): array

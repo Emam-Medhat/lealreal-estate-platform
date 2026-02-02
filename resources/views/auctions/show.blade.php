@@ -177,7 +177,7 @@
             @if ($auction->isActive() && auth()->user())
                 @if ($auction->canUserParticipate(auth()->user()))
                     @if (!$isParticipant)
-                        <form action="{{ route('auctions.join', $auction->id) }}" method="POST" class="bg-white rounded-lg shadow p-6">
+                        <form action="{{ route('messages.auctions.join', $auction->id) }}" method="POST" class="bg-white rounded-lg shadow p-6">
                             @csrf
                             <button type="submit" class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
                                 Join Auction
@@ -186,7 +186,7 @@
                     @else
                         <div class="bg-white rounded-lg shadow p-6">
                             <h3 class="text-lg font-semibold mb-4">Place Your Bid</h3>
-                            <form id="bidForm" action="{{ route('auctions.bid', $auction->id) }}" method="POST">
+                            <form id="bidForm" action="{{ route('messages.auctions.bid', $auction->id) }}" method="POST">
                                 @csrf
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Bid Amount</label>
@@ -243,7 +243,7 @@
                         </svg>
                         <p class="text-gray-600 mb-3">
                             @if (!auth()->user())
-                                Please <a href="{{ route('login') }}" class="text-blue-600 hover:text-blue-700">log in</a> to participate
+                                <a href="{{ route('messages.auctions.show', $auction->id) }}" class="text-blue-600 hover:text-blue-700 mr-3">log in</a> to participate
                             @else
                                 This auction is not currently active
                             @endif

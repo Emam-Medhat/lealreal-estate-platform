@@ -15,13 +15,14 @@ use App\Http\Controllers\AppointmentController;
 |
 */
 
-Route::get('/agents/directory', [AgentController::class, 'directory'])->name('agents.directory');
+Route::get('/agents/directory', [AgentController::class, 'directory'])->name('agents.directory.full');
 
 Route::middleware(['auth', 'verified'])->prefix('agents')->group(function () {
     
     // Agent Dashboard
-    Route::get('/', [AgentController::class, 'dashboard'])->name('agents.dashboard');
+    Route::get('/dashboard', [AgentController::class, 'dashboard'])->name('agents.dashboard');
     Route::get('/performance', [AgentController::class, 'performance'])->name('agents.performance');
+    Route::get('/performance/refresh-activities', [AgentController::class, 'refreshActivities'])->name('agents.performance.refresh');
     Route::get('/ranking', [AgentController::class, 'ranking'])->name('agents.ranking');
     Route::get('/goals', [AgentController::class, 'goals'])->name('agents.goals');
     

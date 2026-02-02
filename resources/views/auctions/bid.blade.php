@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="mb-8">
         <div class="flex items-center mb-4">
-            <a href="{{ route('auctions.show', $auction->id) }}" class="text-blue-600 hover:text-blue-700 mr-3">
+            <a href="{{ route('messages.auctions.show', $auction->id) }}" class="text-blue-600 hover:text-blue-700 mr-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -36,7 +36,7 @@
 
     <!-- Bid Form -->
     <div class="bg-white rounded-lg shadow-lg p-8">
-        <form id="bidForm" action="{{ route('auctions.bid', $auction->id) }}" method="POST" class="space-y-6">
+        <form id="bidForm" action="{{ route('messages.auctions.bid', $auction->id) }}" method="POST" class="space-y-6">
             @csrf
             
             <!-- Manual Bid Section -->
@@ -164,7 +164,7 @@
 
             <!-- Submit Button -->
             <div class="flex space-x-4">
-                <a href="{{ route('auctions.show', $auction->id) }}" 
+                <a href="{{ route('messages.auctions.show', $auction->id) }}" 
                    class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium">
                     Cancel
                 </a>

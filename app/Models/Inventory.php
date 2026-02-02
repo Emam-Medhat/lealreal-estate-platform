@@ -8,45 +8,113 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Inventory extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+
+    protected $table = 'inventory_items';
 
     protected $fillable = [
+        'item_code',
         'name',
+        'name_ar',
         'description',
-        'sku',
-        'category_id',
-        'supplier_id',
-        'unit_price',
-        'quantity',
-        'reorder_level',
-        'max_stock',
-        'unit_of_measure',
+        'description_ar',
+        'category',
         'status',
+        'brand',
+        'model',
+        'sku',
+        'unit',
+        'unit_ar',
+        'unit_cost',
+        'selling_price',
+        'quantity',
+        'min_quantity',
+        'max_quantity',
+        'reorder_point',
+        'reorder_quantity',
+        'supplier',
+        'supplier_contact',
+        'last_purchase_date',
+        'next_purchase_date',
         'location',
+        'location_ar',
+        'specifications',
+        'images',
+        'attachments',
+        'barcode',
+        'qr_code',
+        'warranty_expiry',
+        'expiry_date',
+        'requires_maintenance',
+        'maintenance_instructions',
+        'maintenance_instructions_ar',
+        'maintenance_schedule',
+        'last_maintenance_date',
+        'next_maintenance_date',
+        'safety_notes',
+        'safety_notes_ar',
+        'usage_history',
         'notes',
+        'notes_ar',
         'created_by',
-        'attributes',
+        'updated_by',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
-        'reorder_level' => 'integer',
-        'max_stock' => 'integer',
-        'unit_price' => 'decimal:2',
-        'unit_of_measure' => 'string',
-        'status' => 'string',
+        'min_quantity' => 'integer',
+        'max_quantity' => 'integer',
+        'reorder_point' => 'integer',
+        'reorder_quantity' => 'integer',
+        'unit_cost' => 'decimal:2',
+        'selling_price' => 'decimal:2',
+        'specifications' => 'array',
+        'images' => 'array',
+        'attachments' => 'array',
+        'maintenance_schedule' => 'array',
+        'usage_history' => 'array',
+        'requires_maintenance' => 'boolean',
+        'last_purchase_date' => 'date',
+        'next_purchase_date' => 'date',
+        'warranty_expiry' => 'date',
+        'expiry_date' => 'date',
+        'last_maintenance_date' => 'date',
+        'next_maintenance_date' => 'date',
         'created_by' => 'integer',
-        'attributes' => 'array',
+        'updated_by' => 'integer',
     ];
 
-    public function category()
+    public function getCategoryName()
     {
-        return $this->belongsTo(InventoryCategory::class);
+        $categories = [
+            'tools' => 'Tools',
+            'materials' => 'Materials',
+            'equipment' => 'Equipment',
+            'supplies' => 'Supplies',
+            'safety' => 'Safety',
+            'other' => 'Other'
+        ];
+        
+        return $categories[$this->category] ?? 'Unknown';
     }
 
-    public function supplier()
+    public function getCategoryNameAr()
     {
-        return $this->belongsTo(InventorySupplier::class);
+        $categories = [
+            'tools' => 'أدوات',
+            'materials' => 'مواد',
+            'equipment' => 'معدات',
+            'supplies' => 'لوازم',
+            'safety' => 'سلامة',
+            'other' => 'أخرى'
+        ];
+        
+        return $categories[$this->category] ?? 'غير محدد';
+    }
+
+    public function getSupplierName()
+    {
+        return $this->supplier ?: 'Unknown';
     }
 
     public function transactions()
@@ -76,7 +144,7 @@ class Inventory extends Model
 
     public function scopeLowStock($query)
     {
-        return $query->whereRaw('quantity <= reorder_level')
+        return $query->whereRaw('quantity <= reorder_point')
                     ->where('quantity', '>', 0);
     }
 
@@ -121,7 +189,7 @@ class Inventory extends Model
 
     public function isLowStock()
     {
-        return $this->quantity > 0 && $this->quantity <= $this->reorder_level;
+        return $this->quantity > 0 && $this->quantity <= $this->reorder_point;
     }
 
     public function isOutOfStock()

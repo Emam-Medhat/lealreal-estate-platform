@@ -337,6 +337,11 @@ class Dao extends Model
     }
 
     // Relationships
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'creator_id');
+    }
+
     public function smartContract(): BelongsTo
     {
         return $this->belongsTo(SmartContract::class, 'contract_address', 'address');

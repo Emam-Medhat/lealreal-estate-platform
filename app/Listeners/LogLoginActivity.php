@@ -8,8 +8,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Auth\UserDevice;
-use App\Models\Auth\UserSession;
+use App\Models\UserDevice;
+use App\Models\UserSession;
 
 class LogLoginActivity
 {
@@ -33,12 +33,12 @@ class LogLoginActivity
             'ip_address' => $request->ip(),
             'device_name' => $deviceInfo['device'],
         ], [
-            'device_type' => $deviceInfo['type'],
             'platform' => $deviceInfo['platform'],
             'browser' => $deviceInfo['browser'],
+            'browser_version' => $deviceInfo['browser_version'] ?? null,
             'user_agent' => $userAgent,
-            'last_used_at' => now(),
-            'is_trusted' => true, // Assuming success login means trusted for now
+            'last_seen_at' => now(),
+            'is_active' => true,
         ]);
     }
 
@@ -98,11 +98,23 @@ class LogLoginActivity
             $browser = 'Edge';
         }
 
+        // Detect browser version
+        $browser_version = null;
+        if ($browser === 'Chrome' && preg_match('/Chrome\/(\d+\.\d+)/', $userAgent, $matches)) {
+            $browser_version = $matches[1];
+        } elseif ($browser === 'Firefox' && preg_match('/Firefox\/(\d+\.\d+)/', $userAgent, $matches)) {
+            $browser_version = $matches[1];
+        } elseif ($browser === 'Safari' && preg_match('/Version\/(\d+\.\d+)/', $userAgent, $matches)) {
+            $browser_version = $matches[1];
+        } elseif ($browser === 'Edge' && preg_match('/Edge\/(\d+\.\d+)/', $userAgent, $matches)) {
+            $browser_version = $matches[1];
+        }
+
         return [
             'device' => $device,
-            'type' => $type,
             'platform' => $platform,
             'browser' => $browser,
+            'browser_version' => $browser_version,
         ];
     }
 }

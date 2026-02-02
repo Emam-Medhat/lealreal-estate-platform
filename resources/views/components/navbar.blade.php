@@ -62,7 +62,7 @@
 
                 <!-- User Panel -->
                 @if($isUser)
-                    <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    <a href="{{ route('user.dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                         <i class="fas fa-user mr-2"></i>
                         Dashboard
                     </a>
@@ -96,11 +96,11 @@
                     </div>
                     
                     <div class="py-2">
-                        <a href="{{ route('user.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                        <a href="{{ route('dashboard.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
                             <i class="fas fa-user mr-2"></i>
                             Profile
                         </a>
-                        <a href="{{ route('settings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                        <a href="{{ route('dashboard.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
                             <i class="fas fa-cog mr-2"></i>
                             Settings
                         </a>
@@ -166,7 +166,7 @@
             @endif
             
             @if($isUser)
-                <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50">
+                <a href="{{ route('user.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50">
                     <i class="fas fa-user mr-2"></i>
                     Dashboard
                 </a>

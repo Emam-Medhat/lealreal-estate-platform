@@ -104,13 +104,7 @@
                             <div class="flex items-start justify-between">
                                 <div class="flex items-center">
                                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                        <i class="fas 
-                                            {{ $widget->type === 'text' ? 'fa-font text-blue-600' : 
-                                               ($widget->type === 'image' ? 'fa-image text-green-600' : 
-                                               ($widget->type === 'video' ? 'fa-video text-red-600' : 
-                                               ($widget->type === 'form' ? 'fa-wpforms text-purple-600' : 
-                                               ($widget->type === 'social' ? 'fa-share-alt text-yellow-600' : 
-                                               'fa-cube text-gray-600')) }} text-lg"></i>
+                                        <i class="fas {{ $widget->type === 'text' ? 'fa-font text-blue-600' : ($widget->type === 'image' ? 'fa-image text-green-600' : ($widget->type === 'video' ? 'fa-video text-red-600' : ($widget->type === 'form' ? 'fa-wpforms text-purple-600' : ($widget->type === 'social' ? 'fa-share-alt text-yellow-600' : 'fa-cube text-gray-600')))) }} text-lg"></i>
                                     </div>
                                     <div>
                                         <h3 class="text-lg font-semibold text-gray-800">{{ $widget->name }}</h3>
@@ -120,10 +114,8 @@
                                 <div class="flex items-center space-x-2">
                                     <input type="checkbox" class="widget-checkbox" value="{{ $widget->id }}" 
                                         class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <button onclick="toggleWidget({{ $widget->id }})" 
-                                        class="p-1 rounded hover:bg-gray-200">
-                                        <i class="fas 
-                                            {{ $widget->is_active ? 'fa-eye text-blue-600' : 'fa-eye-slash text-gray-400' }}"></i>
+                                    <button onclick="toggleWidget({{ $widget->id }})" class="p-1 rounded hover:bg-gray-200">
+                                        <i class="fas {{ $widget->is_active ? 'fa-eye text-blue-600' : 'fa-eye-slash text-gray-400' }}"></i>
                                     </button>
                                     <a href="{{ route('admin.widgets.edit', $widget) }}" class="text-gray-600 hover:text-gray-800">
                                         <i class="fas fa-edit"></i>
@@ -331,7 +323,7 @@ function bulkDelete() {
 }
 
 function toggleWidget(id) {
-    fetch(`{{ route('admin.widgets.toggle') }}/${id}`, {
+    fetch(`/admin/widgets/${id}/toggle`, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -351,7 +343,7 @@ function toggleWidget(id) {
 
 function duplicateWidget(id) {
     if (confirm('Are you sure you want to duplicate this widget?')) {
-        fetch(`{{ route('admin.widgets.duplicate') }}/${id}`, {
+        fetch(`/admin/widgets/${id}/duplicate`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -372,7 +364,7 @@ function duplicateWidget(id) {
 
 function deleteWidget(id) {
     if (confirm('Are you sure you want to delete this widget?')) {
-        fetch(`{{ route('admin.widgets.destroy') }}/${id}`, {
+        fetch(`/admin/widgets/${id}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')

@@ -14,11 +14,15 @@ class MaintenanceTeam extends Model
         'team_code',
         'name',
         'description',
+        'leader_name',
+        'leader_email',
+        'leader_phone',
         'team_leader_id',
         'specialization',
         'contact_phone',
         'contact_email',
         'max_concurrent_jobs',
+        'working_hours',
         'working_hours_start',
         'working_hours_end',
         'is_active',
@@ -48,6 +52,11 @@ class MaintenanceTeam extends Model
     public function schedules()
     {
         return $this->hasMany(MaintenanceSchedule::class);
+    }
+
+    public function workOrders()
+    {
+        return $this->hasMany(WorkOrder::class, 'assigned_team_id');
     }
 
     public function maintenanceRequests()

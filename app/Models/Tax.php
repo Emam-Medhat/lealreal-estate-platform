@@ -14,7 +14,7 @@ class Tax extends Model
     protected $fillable = [
         'name',
         'description',
-        'tax_type',
+        'type',
         'rate',
         'is_active',
         'effective_date',
@@ -52,7 +52,7 @@ class Tax extends Model
 
     public function scopeByType($query, $type)
     {
-        return $query->where('tax_type', $type);
+        return $query->where('type', $type);
     }
 
     public function isCurrentlyEffective(): bool

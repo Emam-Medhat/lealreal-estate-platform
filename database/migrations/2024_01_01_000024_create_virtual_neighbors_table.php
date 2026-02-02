@@ -41,7 +41,7 @@ return new class extends Migration
             $table->index(['is_active', 'created_at']);
 
             // Full-text search index
-            $table->index(['notes']);
+
         });
     }
 

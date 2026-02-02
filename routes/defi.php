@@ -1,24 +1,30 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Defi\CryptoPropertyPaymentController;
-use App\Http\Controllers\Defi\DefiPropertyInvestmentController;
-use App\Http\Controllers\Defi\DefiPropertyLoanController;
-use App\Http\Controllers\Defi\DefiPropertyStakingController;
-use App\Http\Controllers\Defi\DefiPropertyYieldController;
-use App\Http\Controllers\Defi\PropertyDaoController;
-use App\Http\Controllers\Defi\PropertyFractionalOwnershipController;
-use App\Http\Controllers\Defi\PropertyLiquidityPoolController;
-use App\Http\Controllers\Defi\PropertyTokenizationController;
+use App\Http\Controllers\Defi\DefiCrowdfundingController;
+use App\Http\Controllers\Defi\DefiLoanController;
+use App\Http\Controllers\Defi\DefiRiskAssessmentController;
+use App\Http\Controllers\Defi\DefiDashboardController;
 
-Route::middleware(['auth'])->prefix('defi')->name('defi.')->group(function () {
-    Route::get('/payments', [CryptoPropertyPaymentController::class, 'index'])->name('payments.index');
-    Route::get('/investments', [DefiPropertyInvestmentController::class, 'index'])->name('investments.index');
-    Route::get('/loans', [DefiPropertyLoanController::class, 'index'])->name('loans.index');
-    Route::get('/staking', [DefiPropertyStakingController::class, 'index'])->name('staking.index');
-    Route::get('/yield', [DefiPropertyYieldController::class, 'index'])->name('yield.index');
-    Route::get('/dao', [PropertyDaoController::class, 'index'])->name('dao.index');
-    Route::get('/fractional', [PropertyFractionalOwnershipController::class, 'index'])->name('fractional.index');
-    Route::get('/liquidity', [PropertyLiquidityPoolController::class, 'index'])->name('liquidity.index');
-    Route::get('/tokenization', [PropertyTokenizationController::class, 'index'])->name('tokenization.index');
+Route::middleware(['auth', 'admin'])->prefix('defi')->name('defi.')->group(function () {
+    // Crowdfunding
+    Route::get('/crowdfunding', [DefiCrowdfundingController::class, 'index'])->name('crowdfunding.index');
+    Route::get('/crowdfunding/create', [DefiCrowdfundingController::class, 'create'])->name('crowdfunding.create');
+    Route::post('/crowdfunding', [DefiCrowdfundingController::class, 'store'])->name('crowdfunding.store');
+    Route::get('/crowdfunding/{id}', [DefiCrowdfundingController::class, 'show'])->name('crowdfunding.show');
+    Route::post('/crowdfunding/{id}/invest', [DefiCrowdfundingController::class, 'invest'])->name('crowdfunding.invest');
+    
+    // DeFi Loans
+    Route::get('/loans', [DefiLoanController::class, 'index'])->name('loans.index');
+    Route::get('/loans/create', [DefiLoanController::class, 'create'])->name('loans.create');
+    Route::post('/loans', [DefiLoanController::class, 'store'])->name('loans.store');
+    Route::get('/loans/{id}', [DefiLoanController::class, 'show'])->name('loans.show');
+    
+    // Risk Assessment
+    Route::get('/risk-assessment', [DefiRiskAssessmentController::class, 'index'])->name('risk-assessment.index');
+    Route::get('/risk-assessment/property/{id}', [DefiRiskAssessmentController::class, 'property'])->name('risk-assessment.property');
+    Route::post('/risk-assessment/evaluate', [DefiRiskAssessmentController::class, 'evaluate'])->name('risk-assessment.evaluate');
+    
+    // Dashboard
+    Route::get('/dashboard', [DefiDashboardController::class, 'index'])->name('dashboard.index');
 });

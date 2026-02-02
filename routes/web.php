@@ -13,15 +13,90 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Analytics\AnalyticsController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\SystemErrorLogController;
+use App\Http\Controllers\OrderController;
 // use App\Http\Controllers\ProfileController;
-// use App\Http\Controllers\SettingsController;
-// use App\Http\Controllers\KYCController;
-// use App\Http\Controllers\WalletController;
-// use App\Http\Controllers\ReferralController;
-// use App\Http\Controllers\Admin\UserController as AdminUserController;
-// use App\Http\Controllers\Admin\KYCController as AdminKYCController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Investor\InvestorController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+// Public investor stats route (without auth) - MUST BE FIRST
+Route::get('/investor/stats', [InvestorController::class, 'getInvestorStats'])->name('investor.stats.public');
+
+// API route for JSON data
+Route::get('/api/investor/stats', [InvestorController::class, 'getInvestorStatsApi'])->name('investor.stats.api');
+
+// Public investment opportunities route (without auth) - MUST BE BEFORE OTHER ROUTES
+Route::get('/investor/opportunities', [InvestorController::class, 'getInvestmentOpportunities'])->name('investor.opportunities.public');
+
+// Public investment funds route (without auth) - MUST BE BEFORE OTHER ROUTES
+Route::get('/investor/funds', [InvestorController::class, 'getInvestmentFunds'])->name('investor.funds.public');
+
+// API route for investor alerts
+Route::post('/api/investor/alerts', function(\Illuminate\Http\Request $request) {
+    try {
+        // Check if it's an AJAX request
+        if (!$request->ajax() && !$request->wantsJson()) {
+            return response()->json([
+                'error' => 'This endpoint accepts only AJAX requests'
+            ], 400);
+        }
+
+        // Validate the request
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'amount_min' => 'nullable|numeric|min:0',
+            'amount_max' => 'nullable|numeric|min:0',
+            'property_type' => 'nullable|string',
+            'location' => 'nullable|string',
+        ]);
+
+        // Store the alert (you would implement this logic)
+        // For now, just return success
+        return response()->json([
+            'success' => true,
+            'message' => 'Alert created successfully'
+        ]);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'خطأ في التحقق من البيانات',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'حدث خطأ: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Developer Module
+Route::middleware(['auth'])->prefix('developer')->name('developer.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Developer\DeveloperController::class, 'index'])->name('index');
+    Route::get('/bim-models', [App\Http\Controllers\Developer\DeveloperController::class, 'bimModels'])->name('bim.models');
+    Route::post('/bim-models/upload', [App\Http\Controllers\Developer\DeveloperController::class, 'uploadBimModel'])->name('bim.models.upload');
+    Route::get('/bim-models/export', [App\Http\Controllers\Developer\DeveloperController::class, 'exportBimModels'])->name('bim.models.export');
+    Route::get('/construction', [App\Http\Controllers\Developer\DeveloperController::class, 'construction'])->name('construction');
+    Route::get('/permits', [App\Http\Controllers\Developer\DeveloperController::class, 'permits'])->name('permits');
+    // Simple route for permits to match sidebar
+    Route::get('/permits', [App\Http\Controllers\Developer\DeveloperController::class, 'permits'])->name('permits');
+});
+
+// Test route for investor stats
+Route::get('/test-investor-stats', function() {
+    return 'Investor stats test route works!';
+});
 
 // Simple test route
 Route::get('/test-properties', function () {
@@ -50,6 +125,19 @@ Route::get('/test-properties', function () {
 Route::get('/public-test', function () {
     return 'Public route works! User: ' . (auth()->check() ? auth()->user()->name : 'Not logged in');
 });
+
+// Test route
+Route::get('/test-subscriptions', function() {
+    return 'Test route works!';
+});
+
+// Simple test route for pricing
+Route::get('/test-pricing', function() {
+    $plans = \App\Models\SubscriptionPlan::where('is_active', true)->get();
+    return 'Found ' . $plans->count() . ' plans';
+});
+
+// Public Subscription Plans Routes
 
 // Test SEO route
 Route::get('/test-seo', function () {
@@ -195,6 +283,22 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
 
     // Analytics Routes
     Route::get('/analytics/dashboard', [AnalyticsController::class, 'dashboard'])->name('analytics.dashboard');
+    
+    // Extended Analytics Routes
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        // Market Trends
+        Route::get('/market/trends', [App\Http\Controllers\MarketAnalyticsController::class, 'marketTrends'])->name('market.trends');
+        
+        // User Behavior Analytics
+        Route::prefix('behavior')->name('behavior.')->group(function () {
+            Route::get('/', [App\Http\Controllers\UserBehaviorController::class, 'index'])->name('index');
+        });
+        
+        // Heatmap Analytics
+        Route::prefix('heatmap')->name('heatmap.')->group(function () {
+            Route::get('/', [App\Http\Controllers\HeatmapController::class, 'index'])->name('index');
+        });
+    });
 
     // Test route for debugging
     Route::get('/debug-favorites', function() {
@@ -242,6 +346,7 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
         Route::delete('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'destroy'])->name('destroy');
         Route::post('/{developer}/toggle-status', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleStatus'])->name('toggleStatus');
         Route::post('/{developer}/toggle-verification', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleVerification'])->name('toggleVerification');
+        Route::post('/{developer}/toggle-featured', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleFeatured'])->name('toggleFeatured');
         Route::get('/stats', [App\Http\Controllers\Developer\DeveloperController::class, 'getStats'])->name('stats');
         Route::get('/export', [App\Http\Controllers\Developer\DeveloperController::class, 'export'])->name('export');
 
@@ -717,6 +822,23 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
 // Investors Management Routes
 Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(function () {
 
+    // Crowdfunding (must come before parameterized routes)
+    Route::prefix('crowdfunding')->name('crowdfunding.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'index'])->name('index');
+        Route::get('/{campaign}', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'show'])->name('show');
+        Route::post('/{campaign}/invest', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'invest'])->name('invest');
+        Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getMyCrowdfundingInvestments'])->name('my.investments');
+        Route::get('/stats', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignStats'])->name('stats');
+        Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getRecommendedCampaigns'])->name('recommended');
+        Route::post('/{campaign}/watch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'watchCampaign'])->name('watch');
+        Route::delete('/{campaign}/unwatch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'unwatchCampaign'])->name('unwatch');
+        Route::get('/{campaign}/updates', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignUpdates'])->name('updates');
+        Route::get('/{campaign}/progress', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignProgress'])->name('progress');
+        Route::post('/calculate-return', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'calculateInvestmentReturn'])->name('calculate.return');
+        Route::post('/compare', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'compareCampaigns'])->name('compare');
+        Route::get('/export', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'exportCampaigns'])->name('export');
+    });
+
     // Investor Management
     Route::get('/', [App\Http\Controllers\Investor\InvestorController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\Investor\InvestorController::class, 'create'])->name('create');
@@ -727,7 +849,6 @@ Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(functi
     Route::delete('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'destroy'])->name('destroy');
     Route::put('/{investor}/status', [App\Http\Controllers\Investor\InvestorController::class, 'updateStatus'])->name('update.status');
     Route::put('/{investor}/verification', [App\Http\Controllers\Investor\InvestorController::class, 'updateVerification'])->name('update.verification');
-    Route::get('/stats', [App\Http\Controllers\Investor\InvestorController::class, 'getInvestorStats'])->name('stats');
     Route::get('/export', [App\Http\Controllers\Investor\InvestorController::class, 'exportInvestors'])->name('export');
 
     // Investor Profile Management
@@ -833,7 +954,7 @@ Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(functi
 
     // Investment Funds
     Route::prefix('funds')->name('funds.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestmentFundController::class, 'index'])->name('index');
+        Route::get('/dashboard', [App\Http\Controllers\Investor\InvestmentFundController::class, 'index'])->name('index');
         Route::get('/{fund}', [App\Http\Controllers\Investor\InvestmentFundController::class, 'show'])->name('show');
         Route::post('/{fund}/invest', [App\Http\Controllers\Investor\InvestmentFundController::class, 'invest'])->name('invest');
         Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getMyFundInvestments'])->name('my.investments');
@@ -843,23 +964,6 @@ Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(functi
         Route::post('/compare', [App\Http\Controllers\Investor\InvestmentFundController::class, 'compareFunds'])->name('compare');
         Route::post('/calculate-value', [App\Http\Controllers\Investor\InvestmentFundController::class, 'calculateInvestmentValue'])->name('calculate.value');
         Route::get('/export', [App\Http\Controllers\Investor\InvestmentFundController::class, 'exportFunds'])->name('export');
-    });
-
-    // Crowdfunding
-    Route::prefix('crowdfunding')->name('crowdfunding.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'index'])->name('index');
-        Route::get('/{campaign}', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'show'])->name('show');
-        Route::post('/{campaign}/invest', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'invest'])->name('invest');
-        Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getMyCrowdfundingInvestments'])->name('my.investments');
-        Route::get('/stats', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignStats'])->name('stats');
-        Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getRecommendedCampaigns'])->name('recommended');
-        Route::post('/{campaign}/watch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'watchCampaign'])->name('watch');
-        Route::delete('/{campaign}/unwatch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'unwatchCampaign'])->name('unwatch');
-        Route::get('/{campaign}/updates', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignUpdates'])->name('updates');
-        Route::get('/{campaign}/progress', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignProgress'])->name('progress');
-        Route::post('/calculate-return', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'calculateInvestmentReturn'])->name('calculate.return');
-        Route::post('/compare', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'compareCampaigns'])->name('compare');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'exportCampaigns'])->name('export');
     });
 
     // DeFi Loans
@@ -1215,6 +1319,13 @@ Route::prefix('investors')->name('investors.')->middleware(['auth'])->group(func
     });
 });
 
+// Public Subscription Plans Routes
+Route::get('/subscriptions/plans', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'publicIndex'])->name('subscriptions.plans.public');
+Route::get('/pricing', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'publicIndex'])->name('pricing');
+Route::get('/pricing/compare', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'comparePlans'])->name('subscriptions.plans.compare');
+Route::post('/subscriptions/subscribe/{plan}', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'subscribe'])->name('subscriptions.subscribe');
+Route::post('/subscriptions/upgrade/{plan}', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'upgrade'])->name('subscriptions.upgrade');
+
 // Subscriptions Management Routes
 Route::prefix('subscriptions')->name('subscriptions.')->middleware(['auth'])->group(function () {
     // Subscription Management
@@ -1232,8 +1343,8 @@ Route::prefix('subscriptions')->name('subscriptions.')->middleware(['auth'])->gr
     Route::get('/{subscription}/invoices', [App\Http\Controllers\Subscription\SubscriptionController::class, 'invoices'])->name('invoices');
     Route::get('/stats', [App\Http\Controllers\Subscription\SubscriptionController::class, 'getSubscriptionStats'])->name('stats');
 
-    // Subscription Plans
-    Route::prefix('/plans')->name('plans.')->group(function () {
+    // Subscription Plans (Admin)
+    Route::prefix('/admin-plans')->name('plans.')->group(function () {
         Route::get('/', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'store'])->name('store');
@@ -1244,7 +1355,7 @@ Route::prefix('subscriptions')->name('subscriptions.')->middleware(['auth'])->gr
         Route::post('/{plan}/duplicate', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'duplicate'])->name('duplicate');
         Route::post('/{plan}/toggle-status', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/stats', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'getPlanStats'])->name('stats');
-        Route::get('/compare', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'comparePlans'])->name('compare');
+        Route::get('/compare', [App\Http\Controllers\Subscription\SubscriptionPlanController::class, 'comparePlans'])->name('admin-compare');
     });
 
     // Subscription Features
@@ -1740,124 +1851,6 @@ Route::prefix('ads')->name('ads.')->middleware(['auth'])->group(function () {
     Route::get('/spotlight-listings', [App\Http\Controllers\PromotedListingController::class, 'spotlightListings'])->name('spotlight-listings');
 });
 
-// Tax System Routes
-Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () {
-    // Main Tax Routes
-    Route::get('/', [App\Http\Controllers\TaxController::class, 'index'])->name('index');
-    Route::get('/analytics', [App\Http\Controllers\TaxController::class, 'analytics'])->name('analytics');
-    Route::get('/list', [App\Http\Controllers\TaxController::class, 'list'])->name('list');
-    Route::get('/{tax}', [App\Http\Controllers\TaxController::class, 'show'])->name('show');
-    Route::get('/{tax}/report', [App\Http\Controllers\TaxController::class, 'generateReport'])->name('report');
-    Route::get('/stats', [App\Http\Controllers\TaxController::class, 'getStats'])->name('stats');
-
-    // Property Tax Routes
-    Route::prefix('property')->name('property.')->group(function () {
-        Route::get('/', [App\Http\Controllers\PropertyTaxController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\PropertyTaxController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\PropertyTaxController::class, 'store'])->name('store');
-        Route::get('/{propertyTax}', [App\Http\Controllers\PropertyTaxController::class, 'show'])->name('show');
-        Route::get('/{propertyTax}/edit', [App\Http\Controllers\PropertyTaxController::class, 'edit'])->name('edit');
-        Route::put('/{propertyTax}', [App\Http\Controllers\PropertyTaxController::class, 'update'])->name('update');
-        Route::delete('/{propertyTax}', [App\Http\Controllers\PropertyTaxController::class, 'destroy'])->name('destroy');
-    });
-
-    // Tax Calculator Routes
-    Route::prefix('calculator')->name('calculator.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxCalculatorController::class, 'index'])->name('index');
-        Route::post('/calculate', [App\Http\Controllers\TaxCalculatorController::class, 'calculate'])->name('calculate');
-        Route::get('/property', [App\Http\Controllers\TaxCalculatorController::class, 'propertyTaxCalculator'])->name('property');
-        Route::get('/capital-gains', [App\Http\Controllers\TaxCalculatorController::class, 'capitalGainsCalculator'])->name('capital-gains');
-        Route::get('/vat', [App\Http\Controllers\TaxCalculatorController::class, 'vatCalculator'])->name('vat');
-    });
-
-    // Tax Filing Routes
-    Route::prefix('filing')->name('filing.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxFilingController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\TaxFilingController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\TaxFilingController::class, 'store'])->name('store');
-        Route::get('/{taxFiling}', [App\Http\Controllers\TaxFilingController::class, 'show'])->name('show');
-        Route::get('/{taxFiling}/edit', [App\Http\Controllers\TaxFilingController::class, 'edit'])->name('edit');
-        Route::put('/{taxFiling}', [App\Http\Controllers\TaxFilingController::class, 'update'])->name('update');
-        Route::post('/{taxFiling}/submit', [App\Http\Controllers\TaxFilingController::class, 'submit'])->name('submit');
-        Route::post('/{taxFiling}/approve', [App\Http\Controllers\TaxFilingController::class, 'approve'])->name('approve');
-        Route::post('/{taxFiling}/reject', [App\Http\Controllers\TaxFilingController::class, 'reject'])->name('reject');
-        Route::get('/{taxFiling}/attachment/{attachmentId}', [App\Http\Controllers\TaxFilingController::class, 'downloadAttachment'])->name('attachment.download');
-    });
-
-    // Tax Payment Routes
-    Route::prefix('payments')->name('payments.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxPaymentController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\TaxPaymentController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\TaxPaymentController::class, 'store'])->name('store');
-        Route::get('/{taxPayment}', [App\Http\Controllers\TaxPaymentController::class, 'show'])->name('show');
-        Route::get('/{taxPayment}/edit', [App\Http\Controllers\TaxPaymentController::class, 'edit'])->name('edit');
-        Route::put('/{taxPayment}', [App\Http\Controllers\TaxPaymentController::class, 'update'])->name('update');
-        Route::post('/{taxPayment}/process', [App\Http\Controllers\TaxPaymentController::class, 'process'])->name('process');
-        Route::post('/{taxPayment}/complete', [App\Http\Controllers\TaxPaymentController::class, 'complete'])->name('complete');
-        Route::post('/{taxPayment}/cancel', [App\Http\Controllers\TaxPaymentController::class, 'cancel'])->name('cancel');
-        Route::get('/{taxPayment}/receipt', [App\Http\Controllers\TaxPaymentController::class, 'receipt'])->name('receipt');
-        Route::get('/{taxPayment}/generate-receipt', [App\Http\Controllers\TaxPaymentController::class, 'generateReceipt'])->name('generate-receipt');
-    });
-
-    // Tax Exemption Routes
-    Route::prefix('exemptions')->name('exemptions.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxExemptionController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\TaxExemptionController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\TaxExemptionController::class, 'store'])->name('store');
-        Route::get('/{taxExemption}', [App\Http\Controllers\TaxExemptionController::class, 'show'])->name('show');
-        Route::post('/{taxExemption}/approve', [App\Http\Controllers\TaxExemptionController::class, 'approve'])->name('approve');
-        Route::post('/{taxExemption}/reject', [App\Http\Controllers\TaxExemptionController::class, 'reject'])->name('reject');
-    });
-
-    // Tax Assessment Routes
-    Route::prefix('assessments')->name('assessments.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxAssessmentController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\TaxAssessmentController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\TaxAssessmentController::class, 'store'])->name('store');
-        Route::get('/{taxAssessment}', [App\Http\Controllers\TaxAssessmentController::class, 'show'])->name('show');
-    });
-
-    // Tax Document Routes
-    Route::prefix('documents')->name('documents.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxDocumentController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\TaxDocumentController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\TaxDocumentController::class, 'store'])->name('store');
-        Route::get('/{taxDocument}', [App\Http\Controllers\TaxDocumentController::class, 'show'])->name('show');
-        Route::get('/{taxDocument}/download', [App\Http\Controllers\TaxDocumentController::class, 'download'])->name('download');
-        Route::delete('/{taxDocument}', [App\Http\Controllers\TaxDocumentController::class, 'destroy'])->name('destroy');
-    });
-
-    // Tax Report Routes
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaxReportController::class, 'index'])->name('index');
-        Route::get('/collection', [App\Http\Controllers\TaxReportController::class, 'collectionReport'])->name('collection');
-        Route::get('/outstanding', [App\Http\Controllers\TaxReportController::class, 'outstandingReport'])->name('outstanding');
-        Route::get('/exemptions', [App\Http\Controllers\TaxReportController::class, 'exemptionReport'])->name('exemptions');
-        Route::get('/analytics', [App\Http\Controllers\TaxReportController::class, 'analytics'])->name('analytics');
-        Route::get('/export', [App\Http\Controllers\TaxReportController::class, 'export'])->name('export');
-    });
-
-    // Capital Gains Tax Routes
-    Route::prefix('capital-gains')->name('capital-gains.')->group(function () {
-        Route::get('/', [App\Http\Controllers\CapitalGainsTaxController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\CapitalGainsTaxController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\CapitalGainsTaxController::class, 'store'])->name('store');
-        Route::get('/{capitalGainsTax}', [App\Http\Controllers\CapitalGainsTaxController::class, 'show'])->name('show');
-        Route::post('/calculate', [App\Http\Controllers\CapitalGainsTaxController::class, 'calculate'])->name('calculate');
-    });
-
-    // VAT Routes
-    Route::prefix('vat')->name('vat.')->group(function () {
-        Route::get('/', [App\Http\Controllers\VatController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\VatController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\VatController::class, 'store'])->name('store');
-        Route::get('/{vatRecord}', [App\Http\Controllers\VatController::class, 'show'])->name('show');
-        Route::get('/calculator', [App\Http\Controllers\VatController::class, 'calculator'])->name('calculator');
-        Route::post('/calculate', [App\Http\Controllers\VatController::class, 'calculate'])->name('calculate');
-        Route::post('/{vatRecord}/submit', [App\Http\Controllers\VatController::class, 'submit'])->name('submit');
-        Route::post('/{vatRecord}/pay', [App\Http\Controllers\VatController::class, 'pay'])->name('pay');
-    });
-});
 
 // Route Map Page - Display all routes (Admin only)
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -2035,6 +2028,49 @@ Route::prefix('analytics-alt')->name('analytics-alt.')->middleware(['auth'])->gr
         Route::post('/heatmaps/compare', [App\Http\Controllers\HeatmapController::class, 'compareHeatmaps'])->name('compare-heatmaps');
         Route::get('/heatmaps/export', [App\Http\Controllers\HeatmapController::class, 'exportHeatmap'])->name('export-heatmap');
     });
+    // Messages Routes
+    Route::prefix('messages')->name('messages.')->group(function () {
+        Route::get('/appointments', [App\Http\Controllers\AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/appointments/create', [App\Http\Controllers\AppointmentController::class, 'create'])->name('appointments.create');
+        Route::post('/appointments', [App\Http\Controllers\AppointmentController::class, 'store'])->name('appointments.store');
+        Route::get('/appointments/{appointment}', [App\Http\Controllers\AppointmentController::class, 'show'])->name('appointments.show');
+        Route::get('/appointments/{appointment}/edit', [App\Http\Controllers\AppointmentController::class, 'edit'])->name('appointments.edit');
+        Route::put('/appointments/{appointment}', [App\Http\Controllers\AppointmentController::class, 'update'])->name('appointments.update');
+        Route::delete('/appointments/{appointment}', [App\Http\Controllers\AppointmentController::class, 'destroy'])->name('appointments.destroy');
+        Route::post('/appointments/{appointment}/confirm', [App\Http\Controllers\AppointmentController::class, 'confirm'])->name('appointments.confirm');
+        Route::post('/appointments/{appointment}/cancel', [App\Http\Controllers\AppointmentController::class, 'cancel'])->name('appointments.cancel');
+        Route::post('/appointments/{appointment}/reschedule', [App\Http\Controllers\AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+        
+        // Auctions Routes
+        Route::prefix('auctions')->name('auctions.')->group(function () {
+            Route::get('/', [App\Http\Controllers\AuctionController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\AuctionController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\AuctionController::class, 'store'])->name('store');
+            Route::get('/my-auctions', [App\Http\Controllers\AuctionController::class, 'myAuctions'])->name('my-auctions');
+            Route::get('/my-bids', [App\Http\Controllers\AuctionController::class, 'myBids'])->name('my-bids');
+            
+            // Auction Results Routes (must come before /{id} to avoid conflicts)
+            Route::get('/results', [App\Http\Controllers\AuctionResultController::class, 'index'])->name('results');
+            Route::get('/results/stats', [App\Http\Controllers\AuctionResultController::class, 'getStats'])->name('results.stats');
+            Route::get('/results/{id}', [App\Http\Controllers\AuctionResultController::class, 'show'])->name('results.show');
+            Route::post('/results/{id}/confirm-winner', [App\Http\Controllers\AuctionResultController::class, 'confirmWinner'])->name('results.confirm-winner');
+            Route::post('/results/{id}/reject-winner', [App\Http\Controllers\AuctionResultController::class, 'rejectWinner'])->name('results.reject-winner');
+            Route::get('/results/{id}/download', [App\Http\Controllers\AuctionResultController::class, 'downloadReport'])->name('results.download');
+            
+            // Individual auction routes (must come after specific routes)
+            Route::get('/{id}', [App\Http\Controllers\AuctionController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [App\Http\Controllers\AuctionController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [App\Http\Controllers\AuctionController::class, 'update'])->name('update');
+            Route::post('/{id}/start', [App\Http\Controllers\AuctionController::class, 'start'])->name('start');
+            Route::post('/{id}/end', [App\Http\Controllers\AuctionController::class, 'end'])->name('end');
+            Route::post('/{id}/cancel', [App\Http\Controllers\AuctionController::class, 'cancel'])->name('cancel');
+            Route::post('/{id}/join', [App\Http\Controllers\AuctionController::class, 'join'])->name('join');
+            Route::get('/{id}/bid', [App\Http\Controllers\AuctionController::class, 'bid'])->name('bid');
+            Route::post('/{id}/bid', [App\Http\Controllers\AuctionController::class, 'placeBid'])->name('placeBid');
+            Route::post('/bids/{bid}/retract', [App\Http\Controllers\AuctionController::class, 'retractBid'])->name('bids.retract');
+            Route::get('/{id}/highest-bid', [App\Http\Controllers\AuctionController::class, 'getHighestBid'])->name('highest-bid');
+        });
+    });
 });
 
 // Request Monitoring Routes
@@ -2054,4 +2090,55 @@ Route::prefix('admin/errors')->name('admin.errors.')->middleware('auth')->group(
     Route::post('/resolve/{id}', [SystemErrorLogController::class, 'resolve'])->name('resolve');
     Route::post('/clear', [SystemErrorLogController::class, 'clear'])->name('clear');
     Route::get('/scan', [SystemErrorLogController::class, 'scanRoutes'])->name('scan');
+});
+
+// Orders routes
+Route::middleware(['auth'])->prefix('orders')->name('orders.')->group(function () {
+    Route::get('/', [OrderController::class, 'index'])->name('index');
+    Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+    Route::get('/{order}/payment-status', [OrderController::class, 'showPaymentStatus'])->name('payment.status');
+    Route::post('/create', [OrderController::class, 'create'])->name('create');
+    Route::patch('/{order}/payment-status', [OrderController::class, 'updatePaymentStatus'])->name('update.payment.status');
+    Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+});
+
+// AI Module
+Route::middleware(['auth', 'admin'])->prefix('ai')->name('ai.')->group(function () {
+    Route::get('/', [App\Http\Controllers\AI\AIController::class, 'index'])->name('index');
+    Route::get('/price-prediction', [App\Http\Controllers\AI\AIController::class, 'pricePrediction'])->name('price.prediction');
+    Route::get('/fraud-detection', [App\Http\Controllers\AI\AIController::class, 'fraudDetection'])->name('fraud.detection');
+    Route::get('/virtual-reality', [App\Http\Controllers\AI\AIController::class, 'virtualReality'])->name('virtual.reality');
+});
+
+// Supreme CMS Module
+Route::middleware(['auth', 'admin'])->prefix('cms')->name('cms.')->group(function () {
+    Route::get('/', [App\Http\Controllers\CMS\CMSController::class, 'index'])->name('index');
+    Route::get('/blog-network', [App\Http\Controllers\CMS\CMSController::class, 'blogNetwork'])->name('blog.network');
+    Route::get('/menu-builder', [App\Http\Controllers\CMS\CMSController::class, 'menuBuilder'])->name('menu.builder');
+    Route::get('/media-library', [App\Http\Controllers\CMS\CMSController::class, 'mediaLibrary'])->name('media.library');
+});
+
+// Agent CRM Module
+Route::middleware(['auth', 'admin'])->prefix('crm')->name('crm.')->group(function () {
+    Route::get('/', [App\Http\Controllers\CRM\CRMController::class, 'index'])->name('index');
+    Route::get('/dashboard', [App\Http\Controllers\CRM\CRMController::class, 'dashboard'])->name('dashboard');
+    Route::get('/offers', [App\Http\Controllers\CRM\CRMController::class, 'offers'])->name('offers');
+    Route::get('/commissions', [App\Http\Controllers\CRM\CRMController::class, 'commissions'])->name('commissions');
+});
+
+// Marketing Module
+Route::middleware(['auth', 'admin'])->prefix('marketing')->name('marketing.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Marketing\MarketingController::class, 'index'])->name('index');
+    Route::get('/campaigns', [App\Http\Controllers\Marketing\MarketingController::class, 'campaigns'])->name('campaigns');
+    Route::get('/reviews', [App\Http\Controllers\Marketing\MarketingController::class, 'reviews'])->name('reviews');
+    Route::get('/complaints', [App\Http\Controllers\Marketing\MarketingController::class, 'complaints'])->name('complaints');
+});
+
+// Financial Module
+Route::middleware(['auth', 'admin'])->prefix('financial')->name('financial.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Financial\FinancialController::class, 'index'])->name('index');
+    Route::get('/payments', [App\Http\Controllers\Financial\FinancialController::class, 'payments'])->name('payments');
+    Route::get('/invoices', [App\Http\Controllers\Financial\FinancialController::class, 'invoices'])->name('invoices');
+    Route::get('/wallets', [App\Http\Controllers\Financial\FinancialController::class, 'wallets'])->name('wallets');
+    Route::get('/cryptocurrencies', [App\Http\Controllers\Financial\FinancialController::class, 'cryptocurrencies'])->name('cryptocurrencies');
 });

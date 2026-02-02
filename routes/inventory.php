@@ -22,14 +22,6 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     // Inventory Dashboard
     Route::get('/', [InventoryController::class, 'index'])->name('index');
     
-    // Simple Inventory Routes (for compatibility)
-    Route::get('/create', [InventoryController::class, 'create'])->name('create');
-    Route::post('/', [InventoryController::class, 'store'])->name('store');
-    Route::get('/{item}', [InventoryController::class, 'show'])->name('show');
-    Route::get('/{item}/edit', [InventoryController::class, 'edit'])->name('edit');
-    Route::put('/{item}', [InventoryController::class, 'update'])->name('update');
-    Route::delete('/{item}', [InventoryController::class, 'destroy'])->name('destroy');
-    
     // Items Management
     Route::get('/items', [InventoryController::class, 'itemsIndex'])->name('items.index');
     Route::get('/items/create', [InventoryController::class, 'itemsCreate'])->name('items.create');
@@ -78,4 +70,12 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     // Low Stock Alerts
     Route::get('/low-stock', [InventoryController::class, 'lowStock'])->name('low-stock');
     Route::post('/low-stock/send-alerts', [InventoryController::class, 'sendLowStockAlerts'])->name('low-stock.send-alerts');
+    
+    // Simple Inventory Routes (for compatibility)
+    Route::get('/create', [InventoryController::class, 'create'])->name('create');
+    Route::post('/', [InventoryController::class, 'store'])->name('store');
+    Route::get('/{item}', [InventoryController::class, 'show'])->name('show');
+    Route::get('/{item}/edit', [InventoryController::class, 'edit'])->name('edit');
+    Route::put('/{item}', [InventoryController::class, 'update'])->name('update');
+    Route::delete('/{item}', [InventoryController::class, 'destroy'])->name('destroy');
 });

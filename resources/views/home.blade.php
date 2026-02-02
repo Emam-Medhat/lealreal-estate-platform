@@ -1,770 +1,438 @@
 @extends('layouts.app')
 
+@section('title', __('Home') . ' | ' . config('app.name', 'Real Estate Pro'))
+
 @section('content')
 
-<!-- Premium Hero Section -->
-<section class="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white overflow-hidden">
-    <!-- Background Video/Image -->
-    <div class="absolute inset-0">
-        <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60"></div>
-        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
-             alt="Luxury Real Estate" 
-             class="w-full h-full object-cover">
-    </div>
-    
-    <!-- Hero Content -->
-    <div class="relative container mx-auto px-6 py-24 lg:py-32">
-        <div class="max-w-4xl">
-            <!-- Trust Badge -->
-            <div class="inline-flex items-center bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-6 border border-white/20">
-                <i class="fas fa-award text-yellow-400 mr-2"></i>
-                <span class="text-sm font-medium">{{ __('Trusted by 50,000+ Property Seekers') }}</span>
-            </div>
-            
-            <!-- Main Headline -->
-            <h1 class="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-                {{ __('Find Your Perfect') }} <br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                    {{ __('Property') }}
-                </span>
-            </h1>
-            
-            <!-- Subheadline -->
-            <p class="text-xl lg:text-2xl text-gray-200 mb-12 max-w-3xl leading-relaxed">
-                {{ __('Discover premium properties, trusted agents, and seamless transactions. Your dream property awaits.') }}
-            </p>
-            
-            <!-- Advanced Search Bar -->
-            <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8">
-                <!-- Property Type Tabs -->
-                <div class="flex flex-wrap gap-2 mb-6">
-                    <button type="button" class="px-6 py-2 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition-colors">
-                        {{ __('Buy') }}
-                    </button>
-                    <button type="button" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors">
-                        {{ __('Rent') }}
-                    </button>
-                    <button type="button" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors">
-                        {{ __('Commercial') }}
-                    </button>
-                    <button type="button" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors">
-                        {{ __('Projects') }}
-                    </button>
-                </div>
-                
-                <!-- Search Form -->
-                <form action="{{ route('properties.index') }}" method="GET" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="relative">
-                            <i class="fas fa-map-marker-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" 
-                                   name="location" 
-                                   placeholder="{{ __('Location, City, or Area') }}" 
-                                   class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                        </div>
-                        
-                        <div class="relative">
-                            <i class="fas fa-home absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <select name="property_type" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 appearance-none">
-                                <option value="">{{ __('All Property Types') }}</option>
-                                <option value="apartment">{{ __('Apartments') }}</option>
-                                <option value="villa">{{ __('Villas') }}</option>
-                                <option value="house">{{ __('Houses') }}</option>
-                                <option value="commercial">{{ __('Commercial') }}</option>
-                                <option value="land">{{ __('Land') }}</option>
-                                <option value="off-plan">{{ __('Off-Plan Projects') }}</option>
-                            </select>
-                        </div>
-                        
-                        <div class="relative">
-                            <i class="fas fa-dollar-sign absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" 
-                                   name="price_range" 
-                                   placeholder="{{ __('Price Range') }}" 
-                                   class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all">
-                        </div>
-                        
-                        <button type="submit" class="bg-blue-600 text-white py-4 px-8 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5">
-                            <i class="fas fa-search mr-2"></i>
-                            {{ __('Search') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Quick Links -->
-            <div class="flex flex-wrap gap-4">
-                <a href="{{ route('properties.index') }}" class="text-white hover:text-blue-300 transition-colors">
-                    <i class="fas fa-fire mr-2"></i>{{ __('Hot Deals') }}
-                </a>
-                <a href="{{ route('properties.index', ['featured' => 1]) }}" class="text-white hover:text-blue-300 transition-colors">
-                    <i class="fas fa-star mr-2"></i>{{ __('Featured') }}
-                </a>
-                <a href="{{ route('properties.index', ['new' => 1]) }}" class="text-white hover:text-blue-300 transition-colors">
-                    <i class="fas fa-sparkles mr-2"></i>{{ __('New Listings') }}
-                </a>
-            </div>
+    <!-- Advanced Glassmorphic Hero Section -->
+    <section class="relative min-h-[90vh] flex items-center justify-center text-white overflow-hidden">
+        <!-- Dynamic Background Layer -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+                 alt="{{ __('Luxury Properties Landscape') }}" 
+                 class="w-full h-full object-cover scale-105 animate-pulse-slow">
+            <div class="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/80 to-transparent"></div>
         </div>
-    </div>
-</section>
 
-<!-- Platform Stats & Trust Indicators -->
-<section class="py-16 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-    <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-4">{{ __('Trusted by Millions') }}</h2>
-            <p class="text-blue-100 text-lg">{{ __('Join the leading real estate platform') }}</p>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="text-center">
-                <div class="text-4xl lg:text-5xl font-bold mb-2" data-counter="{{ $stats->total_properties ?? 15000 }}">0</div>
-                <div class="text-blue-100">{{ __('Properties Listed') }}</div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl lg:text-5xl font-bold mb-2" data-counter="{{ $stats->verified_agents ?? 2500 }}">0</div>
-                <div class="text-blue-100">{{ __('Verified Agents') }}</div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl lg:text-5xl font-bold mb-2" data-counter="{{ $stats->total_developers ?? 180 }}">0</div>
-                <div class="text-blue-100">{{ __('Developers') }}</div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl lg:text-5xl font-bold mb-2" data-counter="{{ $stats->cities_covered ?? 45 }}">0</div>
-                <div class="text-blue-100">{{ __('Cities Covered') }}</div>
-            </div>
-        </div>
-        
-        <!-- Trust Badges -->
-        <div class="flex flex-wrap justify-center gap-6 mt-12">
-            <div class="flex items-center bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/20">
-                <i class="fas fa-shield-alt text-green-400 mr-2"></i>
-                <span class="text-sm">{{ __('Secure Transactions') }}</span>
-            </div>
-            <div class="flex items-center bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/20">
-                <i class="fas fa-certificate text-yellow-400 mr-2"></i>
-                <span class="text-sm">{{ __('Verified Listings') }}</span>
-            </div>
-            <div class="flex items-center bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/20">
-                <i class="fas fa-award text-purple-400 mr-2"></i>
-                <span class="text-sm">{{ __('Award Winning') }}</span>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Featured Properties -->
-<section class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
-            <div>
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                    {{ __('Featured Properties') }}
-                </h2>
-                <p class="text-gray-600 text-lg max-w-2xl">
-                    {{ __('Discover our handpicked selection of premium properties in prime locations') }}
-                </p>
-            </div>
-            <a href="{{ route('properties.index', ['featured' => 1]) }}" class="mt-4 md:mt-0 text-blue-600 font-bold flex items-center hover:text-blue-800 transition-colors">
-                {{ __('View All Featured') }} <i class="fas fa-arrow-right ml-2"></i>
-            </a>
-        </div>
-        
-        <!-- Premium Property Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @forelse($featuredProperties ?? [] as $property)
-                <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-                    <!-- Property Image -->
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="{{ $property->featured_image ?? 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' }}" 
-                             alt="{{ $property->title }}" 
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        
-                        <!-- Badges -->
-                        <div class="absolute top-4 left-4 flex gap-2">
-                            @if($property->featured)
-                                <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                                    {{ __('Featured') }}
-                                </span>
-                            @endif
-                            @if($property->premium)
-                                <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                                    {{ __('Premium') }}
-                                </span>
-                            @endif
-                        </div>
-                        
-                        <!-- Quick Actions -->
-                        <div class="absolute top-4 right-4 flex gap-2">
-                            <button class="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                                <i class="far fa-heart text-gray-700 hover:text-red-500"></i>
-                            </button>
-                            <button class="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                                <i class="fas fa-share-alt text-gray-700"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Property Details -->
-                    <div class="p-6">
-                        <div class="flex items-start justify-between mb-3">
-                            <h3 class="text-lg font-bold text-gray-900 line-clamp-1">{{ $property->title }}</h3>
-                            <div class="text-right">
-                                <div class="text-xl font-bold text-blue-600">
-                                    ${{ number_format($property->price ?? 0) }}
-                                </div>
-                                @if($property->listing_type)
-                                    <div class="text-xs text-gray-500">{{ ucfirst($property->listing_type) }}</div>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center text-gray-600 text-sm mb-3">
-                            <i class="fas fa-map-marker-alt mr-2"></i>
-                            <span class="line-clamp-1">{{ $property->address ?? $property->city ?? 'Location' }}</span>
-                        </div>
-                        
-                        <!-- Property Specs -->
-                        <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                            @if($property->bedrooms)
-                                <div class="flex items-center">
-                                    <i class="fas fa-bed mr-1"></i>
-                                    <span>{{ $property->bedrooms }}</span>
-                                </div>
-                            @endif
-                            @if($property->bathrooms)
-                                <div class="flex items-center">
-                                    <i class="fas fa-bath mr-1"></i>
-                                    <span>{{ $property->bathrooms }}</span>
-                                </div>
-                            @endif
-                            @if($property->area)
-                                <div class="flex items-center">
-                                    <i class="fas fa-ruler-combined mr-1"></i>
-                                    <span>{{ $property->area }} {{ $property->area_unit ?? 'sqft' }}</span>
-                                </div>
-                            @endif
-                        </div>
-                        
-                        <a href="{{ route('properties.show', $property->id) }}" 
-                           class="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            {{ __('View Details') }}
-                        </a>
-                    </div>
-                </div>
-            @empty
-                <!-- Sample Properties for Demo -->
-                @for($i = 1; $i <= 4; $i++)
-                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-                        <div class="relative h-56 overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-                                 alt="Luxury Property" 
-                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                            <div class="absolute top-4 left-4 flex gap-2">
-                                <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                                    {{ __('Featured') }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-2">Luxury Villa {{ $i }}</h3>
-                            <div class="text-xl font-bold text-blue-600 mb-3">${{ number_format(500000 * $i) }}</div>
-                            <div class="flex items-center text-gray-600 text-sm mb-4">
-                                <i class="fas fa-map-marker-alt mr-2"></i>
-                                <span>Downtown District</span>
-                            </div>
-                            <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                                <div class="flex items-center">
-                                    <i class="fas fa-bed mr-1"></i>
-                                    <span>{{ 3 + $i }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-bath mr-1"></i>
-                                    <span>{{ 2 + $i }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-ruler-combined mr-1"></i>
-                                    <span>{{ 2000 * $i }} sqft</span>
-                                </div>
-                            </div>
-                            <button class="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                {{ __('View Details') }}
-                            </button>
-                        </div>
-                    </div>
-                @endfor
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<!-- Browse by Property Type -->
-<section class="py-20 bg-white">
-    <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                {{ __('Browse by Property Type') }}
-            </h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                {{ __('Find exactly what you are looking for with our comprehensive property categories') }}
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            @forelse($propertyTypes ?? [] as $type)
-                <a href="{{ route('properties.index', ['type' => $type->slug]) }}" 
-                   class="bg-gray-50 rounded-2xl p-6 text-center hover:bg-blue-50 hover:shadow-lg transition-all group">
-                    <div class="w-16 h-16 bg-{{ $type->color ?? 'blue' }}-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-{{ $type->color ?? 'blue' }}-600 transition-colors">
-                        <i class="fas fa-{{ $type->icon ?? 'home' }} text-2xl text-{{ $type->color ?? 'blue' }}-600 group-hover:text-white"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-900 mb-1">{{ $type->name }}</h3>
-                    <p class="text-sm text-gray-500">{{ $type->properties_count ?? 0 }}+</p>
-                </a>
-            @empty
-                <!-- Default Property Types for Demo -->
-                @php
-                    $defaultTypes = [
-                        ['slug' => 'apartment', 'name' => __('Apartments'), 'icon' => 'building', 'color' => 'blue', 'count' => 2450],
-                        ['slug' => 'villa', 'name' => __('Villas'), 'icon' => 'home', 'color' => 'green', 'count' => 1200],
-                        ['slug' => 'commercial', 'name' => __('Commercial'), 'icon' => 'store', 'color' => 'purple', 'count' => 850],
-                        ['slug' => 'office', 'name' => __('Offices'), 'icon' => 'briefcase', 'color' => 'orange', 'count' => 650],
-                        ['slug' => 'land', 'name' => __('Land'), 'icon' => 'mountain', 'color' => 'yellow', 'count' => 420],
-                        ['slug' => 'off-plan', 'name' => __('New Projects'), 'icon' => 'hard-hat', 'color' => 'red', 'count' => 180]
-                    ];
-                @endphp
-                
-                @foreach($defaultTypes as $type)
-                    <a href="{{ route('properties.index', ['type' => $type['slug']]) }}" 
-                       class="bg-gray-50 rounded-2xl p-6 text-center hover:bg-blue-50 hover:shadow-lg transition-all group">
-                        <div class="w-16 h-16 bg-{{ $type['color'] }}-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-{{ $type['color'] }}-600 transition-colors">
-                            <i class="fas fa-{{ $type['icon'] }} text-2xl text-{{ $type['color'] }}-600 group-hover:text-white"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-900 mb-1">{{ $type['name'] }}</h3>
-                        <p class="text-sm text-gray-500">{{ $type['count'] }}+</p>
-                    </a>
-                @endforeach
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<!-- Top Real Estate Agents -->
-<section class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
-            <div>
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                    {{ __('Top Real Estate Agents') }}
-                </h2>
-                <p class="text-gray-600 text-lg max-w-2xl">
-                    {{ __('Connect with our verified and experienced agents for expert guidance') }}
-                </p>
-            </div>
-            <a href="{{ route('agents.directory') }}" class="mt-4 md:mt-0 text-blue-600 font-bold flex items-center hover:text-blue-800 transition-colors">
-                {{ __('View All Agents') }} <i class="fas fa-arrow-right ml-2"></i>
-            </a>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            @forelse($topAgents ?? [] as $agent)
-                <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6">
-                    <!-- Agent Profile -->
-                    <div class="flex items-center mb-4">
-                        <div class="relative">
-                            <img src="{{ $agent->profile_photo ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' }}" 
-                                 alt="{{ $agent->name }}" 
-                                 class="w-16 h-16 rounded-full object-cover">
-                            @if($agent->verified)
-                                <div class="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
-                                    <i class="fas fa-check text-white text-xs"></i>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="font-bold text-gray-900">{{ $agent->name }}</h3>
-                            <div class="flex items-center text-sm text-gray-600">
-                                <div class="flex text-yellow-400 mr-1">
-                                    @for($j = 1; $j <= round($agent->rating ?? 4.5); $j++)
-                                        <i class="fas fa-star text-xs"></i>
-                                    @endfor
-                                    @if($agent->rating && $agent->rating < 5)
-                                        <i class="fas fa-star-half-alt text-xs"></i>
-                                    @endif
-                                </div>
-                                <span>({{ $agent->rating ?? '4.5' }})</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Agent Stats -->
-                    <div class="space-y-2 mb-4">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">{{ __('Active Listings') }}</span>
-                            <span class="font-bold text-gray-900">{{ $agent->active_listings ?? 0 }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">{{ __('Properties Sold') }}</span>
-                            <span class="font-bold text-gray-900">{{ $agent->properties_sold ?? 0 }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">{{ __('Experience') }}</span>
-                            <span class="font-bold text-gray-900">{{ $agent->experience_years ?? 0 }} {{ __('Years') }}</span>
-                        </div>
-                    </div>
-                    
-                    <a href="{{ route('agents.show', $agent->id) }}" class="block w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-center">
-                        {{ __('View Profile') }}
-                    </a>
-                </div>
-            @empty
-                <!-- Sample Agents for Demo -->
-                @for($i = 1; $i <= 4; $i++)
-                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="relative">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" 
-                                     alt="Agent {{ $i }}" 
-                                     class="w-16 h-16 rounded-full object-cover">
-                                <div class="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
-                                    <i class="fas fa-check text-white text-xs"></i>
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="font-bold text-gray-900">Sarah Johnson</h3>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <div class="flex text-yellow-400 mr-1">
-                                        @for($j = 1; $j <= 5; $j++)
-                                            <i class="fas fa-star text-xs"></i>
-                                        @endfor
-                                    </div>
-                                    <span>(4.9)</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-2 mb-4">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">{{ __('Active Listings') }}</span>
-                                <span class="font-bold text-gray-900">{{ 25 + $i * 5 }}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">{{ __('Properties Sold') }}</span>
-                                <span class="font-bold text-gray-900">{{ 100 + $i * 20 }}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">{{ __('Experience') }}</span>
-                                <span class="font-bold text-gray-900">{{ 3 + $i }} {{ __('Years') }}</span>
-                            </div>
-                        </div>
-                        
-                        <button class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            {{ __('View Profile') }}
-                        </button>
-                    </div>
-                @endfor
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<!-- Featured Developers -->
-<section class="py-20 bg-white">
-    <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                {{ __('Featured Developers') }}
-            </h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                {{ __('Partner with leading developers for premium projects and investments') }}
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @forelse($featuredDevelopers ?? [] as $developer)
-                <div class="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-all">
-                    <!-- Developer Logo -->
-                    <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                        @if($developer->logo)
-                            <img src="{{ $developer->logo }}" alt="{{ $developer->name }}" class="w-full h-full object-cover rounded-xl">
-                        @else
-                            <i class="fas fa-building text-3xl text-blue-600"></i>
-                        @endif
-                    </div>
-                    
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">{{ $developer->name }}</h3>
-                    <p class="text-gray-600 mb-4">
-                        {{ $developer->description ?? __('Leading real estate developer specializing in luxury residential and commercial projects.') }}
-                    </p>
-                    
-                    <div class="space-y-2 mb-6">
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-building mr-2 text-blue-600"></i>
-                            <span>{{ $developer->active_projects ?? 0 }} {{ __('Active Projects') }}</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-check-circle mr-2 text-green-600"></i>
-                            <span>{{ $developer->certified ? __('Certified & Verified') : __('Registered') }}</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-award mr-2 text-yellow-600"></i>
-                            <span>{{ $developer->award_winning ? __('Award Winning') : __('Established') }}</span>
-                        </div>
-                    </div>
-                    
-                    <a href="{{ route('developers.show', $developer->id) }}" class="block w-full bg-gray-900 text-white py-2 rounded-lg hover:bg-gray-800 transition-colors text-center">
-                        {{ __('View Projects') }}
-                    </a>
-                </div>
-            @empty
-                <!-- Sample Developers for Demo -->
-                @for($i = 1; $i <= 3; $i++)
-                    <div class="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-all">
-                        <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                            <i class="fas fa-building text-3xl text-blue-600"></i>
-                        </div>
-                        
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Premium Developer {{ $i }}</h3>
-                        <p class="text-gray-600 mb-4">
-                            {{ __('Leading real estate developer specializing in luxury residential and commercial projects with over 20 years of experience.') }}
-                        </p>
-                        
-                        <div class="space-y-2 mb-6">
-                            <div class="flex items-center text-sm text-gray-600">
-                                <i class="fas fa-building mr-2 text-blue-600"></i>
-                                <span>{{ 15 + $i * 5 }} {{ __('Active Projects') }}</span>
-                            </div>
-                            <div class="flex items-center text-sm text-gray-600">
-                                <i class="fas fa-check-circle mr-2 text-green-600"></i>
-                                <span>{{ __('Certified & Verified') }}</span>
-                            </div>
-                            <div class="flex items-center text-sm text-gray-600">
-                                <i class="fas fa-award mr-2 text-yellow-600"></i>
-                                <span>{{ __('Award Winning') }}</span>
-                            </div>
-                        </div>
-                        
-                        <button class="w-full bg-gray-900 text-white py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                            {{ __('View Projects') }}
-                        </button>
-                    </div>
-                @endfor
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<!-- Why Choose Us -->
-<section class="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-    <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold mb-4">
-                {{ __('Why Choose Our Platform') }}
-            </h2>
-            <p class="text-blue-100 text-lg max-w-2xl mx-auto">
-                {{ __('Experience the difference with our comprehensive real estate ecosystem') }}
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="text-center">
-                <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-shield-alt text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-3">{{ __('Verified Listings') }}</h3>
-                <p class="text-blue-100">{{ __('Every property is verified by our expert team for authenticity and accuracy') }}</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-user-tie text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-3">{{ __('Trusted Agents') }}</h3>
-                <p class="text-blue-100">{{ __('Work with certified professionals who understand your needs perfectly') }}</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-lock text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-3">{{ __('Secure Platform') }}</h3>
-                <p class="text-blue-100">{{ __('Bank-level security for all transactions and personal information') }}</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-chart-line text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-3">{{ __('Market Insights') }}</h3>
-                <p class="text-blue-100">{{ __('Real-time data and analytics to make informed decisions') }}</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Testimonials -->
-<section class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                {{ __('What Our Clients Say') }}
-            </h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                {{ __('Real stories from real people who found their dream properties') }}
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @for($i = 1; $i <= 3; $i++)
-                <div class="bg-white rounded-2xl shadow-lg p-8">
-                    <!-- Rating -->
-                    <div class="flex text-yellow-400 mb-4">
-                        @for($j = 1; $j <= 5; $j++)
-                            <i class="fas fa-star"></i>
+        <!-- Hero Content Interface -->
+        <div class="relative z-10 container mx-auto px-6 py-20">
+            <div class="max-w-5xl mx-auto">
+                <!-- Animated Trust Indicator -->
+                <div class="inline-flex items-center space-x-3 bg-white/10 backdrop-blur-xl rounded-full px-6 py-2.5 mb-10 border border-white/20 shadow-2xl animate-fade-in-down">
+                    <div class="flex -space-x-2">
+                        @for($i = 1; $i <= 3; $i++)
+                            <img src="https://ui-avatars.com/api/?name=User+{{$i}}&background=random" class="w-8 h-8 rounded-full border-2 border-white/20 object-cover" alt="User Badge">
                         @endfor
                     </div>
-                    
-                    <!-- Testimonial -->
-                    <p class="text-gray-700 mb-6 italic">
-                        "{{ __('Excellent service! Found my dream home within 2 weeks. The agent was very professional and understood exactly what I was looking for.') }}"
-                    </p>
-                    
-                    <!-- Client Info -->
-                    <div class="flex items-center">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" 
-                             alt="Client {{ $i }}" 
-                             class="w-12 h-12 rounded-full object-cover mr-4">
-                        <div>
-                            <h4 class="font-bold text-gray-900">Michael Chen</h4>
-                            <p class="text-sm text-gray-600">{{ __('Property Buyer') }}</p>
+                    <span class="text-sm font-semibold tracking-wide uppercase">{{ __('Trusted by 50K+ Clients Worldwide') }}</span>
+                </div>
+
+                <!-- Visionary Headline -->
+                <h1 class="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-tight animate-fade-in">
+                    {{ __('Find Your') }} <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">
+                        {{ __('Architectural Dream') }}
+                    </span>
+                </h1>
+
+                <!-- Compelling Value Proposition -->
+                <p class="text-xl md:text-2xl text-slate-300 mb-14 max-w-3xl leading-relaxed font-light animate-fade-in delay-200">
+                    {{ __('Experience a new standard of property acquisition. Premium estates, verified listings, and a seamless digital journey designed for the elite.') }}
+                </p>
+
+                <!-- Integrated Search Ecosystem (Glassmorphism) -->
+                <div class="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up delay-300">
+                    <div class="p-4 md:p-6 lg:p-8">
+                        <!-- Dynamic Tabs -->
+                        <div class="flex space-x-2 mb-8 bg-black/20 p-1.5 rounded-2xl w-fit">
+                            @php $tabs = ['Buy', 'Rent', 'Sell', 'Invest']; @endphp
+                            @foreach($tabs as $idx => $tab)
+                                <button class="px-8 py-3 rounded-xl transition-all duration-500 font-bold uppercase tracking-widest text-xs {{ $idx === 0 ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                                    {{ __($tab) }}
+                                </button>
+                            @endforeach
                         </div>
+
+                        <!-- High-Complexity Search Form -->
+                        <form action="{{ route('properties.index') }}" method="GET" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <!-- Location Engine -->
+                                <div class="relative group">
+                                    <div class="absolute inset-y-0 left-6 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-400 text-slate-400">
+                                        <i class="fas fa-location-dot text-lg"></i>
+                                    </div>
+                                    <input type="text" name="location" placeholder="{{ __('Where do you want to live?') }}" 
+                                           class="block w-full pl-16 pr-6 py-6 bg-white/10 border border-white/10 rounded-3xl text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-300 text-lg">
+                                </div>
+
+                                <!-- AI-Suggested Categories -->
+                                <div class="relative group">
+                                    <div class="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
+                                        <i class="fas fa-house-chimney text-lg"></i>
+                                    </div>
+                                    <select name="property_type" class="block w-full pl-16 pr-6 py-6 bg-white/10 border border-white/10 rounded-3xl text-white appearance-none focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-300 text-lg">
+                                        <option value="" class="bg-slate-900">{{ __('All Architecture') }}</option>
+                                        <option value="villa" class="bg-slate-900">{{ __('Modern Villas') }}</option>
+                                        <option value="apartment" class="bg-slate-900">{{ __('Penthouses') }}</option>
+                                        <option value="house" class="bg-slate-900">{{ __('Single Houses') }}</option>
+                                        <option value="office" class="bg-slate-900">{{ __('Smart Offices') }}</option>
+                                    </select>
+                                </div>
+
+                                <!-- Premium Price Filtering -->
+                                <div class="relative group">
+                                    <div class="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
+                                        <i class="fas fa-coins text-lg"></i>
+                                    </div>
+                                    <input type="text" name="price_range" placeholder="{{ __('Investment Range') }}" 
+                                           class="block w-full pl-16 pr-6 py-6 bg-white/10 border border-white/10 rounded-3xl text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-300 text-lg">
+                                </div>
+
+                                <!-- Search Execution -->
+                                <button type="submit" class="relative overflow-hidden group/btn bg-gradient-to-r from-blue-600 to-indigo-600 py-6 px-10 rounded-3xl font-black text-xl shadow-[0_15px_30px_rgba(37,99,235,0.4)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.6)] transition-all duration-500 transform hover:-translate-y-1">
+                                    <div class="absolute inset-0 w-full h-full bg-white/20 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000"></div>
+                                    <span class="relative flex items-center justify-center space-x-3">
+                                        <i class="fas fa-magnifying-glass"></i>
+                                        <span>{{ __('Discover') }}</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            @endfor
-        </div>
-    </div>
-</section>
 
-<!-- Strong Call To Action -->
-<section class="py-24 bg-gradient-to-r from-gray-900 to-gray-800 text-white relative overflow-hidden">
-    <div class="absolute inset-0">
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-    </div>
-    
-    <div class="container mx-auto px-6 relative z-10">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl lg:text-5xl font-bold mb-6">
-                {{ __('Ready to Get Started?') }}
-            </h2>
-            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-                {{ __('Join thousands of satisfied clients and agents who trust our platform for their real estate needs') }}
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-center hover:bg-white/20 transition-all">
-                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-plus text-2xl"></i>
+                <!-- Contextual Quick Filters -->
+                <div class="mt-12 flex flex-wrap gap-8 animate-fade-in delay-500">
+                    <a href="#" class="flex items-center space-x-3 text-slate-300 hover:text-white transition-all group">
+                        <span class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-blue-600 group-hover:shadow-lg transition-all duration-500 border border-white/10">
+                            <i class="fas fa-bolt-lightning text-sm text-yellow-400 group-hover:text-white"></i>
+                        </span>
+                        <span class="font-bold tracking-tight">{{ __('Market Hot Deals') }}</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-slate-300 hover:text-white transition-all group">
+                        <span class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-indigo-600 group-hover:shadow-lg transition-all duration-500 border border-white/10">
+                            <i class="fas fa-award text-sm text-blue-400 group-hover:text-white"></i>
+                        </span>
+                        <span class="font-bold tracking-tight">{{ __('Premium Collection') }}</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-slate-300 hover:text-white transition-all group">
+                        <span class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-green-600 group-hover:shadow-lg transition-all duration-500 border border-white/10">
+                            <i class="fas fa-map-marked-alt text-sm text-cyan-400 group-hover:text-white"></i>
+                        </span>
+                        <span class="font-bold tracking-tight">{{ __('Interactive Map Search') }}</span>
+                    </a>
                 </div>
-                <h3 class="text-xl font-bold mb-4">{{ __('List Your Property') }}</h3>
-                <p class="text-gray-300 mb-6">{{ __('Reach thousands of potential buyers and renters') }}</p>
-                <button class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                    {{ __('Get Started') }}
-                </button>
             </div>
-            
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-center hover:bg-white/20 transition-all">
-                <div class="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-user-tie text-2xl"></i>
+        </div>
+
+        <!-- Ambient Animation Components -->
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/30 blur-[150px] rounded-full"></div>
+        <div class="absolute top-1/4 -left-24 w-64 h-64 bg-indigo-600/40 blur-[130px] rounded-full"></div>
+    </section>
+
+    <!-- Luxury Stats & Counter Section -->
+    <section class="py-20 relative bg-slate-950 overflow-hidden">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center items-center">
+                @php
+                    $stats = [
+                        ['label' => 'Curated Properties', 'value' => 12500, 'icon' => 'fa-building-columns', 'color' => 'from-blue-400 to-blue-600'],
+                        ['label' => 'Premium Transactions', 'value' => 8400, 'icon' => 'fa-handshake-angle', 'color' => 'from-indigo-400 to-indigo-600'],
+                        ['label' => 'Elite Agents', 'value' => 1200, 'icon' => 'fa-user-tie', 'color' => 'from-cyan-400 to-cyan-600'],
+                        ['label' => 'Global Partners', 'value' => 450, 'icon' => 'fa-globe-americas', 'color' => 'from-purple-400 to-purple-600'],
+                    ];
+                @endphp
+
+                @foreach($stats as $stat)
+                    <div class="relative group">
+                        <div class="mb-6 mx-auto w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:border-blue-500/50">
+                            <i class="fas {{ $stat['icon'] }} text-2xl bg-clip-text text-transparent bg-gradient-to-r {{ $stat['color'] }}"></i>
+                        </div>
+                        <div class="text-4xl lg:text-6xl font-black text-white mb-2 tracking-tighter" data-counter="{{ $stat['value'] }}">0</div>
+                        <div class="text-slate-400 font-bold uppercase tracking-widest text-xs">{{ __($stat['label']) }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured properties with Premium Grid -->
+    <section class="py-32 bg-slate-50 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none"></div>
+
+        <div class="container mx-auto px-6 relative">
+            <!-- Section Header Interface -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-20">
+                <div class="max-w-3xl">
+                    <div class="inline-block px-4 py-1.5 bg-blue-100 rounded-full text-blue-600 text-xs font-black uppercase tracking-widest mb-6">
+                        {{ __('Exquisite Selection') }}
+                    </div>
+                    <h2 class="text-4xl md:text-6xl font-black text-slate-900 mb-8 leading-tight tracking-tight">
+                        {{ __('Featured Masterpieces') }}
+                    </h2>
+                    <p class="text-lg text-slate-500 leading-relaxed font-medium">
+                        {{ __('Dive into our handpicked collection of architectural marvels. Each property is a testament to luxury, comfort, and unparalleled design.') }}
+                    </p>
                 </div>
-                <h3 class="text-xl font-bold mb-4">{{ __('Become an Agent') }}</h3>
-                <p class="text-gray-300 mb-6">{{ __('Grow your business with our powerful tools') }}</p>
-                <a href="{{ route('register', ['type' => 'agent']) }}" class="block w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors text-center">
-                    {{ __('Join Now') }}
+                <a href="{{ route('properties.index', ['featured' => 1]) }}" class="mt-10 md:mt-0 group/link flex items-center space-x-4 bg-white px-8 py-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-x-2 border border-slate-100">
+                    <span class="font-black text-slate-900 uppercase tracking-widest text-sm underline decoration-blue-500 decoration-4 underline-offset-8">{{ __('Explore Full Catalog') }}</span>
+                    <i class="fas fa-arrow-right-long text-blue-600 group-hover/link:translate-x-2 transition-transform duration-500"></i>
                 </a>
             </div>
-            
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-center hover:bg-white/20 transition-all">
-                <div class="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-handshake text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-4">{{ __('Partner as Developer') }}</h3>
-                <p class="text-gray-300 mb-6">{{ __('Showcase your projects to premium audience') }}</p>
-                <a href="{{ route('contact') }}" class="block w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors text-center">
-                    {{ __('Contact Us') }}
-                </a>
+
+            <!-- Interactive Multi-Layout Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+                @forelse($featuredProperties ?? [] as $property)
+                    <x-property-premium-card :property="$property" />
+                @empty
+                    <!-- Sophisticated Dummy Content for Redemption -->
+                    @for($i = 1; $i <= 4; $i++)
+                        <div class="group relative bg-white rounded-[2.5rem] overflow-hidden shadow-[0_15px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_40px_70px_-20px_rgba(0,0,0,0.15)] transition-all duration-700 transform hover:-translate-y-4">
+                            <!-- Card Visual Layer -->
+                            <div class="relative h-80 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                                     class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="Estate">
+
+                                <!-- Glassmorphic Badges -->
+                                <div class="absolute top-6 left-6 flex flex-col space-y-2">
+                                    <span class="bg-black/50 backdrop-blur-md text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest border border-white/10">
+                                        {{ __('Featured') }}
+                                    </span>
+                                    @if($i % 2 == 0)
+                                        <span class="bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest">
+                                            {{ __('Premium') }}
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <!-- Wishlist Engine -->
+                                <button class="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-all duration-500 group/heart">
+                                    <i class="fas fa-heart text-xl group-hover/heart:scale-125 transition-transform"></i>
+                                </button>
+
+                                <!-- Value Label -->
+                                <div class="absolute bottom-6 left-6 right-6">
+                                    <div class="bg-white/10 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl flex justify-between items-center shadow-2xl">
+                                        <div class="text-white">
+                                            <div class="text-[10px] font-black uppercase tracking-widest opacity-70">{{ __('Investment') }}</div>
+                                            <div class="text-2xl font-black">${{ number_format(1500000 + ($i * 250000)) }}</div>
+                                        </div>
+                                        <div class="bg-white rounded-2xl p-2.5 text-slate-900 shadow-xl">
+                                            <i class="fas fa-crown"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Interface -->
+                            <div class="p-8">
+                                <h3 class="text-2xl font-black text-slate-900 mb-2 truncate group-hover:text-blue-600 transition-colors">Azure Estate {{ $i }}</h3>
+                                <div class="flex items-center text-slate-400 font-bold text-sm mb-6">
+                                    <i class="fas fa-location-dot mr-2 text-blue-500"></i>
+                                    <span>Upper Manhattan, NYC</span>
+                                </div>
+
+                                <!-- Advanced Specs -->
+                                <div class="grid grid-cols-3 gap-4 py-6 border-y border-slate-100 mb-8">
+                                    <div class="text-center group/spec">
+                                        <i class="fas fa-bed text-blue-500 mb-2 group-hover/spec:scale-125 transition-transform"></i>
+                                        <div class="text-sm font-black text-slate-900">{{ 3 + $i }}</div>
+                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ __('Beds') }}</div>
+                                    </div>
+                                    <div class="text-center group/spec border-x border-slate-100 px-2">
+                                        <i class="fas fa-bath text-blue-500 mb-2 group-hover/spec:scale-125 transition-transform"></i>
+                                        <div class="text-sm font-black text-slate-900">{{ 2 + $i }}</div>
+                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ __('Baths') }}</div>
+                                    </div>
+                                    <div class="text-center group/spec">
+                                        <i class="fas fa-ruler-combined text-blue-500 mb-2 group-hover/spec:scale-125 transition-transform"></i>
+                                        <div class="text-sm font-black text-slate-900">{{ 3200 + ($i * 450) }}</div>
+                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ __('Sqft') }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Architecture -->
+                                <div class="flex items-center space-x-4">
+                                    <a href="#" class="flex-1 bg-slate-900 text-white rounded-2xl py-4 font-black uppercase tracking-widest text-xs text-center border-2 border-slate-900 hover:bg-transparent hover:text-slate-900 transition-all duration-500">
+                                        {{ __('View Manifest') }}
+                                    </a>
+                                    <button class="w-14 h-14 rounded-2xl border-2 border-slate-100 flex items-center justify-center text-slate-400 hover:border-blue-600 hover:text-blue-600 transition-all duration-500">
+                                        <i class="fas fa-paper-plane text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endfor
+                @endforelse
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- JavaScript for Animated Counters -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Animated Counter Function
-    function animateCounter(element, target) {
-        let current = 0;
-        const increment = target / 100;
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
-            element.textContent = Math.floor(current).toLocaleString();
-        }, 20);
-    }
-    
-    // Intersection Observer for Counter Animation
-    const counterElements = document.querySelectorAll('[data-counter]');
-    const observerOptions = {
-        threshold: 0.5,
-        rootMargin: '0px'
-    };
-    
-    const counterObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
-                const target = parseInt(entry.target.getAttribute('data-counter'));
-                animateCounter(entry.target, target);
-                entry.target.classList.add('animated');
-            }
-        });
-    }, observerOptions);
-    
-    counterElements.forEach(element => {
-        counterObserver.observe(element);
-    });
-    
-    // Property Type Tab Switching
-    const propertyTabs = document.querySelectorAll('.property-type-tab');
-    propertyTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Remove active class from all tabs
-            propertyTabs.forEach(t => {
-                t.classList.remove('bg-blue-600', 'text-white');
-                t.classList.add('bg-gray-100', 'text-gray-700');
-            });
-            
-            // Add active class to clicked tab
-            this.classList.remove('bg-gray-100', 'text-gray-700');
-            this.classList.add('bg-blue-600', 'text-white');
-        });
-    });
-    
-    // Smooth Scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-});
-</script>
+    <!-- Visionary Categories Section -->
+    <section class="py-32 bg-slate-950 relative overflow-hidden">
+        <!-- Matrix Pattern Background -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#2563eb 1px, transparent 0); background-size: 40px 40px;"></div>
+
+        <div class="container mx-auto px-6 relative">
+            <div class="text-center max-w-4xl mx-auto mb-20">
+                <h2 class="text-4xl md:text-6xl font-black text-white mb-8">{{ __('Architectural Categories') }}</h2>
+                <p class="text-xl text-slate-400 leading-relaxed font-light">{{ __('Navigate through our curated ecosystem of property segments tailored for modern lifestyle needs.') }}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+                @php
+                    $segments = [
+                        ['name' => 'Royal Penthouses', 'icon' => 'fa-building', 'color' => 'blue', 'listings' => '4,200+'],
+                        ['name' => 'Modern Villas', 'icon' => 'fa-house-user', 'color' => 'indigo', 'listings' => '1,850+'],
+                        ['name' => 'Smart Offices', 'icon' => 'fa-briefcase', 'color' => 'cyan', 'listings' => '920+'],
+                        ['name' => 'Strategic Land', 'icon' => 'fa-mountain-sun', 'color' => 'purple', 'listings' => '540+'],
+                        ['name' => 'Retail Spaces', 'icon' => 'fa-shop', 'color' => 'pink', 'listings' => '320+'],
+                    ];
+                @endphp
+
+                @foreach($segments as $segment)
+                    <a href="#" class="group relative bg-white/5 border border-white/10 rounded-[2.5rem] p-10 text-center hover:bg-white/10 hover:border-white/20 transition-all duration-1000 transform hover:-translate-y-6">
+                        <!-- Icon Interaction -->
+                        <div class="relative w-24 h-24 mx-auto mb-10 overflow-hidden">
+                            <div class="absolute inset-0 bg-{{$segment['color']}}-600/20 blur-2xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-1000"></div>
+                            <div class="relative w-full h-full bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center transition-all duration-700 group-hover:rotate-[360deg] group-hover:bg-{{$segment['color']}}-600 group-hover:shadow-[0_0_40px_rgba(37,99,235,0.4)]">
+                                <i class="fas {{$segment['icon']}} text-3xl text-{{$segment['color']}}-400 group-hover:text-white transition-colors duration-700"></i>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-black text-white mb-4 tracking-tight">{{ __($segment['name']) }}</h3>
+                        <div class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 py-2 px-4 rounded-full bg-white/5 inline-block group-hover:bg-{{$segment['color']}}-600/20 group-hover:text-white transition-all">
+                            {{ $segment['listings'] }} {{ __('Listings') }}
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    <!-- Strategic CTA Ecosystem -->
+    <section class="py-32 relative overflow-hidden bg-white">
+        <div class="container mx-auto px-6">
+            <div class="bg-slate-900 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden shadow-[0_40px_100px_-20px_rgba(15,23,42,0.4)]">
+                <!-- Background Visual Layer -->
+                <div class="absolute inset-0 opacity-10">
+                    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+                         class="w-full h-full object-cover" alt="Elite Office">
+                </div>
+                <div class="absolute -right-40 -top-40 w-96 h-96 bg-blue-600/20 blur-[150px] rounded-full"></div>
+
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 lg:items-center gap-20">
+                    <div>
+                        <h2 class="text-4xl md:text-6xl font-black text-white mb-10 leading-tight">
+                            {{ __('Elevate Your') }} <br>
+                            <span class="text-blue-500">{{ __('Real Estate Assets') }}</span>
+                        </h2>
+                        <p class="text-xl text-slate-400 mb-14 leading-relaxed font-light">
+                            {{ __('Whether you are looking to list a premium property or scale your portfolio, our visionary platform provides the ultimate ecosystem for success.') }}
+                        </p>
+
+                        <div class="flex flex-col sm:flex-row gap-6">
+                            <a href="{{ route('register') }}" class="group/cta bg-white text-slate-900 px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-[13px] hover:bg-blue-600 hover:text-white transition-all duration-500 flex items-center justify-center space-x-4 shadow-2xl hover:shadow-blue-500/40">
+                                <span>{{ __('Ignite Journey') }}</span>
+                                <i class="fas fa-chevron-right text-[10px] group-hover/cta:translate-x-2 transition-transform"></i>
+                            </a>
+                            <a href="{{ route('contact') }}" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-[13px] hover:bg-white/20 transition-all duration-500 flex items-center justify-center">
+                                {{ __('Consult Experts') }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        @php
+                            $features = [
+                                ['title' => 'For Agents', 'desc' => 'Market intelligence & lead engine.', 'icon' => 'fa-users-gear', 'route' => 'register'],
+                                ['title' => 'For Owners', 'desc' => 'Maximum exposure for high-value assets.', 'icon' => 'fa-house-circle-check', 'route' => 'register'],
+                                ['title' => 'For Developers', 'desc' => 'Showcase visionary projects.', 'icon' => 'fa-city', 'route' => 'register'],
+                                ['title' => 'For Investors', 'desc' => 'Data-driven portfolio analytics.', 'icon' => 'fa-chart-pie', 'route' => 'register'],
+                            ];
+                        @endphp
+
+                        @foreach($features as $f)
+                            <div class="bg-white/5 backdrop-blur-lg border border-white/5 p-8 rounded-[2.5rem] hover:border-blue-500/30 transition-all duration-700 group">
+                                <div class="w-14 h-14 rounded-2xl bg-blue-600/20 flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-all duration-500">
+                                    <i class="fas {{$f['icon']}} text-xl text-blue-500 group-hover:text-white"></i>
+                                </div>
+                                <h3 class="text-white font-black text-lg mb-3 tracking-tight">{{ __($f['title']) }}</h3>
+                                <p class="text-slate-400 text-sm font-medium mb-6 leading-relaxed">{{ __($f['desc']) }}</p>
+                                <a href="{{ route($f['route']) }}" class="text-blue-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors flex items-center">
+                                    {{ __('Discover More') }} <i class="fas fa-arrow-right ml-2 group-hover:translate-x-2 transition-transform"></i>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
 @endsection
+
+@push('styles')
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-pulse-slow { animation: pulse-slow 20s infinite ease-in-out; }
+
+        .animate-fade-in { animation: fadeIn 1.2s forwards ease-out; opacity: 0; }
+        .animate-fade-in-down { animation: fadeInDown 1.2s forwards ease-out; opacity: 0; }
+        .animate-fade-in-up { animation: fadeInUp 1.2s forwards ease-out; opacity: 0; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-500 { animation-delay: 0.5s; }
+
+        /* Counter Animation Initial State */
+        [data-counter] { opacity: 0; transform: translateY(20px); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+        [data-counter].animated { opacity: 1; transform: translateY(0); }
+    </style>
+@endpush
+
+@push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Advanced Counter with Locale Formatting
+        function animateCounter(element, target) {
+            let current = 0;
+            const duration = 2000; 
+            const frameRate = 1000 / 60;
+            const totalFrames = Math.round(duration / frameRate);
+            const increment = target / totalFrames;
+
+            let frame = 0;
+            const timer = setInterval(() => {
+                frame++;
+                current += increment;
+                if (frame >= totalFrames) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current).toLocaleString();
+            }, frameRate);
+        }
+
+        const counterElements = document.querySelectorAll('[data-counter]');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+                    const target = parseInt(entry.target.getAttribute('data-counter'));
+                    animateCounter(entry.target, target);
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counterElements.forEach(el => observer.observe(el));
+    });
+    </script>
+@endpush

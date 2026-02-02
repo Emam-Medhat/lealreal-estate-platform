@@ -22,7 +22,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
     Route::get('/analytics', [TaxController::class, 'analytics'])->name('analytics');
     Route::get('/overview', [TaxController::class, 'overview'])->name('overview');
     Route::get('/statistics', [TaxController::class, 'statistics'])->name('statistics');
-    Route::get('/reports', [TaxController::class, 'reports'])->name('reports');
+    Route::get('/reports', [TaxReportController::class, 'index'])->name('reports');
     Route::get('/export', [TaxController::class, 'export'])->name('export');
     
     // Property Tax Routes
@@ -93,6 +93,13 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/rejected', [TaxFilingController::class, 'rejected'])->name('rejected');
         Route::get('/overdue', [TaxFilingController::class, 'overdue'])->name('overdue');
     });
+    
+    // Single Tax Filing Route (for /taxes/filing)
+    Route::get('/filing', [TaxFilingController::class, 'index'])->name('filing');
+    Route::get('/filing/create', [TaxFilingController::class, 'create'])->name('filing.create');
+    Route::post('/filing', [TaxFilingController::class, 'store'])->name('filing.store');
+    Route::get('/filing/{taxFiling}', [TaxFilingController::class, 'show'])->name('filing.show');
+    Route::get('/filing/{taxFiling}/edit', [TaxFilingController::class, 'edit'])->name('filing.edit');
     
     // Tax Payment Routes
     Route::prefix('payments')->name('payments.')->group(function () {

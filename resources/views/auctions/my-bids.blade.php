@@ -71,7 +71,7 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET" action="{{ route('auctions.my-bids') }}" class="space-y-4">
+        <form method="GET" action="{{ route('messages.auctions.index') }}" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -205,13 +205,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">
-                                    <a href="{{ route('auctions.show', $bid->auction->id) }}" 
+                                    <a href="{{ route('messages.auctions.show', $bid->auction->id) }}" 
                                        class="text-blue-600 hover:text-blue-900">
                                         View
                                     </a>
                                     
                                     @if ($bid->canBeRetracted())
-                                        <form action="{{ route('auctions.bids.retract', $bid->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('messages.auctions.bids.retract', $bid->id) }}" method="POST" class="inline">
                                             @csrf
                                             <button type="submit" 
                                                     class="text-red-600 hover:text-red-900"
@@ -222,7 +222,7 @@
                                     @endif
                                     
                                     @if ($bid->auction->isActive())
-                                        <a href="{{ route('auctions.bid', $bid->auction->id) }}" 
+                                        <a href="{{ route('messages.auctions.bid', $bid->auction->id) }}" 
                                            class="text-green-600 hover:text-green-900">
                                             Bid Again
                                         </a>
@@ -239,7 +239,7 @@
                                 <h3 class="text-lg font-medium text-gray-900 mb-2">No bids found</h3>
                                 <p class="text-gray-500">You haven't placed any bids yet.</p>
                                 <div class="mt-4">
-                                    <a href="{{ route('auctions.index') }}" 
+                                    <a href="{{ route('messages.auctions.index') }}" 
                                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                                         Browse Auctions
                                     </a>

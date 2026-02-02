@@ -16,7 +16,7 @@ class Appointment extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'uuid', 'agent_id', 'lead_id', 'property_id', 'title', 'description',
+        'uuid', 'user_id', 'participant_id', 'agent_id', 'lead_id', 'property_id', 'title', 'description',
         'appointment_type', 'status', 'priority', 'start_datetime', 'end_datetime',
         'duration', 'timezone', 'location', 'location_type', 'address',
         'meeting_link', 'meeting_password', 'meeting_platform', 'phone_number',
@@ -81,6 +81,16 @@ class Appointment extends Model
     ];
 
     // Relationships
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+    
+    public function participant(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'participant_id');
+    }
+    
     public function agent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'agent_id');

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DefiLoan;
+use App\Models\DefiPool;
+use App\Models\DefiPosition;
+use App\Models\DefiTransaction;
 use App\Models\CryptoWallet;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -16,9 +18,243 @@ class DefiController extends Controller
 
     public function index()
     {
-        $loans = DefiLoan::with(['borrower', 'lender', 'collateral'])->latest()->paginate(20);
+        $pools = DefiPool::active()->withCount('activePositions')->get();
         
-        return view('blockchain.defi.index', compact('loans'));
+        // Calculate DeFi statistics from real data
+        $totalLiquidity = $pools->sum('total_liquidity');
+        $totalLiquidityUsd = $pools->sum('total_liquidity_usd');
+        $totalBorrowed = DefiPool::byType('lending')->sum('total_liquidity');
+        $totalStaked = DefiPool::byType('staking')->sum('total_liquidity');
+        $averageAPY = $pools->avg('apy');
+        
+        // Additional metrics
+        $totalLent = $totalBorrowed;
+        $totalYield = DefiPool::byType('yield')->sum('total_liquidity') * ($averageAPY / 100);
+        
+        // Portfolio metrics
+        $portfolioValue = $totalLiquidity;
+        $totalEarnings = DefiPosition::where('user_id', auth()->id())->sum('earned_rewards');
+        $activePositions = DefiPosition::where('user_id', auth()->id())->active()->count();
+        $riskScore = 6.5; // Mock risk score
+        
+        return view('blockchain.defi', compact(
+            'pools',
+            'totalLiquidity',
+            'totalLiquidityUsd',
+            'totalBorrowed',
+            'totalStaked',
+            'averageAPY',
+            'totalLent',
+            'totalYield',
+            'portfolioValue',
+            'totalEarnings',
+            'activePositions',
+            'riskScore'
+        ));
+    }
+
+    public function lending()
+    {
+        $lendingPools = DefiPool::byType('lending')->active()->get();
+        $totalLent = $lendingPools->sum('total_liquidity');
+        $activeLoans = DefiPosition::where('user_id', auth()->id())->whereHas('pool', function($query) {
+            $query->byType('lending');
+        })->active()->count();
+        $averageInterestRate = $lendingPools->avg('apy');
+        
+        return view('blockchain.defi.lending', compact(
+            'lendingPools',
+            'totalLent',
+            'activeLoans',
+            'averageInterestRate'
+        ));
+    }
+
+    public function staking()
+    {
+        $stakingPools = DefiPool::byType('staking')->active()->get();
+        $totalStaked = $stakingPools->sum('total_liquidity');
+        $activeStakes = DefiPosition::where('user_id', auth()->id())->whereHas('pool', function($query) {
+            $query->byType('staking');
+        })->active()->count();
+        $averageAPY = $stakingPools->avg('apy');
+        
+        return view('blockchain.defi.staking', compact(
+            'stakingPools',
+            'totalStaked',
+            'activeStakes',
+            'averageAPY'
+        ));
+    }
+
+    public function yield()
+    {
+        $yieldPools = DefiPool::byType('yield')->active()->get();
+        $totalYield = $yieldPools->sum('total_liquidity');
+        $activeYieldPositions = DefiPosition::where('user_id', auth()->id())->whereHas('pool', function($query) {
+            $query->byType('yield');
+        })->active()->count();
+        $averageYield = $yieldPools->avg('apy');
+        
+        return view('blockchain.defi.yield', compact(
+            'yieldPools',
+            'totalYield',
+            'activeYieldPositions',
+            'averageYield'
+        ));
+    }
+
+    public function pools()
+    {
+        $activePools = DefiPool::active()->withCount('activePositions')->get();
+        
+        return view('blockchain.defi.pools', compact('activePools'));
+    }
+
+    public function showPool($id)
+    {
+        $pool = DefiPool::withCount('activePositions')->findOrFail($id);
+        
+        return view('blockchain.defi.pool-show', compact('pool'));
+    }
+
+    public function depositPool($id)
+    {
+        $pool = DefiPool::findOrFail($id);
+        
+        return view('blockchain.defi.pool-deposit', compact('pool'));
+    }
+
+    public function withdrawPool($id)
+    {
+        $pool = DefiPool::findOrFail($id);
+        $userPosition = DefiPosition::where('user_id', auth()->id())
+            ->where('pool_id', $id)
+            ->active()
+            ->first();
+        
+        return view('blockchain.defi.pool-withdraw', compact('pool', 'userPosition'));
+    }
+
+    public function refresh()
+    {
+        // Calculate current statistics from real data
+        $pools = DefiPool::active()->get();
+        $totalLiquidity = $pools->sum('total_liquidity');
+        $totalBorrowed = DefiPool::byType('lending')->sum('total_liquidity');
+        $totalStaked = DefiPool::byType('staking')->sum('total_liquidity');
+        $averageAPY = $pools->avg('apy');
+
+        return response()->json([
+            'total_liquidity' => number_format($totalLiquidity, 2),
+            'total_borrowed' => number_format($totalBorrowed, 2),
+            'total_staked' => number_format($totalStaked, 2),
+            'average_apy' => number_format($averageAPY, 2)
+        ]);
+    }
+
+    public function processDeposit(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:' . DefiPool::findOrFail($id)->min_deposit,
+            'token' => 'required|string'
+        ]);
+
+        $pool = DefiPool::findOrFail($id);
+        $user = auth()->user();
+
+        // Create new position or add to existing
+        $position = DefiPosition::where('user_id', $user->id)
+            ->where('pool_id', $pool->id)
+            ->active()
+            ->first();
+
+        if (!$position) {
+            $position = DefiPosition::create([
+                'user_id' => $user->id,
+                'pool_id' => $pool->id,
+                'amount' => $request->amount,
+                'shares' => $request->amount, // Simplified - should calculate based on pool shares
+                'earned_rewards' => 0,
+                'status' => 'active',
+                'opened_at' => now()
+            ]);
+        } else {
+            $position->amount += $request->amount;
+            $position->shares += $request->amount;
+            $position->save();
+        }
+
+        // Create transaction record
+        DefiTransaction::create([
+            'user_id' => $user->id,
+            'pool_id' => $pool->id,
+            'position_id' => $position->id,
+            'type' => 'deposit',
+            'amount' => $request->amount,
+            'fee' => 0,
+            'status' => 'completed',
+            'executed_at' => now()
+        ]);
+
+        // Update pool liquidity
+        $pool->total_liquidity += $request->amount;
+        $pool->save();
+
+        return redirect()->route('blockchain.defi.pool.show', $pool->id)
+            ->with('success', 'تم إيداع ' . number_format($request->amount, 4) . ' ' . explode('/', $pool->token_pair)[0] . ' بنجاح');
+    }
+
+    public function processWithdraw(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.0001'
+        ]);
+
+        $pool = DefiPool::findOrFail($id);
+        $user = auth()->user();
+
+        $position = DefiPosition::where('user_id', $user->id)
+            ->where('pool_id', $pool->id)
+            ->active()
+            ->firstOrFail();
+
+        if ($request->amount > $position->amount) {
+            return back()->with('error', 'المبلغ المطلوب أكبر من رصيدك المتاح');
+        }
+
+        $withdrawFee = $request->amount * ($pool->withdraw_fee / 100);
+        $netAmount = $request->amount - $withdrawFee;
+
+        // Create transaction record
+        DefiTransaction::create([
+            'user_id' => $user->id,
+            'pool_id' => $pool->id,
+            'position_id' => $position->id,
+            'type' => 'withdraw',
+            'amount' => $request->amount,
+            'fee' => $withdrawFee,
+            'status' => 'completed',
+            'executed_at' => now()
+        ]);
+
+        // Update position
+        $position->amount -= $request->amount;
+        $position->shares -= $request->amount;
+        
+        if ($position->amount <= 0) {
+            $position->status = 'withdrawn';
+            $position->closed_at = now();
+        }
+        
+        $position->save();
+
+        // Update pool liquidity
+        $pool->total_liquidity -= $request->amount;
+        $pool->save();
+
+        return redirect()->route('blockchain.defi.pool.show', $pool->id)
+            ->with('success', 'تم سحب ' . number_format($netAmount, 4) . ' ' . explode('/', $pool->token_pair)[0] . ' بنجاح');
     }
 
     public function createLoan(Request $request)

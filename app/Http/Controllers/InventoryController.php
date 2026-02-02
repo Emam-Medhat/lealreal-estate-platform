@@ -13,7 +13,7 @@ class InventoryController extends Controller
 {
     public function index()
     {
-        $items = Inventory::with(['category', 'supplier'])
+        $items = Inventory::query()
             ->when(request('search'), function($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
@@ -21,15 +21,15 @@ class InventoryController extends Controller
                       ->orWhere('description', 'like', '%' . $search . '%');
                 });
             })
-            ->when(request('category'), function($query, $categoryId) {
-                $query->where('category_id', $categoryId);
+            ->when(request('category'), function($query, $category) {
+                $query->where('category', $category);
             })
             ->when(request('status'), function($query, $status) {
                 $query->where('status', $status);
             })
             ->when(request('stock_level'), function($query, $stockLevel) {
                 if ($stockLevel === 'low') {
-                    $query->whereRaw('quantity <= reorder_level AND quantity > 0');
+                    $query->whereRaw('quantity <= reorder_point AND quantity > 0');
                 } elseif ($stockLevel === 'out') {
                     $query->where('quantity', 0);
                 } elseif ($stockLevel === 'available') {
@@ -101,7 +101,7 @@ class InventoryController extends Controller
 
     public function show($id)
     {
-        $item = Inventory::with(['category', 'supplier'])->findOrFail($id);
+        $item = Inventory::findOrFail($id);
         return view('maintenance.inventory-show', compact('item'));
     }
 
@@ -152,27 +152,15 @@ class InventoryController extends Controller
     // Stock Movements
     public function movementsIndex()
     {
-        // Simple test data without database dependency
-        $movements = collect([
-            (object) [
-                'id' => 1,
-                'created_at' => now(),
-                'item_name' => 'Test Item 1',
-                'type' => 'in',
-                'quantity' => 10,
-                'reason' => 'Initial Stock',
-                'user_id' => 1
-            ],
-            (object) [
-                'id' => 2,
-                'created_at' => now()->subDay(),
-                'item_name' => 'Test Item 2',
-                'type' => 'out',
-                'quantity' => 5,
-                'reason' => 'Sale',
-                'user_id' => 1
-            ]
-        ]);
+        $movements = DB::table('inventory_movements')
+            ->join('inventory_items', 'inventory_movements.inventory_id', '=', 'inventory_items.id')
+            ->select('inventory_movements.*', 'inventory_items.name as item_name', 'inventory_items.sku')
+            ->orderBy('inventory_movements.created_at', 'desc')
+            ->get()
+            ->map(function ($movement) {
+                $movement->created_at = \Carbon\Carbon::parse($movement->created_at);
+                return $movement;
+            });
             
         return view('inventory.movements.index', compact('movements'));
     }
@@ -186,10 +174,15 @@ class InventoryController extends Controller
     public function movementsStore(Request $request)
     {
         $validated = $request->validate([
-            'inventory_id' => 'required|exists:inventory,id',
-            'type' => 'required|in:in,out,adjustment',
+            'inventory_id' => 'required|exists:inventory_items,id',
+            'type' => 'required|in:in,out,transfer',
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|string|max:255',
+            'reference' => 'nullable|string|max:255',
+            'location_from' => 'nullable|string|max:255',
+            'location_to' => 'nullable|string|max:255',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'total_cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string'
         ]);
 
@@ -198,7 +191,12 @@ class InventoryController extends Controller
             'type' => $validated['type'],
             'quantity' => $validated['quantity'],
             'reason' => $validated['reason'],
-            'notes' => $validated['notes'],
+            'reference' => $validated['reference'] ?? null,
+            'location_from' => $validated['location_from'] ?? null,
+            'location_to' => $validated['location_to'] ?? null,
+            'unit_cost' => $validated['unit_cost'] ?? null,
+            'total_cost' => $validated['total_cost'] ?? null,
+            'notes' => $validated['notes'] ?? null,
             'user_id' => auth()->id(),
             'created_at' => now(),
             'updated_at' => now()
@@ -211,10 +209,14 @@ class InventoryController extends Controller
     public function movementsShow($id)
     {
         $movement = DB::table('inventory_movements')
-            ->join('inventory', 'inventory_movements.inventory_id', '=', 'inventory.id')
-            ->select('inventory_movements.*', 'inventory.name as item_name', 'inventory.sku')
+            ->join('inventory_items', 'inventory_movements.inventory_id', '=', 'inventory_items.id')
+            ->select('inventory_movements.*', 'inventory_items.name as item_name', 'inventory_items.sku')
             ->where('inventory_movements.id', $id)
             ->first();
+            
+        if ($movement) {
+            $movement->created_at = \Carbon\Carbon::parse($movement->created_at);
+        }
             
         return view('inventory.movements.show', compact('movement'));
     }
@@ -267,7 +269,7 @@ class InventoryController extends Controller
 
     public function export()
     {
-        $items = Inventory::with(['category', 'supplier'])->get();
+        $items = Inventory::all();
         
         $filename = 'inventory_' . date('Y-m-d') . '.csv';
         $headers = [
@@ -300,7 +302,7 @@ class InventoryController extends Controller
     // Items Management
     public function itemsIndex()
     {
-        $items = Inventory::with(['category', 'supplier'])
+        $items = Inventory::query()
             ->when(request('search'), function($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
@@ -323,17 +325,44 @@ class InventoryController extends Controller
     public function itemsStore(Request $request)
     {
         $validated = $request->validate([
+            'item_code' => 'required|string|unique:inventory_items,item_code',
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:inventory,sku',
+            'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'category_id' => 'nullable|exists:inventory_categories,id',
-            'supplier_id' => 'nullable|exists:inventory_suppliers,id',
+            'description_ar' => 'nullable|string',
+            'category' => 'required|in:tools,materials,equipment,supplies,safety,other',
+            'status' => 'required|in:active,inactive,discontinued,out_of_stock',
+            'brand' => 'nullable|string|max:255',
+            'model' => 'nullable|string|max:255',
+            'sku' => 'nullable|string|unique:inventory_items,sku',
+            'unit' => 'required|string|max:50',
+            'unit_ar' => 'nullable|string|max:50',
+            'unit_cost' => 'required|numeric|min:0',
+            'selling_price' => 'nullable|numeric|min:0',
             'quantity' => 'required|integer|min:0',
-            'min_stock_level' => 'required|integer|min:0',
-            'max_stock_level' => 'required|integer|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'status' => 'required|in:active,inactive,discontinued'
+            'min_quantity' => 'nullable|integer|min:0',
+            'max_quantity' => 'nullable|integer|min:0',
+            'reorder_point' => 'nullable|integer|min:0',
+            'reorder_quantity' => 'nullable|integer|min:0',
+            'supplier' => 'nullable|string|max:255',
+            'supplier_contact' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'location_ar' => 'nullable|string|max:255',
+            'barcode' => 'nullable|string|max:255',
+            'qr_code' => 'nullable|string|max:255',
+            'warranty_expiry' => 'nullable|date',
+            'expiry_date' => 'nullable|date',
+            'requires_maintenance' => 'nullable|boolean',
+            'maintenance_instructions' => 'nullable|string',
+            'maintenance_instructions_ar' => 'nullable|string',
+            'safety_notes' => 'nullable|string',
+            'safety_notes_ar' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'notes_ar' => 'nullable|string',
         ]);
+
+        // Add the created_by field from the authenticated user
+        $validated['created_by'] = auth()->id();
 
         Inventory::create($validated);
 
@@ -343,7 +372,7 @@ class InventoryController extends Controller
 
     public function itemsShow($item)
     {
-        $item = Inventory::with(['category', 'supplier'])->findOrFail($item);
+        $item = Inventory::findOrFail($item);
         return view('inventory.items.show', compact('item'));
     }
 
@@ -523,7 +552,7 @@ class InventoryController extends Controller
 
     public function suppliersShow($supplier)
     {
-        $supplier = InventorySupplier::with(['items'])->findOrFail($supplier);
+        $supplier = InventorySupplier::findOrFail($supplier);
         return view('inventory.suppliers.show', compact('supplier'));
     }
 
@@ -562,8 +591,8 @@ class InventoryController extends Controller
     // Low Stock Alerts
     public function lowStock()
     {
-        $items = Inventory::with(['category', 'supplier'])
-            ->whereRaw('quantity <= min_stock_level')
+        $items = Inventory::query()
+            ->whereRaw('quantity <= reorder_point')
             ->get();
             
         return view('inventory.low-stock', compact('items'));

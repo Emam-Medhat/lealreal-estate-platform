@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'appraisals.php',
                 'warranties.php',
                 'ai.php',
+                'bigdata.php',
                 'blockchain.php',
                 'defi.php',
                 'metaverse.php',
@@ -67,6 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '2fa' => \App\Http\Middleware\CheckTwoFactor::class,
             'fingerprint' => \App\Http\Middleware\TrackDeviceFingerprint::class,
             'request.logger' => \App\Http\Middleware\RequestLogger::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -52,8 +52,12 @@ class LeadController extends Controller
     public function pipeline()
     {
         $statuses = $this->leadService->getPipelineData();
+        $totalLeads = Lead::count();
+        $convertedLeads = Lead::whereNotNull('converted_date')->count();
+        $totalValue = Lead::sum('estimated_value');
+        $conversionRate = $totalLeads > 0 ? ($convertedLeads / $totalLeads) * 100 : 0;
         
-        return view('leads.pipeline', compact('statuses'));
+        return view('leads.pipeline', compact('statuses', 'totalLeads', 'convertedLeads', 'totalValue', 'conversionRate'));
     }
     
     public function create()

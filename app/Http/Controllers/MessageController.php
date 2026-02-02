@@ -27,12 +27,20 @@ class MessageController extends Controller
         ->latest('updated_at')
         ->paginate(20);
 
-        return view('messages.inbox', compact('conversations'));
+        // Get list of users for composing new messages
+        $users = User::where('id', '!=', Auth::id())
+            ->where('account_status', 'active')
+            ->get(['id', 'first_name', 'last_name', 'email']);
+
+        return view('messages.inbox', compact('conversations', 'users'));
     }
 
     public function show(Conversation $conversation)
     {
-        $this->authorize('view', $conversation);
+        // Manual authorization check
+        if (!$conversation->canBeViewedByUser(Auth::id())) {
+            abort(403, 'Unauthorized');
+        }
         
         $conversation->load([
             'messages' => function ($query) {
@@ -42,13 +50,18 @@ class MessageController extends Controller
             'receiver.profile'
         ]);
 
+        // Determine the other user in the conversation
+        $otherUser = $conversation->sender_id === Auth::id() 
+            ? $conversation->receiver 
+            : $conversation->sender;
+
         // Mark messages as read
         Message::where('conversation_id', $conversation->id)
             ->where('sender_id', '!=', Auth::id())
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
-        return view('messages.conversation', compact('conversation'));
+        return view('messages.conversation', compact('conversation', 'otherUser'));
     }
 
     public function create(Request $request)
@@ -60,10 +73,89 @@ class MessageController extends Controller
         }
 
         $users = User::where('id', '!=', Auth::id())
-            ->where('status', 'active')
-            ->get(['id', 'name', 'email']);
+            ->where('account_status', 'active')
+            ->get(['id', 'first_name', 'last_name', 'email']);
 
         return view('messages.create', compact('recipient', 'users'));
+    }
+
+    public function createConversation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipient_id' => 'required|exists:users,id',
+            'content' => 'required|string|max:2000',
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            $recipient = User::findOrFail($request->recipient_id);
+            
+            // Check if conversation already exists
+            $conversation = Conversation::where(function ($query) use ($recipient) {
+                $query->where('sender_id', Auth::id())
+                      ->where('receiver_id', $recipient->id);
+            })->orWhere(function ($query) use ($recipient) {
+                $query->where('sender_id', $recipient->id)
+                      ->where('receiver_id', Auth::id());
+            })->first();
+
+            if (!$conversation) {
+                $conversation = Conversation::create([
+                    'sender_id' => Auth::id(),
+                    'receiver_id' => $recipient->id,
+                    'status' => 'active',
+                ]);
+            }
+
+            // Create message
+            $message = Message::create([
+                'conversation_id' => $conversation->id,
+                'sender_id' => Auth::id(),
+                'receiver_id' => $recipient->id,
+                'content' => $request->content,
+                'type' => 'text',
+                'is_read' => false,
+            ]);
+
+            // Update conversation timestamp
+            $conversation->update(['updated_at' => now()]);
+
+            // Create notification for recipient
+            UserNotification::create([
+                'user_id' => $recipient->id,
+                'title' => 'New Message',
+                'message' => "You have a new message from " . Auth::user()->full_name,
+                'type' => 'message',
+                'action_url' => route('messages.conversation', $conversation),
+                'action_text' => 'View Message',
+                'is_read' => false,
+            ]);
+
+            // Log activity
+            UserActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'sent_message',
+                'description' => "Sent message to {$recipient->full_name}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'conversation_id' => $conversation->id,
+                'message' => 'Conversation created successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create conversation: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function store(SendMessageRequest $request)
@@ -122,9 +214,9 @@ class MessageController extends Controller
             UserNotification::create([
                 'user_id' => $recipient->id,
                 'title' => 'New Message',
-                'message' => "You have a new message from " . Auth::user()->name,
+                'message' => "You have a new message from " . Auth::user()->full_name,
                 'type' => 'message',
-                'action_url' => route('messages.show', $conversation),
+                'action_url' => route('messages.conversation', $conversation),
                 'action_text' => 'View Message',
                 'is_read' => false,
             ]);
@@ -133,7 +225,7 @@ class MessageController extends Controller
             UserActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'sent_message',
-                'details' => "Sent message to {$recipient->name}",
+                'description' => "Sent message to {$recipient->full_name}",
                 'ip_address' => $request->ip(),
             ]);
 
@@ -147,7 +239,7 @@ class MessageController extends Controller
                 ]);
             }
 
-            return redirect()->route('messages.show', $conversation)
+            return redirect()->route('messages.conversation', $conversation)
                 ->with('success', 'Message sent successfully.');
 
         } catch (\Exception $e) {
@@ -168,7 +260,10 @@ class MessageController extends Controller
 
     public function reply(Request $request, Conversation $conversation)
     {
-        $this->authorize('reply', $conversation);
+        // Manual authorization check
+        if (!$conversation->canBeRepliedToByUser(Auth::id())) {
+            abort(403, 'Unauthorized');
+        }
         
         $request->validate([
             'message' => 'required|string|max:2000',
@@ -213,9 +308,9 @@ class MessageController extends Controller
             UserNotification::create([
                 'user_id' => $recipient->id,
                 'title' => 'New Message',
-                'message' => "You have a new message from " . Auth::user()->name,
+                'message' => "You have a new message from " . Auth::user()->full_name,
                 'type' => 'message',
-                'action_url' => route('messages.show', $conversation),
+                'action_url' => route('messages.conversation', $conversation),
                 'action_text' => 'View Message',
                 'is_read' => false,
             ]);
@@ -224,7 +319,7 @@ class MessageController extends Controller
             UserActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'replied_to_message',
-                'details' => "Replied to message in conversation with {$recipient->name}",
+                'description' => "Replied to message in conversation with {$recipient->full_name}",
                 'ip_address' => $request->ip(),
             ]);
 
@@ -305,7 +400,7 @@ class MessageController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'deleted_message',
-            'details' => 'Deleted a message',
+            'description' => 'Deleted a message',
             'ip_address' => request()->ip(),
         ]);
 
@@ -317,7 +412,13 @@ class MessageController extends Controller
 
     public function deleteConversation(Conversation $conversation): JsonResponse
     {
-        $this->authorize('delete', $conversation);
+        // Manual authorization check
+        if (!$conversation->canBeViewedByUser(Auth::id())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
         
         DB::beginTransaction();
         
@@ -336,7 +437,7 @@ class MessageController extends Controller
             UserActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'deleted_conversation',
-                'details' => 'Deleted a conversation',
+                'description' => 'Deleted a conversation',
                 'ip_address' => request()->ip(),
             ]);
 

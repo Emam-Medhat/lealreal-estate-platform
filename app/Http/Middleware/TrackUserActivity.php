@@ -50,7 +50,7 @@ class TrackUserActivity
         // Create activity record
         UserActivity::create(array_merge($activityData, [
             'user_id' => $user->id,
-            'session_id' => session()->getId(),
+            'session_id' => session()->getId() ?? 'no-session',
             'method' => $request->method(),
             'url' => $request->path(),
             'full_url' => $request->fullUrl(),

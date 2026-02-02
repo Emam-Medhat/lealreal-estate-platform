@@ -19,43 +19,42 @@ class BlockchainController extends Controller
     public function index()
     {
         $records = BlockchainRecord::latest()->paginate(50);
+        $recentBlocks = BlockchainRecord::latest()->take(10)->get();
+        $recentTransactions = collect([]); // Will be implemented when CryptoTransaction model is ready
         $stats = $this->buildBlockchainStats();
         
-        return view('blockchain.dashboard', compact('records', 'stats'));
+        return view('blockchain.dashboard', compact('records', 'recentBlocks', 'recentTransactions', 'stats'));
     }
 
     public function createRecord(Request $request)
     {
         $request->validate([
-            'block_hash' => 'required|string|max:255',
-            'block_number' => 'required|integer|min:1',
+            'hash' => 'required|string|max:64',
+            'previous_hash' => 'nullable|string|max:64',
+            'height' => 'required|integer|min:1',
             'transaction_count' => 'required|integer|min:0',
-            'gas_used' => 'required|integer|min:0',
-            'block_reward' => 'required|numeric|min:0',
-            'miner_address' => 'required|string|max:255',
+            'difficulty' => 'required|integer|min:0',
+            'miner' => 'nullable|string|max:255',
             'timestamp' => 'required|date',
-            'parent_hash' => 'nullable|string|max:255',
-            'nonce' => 'required|string|max:255',
-            'difficulty' => 'required|numeric|min:0',
-            'total_difficulty' => 'required|numeric|min:0',
-            'size' => 'required|integer|min:0',
+            'nonce' => 'required|integer|min:0',
+            'size' => 'required|numeric|min:0',
+            'merkle_root' => 'nullable|string|max:64',
             'data' => 'nullable|array'
         ]);
 
         $record = BlockchainRecord::create([
-            'block_hash' => $request->block_hash,
-            'block_number' => $request->block_number,
+            'hash' => $request->hash,
+            'previous_hash' => $request->previous_hash,
+            'height' => $request->height,
             'transaction_count' => $request->transaction_count,
-            'gas_used' => $request->gas_used,
-            'block_reward' => $request->block_reward,
-            'miner_address' => $request->miner_address,
-            'timestamp' => $request->timestamp,
-            'parent_hash' => $request->parent_hash,
-            'nonce' => $request->nonce,
             'difficulty' => $request->difficulty,
-            'total_difficulty' => $request->total_difficulty,
+            'miner' => $request->miner,
+            'timestamp' => $request->timestamp,
+            'nonce' => $request->nonce,
             'size' => $request->size,
+            'merkle_root' => $request->merkle_root,
             'data' => $request->data ?? [],
+            'status' => 'pending',
             'created_at' => now()
         ]);
 
@@ -85,9 +84,9 @@ class BlockchainController extends Controller
 
     public function getBlock(Request $request)
     {
-        $blockHash = $request->block_hash;
+        $blockHash = $request->hash;
         
-        $block = BlockchainRecord::where('block_hash', $blockHash)->first();
+        $block = BlockchainRecord::where('hash', $blockHash)->first();
         
         if (!$block) {
             return response()->json(['error' => 'Block not found'], 404);
@@ -143,7 +142,7 @@ class BlockchainController extends Controller
             'chain_id' => config('blockchain.chain_id', '0x1'),
             'block_time' => config('blockchain.block_time', 12),
             'gas_limit' => config('blockchain.gas_limit', 21000),
-            'current_block' => BlockchainRecord::latest()->value('block_number') ?? 0,
+            'current_block' => BlockchainRecord::latest()->value('height') ?? 0,
             'total_blocks' => BlockchainRecord::count(),
             'difficulty' => BlockchainRecord::latest()->value('difficulty') ?? 0,
             'hash_rate' => $this->calculateHashRate()
@@ -158,12 +157,20 @@ class BlockchainController extends Controller
             'total_blocks' => BlockchainRecord::count(),
             'latest_block' => BlockchainRecord::latest()->first(),
             'total_transactions' => BlockchainRecord::sum('transaction_count'),
-            'total_gas_used' => BlockchainRecord::sum('gas_used'),
-            'total_block_reward' => BlockchainRecord::sum('block_reward'),
+            'total_contracts' => 0, // Will be implemented when SmartContract model is ready
+            'total_wallets' => 0, // Will be implemented when CryptoWallet model is ready
+            'total_difficulty' => BlockchainRecord::sum('difficulty'),
             'average_block_size' => BlockchainRecord::avg('size'),
-            'average_gas_used' => BlockchainRecord::avg('gas_used'),
-            'total_difficulty' => BlockchainRecord::latest()->value('total_difficulty') ?? 0,
-            'hash_rate' => $this->calculateHashRate()
+            'average_difficulty' => BlockchainRecord::avg('difficulty'),
+            'confirmed_blocks' => BlockchainRecord::where('status', 'confirmed')->count(),
+            'pending_blocks' => BlockchainRecord::where('status', 'pending')->count(),
+            'orphaned_blocks' => BlockchainRecord::where('status', 'orphaned')->count(),
+            'total_miners' => BlockchainRecord::distinct('miner')->count('miner'),
+            'latest_height' => BlockchainRecord::max('height'),
+            'hash_rate' => $this->calculateHashRate(),
+            'network_hashrate' => $this->calculateHashRate(),
+            'difficulty' => BlockchainRecord::latest()->value('difficulty') ?? 0,
+            'gas_price' => 0 // Will be implemented when gas price tracking is ready
         ];
     }
 
@@ -177,11 +184,11 @@ class BlockchainController extends Controller
     private function getValidationDetails($block)
     {
         return [
-            'block_hash_valid' => strlen($block->block_hash) === 66,
+            'block_hash_valid' => strlen($block->hash) === 64,
             'nonce_valid' => is_numeric($block->nonce),
             'difficulty_valid' => $block->difficulty > 0,
             'timestamp_valid' => $block->timestamp instanceof \Carbon\Carbon,
-            'parent_hash_valid' => $block->block_number === 1 || $block->parent_hash !== null
+            'parent_hash_valid' => $block->height === 1 || $block->previous_hash !== null
         ];
     }
 
@@ -198,9 +205,14 @@ class BlockchainController extends Controller
     private function calculateHashRate()
     {
         $latestBlock = BlockchainRecord::latest()->first();
-        $previousBlock = BlockchainRecord::where('block_number', $latestBlock->block_number - 1)->first();
         
-        if (!$latestBlock || !$previousBlock) {
+        if (!$latestBlock) {
+            return 0;
+        }
+        
+        $previousBlock = BlockchainRecord::where('height', $latestBlock->height - 1)->first();
+        
+        if (!$previousBlock) {
             return 0;
         }
 
@@ -234,21 +246,20 @@ class BlockchainController extends Controller
             $file = fopen('php://output', 'w');
             
             fputcsv($file, [
-                'Block Hash', 'Block Number', 'Transaction Count', 'Gas Used', 'Block Reward', 
-                'Miner Address', 'Timestamp', 'Difficulty', 'Size'
+                'Block Hash', 'Block Height', 'Transaction Count', 'Difficulty', 
+                'Miner', 'Timestamp', 'Size', 'Status'
             ]);
             
             foreach ($records as $record) {
                 fputcsv($file, [
-                    $record->block_hash,
-                    $record->block_number,
+                    $record->hash,
+                    $record->height,
                     $record->transaction_count,
-                    $record->gas_used,
-                    $record->block_reward,
-                    $record->miner_address,
-                    $record->timestamp->toDateTimeString(),
                     $record->difficulty,
-                    $record->size
+                    $record->miner,
+                    $record->timestamp->toDateTimeString(),
+                    $record->size,
+                    $record->status
                 ]);
             }
             
@@ -271,7 +282,7 @@ class BlockchainController extends Controller
 
     public function getBlockTransactions($blockHash)
     {
-        $block = BlockchainRecord::where('block_hash', $blockHash)->first();
+        $block = BlockchainRecord::where('hash', $blockHash)->first();
         
         if (!$block) {
             return response()->json(['error' => 'Block not found'], 404);

@@ -17,7 +17,29 @@ class HeatmapController extends Controller
 
     public function index()
     {
-        return view('analytics.heatmaps.index');
+        try {
+            // Calculate heatmap statistics
+            $totalClicks = $this->getTotalClicks();
+            $activePages = $this->getActivePages();
+            $hotspots = $this->getTotalHotspots();
+            $avgInteraction = $this->getAvgInteractionPerPage();
+
+            return view('analytics.heatmaps.index', compact(
+                'totalClicks',
+                'activePages',
+                'hotspots',
+                'avgInteraction'
+            ));
+        } catch (\Exception $e) {
+            // Return view with default values if there's an error
+            return view('analytics.heatmaps.index', [
+                'totalClicks' => 0,
+                'activePages' => 0,
+                'hotspots' => 0,
+                'avgInteraction' => 0,
+                'error' => 'Failed to fetch heatmap data: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function generateHeatmap(Request $request)
@@ -477,5 +499,40 @@ class HeatmapController extends Controller
             '90d' => 90,
             default => 30
         };
+    }
+
+    private function getTotalClicks()
+    {
+        return AnalyticEvent::where('event_name', 'click')
+            ->where('created_at', '>', now()->subDays(30))
+            ->count();
+    }
+
+    private function getActivePages()
+    {
+        return AnalyticEvent::where('created_at', '>', now()->subDays(30))
+            ->distinct('page_url')
+            ->count();
+    }
+
+    private function getTotalHotspots()
+    {
+        // Simplified hotspot calculation
+        return AnalyticEvent::where('event_name', 'click')
+            ->where('created_at', '>', now()->subDays(30))
+            ->selectRaw('page_url, COUNT(*) as click_count')
+            ->having('click_count', '>', 10)
+            ->count();
+    }
+
+    private function getAvgInteractionPerPage()
+    {
+        $totalInteractions = AnalyticEvent::whereIn('event_name', ['click', 'mouse_move', 'scroll'])
+            ->where('created_at', '>', now()->subDays(30))
+            ->count();
+        
+        $activePages = $this->getActivePages();
+        
+        return $activePages > 0 ? $totalInteractions / $activePages : 0;
     }
 }

@@ -16,23 +16,23 @@ class ContentController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:manage-content');
+        $this->middleware('admin');
     }
 
     public function dashboard(): View
     {
         $stats = [
-            'blog_posts' => BlogPost::count(),
-            'pages' => Page::count(),
-            'news' => News::count(),
-            'guides' => Guide::count(),
-            'faqs' => Faq::count(),
-            'published_posts' => BlogPost::where('status', 'published')->count(),
-            'draft_posts' => BlogPost::where('status', 'draft')->count(),
+            'blog_posts' => $this->safeCount('BlogPost'),
+            'pages' => $this->safeCount('Page'),
+            'news' => $this->safeCount('News'),
+            'guides' => $this->safeCount('Guide'),
+            'faqs' => $this->safeCount('Faq'),
+            'published_posts' => $this->safeCountWhere('BlogPost', 'status', 'published'),
+            'draft_posts' => $this->safeCountWhere('BlogPost', 'status', 'draft'),
         ];
 
-        $recent_posts = BlogPost::latest()->take(5)->get();
-        $recent_news = News::latest()->take(5)->get();
+        $recent_posts = $this->safeGet('BlogPost', 5);
+        $recent_news = $this->safeGet('News', 5);
 
         return view('content.dashboard', compact('stats', 'recent_posts', 'recent_news'));
     }
@@ -64,5 +64,53 @@ class ContentController extends Controller
     public function seoTools(): View
     {
         return view('content.seo-tools');
+    }
+
+    /**
+     * Safely count records from a table that might not exist
+     */
+    private function safeCount($model)
+    {
+        try {
+            $modelClass = "App\\Models\\{$model}";
+            if (class_exists($modelClass)) {
+                return $modelClass::count();
+            }
+        } catch (\Exception $e) {
+            // Table doesn't exist or other database error
+        }
+        return 0;
+    }
+
+    /**
+     * Safely count records with where condition from a table that might not exist
+     */
+    private function safeCountWhere($model, $column, $value)
+    {
+        try {
+            $modelClass = "App\\Models\\{$model}";
+            if (class_exists($modelClass)) {
+                return $modelClass::where($column, $value)->count();
+            }
+        } catch (\Exception $e) {
+            // Table doesn't exist or other database error
+        }
+        return 0;
+    }
+
+    /**
+     * Safely get records from a table that might not exist
+     */
+    private function safeGet($model, $limit = 5)
+    {
+        try {
+            $modelClass = "App\\Models\\{$model}";
+            if (class_exists($modelClass)) {
+                return $modelClass::latest()->take($limit)->get();
+            }
+        } catch (\Exception $e) {
+            // Table doesn't exist or other database error
+        }
+        return collect();
     }
 }

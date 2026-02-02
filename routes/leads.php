@@ -84,15 +84,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Lead Conversions
     Route::get('/lead-conversions', [LeadConversionController::class, 'index'])->name('lead-conversions.index');
+    Route::get('/lead-conversions/analytics', [LeadConversionController::class, 'analytics'])->name('lead-conversions.analytics');
+    Route::get('/lead-conversions/funnel', [LeadConversionController::class, 'conversionFunnel'])->name('lead-conversions.funnel');
+    Route::get('/lead-conversions/report', [LeadConversionController::class, 'conversionReport'])->name('lead-conversions.report');
     Route::get('/lead-conversions/create/{lead}', [LeadConversionController::class, 'create'])->name('lead-conversions.create');
     Route::post('/lead-conversions', [LeadConversionController::class, 'store'])->name('lead-conversions.store');
     Route::get('/lead-conversions/{conversion}', [LeadConversionController::class, 'show'])->name('lead-conversions.show');
     Route::get('/lead-conversions/{conversion}/edit', [LeadConversionController::class, 'edit'])->name('lead-conversions.edit');
     Route::put('/lead-conversions/{conversion}', [LeadConversionController::class, 'update'])->name('lead-conversions.update');
     Route::delete('/lead-conversions/{conversion}', [LeadConversionController::class, 'destroy'])->name('lead-conversions.destroy');
-    Route::get('/lead-conversions/analytics', [LeadConversionController::class, 'analytics'])->name('lead-conversions.analytics');
-    Route::get('/lead-conversions/funnel', [LeadConversionController::class, 'conversionFunnel'])->name('lead-conversions.funnel');
-    Route::get('/lead-conversions/report', [LeadConversionController::class, 'conversionReport'])->name('lead-conversions.report');
 
     // Lead Campaigns
     Route::get('/lead-campaigns', [LeadCampaignController::class, 'index'])->name('lead-campaigns.index');

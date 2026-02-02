@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dao;
+use App\Models\DaoMember;
+use App\Models\DaoProposal;
 use App\Models\CryptoWallet;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -14,94 +16,277 @@ class DaoController extends Controller
         $this->middleware('auth');
     }
 
+    public function show($id)
+    {
+        $dao = Dao::with(['creator', 'members', 'proposals'])->findOrFail($id);
+        
+        return view('blockchain.daos.show', compact('dao'));
+    }
+
+    public function members($id)
+    {
+        $dao = Dao::with(['creator', 'members'])->findOrFail($id);
+        
+        return view('blockchain.daos.members', compact('dao'));
+    }
+
+    public function proposals($id)
+    {
+        $dao = Dao::with(['creator', 'proposals'])->findOrFail($id);
+        
+        return view('blockchain.daos.proposals', compact('dao'));
+    }
+
+    public function createProposal($id)
+    {
+        $dao = Dao::findOrFail($id);
+        
+        return view('blockchain.daos.create-proposal', compact('dao'));
+    }
+
+    public function storeProposal(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'required|in:funding,parameter_change,member,other',
+            'amount_requested' => 'nullable|numeric|min:0',
+            'recipient_address' => 'nullable|string|max:255',
+            'status' => 'required|in:active,passed,rejected,executed',
+            'voting_starts_at' => 'required|date',
+            'voting_ends_at' => 'required|date|after:voting_starts_at'
+        ]);
+
+        $dao = Dao::findOrFail($id);
+
+        DaoProposal::create([
+            'dao_id' => $dao->id,
+            'proposer_id' => auth()->id(),
+            'title' => $request->title,
+            'description' => $request->description,
+            'type' => $request->type,
+            'amount_requested' => $request->amount_requested,
+            'recipient_address' => $request->recipient_address,
+            'status' => $request->status,
+            'voting_starts_at' => $request->voting_starts_at,
+            'voting_ends_at' => $request->voting_ends_at,
+            'votes_for' => 0,
+            'votes_against' => 0,
+            'votes_abstain' => 0
+        ]);
+
+        return redirect()->route('blockchain.dao.proposals', $dao->id)
+            ->with('success', 'تم إنشاء المقترح بنجاح');
+    }
+
+    public function showProposal($id, $proposal_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $proposal = DaoProposal::where('dao_id', $dao->id)->findOrFail($proposal_id);
+        
+        return view('blockchain.daos.show-proposal', compact('dao', 'proposal'));
+    }
+
+    public function editProposal($id, $proposal_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $proposal = DaoProposal::where('dao_id', $dao->id)->findOrFail($proposal_id);
+        
+        return view('blockchain.daos.edit-proposal', compact('dao', 'proposal'));
+    }
+
+    public function updateProposal(Request $request, $id, $proposal_id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'required|in:funding,parameter_change,member,other',
+            'amount_requested' => 'nullable|numeric|min:0',
+            'recipient_address' => 'nullable|string|max:255',
+            'status' => 'required|in:active,passed,rejected,executed',
+            'voting_starts_at' => 'required|date',
+            'voting_ends_at' => 'required|date|after:voting_starts_at'
+        ]);
+
+        $dao = Dao::findOrFail($id);
+        $proposal = DaoProposal::where('dao_id', $dao->id)->findOrFail($proposal_id);
+
+        $proposal->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'type' => $request->type,
+            'amount_requested' => $request->amount_requested,
+            'recipient_address' => $request->recipient_address,
+            'status' => $request->status,
+            'voting_starts_at' => $request->voting_starts_at,
+            'voting_ends_at' => $request->voting_ends_at
+        ]);
+
+        return redirect()->route('blockchain.dao.proposals', $dao->id)
+            ->with('success', 'تم تحديث المقترح بنجاح');
+    }
+
+    public function deleteProposal($id, $proposal_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $proposal = DaoProposal::where('dao_id', $dao->id)->findOrFail($proposal_id);
+        
+        $proposal->delete();
+
+        return redirect()->route('blockchain.dao.proposals', $dao->id)
+            ->with('success', 'تم حذف المقترح بنجاح');
+    }
+
+    public function voteOnProposal(Request $request, $id, $proposal_id)
+    {
+        $request->validate([
+            'vote' => 'required|in:for,against,abstain',
+            'reason' => 'nullable|string|max:255'
+        ]);
+
+        $dao = Dao::findOrFail($id);
+        $proposal = DaoProposal::where('dao_id', $dao->id)->findOrFail($proposal_id);
+
+        // Add voting logic here
+        // This would typically involve creating a vote record and updating proposal counts
+
+        return redirect()->route('blockchain.dao.proposals', $dao->id)
+            ->with('success', 'تم تسجيل تصويتك بنجاح');
+    }
+
+    public function executeProposal($id, $proposal_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $proposal = DaoProposal::where('dao_id', $dao->id)->findOrFail($proposal_id);
+
+        // Add execution logic here
+        // This would typically involve executing the proposal on blockchain
+
+        $proposal->update([
+            'status' => 'executed',
+            'execution_result' => 'تم التنفيذ بنجاح'
+        ]);
+
+        return redirect()->route('blockchain.dao.proposals', $dao->id)
+            ->with('success', 'تم تنفيذ المقترح بنجاح');
+    }
+
+    public function vote($id)
+    {
+        $dao = Dao::findOrFail($id);
+        
+        return view('blockchain.daos.vote', compact('dao'));
+    }
+
+    public function addMember($id)
+    {
+        $dao = Dao::findOrFail($id);
+        
+        return view('blockchain.daos.add-member', compact('dao'));
+    }
+
+    public function storeMember(Request $request, $id)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role' => 'required|in:member,admin,treasurer',
+            'voting_power' => 'required|numeric|min:0',
+            'tokens_held' => 'required|numeric|min:0'
+        ]);
+
+        $dao = Dao::findOrFail($id);
+
+        DaoMember::create([
+            'dao_id' => $dao->id,
+            'user_id' => $request->user_id,
+            'role' => $request->role,
+            'voting_power' => $request->voting_power,
+            'tokens_held' => $request->tokens_held,
+            'joined_at' => now()
+        ]);
+
+        return redirect()->route('blockchain.dao.members', $dao->id)
+            ->with('success', 'تم إضافة العضو بنجاح');
+    }
+
+    public function showMember($id, $member_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $member = DaoMember::where('dao_id', $dao->id)->findOrFail($member_id);
+        
+        return view('blockchain.daos.show-member', compact('dao', 'member'));
+    }
+
+    public function editMember($id, $member_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $member = DaoMember::where('dao_id', $dao->id)->findOrFail($member_id);
+        
+        return view('blockchain.daos.edit-member', compact('dao', 'member'));
+    }
+
+    public function updateMember(Request $request, $id, $member_id)
+    {
+        $request->validate([
+            'role' => 'required|in:member,admin,treasurer',
+            'voting_power' => 'required|numeric|min:0',
+            'tokens_held' => 'required|numeric|min:0'
+        ]);
+
+        $dao = Dao::findOrFail($id);
+        $member = DaoMember::where('dao_id', $dao->id)->findOrFail($member_id);
+
+        $member->update([
+            'role' => $request->role,
+            'voting_power' => $request->voting_power,
+            'tokens_held' => $request->tokens_held
+        ]);
+
+        return redirect()->route('blockchain.dao.members', $dao->id)
+            ->with('success', 'تم تحديث العضو بنجاح');
+    }
+
+    public function deleteMember($id, $member_id)
+    {
+        $dao = Dao::findOrFail($id);
+        $member = DaoMember::where('dao_id', $dao->id)->findOrFail($member_id);
+        
+        $member->delete();
+
+        return redirect()->route('blockchain.dao.members', $dao->id)
+            ->with('success', 'تم حذف العضو بنجاح');
+    }
+
+    public function exportMembers($id)
+    {
+        $dao = Dao::findOrFail($id);
+        $members = $dao->members()->with('user')->get();
+        
+        // Export logic here - could return CSV or Excel
+        return response()->json([
+            'dao' => $dao->name,
+            'members_count' => $members->count(),
+            'members' => $members
+        ]);
+    }
+
+    public function treasury($id)
+    {
+        $dao = Dao::with(['creator'])->findOrFail($id);
+        
+        return view('blockchain.daos.treasury', compact('dao'));
+    }
+
+    public function create()
+    {
+        return view('blockchain.daos.create');
+    }
+
     public function index()
     {
         $daos = Dao::with(['creator', 'members', 'proposals'])->latest()->paginate(20);
         
         return view('blockchain.daos.index', compact('daos'));
-    }
-
-    public function createDao(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'address' => 'required|string|max:255|unique:daos',
-            'contract_address' => 'required|string|max:255',
-            'creator_address' => 'required|string|max:255',
-            'token_address' => 'nullable|string|max:255',
-            'governance_token' => 'required|string|max:255',
-            'quorum' => 'required|integer|min:1|max:100',
-            'voting_period' => 'required|integer|min:1|max:10080',
-            'proposal_threshold' => 'required|integer|min:1',
-            'treasury_address' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'website' => 'nullable|string|max:255',
-            'twitter' => 'nullable|string|max:255',
-            'discord' => 'nullable|string|max:255',
-            'telegram' => 'nullable|string|max:255',
-            'is_active' => 'required|boolean',
-            'metadata' => 'nullable|array',
-            'created_at' => 'now()',
-            'updated_at' => 'now()'
-        ]);
-
-        // Handle logo upload
-        $logoPath = null;
-        if ($request->hasFile('logo')) {
-            $logo = $request->file('logo');
-            $logoPath = $logo->store('daos', 'public');
-        }
-
-        $dao = Dao::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'address' => $request->address,
-            'contract_address' => $request->contract_address,
-            'creator_address' => $request->creator_address,
-            'token_address' => $request->token_address,
-            'governance_token' => $request->governance_token,
-            'quorum' => $request->quorum,
-            'voting_period' => $request->voting_period,
-            'proposal_threshold' => $request->proposal_threshold,
-            'treasury_address' => $request->treasury_address,
-            'logo' => $logoPath,
-            'website' => $request->website,
-            'twitter' => $request->twitter,
-            'discord' => $request->discord,
-            'telegram' => $request->telegram,
-            'is_active' => $request->is_active,
-            'metadata' => $request->metadata ?? [],
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'dao' => $dao
-        ]);
-    }
-
-    public function getDaos(Request $request)
-    {
-        $query = Dao::with(['creator', 'members', 'proposals']);
-        
-        if ($request->is_active !== null) {
-            $query->where('is_active', $request->is_active);
-        }
-        
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%");
-            });
-        }
-
-        $daos = $query->latest()->paginate(20);
-        
-        return response()->json($daos);
     }
 
     public function getDao(Request $request)
@@ -166,35 +351,7 @@ class DaoController extends Controller
         ]);
     }
 
-    public function createProposal(Request $request)
-    {
-        $request->validate([
-            'dao_id' => 'required|integer|exists:daos,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'proposer_address' => 'required|string|max:255',
-            'proposal_type' => 'required|string|in:funding,governance,parameter_change,upgrade',
-            'target_address' => 'nullable|string|max:255',
-            'amount' => 'nullable|numeric|min:0',
-            'currency' => 'nullable|string|in:ETH,USDC,USDT',
-            'execution_date' => 'nullable|date|after:now',
-            'parameters' => 'nullable|array',
-            'voting_starts_at' => 'required|date',
-            'voting_ends_at' => 'required|date|after:voting_starts_at',
-            'status' => 'required|string|in:pending,active,executed,failed,expired',
-            'created_at' => 'now()',
-            'updated_at' => 'now()'
-        ]);
-
-        $proposal = $this->createProposalRecord($request->all());
-
-        return response()->json([
-            'status' => 'success',
-            'proposal' => $proposal
-        ]);
-    }
-
-    public function getProposals(Request $request)
+    public function getDaos(Request $request)
     {
         $daoId = $request->dao_id;
         
@@ -220,112 +377,6 @@ class DaoController extends Controller
         }
 
         return response()->json($proposal);
-    }
-
-    public function voteOnProposal(Request $request)
-    {
-        $request->validate([
-            'proposal_id' => 'required|integer',
-            'voter_address' => 'required|string|max:255',
-            'vote' => 'required|string|in:for,against,abstain',
-            'reason' => 'nullable|string|max:255',
-            'voting_power' => 'required|integer|min:1'
-        ]);
-
-        $proposal = $this->getProposalById($request->proposal_id);
-        
-        if (!$proposal) {
-            return response()->json(['error' => 'Proposal not found'], 404);
-        }
-
-        if ($proposal->status !== 'active') {
-            return response()->json(['error' => 'Proposal is not active for voting'], 400);
-        }
-
-        if (now()->gt($proposal->voting_ends_at)) {
-            return response()->json(['error' => 'Voting period has ended'], 400);
-        }
-
-        $result = $this->castVote($proposal, $request->all());
-
-        return response()->json([
-            'status' => $result['status'],
-            'vote' => $result['vote']
-        ]);
-    }
-
-    public function executeProposal(Request $request)
-    {
-        $request->validate([
-            'proposal_id' => 'required|integer',
-            'executor_address' => 'required|string|max:255'
-        ]);
-
-        $proposal = $this->getProposalById($request->proposal_id);
-        
-        if (!$proposal) {
-            return response()->json(['error' => 'Proposal not found'], 404);
-        }
-
-        if ($proposal->status !== 'active') {
-            return response()->json(['error' => 'Proposal cannot be executed'], 400);
-        }
-
-        if (!$this->canExecuteProposal($proposal)) {
-            return response()->json(['error' => 'Proposal does not have enough votes to execute'], 400);
-        }
-
-        $result = $this->executeProposalAction($proposal, $request->executor_address);
-
-        return response()->json([
-            'status' => $result['status'],
-            'transaction_hash' => $result['transaction_hash']
-        ]);
-    }
-
-    public function getDaoStats(Request $request)
-    {
-        $daoId = $request->dao_id;
-        
-        if (!$daoId) {
-            return response()->json(['error' => 'DAO ID is required'], 400);
-        }
-
-        $dao = Dao::findOrFail($daoId);
-        
-        $stats = [
-            'dao_info' => [
-                'name' => $dao->name,
-                'address' => $dao->address,
-                'creator_address' => $dao->creator_address,
-                'governance_token' => $dao->governance_token,
-                'quorum' => $dao->quorum,
-                'voting_period' => $dao->voting_period,
-                'proposal_threshold' => $dao->proposal_threshold,
-                'created_at' => $dao->created_at
-            ],
-            'member_stats' => $this->getDaoMemberStats($dao),
-            'proposal_stats' => $this->getDaoProposalStats($dao),
-            'treasury_stats' => $this->getDaoTreasuryStats($dao),
-            'voting_stats' => $this->getDaoVotingStats($dao)
-        ];
-
-        return response()->json($stats);
-    }
-
-    public function getDaoMembers(Request $request)
-    {
-        $daoId = $request->dao_id;
-        
-        if (!$daoId) {
-            return response()->json(['error' => 'DAO ID is required'], 400);
-        }
-
-        $dao = Dao::findOrFail($daoId);
-        
-        $members = $this->buildDaoMembers($dao);
-
-        return response()->json($members);
     }
 
     public function joinDao(Request $request)

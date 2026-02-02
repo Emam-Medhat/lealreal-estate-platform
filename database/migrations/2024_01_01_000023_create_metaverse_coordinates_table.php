@@ -39,8 +39,8 @@ return new class extends Migration
             $table->index(['is_public', 'created_at']);
 
             // Regular index for search (removed full-text due to length limit)
-            $table->index('coordinate_value');
-            $table->index('description');
+            // $table->index('coordinate_value');
+            // $table->index('description');
         });
     }
 

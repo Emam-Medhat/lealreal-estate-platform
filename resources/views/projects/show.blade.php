@@ -208,7 +208,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    @if($project->team && $project->team->members->count() > 0)
+                    @if($project->team && $project->team->members && $project->team->members->count() > 0)
                         @foreach($project->team->members->take(5) as $member)
                             <div class="d-flex align-items-center mb-2">
                                 <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
@@ -220,7 +220,7 @@
                                 </div>
                             </div>
                         @endforeach
-                        @if($project->team->members->count() > 5)
+                        @if($project->team->members && $project->team->members->count() > 5)
                             <small class="text-muted">+{{ $project->team->members->count() - 5 }} أعضاء آخرين</small>
                         @endif
                     @else

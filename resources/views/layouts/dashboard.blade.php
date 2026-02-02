@@ -396,7 +396,7 @@
                                 <i class="fas fa-crystal-ball w-4"></i>
                                 <span class="mr-3">توقع الأسعار</span>
                             </a>
-                            <a href="{{ route('ai.fraud-detection.index') }}"
+                            <a href="{{ route('ai.fraud.detection') }}"
                                 class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-user-secret w-4"></i>
                                 <span class="mr-3">كشف الاحتيال</span>
@@ -453,7 +453,7 @@
                                 <i class="fas fa-shield-check w-4"></i>
                                 <span class="mr-3">مركز الامتثال</span>
                             </a>
-                            <a href="{{ route('taxes.filing.index') }}"
+                            <a href="{{ route('taxes.filing') }}"
                                 class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-file-contract w-4"></i>
                                 <span class="mr-3">الإقرارات الضريبية</span>

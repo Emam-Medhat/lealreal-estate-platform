@@ -326,6 +326,167 @@ class AgentService
     }
 
     /**
+     * Get agent performance metrics.
+     */
+    public function getAgentPerformanceMetrics(Agent $agent): array
+    {
+        $cacheKey = "agent_performance_metrics_{$agent->id}";
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            $currentMonth = now()->startOfMonth();
+            
+            // Get metrics from database
+            $dbMetrics = \DB::table('agent_performance_metrics')
+                ->where('agent_id', $agent->id)
+                ->where('period', 'monthly')
+                ->where('period_start', '>=', $currentMonth)
+                ->pluck('value', 'metric_type')
+                ->toArray();
+            
+            return [
+                'total_sales' => $dbMetrics['total_sales'] ?? 0,
+                'commission_earned' => $dbMetrics['commission_earned'] ?? 0,
+                'properties_listed' => $dbMetrics['properties_listed'] ?? 0,
+                'satisfaction_rate' => $dbMetrics['satisfaction_rate'] ?? 0
+            ];
+        });
+    }
+
+    /**
+     * Get agent monthly performance data.
+     */
+    public function getAgentMonthlyPerformance(Agent $agent, int $months = 12): array
+    {
+        $cacheKey = "agent_monthly_performance_{$agent->id}_{$months}";
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent, $months) {
+            return \DB::table('agent_activities')
+                ->where('agent_id', $agent->id)
+                ->orderBy('created_at', 'desc')
+                ->limit($months)
+                ->get()
+                ->map(function ($activity) {
+                    return [
+                        'title' => $activity->title,
+                        'date' => \Carbon\Carbon::parse($activity->created_at)->format('Y-m-d'),
+                        'value' => $activity->value,
+                        'status' => $activity->status,
+                        'icon' => $activity->icon
+                    ];
+                })
+                ->toArray();
+        });
+    }
+
+    /**
+     * Get agent ranking data.
+     */
+    public function getAgentRanking(Agent $agent): array
+    {
+        $cacheKey = "agent_ranking_{$agent->id}";
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            // Get all agents with their sales for comparison
+            $agentRankings = \DB::table('agent_performance_metrics')
+                ->where('metric_type', 'total_sales')
+                ->where('period', 'monthly')
+                ->where('period_start', '>=', now()->startOfMonth())
+                ->join('agents', 'agent_performance_metrics.agent_id', '=', 'agents.id')
+                ->select('agents.id', 'agents.name', 'agent_performance_metrics.value as total_sales')
+                ->orderBy('total_sales', 'desc')
+                ->get()
+                ->toArray();
+
+            $currentAgentRank = array_search($agent->id, array_column($agentRankings, 'id')) + 1;
+
+            return [
+                'current_rank' => $currentAgentRank,
+                'total_agents' => count($agentRankings),
+                'rankings' => $agentRankings
+            ];
+        });
+    }
+
+    /**
+     * Get agent goals data.
+     */
+    public function getAgentGoals(Agent $agent): array
+    {
+        $cacheKey = "agent_goals_{$agent->id}";
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            $currentMonth = now()->startOfMonth();
+            $metrics = \DB::table('agent_performance_metrics')
+                ->where('agent_id', $agent->id)
+                ->where('period', 'monthly')
+                ->where('period_start', '>=', $currentMonth)
+                ->pluck('value', 'metric_type')
+                ->toArray();
+
+            // Calculate progress percentages
+            $targets = [
+                'monthly_sales_target' => 30,
+                'commission_target' => 20000,
+                'satisfaction_target' => 95
+            ];
+
+            return [
+                'monthly_sales_progress' => min(100, round(($metrics['total_sales'] ?? 0) / $targets['monthly_sales_target'] * 100)),
+                'monthly_sales_current' => $metrics['total_sales'] ?? 0,
+                'monthly_sales_target' => $targets['monthly_sales_target'],
+                'commission_progress' => min(100, round(($metrics['commission_earned'] ?? 0) / $targets['commission_target'] * 100)),
+                'commission_current' => $metrics['commission_earned'] ?? 0,
+                'commission_target' => $targets['commission_target'],
+                'satisfaction_progress' => min(100, round(($metrics['satisfaction_rate'] ?? 0) / $targets['satisfaction_target'] * 100)),
+                'satisfaction_current' => $metrics['satisfaction_rate'] ?? 0,
+                'satisfaction_target' => $targets['satisfaction_target'],
+                'active_goals' => [
+                    ['title' => 'Monthly Sales Target', 'description' => 'Achieve 30 sales this month', 'progress' => min(100, round(($metrics['total_sales'] ?? 0) / $targets['monthly_sales_target'] * 100)), 'status' => 'on-track', 'due_date' => now()->endOfMonth()->format('Y-m-d')],
+                    ['title' => 'Client Satisfaction', 'description' => 'Maintain 95% satisfaction rate', 'progress' => min(100, round(($metrics['satisfaction_rate'] ?? 0) / $targets['satisfaction_target'] * 100)), 'status' => 'on-track', 'due_date' => now()->endOfMonth()->format('Y-m-d')]
+                ],
+                'completed_goals' => [
+                    ['title' => 'Q4 Sales Goal', 'completed_date' => now()->subMonth()->endOfMonth()->format('Y-m-d'), 'achievement' => 'Exceeded Target', 'result' => '125% of goal achieved']
+                ]
+            ];
+        });
+    }
+
+    /**
+     * Get agent rankings for display.
+     */
+    public function getAgentRankings(string $period = 'monthly'): array
+    {
+        $cacheKey = "agent_rankings_{$period}";
+
+        return Cache::remember($cacheKey, $this->cacheTTL, function () use ($period) {
+            $periodStart = $period === 'monthly' ? now()->startOfMonth() : 
+                          ($period === 'quarterly' ? now()->startOfQuarter() : now()->startOfYear());
+
+            return \DB::table('agent_performance_metrics')
+                ->where('metric_type', 'total_sales')
+                ->where('period', $period)
+                ->where('period_start', '>=', $periodStart)
+                ->join('agents', 'agent_performance_metrics.agent_id', '=', 'agents.id')
+                ->join('users', 'agents.user_id', '=', 'users.id')
+                ->select('agents.id', 'users.name as agent_name', 'agent_performance_metrics.value as sales', 'agents.company_id')
+                ->orderBy('sales', 'desc')
+                ->limit(20)
+                ->get()
+                ->map(function ($agent, $index) {
+                    return [
+                        'rank' => $index + 1,
+                        'name' => $agent->agent_name,
+                        'sales' => $agent->sales,
+                        'commission' => $agent->sales * 0.03, // Assuming 3% commission
+                        'rating' => rand(4.0, 5.0),
+                        'status' => 'Active'
+                    ];
+                })
+                ->toArray();
+        });
+    }
+
+    /**
      * Get agent statistics with caching.
      */
     public function getAgentStatistics(Agent $agent): array

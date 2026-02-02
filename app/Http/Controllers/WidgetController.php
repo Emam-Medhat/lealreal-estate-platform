@@ -18,7 +18,7 @@ class WidgetController extends Controller
 
     public function index(): View
     {
-        $widgets = Widget::latest()->get();
+        $widgets = Widget::latest()->paginate(12);
 
         return view('admin.widgets.index', compact('widgets'));
     }
@@ -168,6 +168,36 @@ class WidgetController extends Controller
 
         return redirect()->route('admin.widgets.index')
             ->with('success', 'تم تحديث حالة الويدجت بنجاح');
+    }
+
+    public function bulkToggle(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'widget_ids' => 'required|array',
+            'widget_ids.*' => 'required|exists:widgets,id',
+            'is_active' => 'required|boolean',
+        ]);
+
+        Widget::whereIn('id', $validated['widget_ids'])
+            ->update(['is_active' => $validated['is_active']]);
+
+        $action = $validated['is_active'] ? 'تفعيل' : 'تعطيل';
+        return redirect()->route('admin.widgets.index')
+            ->with('success', "تم {$action} الويدجتات المحددة بنجاح");
+    }
+
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'widget_ids' => 'required|array',
+            'widget_ids.*' => 'required|exists:widgets,id',
+        ]);
+
+        $count = count($validated['widget_ids']);
+        Widget::whereIn('id', $validated['widget_ids'])->delete();
+
+        return redirect()->route('admin.widgets.index')
+            ->with('success', "تم حذف {$count} ويدجت بنجاح");
     }
 
     public function preview(Widget $widget): View

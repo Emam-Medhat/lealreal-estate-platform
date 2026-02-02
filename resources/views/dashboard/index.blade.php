@@ -1,6 +1,8 @@
-@extends('layouts.dashboard')
+@extends('admin.layouts.admin')
 
-@section('title', 'لوحة التحكم الشاملة')
+@section('title', 'لوحة التحكم')
+
+@section('page-title', 'لوحة التحكم')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">

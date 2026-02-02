@@ -23,26 +23,26 @@ class AppointmentController extends Controller
         
         // Filter
         if ($request->filter === 'today') {
-            $query->whereDate('date', today());
+            $query->whereDate('start_datetime', today());
         } elseif ($request->filter === 'week') {
-            $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
+            $query->whereBetween('start_datetime', [now()->startOfWeek(), now()->endOfWeek()]);
         } elseif ($request->filter === 'month') {
-            $query->whereMonth('date', now()->month)
-                  ->whereYear('date', now()->year);
+            $query->whereMonth('start_datetime', now()->month)
+                  ->whereYear('start_datetime', now()->year);
         }
         
         // Sort
         if ($request->sort === 'date') {
-            $query->orderBy('date', 'asc')->orderBy('time', 'asc');
+            $query->orderBy('start_datetime', 'asc');
         } elseif ($request->sort === 'name') {
             $query->join('users', function ($join) {
                 $join->on('appointments.participant_id', '=', 'users.id')
                      ->orOn('appointments.user_id', '=', 'users.id');
-            })->orderBy('users.name', 'asc');
+            })->orderBy('users.first_name', 'asc')->orderBy('users.last_name', 'asc');
         } elseif ($request->sort === 'status') {
             $query->orderBy('status', 'asc');
         } else {
-            $query->orderBy('date', 'asc')->orderBy('time', 'asc');
+            $query->orderBy('start_datetime', 'asc');
         }
         
         $appointments = $query->with(['user', 'participant'])
@@ -58,23 +58,25 @@ class AppointmentController extends Controller
         $todayEvents = Appointment::where(function ($query) use ($user) {
             $query->where('user_id', $user->id)
                   ->orWhere('participant_id', $user->id);
-        })->whereDate('date', today())
+        })->whereDate('start_datetime', today())
           ->where('status', '!=', 'cancelled')
           ->with(['user', 'participant'])
-          ->orderBy('time', 'asc')
+          ->orderBy('start_datetime', 'asc')
           ->get();
         
         $weekEvents = Appointment::where(function ($query) use ($user) {
             $query->where('user_id', $user->id)
                   ->orWhere('participant_id', $user->id);
-        })->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
+        })->whereBetween('start_datetime', [now()->startOfWeek(), now()->endOfWeek()])
           ->where('status', '!=', 'cancelled')
           ->with(['user', 'participant'])
-          ->orderBy('date', 'asc')
-          ->orderBy('time', 'asc')
+          ->orderBy('start_datetime', 'asc')
           ->get();
         
-        return view('messages.appointments', compact('appointments', 'stats', 'todayEvents', 'weekEvents'));
+        // Get users for appointment creation form
+        $users = User::where('id', '!=', Auth::id())->get();
+        
+        return view('messages.appointments', compact('appointments', 'stats', 'todayEvents', 'weekEvents', 'users'));
     }
     
     public function create()
@@ -88,8 +90,7 @@ class AppointmentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'participant_id' => 'required|exists:users,id',
-            'date' => 'required|date|after_or_equal:today',
-            'time' => 'required',
+            'start_datetime' => 'required|date|after_or_equal:today',
             'duration' => 'required|integer|min:15|max:480',
             'type' => 'required|in:video,voice,in-person,phone',
             'notes' => 'nullable|string|max:1000',
@@ -100,10 +101,9 @@ class AppointmentController extends Controller
             'user_id' => Auth::id(),
             'participant_id' => $request->participant_id,
             'title' => $request->title,
-            'date' => $request->date,
-            'time' => $request->time,
+            'start_datetime' => $request->start_datetime,
             'duration' => $request->duration,
-            'type' => $request->type,
+            'appointment_type' => $request->type,
             'notes' => $request->notes,
             'status' => 'pending',
             'reminder_minutes' => $request->reminder_minutes ?? 30
@@ -147,8 +147,7 @@ class AppointmentController extends Controller
         
         $request->validate([
             'title' => 'required|string|max:255',
-            'date' => 'required|date|after_or_equal:today',
-            'time' => 'required',
+            'start_datetime' => 'required|date|after_or_equal:today',
             'duration' => 'required|integer|min:15|max:480',
             'type' => 'required|in:video,voice,in-person,phone',
             'notes' => 'nullable|string|max:1000',
@@ -240,13 +239,11 @@ class AppointmentController extends Controller
         })->findOrFail($id);
         
         $request->validate([
-            'date' => 'required|date|after_or_equal:today',
-            'time' => 'required'
+            'start_datetime' => 'required|date|after_or_equal:today'
         ]);
         
         $appointment->update([
-            'date' => $request->date,
-            'time' => $request->time,
+            'start_datetime' => $request->start_datetime,
             'status' => 'pending' // Reset to pending when rescheduled
         ]);
         
@@ -278,7 +275,7 @@ class AppointmentController extends Controller
             UserNotification::create([
                 'user_id' => $appointment->participant_id,
                 'title' => 'Appointment Reminder',
-                'message' => 'Reminder: You have an appointment "' . $appointment->title . '" on ' . $appointment->date->format('M j, Y') . ' at ' . $appointment->time->format('h:i A'),
+                'message' => 'Reminder: You have an appointment "' . $appointment->title . '" on ' . $appointment->start_datetime->format('M j, Y') . ' at ' . $appointment->start_datetime->format('h:i A'),
                 'type' => 'appointment',
                 'data' => json_encode(['appointment_id' => $appointment->id]),
                 'action_url' => '/messages/appointments/' . $appointment->id,
@@ -291,7 +288,7 @@ class AppointmentController extends Controller
             UserNotification::create([
                 'user_id' => $appointment->user_id,
                 'title' => 'Appointment Reminder',
-                'message' => 'Reminder: You have an appointment "' . $appointment->title . '" on ' . $appointment->date->format('M j, Y') . ' at ' . $appointment->time->format('h:i A'),
+                'message' => 'Reminder: You have an appointment "' . $appointment->title . '" on ' . $appointment->start_datetime->format('M j, Y') . ' at ' . $appointment->start_datetime->format('h:i A'),
                 'type' => 'appointment',
                 'data' => json_encode(['appointment_id' => $appointment->id]),
                 'action_url' => '/messages/appointments/' . $appointment->id,
@@ -312,20 +309,19 @@ class AppointmentController extends Controller
         $appointments = Appointment::where(function ($query) use ($user) {
             $query->where('user_id', $user->id)
                   ->orWhere('participant_id', $user->id);
-        })->whereMonth('date', $currentMonth)
-          ->whereYear('date', $currentYear)
+        })->whereMonth('start_datetime', $currentMonth)
+          ->whereYear('start_datetime', $currentYear)
           ->where('status', '!=', 'cancelled')
           ->with(['user', 'participant'])
-          ->orderBy('date', 'asc')
-          ->orderBy('time', 'asc')
+          ->orderBy('start_datetime', 'asc')
           ->get();
         
         $todayEvents = $appointments->filter(function ($appointment) {
-            return $appointment->date->isToday();
+            return $appointment->start_datetime->isToday();
         });
         
         $weekEvents = $appointments->filter(function ($appointment) {
-            return $appointment->date->between(now()->startOfWeek(), now()->endOfWeek());
+            return $appointment->start_datetime->between(now()->startOfWeek(), now()->endOfWeek());
         });
         
         $stats = [
@@ -345,7 +341,7 @@ class AppointmentController extends Controller
             $query->where('user_id', $user->id)
                   ->orWhere('participant_id', $user->id());
         })->with(['user', 'participant'])
-          ->orderBy('date', 'asc')
+          ->orderBy('start_datetime', 'asc')
           ->get();
         
         // Generate calendar file (ICS format)
@@ -354,7 +350,7 @@ class AppointmentController extends Controller
         $content .= "PRODID:-//Real Estate Platform//Appointment Calendar//EN\r\n";
         
         foreach ($appointments as $appointment) {
-            $start = Carbon::parse($appointment->date . ' ' . $appointment->time);
+            $start = $appointment->start_datetime;
             $end = $start->copy()->addMinutes($appointment->duration);
             
             $content .= "BEGIN:VEVENT\r\n";
@@ -386,7 +382,7 @@ class AppointmentController extends Controller
         }
         
         if ($date) {
-            $query->whereDate('date', $date);
+            $query->whereDate('start_datetime', $date);
         }
         
         return $query->count();

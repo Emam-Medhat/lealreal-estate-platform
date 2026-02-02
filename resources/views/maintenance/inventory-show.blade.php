@@ -42,7 +42,7 @@
                                     <td class="fw-bold">Category:</td>
                                     <td>
                                         @if($item->category)
-                                            <span class="badge bg-info">{{ $item->category->name }}</span>
+                                            <span class="badge bg-info">{{ $item->getCategoryName() }}</span>
                                         @else
                                             <span class="text-muted">No Category</span>
                                         @endif
@@ -52,7 +52,7 @@
                                     <td class="fw-bold">Supplier:</td>
                                     <td>
                                         @if($item->supplier)
-                                            <span class="badge bg-primary">{{ $item->supplier->name }}</span>
+                                            <span class="badge bg-primary">{{ $item->getSupplierName() }}</span>
                                         @else
                                             <span class="text-muted">No Supplier</span>
                                         @endif

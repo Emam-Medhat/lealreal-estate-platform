@@ -17,11 +17,9 @@ class OfferController extends Controller
         $query = Offer::with(['property.images', 'property.user', 'counterOffers']);
 
         if ($request->type === 'sent') {
-            $query->where('user_id', $user->id);
+            $query->where('buyer_id', $user->id);
         } elseif ($request->type === 'received') {
-            $query->whereHas('property', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            });
+            $query->where('seller_id', $user->id);
         }
 
         // Filters
@@ -30,20 +28,18 @@ class OfferController extends Controller
         }
 
         if ($request->min_amount) {
-            $query->where('amount', '>=', $request->min_amount);
+            $query->where('offer_amount', '>=', $request->min_amount);
         }
 
         if ($request->max_amount) {
-            $query->where('amount', '<=', $request->max_amount);
+            $query->where('offer_amount', '<=', $request->max_amount);
         }
 
         $offers = $query->orderBy('created_at', 'desc')->paginate(15);
 
         $stats = [
-            'total_sent' => Offer::where('user_id', $user->id)->count(),
-            'total_received' => Offer::whereHas('property', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })->count(),
+            'total_sent' => Offer::where('buyer_id', $user->id)->count(),
+            'total_received' => Offer::where('seller_id', $user->id)->count(),
             'pending' => Offer::where('status', 'pending')->count(),
             'accepted' => Offer::where('status', 'accepted')->count(),
             'rejected' => Offer::where('status', 'rejected')->count()

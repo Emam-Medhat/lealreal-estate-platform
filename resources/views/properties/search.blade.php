@@ -17,7 +17,7 @@
                         <i class="fas fa-sliders-h mr-2"></i>
                         Advanced Search
                     </button>
-                    <a href="{{ route('properties.map') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <a href="{{ route('properties.search.map') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-map mr-2"></i>
                         Map View
                     </a>
@@ -27,7 +27,7 @@
 
         <!-- Search Form -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <form action="{{ route('properties.search') }}" method="GET" class="space-y-4">
+            <form action="{{ route('properties.search.index') }}" method="GET" class="space-y-4">
                 <!-- Main Search Row -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
@@ -337,7 +337,7 @@ function toggleView(view) {
 }
 
 function clearFilters() {
-    window.location.href = '{{ route('properties.search') }}';
+    window.location.href = '{{ route('properties.search.index') }}';
 }
 
 function toggleFavorite(propertyId) {

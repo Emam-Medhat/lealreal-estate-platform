@@ -43,7 +43,7 @@ class InvestmentOpportunityController extends Controller
             ->latest('published_at')
             ->paginate(20);
 
-        return view('investor.opportunities.index', compact('opportunities'));
+        return view('investor.opportunities', compact('opportunities'));
     }
 
     public function show(InvestmentOpportunity $opportunity)

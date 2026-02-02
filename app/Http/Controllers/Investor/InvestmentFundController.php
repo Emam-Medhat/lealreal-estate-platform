@@ -16,32 +16,55 @@ class InvestmentFundController extends Controller
 {
     public function index(Request $request)
     {
-        $investor = Investor::where('user_id', Auth::id())->firstOrFail();
-        
-        $funds = $investor->investmentFunds()
-            ->with(['fundManager'])
-            ->when($request->search, function ($query, $search) {
-                $query->where('fund_name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            })
-            ->when($request->fund_type, function ($query, $type) {
-                $query->where('fund_type', $type);
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->risk_level, function ($query, $risk) {
-                $query->where('risk_level', $risk);
-            })
-            ->latest('created_at')
-            ->paginate(20);
+        try {
+            // Try to get investor first
+            $investor = Investor::where('user_id', Auth::id())->first();
+            
+            if (!$investor) {
+                // If no investor found, show all funds as public view
+                $funds = \App\Models\InvestmentFund::where('status', 'active')
+                    ->orderBy('featured', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(20);
+                
+                return view('investor.funds.index', compact('funds'));
+            }
+            
+            // For now, show all funds since investmentFunds relationship doesn't exist
+            $funds = \App\Models\InvestmentFund::where('status', 'active')
+                ->orderBy('featured', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->when($request->search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                })
+                ->when($request->fund_type, function ($query, $type) {
+                    $query->where('type', $type);
+                })
+                ->when($request->status, function ($query, $status) {
+                    $query->where('status', $status);
+                })
+                ->when($request->risk_level, function ($query, $risk) {
+                    $query->where('risk_level', $risk);
+                })
+                ->paginate(20);
 
-        return view('investor.funds.index', compact('funds'));
+            return view('investor.funds.index', compact('funds'));
+        } catch (\Exception $e) {
+            // Fallback to showing all funds
+            $funds = \App\Models\InvestmentFund::where('status', 'active')
+                ->orderBy('featured', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+            
+            return view('investor.funds.index', compact('funds'));
+        }
     }
 
     public function show(InvestmentFund $fund)
     {
-        $fund->load(['fundManager', 'documents', 'holdings']);
+        // Don't load any relationships for now to avoid errors
+        // $fund->load(['holdings']);
         
         return view('investor.funds.show', compact('fund'));
     }

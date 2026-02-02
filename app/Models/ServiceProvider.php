@@ -35,6 +35,7 @@ class ServiceProvider extends Model
         'notes',
         'attachments',
         'created_by',
+        'status',
     ];
 
     protected $casts = [

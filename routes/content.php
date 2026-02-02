@@ -160,6 +160,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{widget}/duplicate', [WidgetController::class, 'duplicate'])->name('duplicate');
         Route::post('/reorder', [WidgetController::class, 'reorder'])->name('reorder');
         Route::post('/{widget}/toggle', [WidgetController::class, 'toggleStatus'])->name('toggle');
+        Route::post('/bulk-toggle', [WidgetController::class, 'bulkToggle'])->name('bulk-toggle');
+        Route::post('/bulk-delete', [WidgetController::class, 'bulkDelete'])->name('bulk-delete');
         Route::get('/{widget}/preview', [WidgetController::class, 'preview'])->name('preview');
     });
 });

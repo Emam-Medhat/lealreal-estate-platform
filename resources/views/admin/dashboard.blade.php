@@ -52,10 +52,10 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-blue-100 text-sm font-medium">إجمالي المستخدمين</p>
-                            <p class="text-3xl font-bold mt-2">{{ $stats['total_users'] }}</p>
+                            <p class="text-3xl font-bold mt-2">{{ $stats['site']['total_users'] }}</p>
                             <p class="text-blue-100 text-sm mt-2">
                                 <i class="fas fa-arrow-up ml-1"></i>
-                                +{{ $stats['new_users_today'] }} اليوم
+                                +{{ $stats['site']['new_users_today'] }} اليوم
                             </p>
                         </div>
                         <div class="bg-white/20 rounded-full p-4">
@@ -69,10 +69,10 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-emerald-100 text-sm font-medium">العقارات</p>
-                            <p class="text-3xl font-bold mt-2">{{ $stats['total_properties'] }}</p>
+                            <p class="text-3xl font-bold mt-2">{{ $stats['site']['total_properties'] }}</p>
                             <p class="text-emerald-100 text-sm mt-2">
                                 <i class="fas fa-arrow-up ml-1"></i>
-                                +{{ $stats['new_properties_today'] }} اليوم
+                                +{{ $stats['site']['new_properties_today'] }} اليوم
                             </p>
                         </div>
                         <div class="bg-white/20 rounded-full p-4">
@@ -85,15 +85,15 @@
                     class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-purple-100 text-sm font-medium">الشركات</p>
-                            <p class="text-3xl font-bold mt-2">{{ $stats['total_companies'] }}</p>
+                            <p class="text-purple-100 text-sm font-medium">المستثمرون</p>
+                            <p class="text-3xl font-bold mt-2">{{ $stats['site']['total_investors'] }}</p>
                             <p class="text-purple-100 text-sm mt-2">
                                 <i class="fas fa-arrow-up ml-1"></i>
-                                +{{ $stats['new_companies_today'] }} اليوم
+                                +{{ $stats['site']['new_investors_today'] }} اليوم
                             </p>
                         </div>
                         <div class="bg-white/20 rounded-full p-4">
-                            <i class="fas fa-building text-2xl"></i>
+                            <i class="fas fa-chart-line text-2xl"></i>
                         </div>
                     </div>
                 </div>
@@ -103,10 +103,10 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-amber-100 text-sm font-medium">الإيرادات</p>
-                            <p class="text-3xl font-bold mt-2">${{ number_format($stats['total_revenue'], 0) }}</p>
+                            <p class="text-3xl font-bold mt-2">${{ number_format($stats['site']['total_revenue'], 0) }}</p>
                             <p class="text-amber-100 text-sm mt-2">
                                 <i class="fas fa-arrow-up ml-1"></i>
-                                +${{ number_format($stats['revenue_today'], 0) }} اليوم
+                                +${{ number_format($stats['site']['revenue_today'], 0) }} اليوم
                             </p>
                         </div>
                         <div class="bg-white/20 rounded-full p-4">
@@ -265,6 +265,13 @@
                         class="bg-amber-50 border border-amber-100 rounded-xl p-4 hover:bg-amber-100 transition-all text-center group">
                         <i class="fas fa-edit text-amber-600 text-2xl mb-2 group-hover:scale-110 transition-transform"></i>
                         <p class="text-xs font-bold text-gray-800">New Post</p>
+                    </a>
+
+                    <a href="{{ route('investor.stats.public') }}"
+                        class="bg-purple-50 border border-purple-100 rounded-xl p-4 hover:bg-purple-100 transition-all text-center group">
+                        <i
+                            class="fas fa-chart-line text-purple-600 text-2xl mb-2 group-hover:scale-110 transition-transform"></i>
+                        <p class="text-xs font-bold text-gray-800">Investor Stats</p>
                     </a>
 
                     <a href="{{ route('admin.settings') }}"
@@ -1107,7 +1114,7 @@
                             <h4 class="font-bold text-gray-900">Tax Systems</h4>
                         </div>
                         <div class="space-y-2.5">
-                            <a href="{{ route('taxes.filing.index') }}"
+                            <a href="{{ route('taxes.filing') }}"
                                 class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors">
                                 <i class="fas fa-file-export w-5"></i> Tax Filings
                             </a>
@@ -1231,7 +1238,7 @@
                                 class="flex items-center text-sm text-gray-600 hover:text-teal-600 transition-colors">
                                 <i class="fas fa-crystal-ball w-5"></i> Price Predictor
                             </a>
-                            <a href="{{ route('ai.fraud-detection.index') }}"
+                            <a href="{{ route('ai.fraud.detection') }}"
                                 class="flex items-center text-sm text-gray-600 hover:text-teal-600 transition-colors">
                                 <i class="fas fa-user-secret w-5"></i> Fraud Detection
                             </a>

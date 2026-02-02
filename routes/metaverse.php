@@ -8,6 +8,7 @@ use App\Http\Controllers\Metaverse\MetaversePropertyNftController;
 use App\Http\Controllers\Metaverse\MetaverseShowroomController;
 use App\Http\Controllers\Metaverse\MetaverseTransactionController;
 use App\Http\Controllers\Metaverse\MetaversePropertyBuilderController;
+use App\Http\Controllers\MetaverseController;
 
 Route::middleware(['auth'])->prefix('metaverse')->name('metaverse.')->group(function () {
     Route::get('/', [MetaversePropertyController::class, 'index'])->name('index');
@@ -29,4 +30,11 @@ Route::middleware(['auth'])->prefix('metaverse')->name('metaverse.')->group(func
     
     // Transactions
     Route::get('/transactions', [MetaverseTransactionController::class, 'index'])->name('transactions.index');
+});
+
+// Blockchain Metaverse Routes
+Route::middleware(['auth'])->prefix('blockchain/metaverse')->name('blockchain.metaverse.')->group(function () {
+    Route::get('/properties', [MetaverseController::class, 'properties'])->name('properties');
+    Route::get('/marketplace', [MetaverseController::class, 'marketplace'])->name('marketplace');
+    Route::get('/nft', [MetaverseController::class, 'nft'])->name('nft');
 });

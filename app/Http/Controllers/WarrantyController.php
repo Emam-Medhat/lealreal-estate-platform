@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Warranty;
+use App\Models\WarrantyClaim;
 use App\Models\Property;
 use App\Models\ServiceProvider;
 use Illuminate\Http\Request;
@@ -29,13 +30,156 @@ class WarrantyController extends Controller
                 } elseif ($expiryStatus === 'expiring_soon') {
                     $query->where('end_date', '>', now())
                         ->where('end_date', '<=', now()->addDays(30));
-                } elseif ($expiryStatus === 'active') {
-                    $query->where('end_date', '>', now()->addDays(30));
                 }
             })
-            ->latest()->paginate(15);
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return view('maintenance.warranties', compact('warranties'));
+    }
+
+    public function policiesIndex()
+    {
+        $warranties = Warranty::with(['property', 'serviceProvider'])
+            ->when(request('status'), function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->when(request('property_id'), function ($query, $propertyId) {
+                $query->where('property_id', $propertyId);
+            })
+            ->when(request('service_provider_id'), function ($query, $providerId) {
+                $query->where('service_provider_id', $providerId);
+            })
+            ->when(request('expiry_status'), function ($query, $expiryStatus) {
+                if ($expiryStatus === 'expired') {
+                    $query->where('end_date', '<', now());
+                } elseif ($expiryStatus === 'expiring_soon') {
+                    $query->where('end_date', '>', now())
+                           ->where('end_date', '<=', now()->addDays(30));
+                }
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        $properties = Property::all();
+        $serviceProviders = ServiceProvider::all();
+
+        return view('warranties.policies.index', compact('warranties', 'properties', 'serviceProviders'));
+    }
+
+    public function policiesCreate()
+    {
+        $properties = Property::all();
+        $serviceProviders = ServiceProvider::all();
+
+        return view('warranties.policies.create', compact('properties', 'serviceProviders'));
+    }
+
+    public function policiesStore(Request $request)
+    {
+        $validated = $request->validate([
+            'warranty_number' => 'required|string|max:255|unique:warranties,warranty_number',
+            'warranty_type' => 'required|in:product,labor,combined,extended',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'coverage_details' => 'required|string',
+            'property_id' => 'required|exists:properties,id',
+            'service_provider_id' => 'nullable|exists:service_providers,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'duration_months' => 'required|integer|min:1',
+            'coverage_amount' => 'required|numeric|min:0',
+            'deductible_amount' => 'nullable|numeric|min:0',
+            'terms_conditions' => 'nullable|string',
+            'contact_person' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['warranty_code'] = 'WAR-' . date('Y') . '-' . str_pad(Warranty::count() + 1, 4, '0', STR_PAD_LEFT);
+        $validated['status'] = 'active';
+        $validated['created_by'] = auth()->id();
+
+        $warranty = Warranty::create($validated);
+
+        return redirect()->route('warranties.policies.show', $warranty)
+            ->with('success', 'تم إنشاء الضمان بنجاح');
+    }
+
+    public function policiesShow(Warranty $policy)
+    {
+        $policy->load(['property', 'serviceProvider', 'createdBy']);
+        
+        $stats = [
+            'total_claims' => $policy->claims()->count(),
+            'approved_claims' => $policy->claims()->where('status', 'approved')->count(),
+            'rejected_claims' => $policy->claims()->where('status', 'rejected')->count(),
+            'pending_claims' => $policy->claims()->where('status', 'pending')->count(),
+            'total_claimed_amount' => $policy->claims()->where('status', 'approved')->sum('amount'),
+            'remaining_coverage' => $policy->coverage_amount - $policy->claims()->where('status', 'approved')->sum('amount'),
+            'days_remaining' => $policy->end_date->diffInDays(now()),
+            'is_expired' => $policy->end_date < now(),
+            'is_expiring_soon' => $policy->end_date <= now()->addDays(30) && $policy->end_date > now(),
+        ];
+
+        return view('warranties.policies.show', compact('policy', 'stats'));
+    }
+
+    public function policiesEdit(Warranty $policy)
+    {
+        if ($policy->status === 'expired') {
+            return back()->with('error', 'لا يمكن تعديل الضمان المنتهي');
+        }
+
+        $properties = Property::all();
+        $serviceProviders = ServiceProvider::all();
+
+        return view('warranties.policies.edit', compact('policy', 'properties', 'serviceProviders'));
+    }
+
+    public function policiesUpdate(Request $request, Warranty $policy)
+    {
+        if ($policy->status === 'expired') {
+            return back()->with('error', 'لا يمكن تعديل الضمان المنتهي');
+        }
+
+        $validated = $request->validate([
+            'warranty_number' => 'required|string|max:255|unique:warranties,warranty_number,' . $policy->id,
+            'warranty_type' => 'required|in:product,labor,combined,extended',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'coverage_details' => 'required|string',
+            'property_id' => 'required|exists:properties,id',
+            'service_provider_id' => 'nullable|exists:service_providers,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'duration_months' => 'required|integer|min:1',
+            'coverage_amount' => 'required|numeric|min:0',
+            'deductible_amount' => 'nullable|numeric|min:0',
+            'terms_conditions' => 'nullable|string',
+            'contact_person' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'notes' => 'nullable|string',
+        ]);
+
+        $policy->update($validated);
+
+        return redirect()->route('warranties.policies.show', $policy)
+            ->with('success', 'تم تحديث الضمان بنجاح');
+    }
+
+    public function policiesDestroy(Warranty $policy)
+    {
+        if ($policy->claims()->where('status', 'pending')->exists()) {
+            return back()->with('error', 'لا يمكن حذف الضمان الذي لديه مطالبات معلقة');
+        }
+
+        $policy->delete();
+
+        return redirect()->route('warranties.policies.index')
+            ->with('success', 'تم حذف الضمان بنجاح');
     }
 
     public function create()
@@ -383,6 +527,237 @@ class WarrantyController extends Controller
         ];
 
         return $labels[$type] ?? $type;
+    }
+
+    // Claims Methods
+    public function claimsIndex()
+    {
+        $claims = WarrantyClaim::with(['warranty.property', 'warranty.serviceProvider', 'creator'])
+            ->when(request('status'), function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->when(request('warranty_id'), function ($query, $warrantyId) {
+                $query->where('warranty_id', $warrantyId);
+            })
+            ->when(request('date_from'), function ($query, $dateFrom) {
+                $query->whereDate('claim_date', '>=', $dateFrom);
+            })
+            ->when(request('date_to'), function ($query, $dateTo) {
+                $query->whereDate('claim_date', '<=', $dateTo);
+            })
+            ->orderBy('claim_date', 'desc')
+            ->paginate(10);
+
+        return view('warranties.claims.index', compact('claims'));
+    }
+
+    public function claimsCreate()
+    {
+        $warranties = Warranty::where('status', 'active')->get();
+        return view('warranties.claims.create', compact('warranties'));
+    }
+
+    public function claimsStore(Request $request)
+    {
+        $request->validate([
+            'warranty_id' => 'required|exists:warranties,id',
+            'description' => 'required|string',
+            'amount' => 'required|numeric|min:0',
+            'claim_date' => 'required|date',
+            'incident_date' => 'nullable|date',
+        ]);
+
+        $claimNumber = 'CLM-' . date('Y') . '-' . str_pad(WarrantyClaim::count() + 1, 4, '0', STR_PAD_LEFT);
+
+        WarrantyClaim::create([
+            'warranty_id' => $request->warranty_id,
+            'claim_number' => $claimNumber,
+            'description' => $request->description,
+            'amount' => $request->amount,
+            'claim_date' => $request->claim_date,
+            'incident_date' => $request->incident_date,
+            'status' => 'pending',
+            'created_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('warranties.claims.index')
+            ->with('success', 'تم إنشاء المطالبة بنجاح');
+    }
+
+    public function claimsShow(WarrantyClaim $claim)
+    {
+        $claim->load(['warranty.property', 'warranty.serviceProvider', 'creator']);
+        return view('warranties.claims.show', compact('claim'));
+    }
+
+    public function claimsEdit(WarrantyClaim $claim)
+    {
+        $warranties = Warranty::where('status', 'active')->get();
+        return view('warranties.claims.edit', compact('claim', 'warranties'));
+    }
+
+    public function claimsUpdate(Request $request, WarrantyClaim $claim)
+    {
+        $request->validate([
+            'description' => 'required|string',
+            'amount' => 'required|numeric|min:0',
+            'claim_date' => 'required|date',
+            'incident_date' => 'nullable|date',
+            'status' => 'required|in:pending,approved,rejected,processing,completed',
+            'resolution' => 'nullable|string',
+        ]);
+
+        $claim->update($request->all());
+
+        return redirect()->route('warranties.claims.show', $claim)
+            ->with('success', 'تم تحديث المطالبة بنجاح');
+    }
+
+    public function claimsDestroy(WarrantyClaim $claim)
+    {
+        $claim->delete();
+        return redirect()->route('warranties.claims.index')
+            ->with('success', 'تم حذف المطالبة بنجاح');
+    }
+
+    public function claimsApprove(WarrantyClaim $claim)
+    {
+        $claim->update([
+            'status' => 'approved',
+            'resolved_at' => now(),
+        ]);
+
+        return redirect()->route('warranties.claims.show', $claim)
+            ->with('success', 'تم قبول المطالبة بنجاح');
+    }
+
+    public function claimsReject(WarrantyClaim $claim)
+    {
+        $claim->update([
+            'status' => 'rejected',
+            'resolved_at' => now(),
+        ]);
+
+        return redirect()->route('warranties.claims.show', $claim)
+            ->with('success', 'تم رفض المطالبة');
+    }
+
+    public function claimsProcess(WarrantyClaim $claim)
+    {
+        $claim->update(['status' => 'processing']);
+
+        return redirect()->route('warranties.claims.show', $claim)
+            ->with('success', 'تم بدء معالجة المطالبة');
+    }
+
+    public function claimsComplete(WarrantyClaim $claim)
+    {
+        $claim->update([
+            'status' => 'completed',
+            'resolved_at' => now(),
+        ]);
+
+        return redirect()->route('warranties.claims.show', $claim)
+            ->with('success', 'تم إكمال المطالبة بنجاح');
+    }
+
+    public function claimsAssign(Request $request, WarrantyClaim $claim)
+    {
+        $request->validate([
+            'assigned_to' => 'required|exists:users,id',
+        ]);
+
+        $claim->update([
+            'assigned_to' => $request->assigned_to,
+            'status' => 'processing',
+        ]);
+
+        return redirect()->route('warranties.claims.show', $claim)
+            ->with('success', 'تم تعيين المطالبة بنجاح');
+    }
+
+    // Service Providers Methods
+    public function providersIndex()
+    {
+        $providers = ServiceProvider::when(request('search'), function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
+            })
+            ->when(request('status'), function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->orderBy('name')
+            ->paginate(10);
+
+        return view('warranties.providers.index', compact('providers'));
+    }
+
+    public function providersCreate()
+    {
+        return view('warranties.providers.create');
+    }
+
+    public function providersStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:service_providers,email',
+            'phone' => 'required|string|max:20',
+            'address' => 'nullable|string',
+            'description' => 'nullable|string',
+            'services' => 'nullable|string',
+            'contact_person' => 'nullable|string|max:255',
+            'status' => 'required|in:active,inactive',
+            'company_name' => 'nullable|string|max:255',
+            'website' => 'nullable|url',
+            'license_number' => 'nullable|string|max:255',
+        ]);
+
+        ServiceProvider::create($request->all());
+
+        return redirect()->route('warranties.providers.index')
+            ->with('success', 'تم إضافة مقدم الخدمة بنجاح');
+    }
+
+    public function providersShow(ServiceProvider $provider)
+    {
+        $provider->load(['warranties' => function($query) {
+            $query->with('property')->latest();
+        }]);
+        
+        return view('warranties.providers.show', compact('provider'));
+    }
+
+    public function providersEdit(ServiceProvider $provider)
+    {
+        return view('warranties.providers.edit', compact('provider'));
+    }
+
+    public function providersUpdate(Request $request, ServiceProvider $provider)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:service_providers,email,' . $provider->id,
+            'phone' => 'required|string|max:20',
+            'address' => 'nullable|string',
+            'description' => 'nullable|string',
+            'services' => 'nullable|string',
+            'contact_person' => 'nullable|string|max:255',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        $provider->update($request->all());
+
+        return redirect()->route('warranties.providers.show', $provider)
+            ->with('success', 'تم تحديث مقدم الخدمة بنجاح');
+    }
+
+    public function providersDestroy(ServiceProvider $provider)
+    {
+        $provider->delete();
+        return redirect()->route('warranties.providers.index')
+            ->with('success', 'تم حذف مقدم الخدمة بنجاح');
     }
 
     private function getStatusLabel($status)

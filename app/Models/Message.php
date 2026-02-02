@@ -362,9 +362,9 @@ class Message extends Model
                 UserNotification::create([
                     'user_id' => $message->receiver_id,
                     'title' => 'New Message',
-                    'message' => "You have a new message from {$message->sender->name}",
+                    'message' => "You have a new message from {$message->sender->full_name}",
                     'type' => 'message',
-                    'action_url' => route('messages.show', $message->conversation),
+                    'action_url' => route('messages.conversation', $message->conversation),
                     'action_text' => 'View Message',
                     'is_read' => false,
                 ]);

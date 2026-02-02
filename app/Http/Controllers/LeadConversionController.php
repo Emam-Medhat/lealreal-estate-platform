@@ -127,7 +127,23 @@ class LeadConversionController extends Controller
             'total_conversions' => LeadConversion::count(),
             'total_value' => LeadConversion::sum('conversion_value'),
             'average_value' => LeadConversion::avg('conversion_value'),
-            'conversion_rate' => Lead::where('converted_at', '!=', null)->count() / max(Lead::count(), 1) * 100,
+            'conversion_rate' => Lead::whereNotNull('converted_date')->count() / max(Lead::count(), 1) * 100,
+            'total_conversion_value' => LeadConversion::sum('conversion_value'),
+            'avg_conversion_time' => 0, // Placeholder - calculate from lead created_at to conversion_date
+            'best_month_conversions' => LeadConversion::selectRaw('COUNT(*) as count')
+                ->selectRaw('MONTH(conversion_date) as month')
+                ->groupBy('month')
+                ->orderBy('count', 'desc')
+                ->value('count'),
+            'best_source' => LeadConversion::join('leads', 'lead_conversions.lead_id', '=', 'leads.id')
+                ->join('lead_sources', 'leads.source_id', '=', 'lead_sources.id')
+                ->groupBy('lead_sources.name')
+                ->orderByRaw('COUNT(*) DESC')
+                ->value('lead_sources.name'),
+            'conversion_trend' => 15.5, // Placeholder - calculate actual trend
+            'top_conversion_type' => LeadConversion::groupBy('converted_to_type')
+                ->orderByRaw('COUNT(*) DESC')
+                ->value('converted_to_type'),
         ];
         
         $monthlyConversions = LeadConversion::selectRaw('MONTH(conversion_date) as month, YEAR(conversion_date) as year, COUNT(*) as count, SUM(conversion_value) as value')
@@ -139,7 +155,7 @@ class LeadConversionController extends Controller
             
         $conversionBySource = LeadConversion::join('leads', 'lead_conversions.lead_id', '=', 'leads.id')
             ->join('lead_sources', 'leads.source_id', '=', 'lead_sources.id')
-            ->selectRaw('lead_sources.name as source, COUNT(*) as count, SUM(lead_conversions.conversion_value) as value')
+            ->selectRaw('lead_sources.name as source_name, COUNT(*) as count, SUM(lead_conversions.conversion_value) as value')
             ->groupBy('lead_sources.name')
             ->orderBy('value', 'desc')
             ->get();

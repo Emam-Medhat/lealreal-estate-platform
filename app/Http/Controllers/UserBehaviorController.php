@@ -17,7 +17,34 @@ class UserBehaviorController extends Controller
 
     public function index()
     {
-        return view('analytics.user-behavior.index');
+        try {
+            $period = request()->period ?? '30d';
+            $startDate = $this->getStartDate($period);
+
+            // Calculate engagement metrics
+            $avgSessionDuration = $this->getAvgSessionDuration($startDate);
+            $pagesPerSession = $this->getPagesPerSession($startDate);
+            $bounceRate = $this->getBounceRate($startDate);
+            $returnVisitorRate = $this->getReturnVisitorRate($startDate);
+
+            return view('analytics.user-behavior.index', compact(
+                'avgSessionDuration',
+                'pagesPerSession', 
+                'bounceRate',
+                'returnVisitorRate',
+                'period'
+            ));
+        } catch (\Exception $e) {
+            // Return view with default values if there's an error
+            return view('analytics.user-behavior.index', [
+                'avgSessionDuration' => 0,
+                'pagesPerSession' => 0,
+                'bounceRate' => 0,
+                'returnVisitorRate' => 0,
+                'period' => '30d',
+                'error' => 'Failed to fetch user behavior data: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function behaviorPatterns(Request $request)

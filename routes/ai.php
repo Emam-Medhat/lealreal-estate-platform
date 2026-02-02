@@ -16,6 +16,16 @@ use App\Http\Controllers\AiRentalPriceOptimizationController;
 use App\Http\Controllers\AiVirtualStagingController;
 
 Route::middleware(['auth'])->prefix('ai')->name('ai.')->group(function () {
+    // AI Dashboard/Index
+    Route::get('/', [AiInsightsController::class, 'index'])->name('index');
+    
+    // AI Insights API Routes
+    Route::post('/insights/generate', [AiInsightsController::class, 'generateInsights'])->name('insights.generate');
+    Route::get('/anomaly-detection', [AiInsightsController::class, 'anomalyDetection'])->name('anomaly-detection');
+    Route::get('/pattern-recognition', [AiInsightsController::class, 'patternRecognition'])->name('pattern-recognition');
+    Route::get('/predictive-insights', [AiInsightsController::class, 'predictiveInsights'])->name('predictive-insights');
+    Route::get('/recommendations', [AiInsightsController::class, 'recommendations'])->name('recommendations');
+    
     // Property Valuation
     Route::get('/valuation/dashboard', [AiPropertyValuationController::class, 'dashboard'])->name('valuation.dashboard');
     Route::resource('/valuation', AiPropertyValuationController::class);

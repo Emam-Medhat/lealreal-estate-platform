@@ -1,5 +1,5 @@
 <!-- Dynamic Sidebar -->
-<aside class="w-64 bg-white shadow-xl h-screen sticky top-0 border-r border-gray-200 flex flex-col">
+<aside class="w-64 bg-white shadow-xl h-screen sticky top-0 border-r border-gray-200 flex flex-col ">
     <!-- Logo Section -->
     <div class="p-6 border-b border-gray-200">
         <div class="flex items-center">
@@ -45,7 +45,7 @@
                         <i class="fas fa-plus w-4 ml-2"></i>
                         إضافة مستخدم
                     </a>
-                    <a href="{{ route('admin.agents.index') }}
+                    <a href="{{ route('admin.agents.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-user-tie w-4 ml-2"></i>
                         الوكلاء
@@ -57,6 +57,10 @@
                     <a href="{{ route('investor.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         المستثمرين
+                    </a>
+                    <a href="{{ route('investor.stats.public') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-chart-line w-4 ml-2"></i>
+                        إحصائيات المستثمرين
                     </a>
                 </div>
             </div>
@@ -87,11 +91,13 @@
                         <i class="fas fa-building w-4 ml-2"></i>
                         الشركات
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('projects.index') }}" 
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('projects.*') ? 'bg-emerald-50 text-emerald-600' : '' }}">
                         <i class="fas fa-project-diagram w-4 ml-2"></i>
                         المشاريع
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('properties.search.index') }}" 
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('properties.search.*') ? 'bg-emerald-50 text-emerald-600' : '' }}">
                         <i class="fas fa-search-location w-4 ml-2"></i>
                         بحث متقدم
                     </a>
@@ -168,19 +174,19 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="sales-arrow"></i>
                 </button>
                 <div id="sales-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('leads.dashboard') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-funnel-dollar w-4 ml-2"></i>
                         لوحة العملاء المحتملين
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('leads.pipeline') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-stream w-4 ml-2"></i>
                         خطوات المبيعات
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('lead-scoring.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-sort-amount-up w-4 ml-2"></i>
                         تقييم العملاء
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('lead-conversions.analytics') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-pie w-4 ml-2"></i>
                         تحليلات التحويل
                     </a>
@@ -271,7 +277,7 @@
                         <i class="fas fa-users w-4 ml-2"></i>
                         فرق الصيانة
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('maintenance.reports.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-bar w-4 ml-2"></i>
                         تقارير الصيانة
                     </a>
@@ -346,19 +352,19 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="investment-arrow"></i>
                 </button>
                 <div id="investment-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('investor.stats.public') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-line w-4 ml-2"></i>
                         إحصائيات المستثمرين
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('investor.opportunities.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-lightbulb w-4 ml-2"></i>
                         الفرص
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('investor.funds.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-coins w-4 ml-2"></i>
                         صناديق الاستثمار
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('investor.crowdfunding.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users-cog w-4 ml-2"></i>
                         التمويل الجماعي
                     </a>
@@ -434,19 +440,19 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="analytics-arrow"></i>
                 </button>
                 <div id="analytics-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-microchip w-4 ml-2"></i>
                         رؤى الذكاء الاصطناعي
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('analytics.market.trends') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-globe-americas w-4 ml-2"></i>
                         اتجاهات السوق
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('analytics.behavior.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-user-check w-4 ml-2"></i>
                         سلوك المستخدمين
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('analytics.heatmap.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-fire w-4 ml-2"></i>
                         الخرائط الحرارية
                     </a>
@@ -493,15 +499,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="metaverse-arrow"></i>
                 </button>
                 <div id="metaverse-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.metaverse.properties') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-globe w-4 ml-2"></i>
                         العقارات الافتراضية
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.metaverse.marketplace') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-shopping-cart w-4 ml-2"></i>
                         السوق الافتراضي
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.metaverse.nft') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-certificate w-4 ml-2"></i>
                         سجل NFT
                     </a>
@@ -519,15 +525,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="geospatial-arrow"></i>
                 </button>
                 <div id="geospatial-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.geospatial.analysis') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-area w-4 ml-2"></i>
                         التحليلات المكانية
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.geospatial.security') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-shield-alt w-4 ml-2"></i>
                         مقاييس الأمان
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.geospatial.intelligence') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-satellite w-4 ml-2"></i>
                         الاستخبارات المكانية
                     </a>
@@ -545,15 +551,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="legal-arrow"></i>
                 </button>
                 <div id="legal-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.legal.compliance') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-check-shield w-4 ml-2"></i>
                         تدقيق الامتثال
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.legal.notary') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-stamp w-4 ml-2"></i>
                         الكاتب العدل المركزي
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('blockchain.legal.signatures') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-pen-nib w-4 ml-2"></i>
                         التوقيعات الإلكترونية
                     </a>
@@ -571,7 +577,7 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="human-capital-arrow"></i>
                 </button>
                 <div id="human-capital-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="{{ route('agents.performance', ['agent' => 1]) }}"
+                    <a href="{{ route('agents.performance') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-pie w-4 ml-2"></i>
                         الأداء
@@ -600,7 +606,7 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="tax-arrow"></i>
                 </button>
                 <div id="tax-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="{{ route('taxes.filing.index') }}"
+                    <a href="{{ route('taxes.filing') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-file-export w-4 ml-2"></i>
                         تقديم الضرائب
@@ -629,15 +635,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="bigdata-arrow"></i>
                 </button>
                 <div id="bigdata-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('bigdata.predictive-ai') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-microchip w-4 ml-2"></i>
                         الذكاء الاصطناعي التنبؤي
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('bigdata.heatmaps') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-fire w-4 ml-2"></i>
                         الخرائط الحرارية
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('bigdata.sentiment-analysis') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-comment-dots w-4 ml-2"></i>
                         تحليل المشاعر
                     </a>
@@ -655,15 +661,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="defi-arrow"></i>
                 </button>
                 <div id="defi-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('defi.crowdfunding.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users w-4 ml-2"></i>
                         التمويل الجماعي
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('defi.loans.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         قروض DeFi
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('defi.risk-assessment.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-exclamation-circle w-4 ml-2"></i>
                         تقييم المخاطر
                     </a>
@@ -681,15 +687,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="developer-arrow"></i>
                 </button>
                 <div id="developer-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('developer.bim.models') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('developer.bim.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-cube w-4 ml-2"></i>
                         نماذج BIM
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('developer.construction') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('developer.construction') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-tools w-4 ml-2"></i>
                         البناء
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('developer.permits.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('developer.permits.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-file-signature w-4 ml-2"></i>
                         التصاريح
                     </a>
@@ -707,15 +713,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="ai-arrow"></i>
                 </button>
                 <div id="ai-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.price.prediction') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('ai.price.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-crystal-ball w-4 ml-2"></i>
                         متوقع الأسعار
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.fraud.detection') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('ai.fraud.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-user-secret w-4 ml-2"></i>
                         كشف الاحتيال
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.virtual.reality') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('ai.virtual.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-vr-cardboard w-4 ml-2"></i>
                         العرض الافتراضي
                     </a>
@@ -733,15 +739,15 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="supreme-cms-arrow"></i>
                 </button>
                 <div id="supreme-cms-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('cms.blog.network') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('cms.blog.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-blog w-4 ml-2"></i>
                         شبكة المدونات
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('cms.menu.builder') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('cms.menu.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-bars w-4 ml-2"></i>
                         منشئ القوائم
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('cms.media.library') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('cms.media.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-photo-video w-4 ml-2"></i>
                         المكتبة الوسائطية
                     </a>
@@ -798,11 +804,11 @@
                         <i class="fas fa-cog w-4 ml-2"></i>
                         إعدادات SEO العامة
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('marketing.campaigns') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('marketing.campaigns') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-ad w-4 ml-2"></i>
                         الحملات الإعلانية
                     </a>
-                    <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('marketing.reviews') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('marketing.reviews') ? 'bg-blue-50 text-blue-600' : '' }}">
                         <i class="fas fa-star w-4 ml-2"></i>
                         مركز التقييمات
                     </a>
@@ -839,6 +845,11 @@
                     <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-bitcoin w-4 ml-2"></i>
                         العملات الرقمية
+                    </a>
+                    <a href="{{ route('orders.index') }}" 
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('orders.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-shopping-bag w-4 ml-2"></i>
+                        طلباتي
                     </a>
                 </div>
             </div>
@@ -918,23 +929,81 @@
         </div>
     </nav>
 
-    <!-- User Profile -->
-    <div class="absolute bottom-0 w-full p-4 border-t border-gray-200">
-        <div class="flex items-center">
-            <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-full p-2 mr-3">
-                <i class="fas fa-user text-white text-sm"></i>
-            </div>
-            <div class="flex-1">
-                <p class="text-sm font-medium text-gray-800">{{ auth()->user()->name }}</p>
-                <p class="text-xs text-gray-500">{{ auth()->user()->user_type }}</p>
+    <!-- User Profile Section -->
+    <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 shadow-lg" style="position: relative;">
+        <!-- Profile Info -->
+        <div class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer group">
+            <div class="flex items-center space-x-3">
+                <!-- Avatar with status indicator -->
+                <div class="relative">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-3 shadow-md group-hover:shadow-lg transition-all duration-300 transform group-hover:scale-105">
+                        <i class="fas fa-user text-white text-base"></i>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></div>
+                </div>
+                
+                <!-- User Details -->
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors duration-200">
+                        {{ auth()->user()->name }}
+                    </p>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="fas fa-shield-alt ml-1"></i>
+                            {{ auth()->user()->user_type ?? 'Admin' }}
+                        </span>
+                        <span class="text-xs text-gray-500">
+                            <i class="fas fa-clock ml-1"></i>
+                            {{ now()->format('h:i A') }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Expand/Collapse Arrow -->
+                <div class="ml-2">
+                    <i class="fas fa-chevron-up text-gray-400 group-hover:text-gray-600 transition-all duration-200 transform group-hover:rotate-180"></i>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="mt-auto p-4 border-t border-gray-200">
-        <a href="{{ route('logout') }}" class="flex items-center p-3 rounded-lg hover:bg-red-50 transition-colors text-red-600 group">
-            <i class="fas fa-sign-out-alt w-5 ml-3"></i>
-            <span class="font-medium">تسجيل الخروج</span>
-        </a>
+        
+        <!-- Quick Actions -->
+        <div class="px-4 pb-3 space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+                <button class="flex flex-col items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
+                    <i class="fas fa-user-cog text-sm mb-1"></i>
+                    <span class="text-xs">الملف</span>
+                </button>
+                <button class="flex flex-col items-center p-2 rounded-lg bg-gray-50 hover:bg-green-50 hover:text-green-600 transition-all duration-200 group">
+                    <i class="fas fa-cog text-sm mb-1"></i>
+                    <span class="text-xs">الإعدادات</span>
+                </button>
+                <button class="flex flex-col items-center p-2 rounded-lg bg-gray-50 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 group">
+                    <i class="fas fa-bell text-sm mb-1"></i>
+                    <span class="text-xs">التنبيهات</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Logout Button -->
+        <div class="border-t border-gray-100">
+            <form method="POST" action="{{ route('logout') }}" class="m-0">
+                @csrf
+                <button type="submit" class="w-full flex items-center justify-between p-4 hover:bg-red-50 transition-all duration-200 group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center group-hover:bg-red-200 transition-colors duration-200">
+                            <i class="fas fa-sign-out-alt text-red-600 text-sm"></i>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-medium text-red-600 block">تسجيل الخروج</span>
+                            <span class="text-xs text-gray-500 group-hover:text-red-400 transition-colors duration-200">
+                                تسجيل الخروج من النظام
+                            </span>
+                        </div>
+                    </div>
+                    <i class="fas fa-arrow-left text-red-400 group-hover:text-red-600 transition-all duration-200 transform group-hover:translate-x-1"></i>
+                </button>
+            </form>
+        </div>
     </div>
 </aside>
 

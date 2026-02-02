@@ -13,7 +13,7 @@
                         <i class="fas fa-arrow-left"></i>
                     </a>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">{{ $otherUser->name }}</h1>
+                        <h1 class="text-2xl font-bold text-gray-800">{{ $otherUser->full_name }}</h1>
                         <p class="text-gray-600">{{ $otherUser->status ?? 'Active' }}</p>
                     </div>
                 </div>
@@ -172,7 +172,7 @@
                             </div>
                         @endif
                         <div>
-                            <p class="font-medium text-gray-900">{{ $otherUser->name }}</p>
+                            <p class="font-medium text-gray-900">{{ $otherUser->full_name }}</p>
                             <p class="text-sm text-gray-600">{{ $otherUser->email }}</p>
                         </div>
                     </div>

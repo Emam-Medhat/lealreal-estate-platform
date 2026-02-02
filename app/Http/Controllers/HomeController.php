@@ -8,6 +8,13 @@ class HomeController extends Controller
 {
     public function index()
     {
+        // Check if user is authenticated
+        if (auth()->check()) {
+            // Redirect authenticated users to dashboard
+            return redirect()->route('dashboard');
+        }
+
+        // For non-authenticated users, show landing page
         // Get featured properties for home page - show all active properties
         $featuredProperties = Property::where('status', 'active')
             ->with(['media', 'propertyType'])

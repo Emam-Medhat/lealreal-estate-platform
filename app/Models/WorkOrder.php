@@ -63,6 +63,16 @@ class WorkOrder extends Model
         return $this->belongsTo(MaintenanceRequest::class);
     }
 
+    public function property()
+    {
+        return $this->belongsTo(Property::class);
+    }
+
+    public function serviceProvider()
+    {
+        return $this->belongsTo(ServiceProvider::class, 'service_provider_id');
+    }
+
     public function assignedTo()
     {
         return $this->belongsTo(User::class, 'assigned_to');

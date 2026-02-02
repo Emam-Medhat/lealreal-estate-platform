@@ -19,7 +19,34 @@ class TaxReportController extends Controller
 
     public function index()
     {
-        return view('taxes.reports.index');
+        $taxes = Tax::with(['creator'])
+            ->when(request()->type, function($query, $type) {
+                $query->where('type', $type);
+            })
+            ->when(request()->is_active, function($query, $isActive) {
+                $query->where('is_active', $isActive);
+            })
+            ->when(request()->date_from, function($query, $dateFrom) {
+                $query->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when(request()->date_to, function($query, $dateTo) {
+                $query->whereDate('created_at', '<=', $dateTo);
+            })
+            ->latest()
+            ->paginate(20);
+
+        $totalTaxes = Tax::count();
+        $activeTaxes = Tax::where('is_active', true)->count();
+        $inactiveTaxes = Tax::where('is_active', false)->count();
+        $propertyTaxes = Tax::where('type', 'property')->count();
+
+        return view('taxes.reports', compact(
+            'taxes',
+            'totalTaxes',
+            'activeTaxes',
+            'inactiveTaxes',
+            'propertyTaxes'
+        ));
     }
 
     public function collectionReport(Request $request)

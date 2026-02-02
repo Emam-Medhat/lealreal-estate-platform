@@ -8,6 +8,7 @@ use App\Models\Agent;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Models\Investor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -122,17 +123,22 @@ class DashboardController extends Controller
                 'total_properties' => Property::count(),
                 'total_agents' => Agent::count(),
                 'total_companies' => Company::count(),
-                'total_projects' => Project::count(),
-                'total_tasks' => ProjectTask::count(),
+                'total_projects' => $this->safeCount('Project'),
+                'total_tasks' => $this->safeCount('ProjectTask'),
+                'total_investors' => Investor::count(),
                 'new_users_today' => User::whereDate('created_at', today())->count(),
                 'new_properties_today' => Property::whereDate('created_at', today())->count(),
+                'new_investors_today' => Investor::whereDate('created_at', today())->count(),
+                'new_companies_today' => Company::whereDate('created_at', today())->count(),
+                'total_revenue' => 0, // Will be calculated later
+                'revenue_today' => 0, // Will be calculated later
             ],
             
             // Recent activity
             'recent_users' => User::latest()->take(5)->get(),
             'recent_properties' => Property::latest()->take(5)->get(),
-            'recent_projects' => Project::latest()->take(5)->get(),
-            'recent_tasks' => ProjectTask::latest()->take(5)->get(),
+            'recent_projects' => $this->safeGet('Project', 5),
+            'recent_tasks' => $this->safeGet('ProjectTask', 5),
             
             // Quick links and controls
             'quick_links' => [
@@ -213,5 +219,37 @@ class DashboardController extends Controller
         }
 
         return $stats;
+    }
+
+    /**
+     * Safely count records from a table that might not exist
+     */
+    private function safeCount($model)
+    {
+        try {
+            $modelClass = "App\\Models\\{$model}";
+            if (class_exists($modelClass)) {
+                return $modelClass::count();
+            }
+        } catch (\Exception $e) {
+            // Table doesn't exist or other database error
+        }
+        return 0;
+    }
+
+    /**
+     * Safely get records from a table that might not exist
+     */
+    private function safeGet($model, $limit = 5)
+    {
+        try {
+            $modelClass = "App\\Models\\{$model}";
+            if (class_exists($modelClass)) {
+                return $modelClass::latest()->take($limit)->get();
+            }
+        } catch (\Exception $e) {
+            // Table doesn't exist or other database error
+        }
+        return collect();
     }
 }

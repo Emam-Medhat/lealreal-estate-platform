@@ -226,4 +226,39 @@ class TaxController extends Controller
 
         return response()->json($stats);
     }
+
+    /**
+     * Display tax reports page.
+     */
+    public function reports(Request $request)
+    {
+        $taxes = Tax::with(['property', 'owner'])
+            ->when($request->type, function($query, $type) {
+                $query->where('type', $type);
+            })
+            ->when($request->status, function($query, $status) {
+                $query->where('status', $status);
+            })
+            ->when($request->date_from, function($query, $dateFrom) {
+                $query->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($request->date_to, function($query, $dateTo) {
+                $query->whereDate('created_at', '<=', $dateTo);
+            })
+            ->latest()
+            ->paginate(20);
+
+        $totalAmount = Tax::sum('amount');
+        $paidAmount = Tax::where('status', 'paid')->sum('amount');
+        $pendingAmount = Tax::where('status', 'pending')->sum('amount');
+        $overdueAmount = Tax::where('status', 'overdue')->sum('amount');
+
+        return view('taxes.reports', compact(
+            'taxes',
+            'totalAmount',
+            'paidAmount',
+            'pendingAmount',
+            'overdueAmount'
+        ));
+    }
 }

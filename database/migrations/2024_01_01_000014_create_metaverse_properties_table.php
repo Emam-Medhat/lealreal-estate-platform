@@ -72,7 +72,6 @@ return new class extends Migration
 
             // Regular index for search (SQLite doesn't support index)
             $table->index('title');
-            $table->index('description');
         });
     }
 

@@ -71,7 +71,7 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET" action="{{ route('auctions.index') }}" class="space-y-4">
+        <form method="GET" action="{{ route('messages.auctions.index') }}" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
@@ -168,21 +168,21 @@
                     
                     <!-- Actions -->
                     <div class="space-y-2">
-                        <a href="{{ route('auctions.show', $auction->id) }}" 
+                        <a href="{{ route('messages.auctions.show', $auction->id) }}" 
                            class="w-full block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                             View Auction
                         </a>
                         
                         @if ($auction->isActive() && auth()->user() && $auction->canUserParticipate(auth()->user()))
                             @if (!$auction->isUserParticipant(auth()->user()))
-                                <form action="{{ route('auctions.join', $auction->id) }}" method="POST">
+                                <form action="{{ route('messages.auctions.join', $auction->id) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                                         Join Auction
                                     </button>
                                 </form>
                             @else
-                                <a href="{{ route('auctions.bid', $auction->id) }}" 
+                                <a href="{{ route('messages.auctions.bid', $auction->id) }}" 
                                    class="w-full block text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
                                     Place Bid
                                 </a>

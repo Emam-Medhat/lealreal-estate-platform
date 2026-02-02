@@ -27,7 +27,7 @@ class LeadStatus extends Model
 
     public function leads(): HasMany
     {
-        return $this->hasMany(Lead::class);
+        return $this->hasMany(Lead::class, 'status_id');
     }
 
     public function scopeActive($query)
