@@ -21,7 +21,11 @@ class InvestorController extends Controller
                 $query->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('company_name', 'like', "%{$search}%");
+                    ->orWhere('company_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('full_name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%");
+                    });
             })
             ->when($request->status, function ($query, $status) {
                 $query->where('status', $status);
@@ -50,48 +54,55 @@ class InvestorController extends Controller
 
     public function store(StoreInvestorRequest $request)
     {
-        $investor = Investor::create([
-            'user_id' => Auth::id(),
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'company_name' => $request->company_name,
-            'investor_type' => $request->investor_type,
-            'status' => $request->status ?? 'active',
-            'total_invested' => (float) ($request->total_invested ?? 0),
-            'total_returns' => (float) ($request->total_returns ?? 0),
-            'risk_tolerance' => $request->risk_tolerance,
-            'investment_goals' => $request->investment_goals ?? [],
-            'preferred_sectors' => $request->preferred_sectors ?? [],
-            'experience_years' => $request->experience_years,
-            'accredited_investor' => $request->accredited_investor ?? false,
-            'verification_status' => $request->verification_status ?? 'pending',
-            'address' => $request->address ?? [],
-            'social_links' => $request->social_links ?? [],
-            'bio' => $request->bio,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ]);
+        try {
+            $investor = Investor::create([
+                'user_id' => Auth::id(),
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'company_name' => $request->company_name,
+                'investor_type' => $request->investor_type,
+                'status' => $request->status ?? 'active',
+                'total_invested' => (float) ($request->total_invested ?? 0),
+                'total_returns' => (float) ($request->total_returns ?? 0),
+                'risk_tolerance' => $request->risk_tolerance,
+                'investment_goals' => $request->investment_goals ?? [],
+                'preferred_sectors' => $request->preferred_sectors ?? [],
+                'experience_years' => $request->experience_years,
+                'accredited_investor' => $request->accredited_investor ?? false,
+                'verification_status' => $request->verification_status ?? 'pending',
+                'address' => $request->address ?? [],
+                'social_links' => $request->social_links ?? [],
+                'bio' => $request->bio,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
 
-        // Refresh the model to get the correct relationships
-        $investor->refresh();
+            // Refresh the model to get the correct relationships
+            $investor->refresh();
 
-        // Handle profile picture upload
-        if ($request->hasFile('profile_picture')) {
-            $picturePath = $request->file('profile_picture')->store('investor-pictures', 'public');
-            $investor->update(['profile_picture' => $picturePath]);
+            // Handle profile picture upload
+            if ($request->hasFile('profile_picture')) {
+                $picturePath = $request->file('profile_picture')->store('investor-pictures', 'public');
+                $investor->update(['profile_picture' => $picturePath]);
+            }
+
+            UserActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'created_investor',
+                'description' => "Created investor: {$investor->first_name} {$investor->last_name}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            return redirect()->route('investors.show', $investor)
+                ->with('success', 'Investor created successfully.');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create investor: ' . $e->getMessage());
         }
-
-        UserActivityLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'created_investor',
-            'description' => "Created investor: {$investor->first_name} {$investor->last_name}",
-            'ip_address' => $request->ip(),
-        ]);
-
-        return redirect()->route('investor.show', $investor)
-            ->with('success', 'Investor created successfully.');
     }
 
     public function show(Investor $investor)
@@ -152,7 +163,7 @@ class InvestorController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return redirect()->route('investor.show', $investor)
+        return redirect()->route('investors.show', $investor)
             ->with('success', 'Investor updated successfully.');
     }
 
@@ -176,7 +187,7 @@ class InvestorController extends Controller
             'ip_address' => request()->ip(),
         ]);
 
-        return redirect()->route('investor.index')
+        return redirect()->route('investors.index')
             ->with('success', 'Investor deleted successfully.');
     }
 

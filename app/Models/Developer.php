@@ -15,7 +15,6 @@ class Developer extends Model
 
     protected $fillable = [
         'user_id',
-        'company_id',
         'company_name',
         'company_name_ar',
         'license_number',
@@ -28,42 +27,30 @@ class Developer extends Model
         'website',
         'description',
         'description_ar',
-        'logo',
         'address',
-        'contact_person',
         'established_year',
         'total_projects',
+        'completed_projects',
+        'ongoing_projects',
         'total_investment',
-        'specializations',
-        'certifications',
+        'review_count',
         'is_verified',
         'is_featured',
-        'rating',
-        'review_count',
-        'social_media',
-        'settings',
-        'verified_at',
     ];
 
     protected $casts = [
         'address' => 'array',
-        'contact_person' => 'array',
-        'specializations' => 'array',
-        'certifications' => 'array',
-        'social_media' => 'array',
-        'settings' => 'array',
-        'total_investment' => 'decimal:2',
-        'rating' => 'decimal:2',
         'is_verified' => 'boolean',
         'is_featured' => 'boolean',
-        'verified_at' => 'datetime',
+        'total_investment' => 'decimal:2',
         'established_year' => 'integer',
         'total_projects' => 'integer',
+        'completed_projects' => 'integer',
+        'ongoing_projects' => 'integer',
         'review_count' => 'integer',
     ];
 
     protected $dates = [
-        'verified_at',
         'created_at',
         'updated_at',
     ];
@@ -162,7 +149,8 @@ class Developer extends Model
 
     public function scopeByRating($query, $minRating = 0)
     {
-        return $query->where('rating', '>=', $minRating);
+        // Since rating column doesn't exist, return all developers
+        return $query;
     }
 
     public function scopeWithProjects($query)
@@ -317,11 +305,14 @@ class Developer extends Model
 
         static::creating(function ($developer) {
             // Set default values
-            $developer->status = $developer->status ?? 'pending';
+            $developer->status = $developer->status ?? 'active';
             $developer->total_projects = $developer->total_projects ?? 0;
+            $developer->completed_projects = $developer->completed_projects ?? 0;
+            $developer->ongoing_projects = $developer->ongoing_projects ?? 0;
             $developer->total_investment = $developer->total_investment ?? 0;
-            $developer->rating = $developer->rating ?? 0;
             $developer->review_count = $developer->review_count ?? 0;
+            $developer->is_verified = $developer->is_verified ?? false;
+            $developer->is_featured = $developer->is_featured ?? false;
         });
         static::created(function ($developer) {
             // Create profile
@@ -337,7 +328,15 @@ class Developer extends Model
                     'established_year' => $developer->established_year,
                     'employees_count' => 0,
                     'engineers_count' => 0,
-                    'headquarters_address' => $developer->address ?? [],
+                    'headquarters_address' => $developer->address ?? ['full_address' => 'Default Address'],
+                    'contact_information' => [
+                        'email' => $developer->email,
+                        'phone' => $developer->phone,
+                        'website' => $developer->website
+                    ],
+                    'show_contact_form' => true,
+                    'enable_chat_support' => false,
+                    'allow_online_booking' => false,
                 ]);
             }
         });

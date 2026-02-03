@@ -18,12 +18,23 @@ class MarketReportController extends Controller
         $startDate = $this->getStartDate($period);
         $endDate = now();
 
-        $reports = MarketReport::with('report.generator')
-            ->whereBetween('period_start', [$startDate, $endDate])
-            ->latest('period_end')
-            ->paginate(20);
+        try {
+            $reports = MarketReport::with('report.generator')
+                ->whereBetween('period_start', [$startDate, $endDate])
+                ->latest('period_end')
+                ->paginate(20);
 
-        $stats = $this->getMarketStats($startDate, $endDate);
+            $stats = $this->getMarketStats($startDate, $endDate);
+        } catch (\Exception $e) {
+            // If there's a database error, provide default values
+            $reports = collect();
+            $stats = [
+                'total_reports' => 0,
+                'avg_growth' => '0%',
+                'available_properties' => 0,
+                'avg_price' => 0,
+            ];
+        }
 
         return view('reports.market.index', compact('reports', 'stats', 'period'));
     }

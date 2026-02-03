@@ -93,6 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/lead-conversions/{conversion}/edit', [LeadConversionController::class, 'edit'])->name('lead-conversions.edit');
     Route::put('/lead-conversions/{conversion}', [LeadConversionController::class, 'update'])->name('lead-conversions.update');
     Route::delete('/lead-conversions/{conversion}', [LeadConversionController::class, 'destroy'])->name('lead-conversions.destroy');
+    Route::get('/lead-conversions/export', [LeadConversionController::class, 'export'])->name('lead-conversions.export');
 
     // Lead Campaigns
     Route::get('/lead-campaigns', [LeadCampaignController::class, 'index'])->name('lead-campaigns.index');

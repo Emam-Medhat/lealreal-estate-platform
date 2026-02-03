@@ -70,7 +70,7 @@ class MaintenanceController extends Controller
     {
         $properties = \App\Models\Property::all();
         $serviceProviders = ServiceProvider::where('is_active', true)->get();
-        $maintenanceTeams = MaintenanceTeam::where('is_active', true)->get();
+        $maintenanceTeams = MaintenanceTeam::where('status', 'active')->get();
 
         return view('maintenance.create', compact('properties', 'serviceProviders', 'maintenanceTeams'));
     }
@@ -123,7 +123,7 @@ class MaintenanceController extends Controller
     {
         $properties = \App\Models\Property::all();
         $serviceProviders = ServiceProvider::where('is_active', true)->get();
-        $maintenanceTeams = MaintenanceTeam::where('is_active', true)->get();
+        $maintenanceTeams = MaintenanceTeam::where('status', 'active')->get();
 
         return view('maintenance.edit', compact('maintenance', 'properties', 'serviceProviders', 'maintenanceTeams'));
     }
@@ -329,7 +329,7 @@ class MaintenanceController extends Controller
     {
         $properties = \App\Models\Property::where('status', 'active')->get();
         $serviceProviders = ServiceProvider::where('is_active', true)->get();
-        $teams = MaintenanceTeam::where('is_active', true)->get();
+        $teams = MaintenanceTeam::where('status', 'active')->get();
 
         return view('maintenance.schedule.create', compact('properties', 'serviceProviders', 'teams'));
     }
@@ -364,7 +364,7 @@ class MaintenanceController extends Controller
     {
         $properties = \App\Models\Property::where('status', 'active')->get();
         $serviceProviders = ServiceProvider::where('is_active', true)->get();
-        $teams = MaintenanceTeam::where('is_active', true)->get();
+        $teams = MaintenanceTeam::where('status', 'active')->get();
 
         return view('maintenance.schedule.edit', compact('schedule', 'properties', 'serviceProviders', 'teams'));
     }
@@ -411,7 +411,7 @@ class MaintenanceController extends Controller
     {
         $properties = \App\Models\Property::where('status', 'active')->get();
         $serviceProviders = ServiceProvider::where('is_active', true)->get();
-        $teams = MaintenanceTeam::where('is_active', true)->get();
+        $teams = MaintenanceTeam::where('status', 'active')->get();
         $maintenanceRequests = MaintenanceRequest::where('status', 'approved')->get();
 
         return view('maintenance.workorders.create', compact('properties', 'serviceProviders', 'teams', 'maintenanceRequests'));
@@ -468,7 +468,7 @@ class MaintenanceController extends Controller
     {
         $properties = \App\Models\Property::where('status', 'active')->get();
         $serviceProviders = ServiceProvider::where('is_active', true)->get();
-        $teams = MaintenanceTeam::where('is_active', true)->get();
+        $teams = MaintenanceTeam::where('status', 'active')->get();
         $maintenanceRequests = MaintenanceRequest::where('status', 'approved')->get();
 
         return view('maintenance.workorders.edit', compact('workOrder', 'properties', 'serviceProviders', 'teams', 'maintenanceRequests'));
@@ -825,10 +825,10 @@ class MaintenanceController extends Controller
     public function teamToggleStatus(MaintenanceTeam $team)
     {
         $team->update([
-            'is_active' => !$team->is_active,
+            'status' => $team->status === 'active' ? 'inactive' : 'active',
         ]);
 
-        $status = $team->is_active ? 'activated' : 'deactivated';
+        $status = $team->status === 'active' ? 'activated' : 'deactivated';
         return redirect()->back()->with("success", "Team {$status} successfully.");
     }
 
@@ -852,6 +852,11 @@ class MaintenanceController extends Controller
     }
 
     // Maintenance Reports Methods
+    public function reports()
+    {
+        return redirect()->route('maintenance.reports.index');
+    }
+
     public function reportsIndex()
     {
         return view('maintenance.reports.index');
@@ -882,7 +887,7 @@ class MaintenanceController extends Controller
 
         $stats = [
             'total_teams' => MaintenanceTeam::count(),
-            'active_teams' => MaintenanceTeam::where('is_active', true)->count(),
+            'active_teams' => MaintenanceTeam::where('status', 'active')->count(),
             'total_members' => MaintenanceTeam::withCount('members')->get()->sum('members_count'),
             'total_workorders' => WorkOrder::whereNotNull('assigned_team_id')->count(),
         ];

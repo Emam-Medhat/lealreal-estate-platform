@@ -16,7 +16,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <span class="text-sm text-blue-100"><?php echo e(now()->format('M j, Y H:i')); ?></span>
-                    <button onclick="refreshDashboard()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors">
+                    <button onclick="refreshDashboard()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors" style="color:red !important">
                         <i class="fas fa-sync-alt mr-2"></i>
                         تحديث
                     </button>

@@ -294,12 +294,12 @@ class User extends Authenticatable
 
     public function properties(): HasMany
     {
-        return $this->hasMany(Property::class);
+        return $this->hasMany(Property::class, 'agent_id');
     }
 
     public function reviews(): HasMany
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(Review::class, 'agent_id');
     }
 
     public function savedProperties(): HasMany

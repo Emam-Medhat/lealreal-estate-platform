@@ -46,13 +46,15 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                    <select name="position" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Positions</option>
-                        <option value="header" {{ request('position') == 'header' ? 'selected' : '' }}>Header</option>
-                        <option value="sidebar" {{ request('position') == 'sidebar' ? 'selected' : '' }}>Sidebar</option>
-                        <option value="content" {{ request('position') == 'content' ? 'selected' : '' }}>Content</option>
-                        <option value="footer" {{ request('position') == 'footer' ? 'selected' : '' }}>Footer</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <select name="location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Locations</option>
+                        <option value="header" {{ request('location') == 'header' ? 'selected' : '' }}>Header</option>
+                        <option value="sidebar_left" {{ request('location') == 'sidebar_left' ? 'selected' : '' }}>Sidebar Left</option>
+                        <option value="sidebar_right" {{ request('location') == 'sidebar_right' ? 'selected' : '' }}>Sidebar Right</option>
+                        <option value="footer" {{ request('location') == 'footer' ? 'selected' : '' }}>Footer</option>
+                        <option value="content_top" {{ request('location') == 'content_top' ? 'selected' : '' }}>Content Top</option>
+                        <option value="content_bottom" {{ request('location') == 'content_bottom' ? 'selected' : '' }}>Content Bottom</option>
                     </select>
                 </div>
                 <div>
@@ -107,7 +109,7 @@
                                         <i class="fas {{ $widget->type === 'text' ? 'fa-font text-blue-600' : ($widget->type === 'image' ? 'fa-image text-green-600' : ($widget->type === 'video' ? 'fa-video text-red-600' : ($widget->type === 'form' ? 'fa-wpforms text-purple-600' : ($widget->type === 'social' ? 'fa-share-alt text-yellow-600' : 'fa-cube text-gray-600')))) }} text-lg"></i>
                                     </div>
                                     <div>
-                                        <h3 class="text-lg font-semibold text-gray-800">{{ $widget->name }}</h3>
+                                        <h3 class="text-lg font-semibold text-gray-800">{{ $widget->title }}</h3>
                                         <p class="text-sm text-gray-500">{{ $widget->type }}</p>
                                     </div>
                                 </div>
@@ -166,7 +168,7 @@
                                 <div class="flex items-center space-x-4">
                                     <span class="text-gray-500">
                                         <i class="fas fa-map-marker-alt mr-1"></i>
-                                        {{ $widget->position }}
+                                        {{ $widget->location }}
                                     </span>
                                     <span class="text-gray-500">
                                         <i class="fas fa-layer-group mr-1"></i>
@@ -231,12 +233,19 @@ function toggleBulkActions() {
 
 function updateSelectedCount() {
     const checkboxes = document.querySelectorAll('.widget-checkbox:checked');
-    document.getElementById('selected-count').textContent = checkboxes.length;
-}
-
-function clearSelection() {
-    document.querySelectorAll('.widget-checkbox').forEach(cb => cb.checked = false);
-    updateSelectedCount();
+    const count = checkboxes.length;
+    const countElement = document.getElementById('selected-count');
+    if (countElement) {
+        countElement.textContent = count;
+    }
+    
+    // Show/hide bulk actions bar
+    const bulkActions = document.getElementById('bulk-actions');
+    if (count > 0) {
+        bulkActions.classList.remove('hidden');
+    } else {
+        bulkActions.classList.add('hidden');
+    }
 }
 
 function bulkActivate() {
@@ -323,21 +332,31 @@ function bulkDelete() {
 }
 
 function toggleWidget(id) {
-    fetch(`/admin/widgets/${id}/toggle`, {
+    // Test the bypass route first
+    fetch(`/admin/widgets/${id}/toggle-test`, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error toggling widget');
+        alert('Error toggling widget: ' + error.message);
     });
 }
 
@@ -346,18 +365,27 @@ function duplicateWidget(id) {
         fetch(`/admin/widgets/${id}/duplicate`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error duplicating widget');
+            alert('Error duplicating widget: ' + error.message);
         });
     }
 }
@@ -367,24 +395,40 @@ function deleteWidget(id) {
         fetch(`/admin/widgets/${id}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error deleting widget');
+            alert('Error deleting widget: ' + error.message);
         });
     }
 }
 
 function closePreviewModal() {
     document.getElementById('preview-modal').classList.add('hidden');
+}
+
+function clearSelection() {
+    document.querySelectorAll('.widget-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateSelectedCount();
 }
 
 // Event listeners

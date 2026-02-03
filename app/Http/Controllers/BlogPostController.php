@@ -21,12 +21,12 @@ class BlogPostController extends Controller
 
     public function index(Request $request): View
     {
-        $posts = BlogPost::with(['category', 'author'])
+        $posts = BlogPost::with(['author'])
             ->when($request->status, function($query, $status) {
                 return $query->where('status', $status);
             })
             ->when($request->category, function($query, $category) {
-                return $query->where('category_id', $category);
+                return $query->where('category', $category);
             })
             ->when($request->search, function($query, $search) {
                 return $query->where('title', 'like', "%{$search}%")
@@ -50,55 +50,201 @@ class BlogPostController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:blog_posts',
-            'content' => 'required',
-            'excerpt' => 'nullable|string|max:500',
-            'category_id' => 'required|exists:blog_categories,id',
-            'tags' => 'array',
-            'tags.*' => 'exists:blog_tags,id',
-            'featured_image' => 'nullable|image|max:2048',
-            'status' => 'required|in:draft,published,archived',
-            'published_at' => 'nullable|date',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-            'is_featured' => 'boolean',
-            'allow_comments' => 'boolean',
+        // Debug: Log the incoming request
+        \Log::info('Blog post creation attempt', [
+            'user_authenticated' => \Auth::check(),
+            'user_id' => \Auth::id(),
+            'request_data' => $request->all(),
+            'method' => $request->method(),
+            'url' => $request->fullUrl()
         ]);
 
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title']);
+        try {
+            // Pre-validation debug
+            \Log::info('Starting validation', [
+                'request_data' => $request->all(),
+                'files' => $request->allFiles(),
+                'method' => $request->method(),
+                'content_length' => strlen($request->input('content', '')),
+                'title_length' => strlen($request->input('title', '')),
+                'category_value' => $request->input('category'),
+            ]);
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'slug' => 'nullable|string|max:255|unique:blog_posts',
+                'content' => 'required',
+                'excerpt' => 'nullable|string|max:500',
+                'category' => 'required|string|exists:blog_categories,slug',
+                'tags' => 'array',
+                'tags.*' => 'exists:blog_tags,id',
+                'featured_image' => 'nullable|image|max:2048',
+                'status' => 'required|in:draft,published,archived',
+                'published_at' => 'nullable|date',
+                'meta_title' => 'nullable|string|max:255',
+                'meta_description' => 'nullable|string|max:500',
+                'is_featured' => 'boolean',
+                'allow_comments' => 'boolean',
+            ]);
+
+            \Log::info('Validation passed successfully', ['validated_data' => $validated]);
+
+            if (empty($validated['slug'])) {
+                $validated['slug'] = Str::slug($validated['title']);
+                \Log::info('Generated slug', ['slug' => $validated['slug']]);
+            }
+
+            $validated['author_id'] = auth()->id();
+            
+            if ($request->hasFile('featured_image')) {
+                $validated['featured_image'] = $request->file('featured_image')->store('blog', 'public');
+                \Log::info('Featured image uploaded', ['path' => $validated['featured_image']]);
+            }
+
+            // Handle boolean fields
+            $validated['is_featured'] = $request->boolean('is_featured', false);
+            $validated['allow_comments'] = $request->boolean('allow_comments', true);
+
+            \Log::info('About to create blog post', ['final_data' => $validated]);
+
+            $post = BlogPost::create($validated);
+            
+            \Log::info('Blog post created successfully', ['post_id' => $post->id]);
+            
+            // Handle tags if they exist and the relationship is set up
+            if (!empty($validated['tags']) && method_exists($post, 'tags')) {
+                try {
+                    $post->tags()->attach($validated['tags']);
+                    \Log::info('Tags attached successfully', ['tags' => $validated['tags']]);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to attach tags to blog post: ' . $e->getMessage());
+                }
+            }
+
+            // Create initial revision if the model exists
+            if (class_exists('App\Models\ContentRevision')) {
+                try {
+                    ContentRevision::create([
+                        'content_type' => 'blog_post',
+                        'content_id' => $post->id,
+                        'content_data' => $post->toArray(),
+                        'author_id' => auth()->id(),
+                        'revision_notes' => 'إنشاء المقال',
+                    ]);
+                    \Log::info('Content revision created');
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to create content revision: ' . $e->getMessage());
+                }
+            }
+
+            \Log::info('Redirecting to index page');
+            return redirect()->route('admin.blog.posts.index')
+                ->with('success', 'تم إنشاء المقال بنجاح');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed with details', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+                'failed_rules' => $e->validator->failed(),
+                'missing_fields' => $this->getMissingRequiredFields($request)
+            ]);
+            
+            // Get all error messages as a flat array
+            $errorMessages = [];
+            foreach ($e->errors() as $field => $messages) {
+                foreach ($messages as $message) {
+                    $errorMessages[] = $message;
+                }
+            }
+            
+            // Log specific field issues
+            $this->logFieldValidationIssues($request);
+            
+            // Validation errors will be automatically flashed to the session
+            return redirect()->back()
+                ->withInput()
+                ->withErrors($e->errors())
+                ->with('error', 'فشل التحقق: ' . implode(', ', $errorMessages));
+        } catch (\Exception $e) {
+            \Log::error('Failed to create blog post: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'فشل إنشاء المقال: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get missing required fields
+     */
+    private function getMissingRequiredFields(Request $request): array
+    {
+        $required = ['title', 'content', 'category', 'status'];
+        $missing = [];
+        
+        foreach ($required as $field) {
+            if (empty($request->input($field))) {
+                $missing[] = $field;
+            }
+        }
+        
+        return $missing;
+    }
+
+    /**
+     * Log specific field validation issues
+     */
+    private function logFieldValidationIssues(Request $request): void
+    {
+        // Check title
+        $title = $request->input('title', '');
+        if (empty($title)) {
+            \Log::error('Title field is empty');
+        } elseif (strlen($title) > 255) {
+            \Log::error('Title too long', ['length' => strlen($title)]);
         }
 
-        $validated['author_id'] = auth()->id();
-        
+        // Check content
+        $content = $request->input('content', '');
+        if (empty($content)) {
+            \Log::error('Content field is empty');
+        }
+
+        // Check category
+        $category = $request->input('category', '');
+        if (empty($category)) {
+            \Log::error('Category field is empty');
+        } else {
+            // Check if category exists in database
+            $categoryExists = \DB::table('blog_categories')->where('slug', $category)->exists();
+            if (!$categoryExists) {
+                \Log::error('Category does not exist', ['category' => $category]);
+            }
+        }
+
+        // Check status
+        $status = $request->input('status', '');
+        if (empty($status)) {
+            \Log::error('Status field is empty');
+        } elseif (!in_array($status, ['draft', 'published', 'archived'])) {
+            \Log::error('Invalid status value', ['status' => $status]);
+        }
+
+        // Check file if uploaded
         if ($request->hasFile('featured_image')) {
-            $validated['featured_image'] = $request->file('featured_image')->store('blog', 'public');
+            $file = $request->file('featured_image');
+            if (!$file->isValid()) {
+                \Log::error('Invalid file upload', ['error' => $file->getErrorMessage()]);
+            }
         }
-
-        $post = BlogPost::create($validated);
-        
-        if (!empty($validated['tags'])) {
-            $post->tags()->attach($validated['tags']);
-        }
-
-        // Create initial revision
-        ContentRevision::create([
-            'content_type' => 'blog_post',
-            'content_id' => $post->id,
-            'content_data' => $post->toArray(),
-            'author_id' => auth()->id(),
-            'revision_notes' => 'إنشاء المقال',
-        ]);
-
-        return redirect()->route('admin.blog-posts.show', $post)
-            ->with('success', 'تم إنشاء المقال بنجاح');
     }
 
     public function show(BlogPost $post): View
     {
-        $post->load(['category', 'tags', 'author', 'revisions' => function($query) {
+        $post->load(['author', 'revisions' => function($query) {
             $query->latest()->limit(10);
         }]);
         

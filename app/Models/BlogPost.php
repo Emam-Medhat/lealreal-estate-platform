@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class BlogPost extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'title',
@@ -20,21 +19,28 @@ class BlogPost extends Model
         'excerpt',
         'content',
         'featured_image',
+        'images',
         'status',
         'published_at',
         'author_id',
-        'category_id',
-        'views',
+        'category',
+        'tags',
+        'view_count',
+        'like_count',
+        'comment_count',
         'is_featured',
-        'allow_comments',
-        'seo_data',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
-        'seo_data' => 'array',
+        'images' => 'array',
+        'tags' => 'array',
         'is_featured' => 'boolean',
-        'allow_comments' => 'boolean',
+        'view_count' => 'integer',
+        'like_count' => 'integer',
+        'comment_count' => 'integer',
     ];
 
     public function author(): BelongsTo
@@ -44,7 +50,7 @@ class BlogPost extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(BlogCategory::class);
+        return $this->belongsTo(BlogCategory::class, 'category', 'slug');
     }
 
     public function tags(): BelongsToMany
@@ -92,7 +98,7 @@ class BlogPost extends Model
 
     public function incrementViews()
     {
-        $this->increment('views');
+        $this->increment('view_count');
     }
 
     public function getReadingTime()

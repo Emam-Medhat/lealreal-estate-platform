@@ -8,7 +8,7 @@
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div class="flex items-center mb-4">
-                <a href="{{ route('investor.show', $investor) }}" class="text-blue-600 hover:text-blue-800 mr-4">
+                <a href="{{ route('investors.show', $investor) }}" class="text-blue-600 hover:text-blue-800 mr-4">
                     <i class="fas fa-arrow-left"></i> Back to Investor
                 </a>
             </div>
@@ -18,7 +18,7 @@
 
         <!-- Form -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <form method="POST" action="{{ route('investor.update', $investor) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('investors.update', $investor) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -197,7 +197,7 @@
                 
                 <!-- Form Actions -->
                 <div class="mt-8 flex justify-end space-x-4">
-                    <a href="{{ route('investor.show', $investor) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <a href="{{ route('investors.show', $investor) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                         Cancel
                     </a>
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">

@@ -90,9 +90,9 @@
                                     {{ $company->created_at->format('M j, Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
-                                    <a href="#" class="text-gray-600 hover:text-gray-900 mr-3">Edit</a>
-                                    <form action="#" method="POST" class="inline">
+                                    <a href="{{ route('admin.companies.show', $company->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                                    <a href="{{ route('admin.companies.edit', $company->id) }}" class="text-gray-600 hover:text-gray-900 mr-3">Edit</a>
+                                    <form action="{{ route('admin.companies.destroy', $company->id) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure?')">Delete</button>

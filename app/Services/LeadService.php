@@ -119,7 +119,7 @@ class LeadService
     public function getActiveStatuses()
     {
         return Cache::remember('active_lead_statuses', 3600, function () {
-            return LeadStatus::active()->orderBy('order')->get();
+            return LeadStatus::where('is_active', 1)->orderBy('order')->get();
         });
     }
 
@@ -131,7 +131,7 @@ class LeadService
     public function getAvailableAgents()
     {
         return Cache::remember('available_agents_for_leads', 3600, function () {
-            return User::whereIn('role', ['agent', 'admin'])->get(['id', 'name', 'email']);
+            return User::whereIn('role', ['agent', 'admin'])->get(['id', 'full_name', 'email']);
         });
     }
 

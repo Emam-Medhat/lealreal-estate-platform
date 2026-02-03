@@ -119,7 +119,7 @@
                                         <option value="">غير محدد</option>
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" {{ old('assigned_to') == $user->id ? 'selected' : '' }}>
-                                                {{ $user->name }}
+                                                {{ $user->full_name }}
                                             </option>
                                         @endforeach
                                     </select>

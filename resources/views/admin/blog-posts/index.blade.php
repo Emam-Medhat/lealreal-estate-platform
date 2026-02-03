@@ -60,7 +60,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">المشاهدات</p>
-                <p class="text-2xl font-bold text-purple-600">{{ App\Models\BlogPost::sum('views') ?? 0 }}</p>
+                <p class="text-2xl font-bold text-purple-600">{{ App\Models\BlogPost::sum('view_count') ?? 0 }}</p>
             </div>
             <div class="bg-purple-100 rounded-full p-3">
                 <i class="fas fa-eye text-purple-600"></i>
@@ -183,7 +183,7 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-1 space-x-reverse text-gray-600">
                                     <i class="fas fa-eye text-sm"></i>
-                                    <span>{{ $post->views ?? 0 }}</span>
+                                    <span>{{ $post->view_count ?? 0 }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">

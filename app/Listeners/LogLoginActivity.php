@@ -28,11 +28,15 @@ class LogLoginActivity
         $userAgent = $request->header('User-Agent');
         $deviceInfo = $this->parseUserAgent($userAgent);
 
+        // Debug: Log the device info to ensure it's correct
+        \Log::info('Device Info:', $deviceInfo);
+
         UserDevice::updateOrCreate([
             'user_id' => $user->id,
             'ip_address' => $request->ip(),
             'device_name' => $deviceInfo['device'],
         ], [
+            'device_type' => $deviceInfo['device_type'] ?? 'desktop', 
             'platform' => $deviceInfo['platform'],
             'browser' => $deviceInfo['browser'],
             'browser_version' => $deviceInfo['browser_version'] ?? null,
@@ -112,6 +116,7 @@ class LogLoginActivity
 
         return [
             'device' => $device,
+            'device_type' => $type,
             'platform' => $platform,
             'browser' => $browser,
             'browser_version' => $browser_version,

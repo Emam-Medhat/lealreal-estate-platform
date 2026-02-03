@@ -71,31 +71,60 @@ class LeadController extends Controller
         return view('leads.create', compact('sources', 'statuses', 'campaigns', 'tags', 'users'));
     }
     
+    private function getStatusName($statusId)
+    {
+        $status = \App\Models\LeadStatus::find($statusId);
+        return $status ? $status->name : 'new';
+    }
+
+    private function getPriorityName($priorityValue)
+    {
+        $priorities = [
+            1 => 'low',
+            2 => 'medium', 
+            3 => 'high'
+        ];
+        
+        return $priorities[$priorityValue] ?? 'medium';
+    }
+
     public function store(StoreLeadRequest $request)
     {
         DB::beginTransaction();
         
         try {
             $lead = Lead::create([
-                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'full_name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'company' => $request->company,
-                'position' => $request->position,
-                'source_id' => $request->source_id,
-                'status_id' => $request->status_id,
-                'campaign_id' => $request->campaign_id,
+                'job_title' => $request->position,
+                'lead_source' => $request->source_id,
+                'lead_status' => $this->getStatusName($request->status_id),
                 'assigned_to' => $request->assigned_to,
-                'priority' => $request->priority,
+                'priority' => $this->getPriorityName($request->priority),
                 'estimated_value' => $request->estimated_value,
-                'expected_close_date' => $request->expected_close_date,
                 'notes' => $request->notes,
                 'created_by' => auth()->id(),
             ]);
             
             // Attach tags
-            if ($request->has('tags')) {
-                $lead->tags()->attach($request->tags);
+            if ($request->filled('tags')) {
+                $tagNames = array_map('trim', explode(',', $request->tags));
+                $tagIds = [];
+                
+                foreach ($tagNames as $tagName) {
+                    if (!empty($tagName)) {
+                        $tag = \App\Models\LeadTag::firstOrCreate(['name' => $tagName]);
+                        $tagIds[] = $tag->id;
+                    }
+                }
+                
+                if (!empty($tagIds)) {
+                    $lead->tags()->attach($tagIds);
+                }
             }
             
             // Create initial activity

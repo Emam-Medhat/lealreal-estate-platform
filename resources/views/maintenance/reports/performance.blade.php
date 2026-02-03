@@ -100,7 +100,7 @@
                                     <div class="text-left">
                                         <span class="badge bg-success">{{ number_format($team->completion_rate, 1) }}%</span>
                                         <br>
-                                        <small class="text-muted">{{ number_format($team->avg_completion_time, 1) } يوم</small>
+                                        <small class="text-muted">{{ number_format($team->avg_completion_time, 1) }} يوم</small>
                                     </div>
                                 </div>
                             @endforeach
@@ -217,26 +217,34 @@
         }
     });
 
+    @php
+    $teamChartData = [];
+    if (isset($teamPerformance)) {
+        $colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'];
+        $teamChartData = $teamPerformance->take(5)->map(function($team, $index) use ($colors) {
+            return [
+                'label' => $team->team_name,
+                'data' => [
+                    $team->completion_rate,
+                    min(100, 100 - ($team->avg_completion_time * 5)),
+                    $team->completion_rate,
+                    min(100, 100 - ($team->avg_cost / 10)),
+                    $team->completion_rate
+                ],
+                'borderColor' => $colors[$index] ?? '#007bff',
+                'backgroundColor' => ($colors[$index] ?? '#007bff') . '0.2'
+            ];
+        })->toArray();
+    }
+    @endphp
+
     // Team Comparison Chart
     const teamCtx = document.getElementById('teamComparisonChart').getContext('2d');
     const teamChart = new Chart(teamCtx, {
         type: 'radar',
         data: {
-            labels: ['معدل الإنجاز', 'سرعة التنفيذ', 'جودة العمل', 'التكلفة', 'الالتزام بالمواعيد'],
-            datasets: @json(isset($teamPerformance) ? $teamPerformance->take(5)->map(function($team, $index) {
-                return [
-                    'label' => $team->team_name,
-                    'data' => [
-                        $team->completion_rate,
-                        min(100, 100 - ($team->avg_completion_time * 5)),
-                        $team->completion_rate,
-                        min(100, 100 - ($team->avg_cost / 10)),
-                        $team->completion_rate
-                    ],
-                    'borderColor' => ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'][$index],
-                    'backgroundColor' => ['rgba(0, 123, 255, 0.2)', 'rgba(40, 167, 69, 0.2)', 'rgba(255, 193, 7, 0.2)', 'rgba(220, 53, 69, 0.2)', 'rgba(111, 66, 193, 0.2)'][$index]
-                ];
-            })->toArray() : [])
+            labels: ['معدل الإنجاز', 'سرعة التنفيذ', 'جودة العمل', 'التكلفة', 'التزام بالمواعيد'],
+            datasets: @json($teamChartData)
         },
         options: {
             responsive: true,

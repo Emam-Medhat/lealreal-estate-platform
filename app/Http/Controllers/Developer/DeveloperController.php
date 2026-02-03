@@ -45,39 +45,59 @@ class DeveloperController extends Controller
 
     public function store(StoreDeveloperRequest $request)
     {
-        $developer = Developer::create([
-            'user_id' => Auth::id(),
-            'company_name' => $request->company_name,
-            'contact_email' => $request->contact_email,
-            'contact_phone' => $request->contact_phone,
-            'website' => $request->website,
-            'developer_type' => $request->developer_type,
-            'establishment_year' => $request->establishment_year,
-            'ceo_name' => $request->ceo_name,
-            'headquarters_address' => $request->headquarters_address,
-            'headquarters_city' => $request->headquarters_city,
-            'headquarters_country' => $request->headquarters_country,
-            'status' => $request->status ?? 'active',
-            'is_verified' => $request->is_verified ?? false,
-            'total_projects' => 0,
-            'completed_projects' => 0,
-            'ongoing_projects' => 0,
-        ]);
+        try {
+            // Debug: Log the request data
+            \Log::info('Developer creation attempt', [
+                'request_data' => $request->all(),
+                'validated_data' => $request->validated()
+            ]);
 
-        UserActivityLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'created_developer',
-            'details' => "Created developer: {$developer->company_name}",
-            'ip_address' => $request->ip(),
-        ]);
+            $developer = Developer::create([
+                'user_id' => Auth::id(),
+                'company_name' => $request->company_name,
+                'license_number' => $request->license_number ?? 'TEMP-' . time(),
+                'commercial_register' => $request->commercial_register ?? 'TEMP-' . time(),
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'website' => $request->website,
+                'developer_type' => $request->developer_type,
+                'established_year' => $request->established_year,
+                'address' => $request->address ? ['full_address' => $request->address] : null,
+                'status' => $request->status ?? 'active',
+                'is_verified' => $request->is_verified ?? false,
+                'total_projects' => 0,
+                'completed_projects' => 0,
+                'ongoing_projects' => 0,
+            ]);
 
-        return redirect()->route('developer.show', $developer)
-            ->with('success', 'Developer created successfully.');
+            \Log::info('Developer created successfully', ['developer_id' => $developer->id]);
+
+            UserActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'created_developer',
+                'description' => "Created developer: {$developer->company_name}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            return redirect()->route('developer.show', $developer)
+                ->with('success', 'Developer created successfully.');
+
+        } catch (\Exception $e) {
+            \Log::error('Developer creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create developer: ' . $e->getMessage());
+        }
     }
 
     public function show(Developer $developer)
     {
         $developer->load(['profile']);
+
         
         return view('developer.show', compact('developer'));
     }
@@ -118,7 +138,7 @@ class DeveloperController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'updated_developer',
-            'details' => "Updated developer: {$developer->company_name}",
+            'description' => "Updated developer: {$developer->company_name}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -134,7 +154,7 @@ class DeveloperController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'deleted_developer',
-            'details' => "Deleted developer: {$companyName}",
+            'description' => "Deleted developer: {$companyName}",
             'ip_address' => request()->ip(),
         ]);
 
@@ -153,7 +173,7 @@ class DeveloperController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'updated_developer_status',
-            'details' => "Updated developer {$developer->company_name} status to {$request->status}",
+            'description' => "Updated developer {$developer->company_name} status to {$request->status}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -171,7 +191,7 @@ class DeveloperController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'toggled_developer_verification',
-            'details' => ($developer->is_verified ? 'Verified' : 'Unverified') . " developer: {$developer->company_name}",
+            'description' => ($developer->is_verified ? 'Verified' : 'Unverified') . " developer: {$developer->company_name}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -189,7 +209,7 @@ class DeveloperController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'toggled_developer_featured',
-            'details' => ($developer->is_featured ? 'Featured' : 'Unfeatured') . " developer: {$developer->company_name}",
+            'description' => ($developer->is_featured ? 'Featured' : 'Unfeatured') . " developer: {$developer->company_name}",
             'ip_address' => $request->ip(),
         ]);
 

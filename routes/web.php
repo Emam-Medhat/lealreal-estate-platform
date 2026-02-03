@@ -17,7 +17,14 @@ use App\Http\Controllers\OrderController;
 // use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Investor\InvestorController;
+use App\Http\Controllers\Reports\PerformanceReportController;
 use Illuminate\Support\Facades\Route;
+
+// Performance Report Route - Fix the original route
+Route::get('/reports/performance', [PerformanceReportController::class, 'index'])->name('reports.performance.index');
+
+// Market Report Route - Add directly to web.php
+Route::get('/reports/market', [\App\Http\Controllers\Reports\MarketReportController::class, 'index'])->name('reports.market.index');
 
 /*
 |--------------------------------------------------------------------------
@@ -283,6 +290,9 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
 
     // Analytics Routes
     Route::get('/analytics/dashboard', [AnalyticsController::class, 'dashboard'])->name('analytics.dashboard');
+    Route::get('/analytics/overview', [AnalyticsController::class, 'overview'])->name('analytics.overview');
+    Route::get('/analytics/real-time', [AnalyticsController::class, 'realTime'])->name('analytics.real-time');
+    Route::get('/analytics/reports', [AnalyticsController::class, 'reports'])->name('analytics.reports');
     
     // Extended Analytics Routes
     Route::prefix('analytics')->name('analytics.')->group(function () {
@@ -716,8 +726,8 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
         Route::post('/users/{user}/toggle-status', [App\Http\Controllers\Admin\AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
 
         // Property Management
-        Route::get('/properties', [App\Http\Controllers\Admin\AdminController::class, 'properties'])->name('properties');
-        Route::get('/properties', [App\Http\Controllers\Admin\AdminController::class, 'properties'])->name('properties.index');
+        Route::get('/admin-properties', [App\Http\Controllers\Admin\AdminController::class, 'properties'])->name('admin.properties');
+        Route::get('/admin-properties', [App\Http\Controllers\Admin\AdminController::class, 'properties'])->name('admin.properties.index');
 
         // Company Management
         Route::get('/companies', [App\Http\Controllers\Admin\AdminController::class, 'companies'])->name('companies');
@@ -766,9 +776,13 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
             return redirect()->route('admin.dashboard');
         })->name('projects.index');
 
-        Route::get('/agents', function () {
-            return redirect()->route('admin.dashboard');
-        })->name('agents.index');
+        Route::get('/agents', [App\Http\Controllers\Admin\AdminAgentController::class, 'index'])->name('agents.index');
+        Route::get('/agents/create', [App\Http\Controllers\Admin\AdminAgentController::class, 'create'])->name('agents.create');
+        Route::post('/agents', [App\Http\Controllers\Admin\AdminAgentController::class, 'store'])->name('agents.store');
+        Route::get('/agents/{agent}', [App\Http\Controllers\Admin\AdminAgentController::class, 'show'])->name('agents.show');
+        Route::get('/agents/{agent}/edit', [App\Http\Controllers\Admin\AdminAgentController::class, 'edit'])->name('agents.edit');
+        Route::put('/agents/{agent}', [App\Http\Controllers\Admin\AdminAgentController::class, 'update'])->name('agents.update');
+        Route::delete('/agents/{agent}', [App\Http\Controllers\Admin\AdminAgentController::class, 'destroy'])->name('agents.destroy');
 
         Route::get('/activity', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity');
     });

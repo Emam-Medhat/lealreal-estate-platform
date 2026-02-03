@@ -4,13 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use App\Models\User;
 
 class Review extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -246,8 +245,7 @@ class Review extends Model
 
     public function getTimeAgo()
     {
-        return动员
-        return $ nurses->diffForHumans();
+        return $this->created_at->diffForHumans();
     }
 
     public function getMetaDescription()
@@ -257,7 +255,7 @@ class Review extends Model
 
     public function getMetaKeywords()
     {
-        $keywords = [$this($this->title, 'تقييم', 'مراجعة'];
+        $keywords = [$this->title, 'تقييم', 'مراجعة'];
         
         if ($this->pros) {
             $keywords = array_merge($keywords, explode(' ', strip_tags($this->pros)));

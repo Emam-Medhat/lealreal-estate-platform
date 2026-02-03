@@ -30,6 +30,52 @@
             </div>
         </div>
 
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+                <strong>✅ Success:</strong> {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                <strong>❌ Error:</strong> {{ session('error') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                <strong>⚠️ Please fix the following errors:</strong>
+                <ul class="list-disc list-inside mt-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- Debug Info -->
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+            <strong>🔍 Debug Info:</strong>
+            <ul class="list-disc list-inside mt-2 text-sm">
+                <li>Current URL: {{ url()->current() }}</li>
+                <li>Route: {{ Route::currentRouteName() }}</li>
+                <li>Authenticated: @if(auth()->check()) Yes ({{ auth()->user()->email }}) @else No @endif</li>
+                <li>User ID: @if(auth()->check()) {{ auth()->id() }} @else Not logged in @endif</li>
+                <li>Categories available: {{ $categories->count() ?? 0 }}</li>
+                <li>Tags available: {{ $tags->count() ?? 0 }}</li>
+                <li>Method: {{ request()->method() }}</li>
+            </ul>
+        </div>
+
+        <!-- Console Debug -->
+        <div class="bg-gray-100 border border-gray-400 text-gray-700 px-4 py-3 rounded mb-6">
+            <strong>🖥️ Console Debug:</strong>
+            <div id="console-output" class="mt-2 text-sm font-mono bg-black text-green-400 p-2 rounded max-h-40 overflow-y-auto">
+                Console output will appear here...
+            </div>
+        </div>
+
         <!-- Create Form -->
         <form action="{{ route('admin.blog.posts.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -41,7 +87,7 @@
                     <div class="bg-white rounded-lg shadow-sm p-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Post Title *</label>
                         <input type="text" name="title" value="{{ old('title') }}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                            class="w-full px-3 py-2 border @error('title') border-red-500 @enderror border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
                             placeholder="Enter post title..." required>
                         @error('title')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -52,7 +98,7 @@
                     <div class="bg-white rounded-lg shadow-sm p-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Content *</label>
                         <textarea name="content" rows="20" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2 border @error('content') border-red-500 @enderror border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Write your post content here..." required>{{ old('content') }}</textarea>
                         @error('content')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -122,18 +168,19 @@
 
                     <!-- Categories -->
                     <div class="bg-white rounded-lg shadow-sm p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Categories</h3>
-                        <div class="space-y-2">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Category *</h3>
+                        <select name="category" class="w-full px-3 py-2 border @error('category') border-red-500 @enderror border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <option value="">Select a category</option>
                             @foreach ($categories ?? [] as $category)
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="categories[]" value="{{ $category->id }}" 
-                                        {{ in_array($category->id, old('categories', [])) ? 'checked' : '' }}
-                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">{{ $category->name }}</span>
-                                </label>
+                                <option value="{{ $category->slug }}" {{ old('category') == $category->slug ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
                             @endforeach
-                        </div>
-                        <a href="{{ route('admin.blog.categories.create') }}" class="mt-3 text-blue-600 hover:text-blue-800 text-sm">
+                        </select>
+                        @error('category')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <a href="{{ route('admin.blog.categories.create') }}" class="mt-3 text-blue-600 hover:text-blue-800 text-sm inline-block">
                             <i class="fas fa-plus mr-1"></i>
                             Add New Category
                         </a>
@@ -142,10 +189,24 @@
                     <!-- Tags -->
                     <div class="bg-white rounded-lg shadow-sm p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Tags</h3>
-                        <input type="text" name="tags" value="{{ old('tags') }}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter tags separated by commas">
-                        <p class="mt-1 text-sm text-gray-500">e.g. technology, web development, tutorial</p>
+                        <div class="space-y-2 max-h-40 overflow-y-auto">
+                            @foreach ($tags ?? [] as $tag)
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="tags[]" value="{{ $tag->id }}" 
+                                        {{ in_array($tag->id, old('tags', [])) ? 'checked' : '' }}
+                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-700">{{ $tag->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @if($tags->count() === 0)
+                            <p class="text-sm text-gray-500">No tags available</p>
+                        @else
+                            <p class="mt-2 text-sm text-gray-500">Select relevant tags for this post</p>
+                        @endif
+                        @error('tags')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- SEO Settings -->
@@ -203,7 +264,158 @@
 </div>
 
 <script>
+// Console Debug Function
+function logToConsole(message, type = 'info') {
+    const consoleOutput = document.getElementById('console-output');
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'error' ? '#ff6b6b' : type === 'warning' ? '#feca57' : '#48dbfb';
+    
+    consoleOutput.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    
+    // Also log to browser console
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+// Initialize console
+logToConsole('Debug console initialized', 'info');
+logToConsole('Current page: {{ url()->current() }}', 'info');
+
+// Form submission debugging
+document.querySelector('form').addEventListener('submit', function(e) {
+    logToConsole('Form submission started...', 'info');
+    
+    const formData = new FormData(this);
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+        logToConsole(`${key}: ${value}`, 'info');
+    }
+    
+    // Check required fields specifically
+    const requiredFields = ['title', 'content', 'category', 'status'];
+    let missingFields = [];
+    
+    requiredFields.forEach(field => {
+        if (!data[field] || data[field].trim() === '') {
+            missingFields.push(field);
+            logToConsole(`❌ MISSING REQUIRED FIELD: ${field}`, 'error');
+        } else {
+            logToConsole(`✅ Field OK: ${field} = "${data[field]}"`, 'info');
+        }
+    });
+    
+    if (missingFields.length > 0) {
+        logToConsole(`🚨 FORM WILL FAIL - Missing: ${missingFields.join(', ')}`, 'error');
+        e.preventDefault(); // Prevent submission
+        alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+        return;
+    }
+    
+    logToConsole(`Form data: ${JSON.stringify(data, null, 2)}`, 'info');
+    logToConsole('✅ Form looks good, sending to server...', 'info');
+});
+
+// Track field changes with real-time validation
+document.querySelectorAll('input, textarea, select').forEach(field => {
+    field.addEventListener('change', function() {
+        logToConsole(`Field changed: ${this.name} = ${this.value}`, 'info');
+        validateField(this);
+    });
+    
+    field.addEventListener('blur', function() {
+        validateField(this);
+    });
+    
+    // Real-time validation for text fields
+    if (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA') {
+        field.addEventListener('input', function() {
+            validateField(this);
+        });
+    }
+});
+
+// Real-time field validation
+function validateField(field) {
+    const fieldName = field.name;
+    const value = field.value.trim();
+    const isRequired = field.hasAttribute('required');
+    
+    // Reset field styling
+    field.style.borderColor = '';
+    field.style.borderWidth = '';
+    field.style.boxShadow = '';
+    
+    // Remove previous error indicator
+    const label = field.closest('div').querySelector('label');
+    if (label) {
+        label.innerHTML = label.innerHTML.replace(' <span style="color: #ef4444;">❌</span>', '');
+    }
+    
+    let isValid = true;
+    let errorMessage = '';
+    
+    // Check specific field validations
+    switch(fieldName) {
+        case 'title':
+            if (isRequired && !value) {
+                isValid = false;
+                errorMessage = 'Title is required';
+            } else if (value.length > 255) {
+                isValid = false;
+                errorMessage = 'Title too long (max 255 characters)';
+            }
+            break;
+            
+        case 'content':
+            if (isRequired && !value) {
+                isValid = false;
+                errorMessage = 'Content is required';
+            }
+            break;
+            
+        case 'category':
+            if (isRequired && !value) {
+                isValid = false;
+                errorMessage = 'Category is required';
+            }
+            break;
+            
+        case 'status':
+            if (isRequired && !value) {
+                isValid = false;
+                errorMessage = 'Status is required';
+            }
+            break;
+    }
+    
+    // Update field styling based on validation
+    if (!isValid) {
+        field.style.borderColor = '#ef4444';
+        field.style.borderWidth = '2px';
+        field.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+        
+        if (label) {
+            label.innerHTML += ' <span style="color: #ef4444;">❌</span>';
+        }
+        
+        logToConsole(`🔴 Field validation failed: ${fieldName} - ${errorMessage}`, 'error');
+    } else if (value) {
+        field.style.borderColor = '#10b981';
+        field.style.borderWidth = '2px';
+        field.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+        
+        if (label) {
+            label.innerHTML += ' <span style="color: #10b981;">✅</span>';
+        }
+        
+        logToConsole(`✅ Field validation passed: ${fieldName}`, 'info');
+    }
+}
+
 function saveDraft() {
+    logToConsole('Saving draft...', 'info');
     const form = document.querySelector('form');
     const statusField = form.querySelector('select[name="status"]');
     statusField.value = 'draft';
@@ -211,8 +423,63 @@ function saveDraft() {
 }
 
 function previewPost() {
-    // Implement preview functionality
-    alert('Preview functionality would open a new tab with post preview');
+    logToConsole('Preview requested...', 'info');
+    // You can implement preview functionality here
+    alert('Preview functionality coming soon!');
 }
+
+// Check for existing errors on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const errorElements = document.querySelectorAll('.text-red-600');
+    if (errorElements.length > 0) {
+        logToConsole(`Found ${errorElements.length} validation errors`, 'error');
+        errorElements.forEach((elem, index) => {
+            logToConsole(`Error ${index + 1}: ${elem.textContent}`, 'error');
+            
+            // Find the associated input field and highlight it
+            const errorContainer = elem.closest('div');
+            if (errorContainer) {
+                const inputField = errorContainer.querySelector('input, textarea, select');
+                if (inputField) {
+                    inputField.style.borderColor = '#ef4444';
+                    inputField.style.borderWidth = '2px';
+                    inputField.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+                    
+                    // Add error indicator
+                    const errorLabel = errorContainer.querySelector('label');
+                    if (errorLabel) {
+                        errorLabel.innerHTML += ' <span style="color: #ef4444;">❌</span>';
+                    }
+                    
+                    logToConsole(`🔴 Highlighted problematic field: ${inputField.name || inputField.type}`, 'error');
+                }
+            }
+        });
+        
+        // Scroll to first error
+        const firstError = errorElements[0];
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    const successElements = document.querySelectorAll('.text-green-700');
+    if (successElements.length > 0) {
+        logToConsole(`Found ${successElements.length} success messages`, 'info');
+    }
+});
+
+// Network monitoring
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+    logToConsole(`Network request: ${args[0]} ${args[1]?.method || 'GET'}`, 'info');
+    return originalFetch.apply(this, args).then(response => {
+        logToConsole(`Response status: ${response.status} ${response.statusText}`, response.ok ? 'info' : 'error');
+        return response;
+    }).catch(error => {
+        logToConsole(`Network error: ${error.message}`, 'error');
+        throw error;
+    });
+};
 </script>
 @endsection

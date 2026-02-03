@@ -20,7 +20,7 @@
                     </button>
                     
                     <!-- Add Investor Button -->
-                    <a href="{{ route('investor.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <a href="{{ route('investors.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-plus mr-2"></i>
                         Add Investor
                     </a>
@@ -81,7 +81,7 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <form method="GET" action="{{ route('investor.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <form method="GET" action="{{ route('investors.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Search investors..." 
@@ -194,10 +194,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <a href="{{ route('investor.show', $investor) }}" class="text-blue-600 hover:text-blue-900">
+                                        <a href="{{ route('investors.show', $investor) }}" class="text-blue-600 hover:text-blue-900">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('investor.edit', $investor) }}" class="text-indigo-600 hover:text-indigo-900">
+                                        <a href="{{ route('investors.edit', $investor) }}" class="text-indigo-600 hover:text-indigo-900">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <button onclick="deleteInvestor({{ $investor->id }})" class="text-red-600 hover:text-red-900">
@@ -213,7 +213,7 @@
                                         <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
                                         <p class="text-lg font-medium text-gray-900 mb-2">No investors found</p>
                                         <p class="text-gray-500 mb-4">Get started by adding your first investor.</p>
-                                        <a href="{{ route('investor.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                        <a href="{{ route('investors.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                                             <i class="fas fa-plus mr-2"></i>
                                             Add Investor
                                         </a>
@@ -279,7 +279,7 @@ function deleteInvestor(id) {
 function exportInvestors() {
     const format = prompt('Export format (json, csv, xlsx):', 'json');
     if (format && ['json', 'csv', 'xlsx'].includes(format)) {
-        const url = `{{ route('investor.export') }}?format=${format}`;
+        const url = `{{ route('investors.export') }}?format=${format}`;
         window.open(url, '_blank');
     }
 }

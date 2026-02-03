@@ -102,7 +102,7 @@ class OptimizedPropertyService
 
         $cacheKey = "similar_properties_{$propertyId}_{$limit}";
         
-        return Cache::remember($cacheKey, 900, function () use ($property, $limit) {
+        return Cache::remember($cacheKey, 900, function () use ($property, $limit, $propertyId) {
             return Property::select(['id', 'title', 'slug', 'listing_type'])
                 ->with([
                     'price:property_id,price,currency',

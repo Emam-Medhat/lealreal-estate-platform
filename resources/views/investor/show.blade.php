@@ -9,12 +9,12 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <a href="{{ route('investor.index') }}" class="text-blue-600 hover:text-blue-800 mr-4">
+                    <a href="{{ route('investors.index') }}" class="text-blue-600 hover:text-blue-800 mr-4">
                         <i class="fas fa-arrow-left"></i> Back to Investors
                     </a>
                 </div>
                 <div class="flex space-x-2">
-                    <a href="{{ route('investor.edit', $investor) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <a href="{{ route('investors.edit', $investor) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-edit mr-2"></i>
                         Edit
                     </a>
@@ -461,7 +461,7 @@ function updateStatus() {
     const selectedStatus = document.querySelector('input[name="status"]:checked');
     if (selectedStatus) {
         const status = selectedStatus.value;
-        fetch(`{{ route('investor.update.status', $investor) }}`, {
+        fetch(`{{ route('investors.status', $investor) }}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -491,7 +491,7 @@ function updateVerification() {
     const selectedStatus = document.querySelector('input[name="verification_status"]:checked');
     if (selectedStatus) {
         const status = selectedStatus.value;
-        fetch(`{{ route('investor.update.verification', $investor) }}`, {
+        fetch(`{{ route('investors.verify', $investor) }}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

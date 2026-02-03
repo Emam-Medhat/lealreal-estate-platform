@@ -47,13 +47,11 @@ class RegisteredUserController extends Controller
 
             $user = $this->authService->register($data);
 
-            // Auto-login after registration
-            Auth::login($user);
-
             // Flash success message
-            session()->flash('success', 'تم إنشاء حسابك بنجاح! مرحباً بك في منصة العقارات العالمية.');
+            session()->flash('success', 'تم إنشاء حسابك بنجاح! يرجى تسجيل الدخول لاستخدام المنصة.');
 
-            return redirect()->route('dashboard');
+            // Redirect to login page instead of auto-login
+            return redirect()->route('login')->with('success', 'تم إنشاء حسابك بنجاح! يمكنك الآن تسجيل الدخول.');
 
         } catch (\Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());

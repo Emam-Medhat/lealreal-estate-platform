@@ -45,6 +45,9 @@ Route::prefix('reports/performance')->name('reports.performance.')->group(functi
     Route::post('/', [PerformanceReportController::class, 'store'])->name('store');
     Route::get('/{report}', [PerformanceReportController::class, 'show'])->name('show');
     Route::get('/data', [PerformanceReportController::class, 'getPerformanceData'])->name('data');
+    Route::get('/{report}/export', [PerformanceReportController::class, 'export'])->name('export');
+    Route::post('/{report}/duplicate', [PerformanceReportController::class, 'duplicate'])->name('duplicate');
+    Route::delete('/{report}', [PerformanceReportController::class, 'destroy'])->name('destroy');
 });
 
 // Market Reports

@@ -22,7 +22,7 @@ class PropertyFinancialAnalysisController extends Controller
         $totalProperties = Property::count();
         $totalAnalyses = PropertyFinancialAnalysis::count();
         $avgRoi = RoiCalculation::avg('roi_percentage') ?? 0;
-        $totalCashFlow = CashFlowProjection::sum('net_cash_flow') ?? 0;
+        $totalCashFlow = CashFlowProjection::sum('total_cash_flow') ?? 0;
 
         return view('financial.analysis-dashboard', compact(
             'analyses',

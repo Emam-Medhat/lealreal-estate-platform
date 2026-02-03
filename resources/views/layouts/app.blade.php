@@ -13,6 +13,9 @@
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Custom CSS -->
     <style>
         :root {
@@ -248,7 +251,7 @@
 @unless(isset($showNavbar) && $showNavbar === false)
 <!-- Navigation -->
 <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg sticky top-0 z-50">
-    <div class="container mx-auto px-6">
+    <div class="container mx-auto px-6" style="background-color:blue; max-width: inherit;">
         <div class="flex justify-between items-center py-4">
             <!-- Logo -->
             <div class="flex items-center">
@@ -831,6 +834,7 @@ function updateNotificationCount() {
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {{-- <script src="{{ asset('js/agents-directory.js') }}"></script> --}}
     @yield('scripts')
 </body>

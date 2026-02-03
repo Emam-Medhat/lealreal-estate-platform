@@ -184,19 +184,31 @@ class PropertyAmenityController extends Controller
     public function searchAmenities(Request $request): JsonResponse
     {
         $request->validate([
-            'query' => 'required|string|min:2',
+            'query' => 'nullable|string|min:2',
         ]);
 
-        $amenities = PropertyAmenity::where('name', 'like', '%' . $request->query . '%')
-            ->orWhere('description', 'like', '%' . $request->query . '%')
-            ->active()
-            ->ordered()
-            ->limit(20)
-            ->get();
+        $query = $request->query('query');
+        
+        if (empty($query)) {
+            // If no query provided, return popular or recent amenities
+            $amenities = PropertyAmenity::active()
+                ->ordered()
+                ->limit(20)
+                ->get();
+        } else {
+            // Search with query
+            $amenities = PropertyAmenity::where('name', 'like', '%' . $query . '%')
+                ->orWhere('description', 'like', '%' . $query . '%')
+                ->active()
+                ->ordered()
+                ->limit(20)
+                ->get();
+        }
 
         return response()->json([
             'success' => true,
             'data' => $amenities,
+            'query' => $query,
         ]);
     }
 

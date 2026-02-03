@@ -77,6 +77,7 @@ class PageController extends Controller
 
         // Create initial revision
         ContentRevision::create([
+            'model_type' => 'App\Models\Page',
             'content_type' => 'page',
             'content_id' => $page->getKey(),
             'content_data' => $page->toArray(),

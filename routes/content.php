@@ -160,6 +160,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{widget}/duplicate', [WidgetController::class, 'duplicate'])->name('duplicate');
         Route::post('/reorder', [WidgetController::class, 'reorder'])->name('reorder');
         Route::post('/{widget}/toggle', [WidgetController::class, 'toggleStatus'])->name('toggle');
+        Route::post('/{widget}/toggle-test', function($widget) {
+            try {
+                $widget->update(['is_active' => !$widget->is_active]);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Widget status updated successfully (test route)',
+                    'new_status' => $widget->is_active
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: ' . $e->getMessage()
+                ], 500);
+            }
+        })->name('toggle-test');
         Route::post('/bulk-toggle', [WidgetController::class, 'bulkToggle'])->name('bulk-toggle');
         Route::post('/bulk-delete', [WidgetController::class, 'bulkDelete'])->name('bulk-delete');
         Route::get('/{widget}/preview', [WidgetController::class, 'preview'])->name('preview');
