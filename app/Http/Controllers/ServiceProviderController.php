@@ -9,22 +9,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+namespace App\Http\Controllers;
+
+use App\Models\ServiceProvider;
+use App\Services\ServiceProviderService;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 class ServiceProviderController extends Controller
 {
-    public function index()
-    {
-        $providers = ServiceProvider::with(['maintenanceRequests', 'schedules'])
-            ->when(request('is_active'), function ($query, $isActive) {
-                $query->where('is_active', $isActive);
-            })
-            ->when(request('service_type'), function ($query, $serviceType) {
-                $query->where('service_type', $serviceType);
-            })
-            ->when(request('rating'), function ($query, $rating) {
-                $query->where('rating', '>=', $rating);
-            })
-            ->latest()->paginate(15);
+    protected $providerService;
 
+    public function __construct(ServiceProviderService $providerService)
+    {
+        $this->providerService = $providerService;
+    }
+
+    public function index(Request $request)
+    {
+        $providers = $this->providerService->getAllProviders($request->all());
         return view('maintenance.providers', compact('providers'));
     }
 
@@ -55,42 +58,20 @@ class ServiceProviderController extends Controller
             'attachments.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
         ]);
 
-        $validated['provider_code'] = 'PROV-' . date('Y') . '-' . str_pad(ServiceProvider::count() + 1, 4, '0', STR_PAD_LEFT);
-        $validated['specializations'] = json_encode($validated['specializations'] ?? []);
-        $validated['is_active'] = $validated['is_active'] ?? true;
-
-        DB::beginTransaction();
         try {
-            $provider = ServiceProvider::create($validated);
-
-            // Handle attachments if any
-            if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('provider_attachments', 'public');
-                    // You might want to create an attachments table
-                }
-            }
-
-            DB::commit();
+            $attachments = $request->file('attachments', []);
+            $provider = $this->providerService->createProvider($validated, $attachments);
 
             return redirect()->route('maintenance.providers.show', $provider)
                 ->with('success', 'تم إنشاء مقدم الخدمة بنجاح');
         } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'حدث خطأ أثناء إنشاء مقدم الخدمة');
+            return back()->with('error', 'حدث خطأ أثناء إنشاء مقدم الخدمة: ' . $e->getMessage());
         }
     }
 
     public function show(ServiceProvider $provider)
     {
-        $provider->load([
-            'maintenanceRequests' => function ($query) {
-                $query->latest()->take(10);
-            },
-            'schedules' => function ($query) {
-                $query->where('scheduled_date', '>=', now())->orderBy('scheduled_date')->take(10);
-            }
-        ]);
+        $provider = $this->providerService->getProviderDetails($provider->id);
 
         $stats = [
             'total_requests' => $provider->maintenanceRequests()->count(),
@@ -108,7 +89,6 @@ class ServiceProviderController extends Controller
     public function edit(ServiceProvider $provider)
     {
         $provider->specializations = json_decode($provider->specializations ?? '[]', true);
-
         return view('maintenance.providers-edit', compact('provider'));
     }
 
@@ -132,32 +112,30 @@ class ServiceProviderController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $validated['specializations'] = json_encode($validated['specializations'] ?? []);
-        $validated['is_active'] = $validated['is_active'] ?? $provider->is_active;
-
-        $provider->update($validated);
-
-        return redirect()->route('maintenance.providers.show', $provider)
-            ->with('success', 'تم تحديث مقدم الخدمة بنجاح');
+        try {
+            $this->providerService->updateProvider($provider, $validated);
+            return redirect()->route('maintenance.providers.show', $provider)
+                ->with('success', 'تم تحديث مقدم الخدمة بنجاح');
+        } catch (\Exception $e) {
+            return back()->with('error', 'حدث خطأ أثناء تحديث مقدم الخدمة');
+        }
     }
 
     public function destroy(ServiceProvider $provider)
     {
-        if ($provider->maintenanceRequests()->where('status', '!=', 'completed')->exists()) {
-            return back()->with('error', 'لا يمكن حذف مقدم الخدمة الذي لديه طلبات صيانة نشطة');
+        try {
+            $this->providerService->deleteProvider($provider);
+            return redirect()->route('maintenance.providers.index')
+                ->with('success', 'تم حذف مقدم الخدمة بنجاح');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $provider->delete();
-
-        return redirect()->route('maintenance.providers.index')
-            ->with('success', 'تم حذف مقدم الخدمة بنجاح');
     }
 
     public function toggleStatus(ServiceProvider $provider)
     {
-        $provider->update(['is_active' => !$provider->is_active]);
-
-        $status = $provider->is_active ? 'تفعيل' : 'تعطيل';
+        $isActive = $this->providerService->toggleProviderStatus($provider);
+        $status = $isActive ? 'تفعيل' : 'تعطيل';
 
         return redirect()->route('maintenance.providers.show', $provider)
             ->with('success', 'تم ' . $status . ' مقدم الخدمة بنجاح');
@@ -170,11 +148,7 @@ class ServiceProviderController extends Controller
             'review' => 'nullable|string|max:1000',
         ]);
 
-        $provider->update([
-            'rating' => $validated['rating'],
-            'last_review' => $validated['review'],
-            'last_review_date' => now(),
-        ]);
+        $this->providerService->updateProviderRating($provider, $validated['rating'], $validated['review']);
 
         return redirect()->route('maintenance.providers.show', $provider)
             ->with('success', 'تم تحديث تقييم مقدم الخدمة بنجاح');
@@ -186,60 +160,16 @@ class ServiceProviderController extends Controller
         $date = $request->date;
         $duration = $request->duration ?? 60;
 
-        $providers = ServiceProvider::where('is_active', true)
-            ->where(function ($query) use ($serviceType) {
-                $query->where('service_type', $serviceType)
-                    ->orWhere('service_type', 'all');
-            })
-            ->whereDoesntHave('schedules', function ($query) use ($date, $duration) {
-                $query->where('status', 'in_progress')
-                    ->where('scheduled_date', '<=', Carbon::parse($date)->addMinutes($duration))
-                    ->where('scheduled_date', '>=', Carbon::parse($date)->subMinutes($duration));
-            })
-            ->withCount([
-                'maintenanceRequests' => function ($query) {
-                    $query->where('status', 'completed');
-                }
-            ])
-            ->orderBy('rating', 'desc')
-            ->get();
+        $providers = $this->providerService->getAvailableProviders($serviceType, $date, $duration);
 
         return response()->json($providers);
     }
 
     public function performance(ServiceProvider $provider)
     {
-        $stats = [
-            'monthly_requests' => $provider->maintenanceRequests()
-                ->whereMonth('created_at', now()->month)
-                ->count(),
-            'monthly_completed' => $provider->maintenanceRequests()
-                ->where('status', 'completed')
-                ->whereMonth('completed_at', now()->month)
-                ->count(),
-            'monthly_revenue' => $provider->maintenanceRequests()
-                ->where('status', 'completed')
-                ->whereMonth('completed_at', now()->month)
-                ->sum('actual_cost'),
-            'average_completion_time' => $provider->maintenanceRequests()
-                ->where('status', 'completed')
-                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, started_at, completed_at)) as avg_time')
-                ->value('avg_time'),
-            'completion_rate' => $provider->maintenanceRequests()
-                ->where('status', 'completed')
-                ->count() > 0 ?
-                ($provider->maintenanceRequests()->where('status', 'completed')->count() /
-                    $provider->maintenanceRequests()->count()) * 100 : 0,
-        ];
-
-        $monthlyData = $provider->maintenanceRequests()
-            ->where('status', 'completed')
-            ->selectRaw('MONTH(completed_at) as month, YEAR(completed_at) as year, COUNT(*) as count, SUM(actual_cost) as revenue')
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->take(12)
-            ->get();
+        $performanceData = $this->providerService->getProviderPerformance($provider);
+        $stats = $performanceData['stats'];
+        $monthlyData = $performanceData['monthlyData'];
 
         return view('maintenance.providers-performance', compact('provider', 'stats', 'monthlyData'));
     }

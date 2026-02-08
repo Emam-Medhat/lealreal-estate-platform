@@ -1,0 +1,606 @@
+<?php
+
+namespace App\Services;
+
+use App\Repositories\Contracts\LeadRepositoryInterface;
+use App\Models\Lead;
+use App\Models\LeadSource;
+use App\Models\LeadStatus;
+use App\Models\User;
+use App\Models\LeadActivity;
+use App\Models\LeadConversion;
+use App\Models\LeadScore;
+use App\Services\CacheService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+class LeadService
+{
+    protected $leadRepository;
+
+    public function __construct(LeadRepositoryInterface $leadRepository)
+    {
+        $this->leadRepository = $leadRepository;
+    }
+
+    /**
+     * Get paginated leads with filtering and optimized caching.
+     *
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getLeads(array $filters = [], int $perPage = 20): LengthAwarePaginator
+    {
+        return CacheService::rememberLeads('filtered', function () use ($filters, $perPage) {
+            return $this->leadRepository->getFilteredLeads($filters, $perPage);
+        }, 'medium');
+    }
+
+    /**
+     * Get recent leads with optimized caching.
+     *
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getRecentLeads(int $limit = 10)
+    {
+        return CacheService::rememberLeads("recent_{$limit}", function () use ($limit) {
+            return $this->leadRepository->getRecent($limit);
+        }, 'short');
+    }
+
+    /**
+     * Get lead sources with caching
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActiveSources()
+    {
+        return CacheService::remember('lead_sources_active', function () {
+            return LeadSource::where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+        }, 'extended');
+    }
+
+    /**
+     * Get lead statuses with caching
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActiveStatuses()
+    {
+        return CacheService::remember('lead_statuses_active', function () {
+            return LeadStatus::where('is_active', 1)->orderBy('order')->get(['id', 'name', 'color']);
+        }, 'extended');
+    }
+
+    /**
+     * Get available agents with optimized caching
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAvailableAgents()
+    {
+        return CacheService::rememberUsers('available_agents', function () {
+            return User::whereIn('role', ['agent', 'admin'])
+                ->where('account_status', 'active')
+                ->get(['id', 'full_name', 'email']);
+        }, 'long');
+    }
+
+    /**
+     * Get dashboard statistics with single query and caching
+     *
+     * @return array
+     */
+    public function getDashboardStats()
+    {
+        return CacheService::rememberDashboard('leads_stats', function () {
+            return $this->leadRepository->getDashboardStats();
+        }, 'short');
+    }
+
+    /**
+     * Get lead sources statistics with caching
+     *
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getLeadSourcesStats(int $limit = 5)
+    {
+        return CacheService::rememberAnalytics("lead_sources_stats_{$limit}", function () use ($limit) {
+            return LeadSource::withCount('leads')
+                ->orderBy('leads_count', 'desc')
+                ->take($limit)
+                ->get(['id', 'name', 'leads_count']);
+        }, 'medium');
+    }
+
+    /**
+     * Get lead statuses statistics with caching
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getLeadStatusesStats()
+    {
+        return CacheService::rememberAnalytics('lead_statuses_stats', function () {
+            return LeadStatus::withCount('leads')
+                ->orderBy('order')
+                ->get(['id', 'name', 'color', 'leads_count']);
+        }, 'medium');
+    }
+
+    /**
+     * Get pipeline data with optimized eager loading and caching
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPipelineData()
+    {
+        return CacheService::rememberDashboard('leads_pipeline', function () {
+            return Lead::with(['source:id,name', 'status:id,name,color', 'assignedTo:id,full_name'])
+                ->select(['id', 'uuid', 'first_name', 'last_name', 'email', 'lead_status', 'priority', 'lead_source', 'assigned_to', 'created_at'])
+                ->orderBy('priority', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }, 'short');
+    }
+
+    /**
+     * Create lead with optimized operations and cache clearing
+     *
+     * @param array $data
+     * @return Lead
+     */
+    public function createLead(array $data): Lead
+    {
+        DB::beginTransaction();
+        
+        try {
+            $lead = $this->leadRepository->create($data);
+            
+            // Clear relevant caches
+            $this->clearLeadCaches();
+            
+            DB::commit();
+            
+            return $lead;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Update lead with cache clearing
+     *
+     * @param Lead $lead
+     * @param array $data
+     * @return bool
+     */
+    public function updateLead(Lead $lead, array $data): bool
+    {
+        DB::beginTransaction();
+        
+        try {
+            $result = $this->leadRepository->update($lead->id, $data);
+            
+            // Clear relevant caches
+            $this->clearLeadCaches();
+            
+            DB::commit();
+            
+            return $result;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete lead with cache clearing
+     *
+     * @param Lead $lead
+     * @return bool
+     */
+    public function deleteLead(Lead $lead): bool
+    {
+        DB::beginTransaction();
+        
+        try {
+            $result = $this->leadRepository->deleteById($lead->id);
+            
+            // Clear relevant caches
+            $this->clearLeadCaches();
+            
+            DB::commit();
+            
+            return $result;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Bulk update leads with performance optimization
+     *
+     * @param array $ids
+     * @param array $data
+     * @return int
+     */
+    public function bulkUpdateLeads(array $ids, array $data): int
+    {
+        DB::beginTransaction();
+        
+        try {
+            $result = Lead::whereIn('id', $ids)->update($data);
+            
+            // Clear relevant caches
+            $this->clearLeadCaches();
+            
+            DB::commit();
+            
+            return $result;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Get leads for export with memory-efficient chunking
+     *
+     * @param array $filters
+     * @return \Generator
+     */
+    public function getLeadsForExport(array $filters = []): \Generator
+    {
+        return $this->leadRepository->getForExport($filters);
+    }
+
+    /**
+     * Search leads with optimized full-text search
+     *
+     * @param string $query
+     * @param array $filters
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function searchLeads(string $query, array $filters = [], int $limit = 50)
+    {
+        $cacheKey = CacheService::generateKey('lead_search', ['query' => $query, 'filters' => $filters, 'limit' => $limit]);
+        
+        return CacheService::remember($cacheKey, function () use ($query, $filters, $limit) {
+            $leadQuery = Lead::with([
+                'source:id,name',
+                'status:id,name,color',
+                'assignedTo:id,full_name,email'
+            ]);
+
+            // Use full-text search if available
+            if (Schema::getConnection()->getDriverName() === 'mysql') {
+                $leadQuery->whereRaw("MATCH(first_name, last_name, full_name, email, company) AGAINST(? IN BOOLEAN MODE)", [$query]);
+            } else {
+                // Fallback to LIKE search
+                $leadQuery->where(function ($q) use ($query) {
+                    $q->where('first_name', 'LIKE', "%{$query}%")
+                      ->orWhere('last_name', 'LIKE', "%{$query}%")
+                      ->orWhere('full_name', 'LIKE', "%{$query}%")
+                      ->orWhere('email', 'LIKE', "%{$query}%")
+                      ->orWhere('company', 'LIKE', "%{$query}%");
+                });
+            }
+
+            // Apply additional filters
+            if (!empty($filters['status'])) {
+                $leadQuery->where('lead_status', $filters['status']);
+            }
+            
+            if (!empty($filters['assigned_to'])) {
+                $leadQuery->where('assigned_to', $filters['assigned_to']);
+            }
+
+            return $leadQuery->orderBy('priority', 'desc')
+                           ->orderBy('created_at', 'desc')
+                           ->take($limit)
+                           ->get();
+        }, 'short');
+    }
+
+    /**
+     * Clear lead-related caches
+     *
+     * @return void
+     */
+    private function clearLeadCaches(): void
+    {
+        CacheService::clearTags([CacheService::TAGS['leads'], CacheService::TAGS['dashboard'], CacheService::TAGS['analytics']]);
+    }
+
+    /**
+     * Get lead conversion funnel data
+     *
+     * @return array
+     */
+    public function getConversionFunnel()
+    {
+        return CacheService::rememberAnalytics('lead_conversion_funnel', function () {
+            $statuses = LeadStatus::orderBy('order')->get(['id', 'name']);
+            $funnel = [];
+
+            foreach ($statuses as $status) {
+                $count = $this->leadRepository->countByStatusName($status->name);
+                $funnel[] = [
+                    'status' => $status->name,
+                    'count' => $count,
+                    'percentage' => $this->calculateConversionPercentage($status->name, $count)
+                ];
+            }
+
+            return $funnel;
+        }, 'medium');
+    }
+
+    /**
+     * Calculate conversion percentage for a status
+     *
+     * @param string $status
+     * @param int $count
+     * @return float
+     */
+    private function calculateConversionPercentage(string $status, int $count): float
+    {
+        $totalLeads = $this->leadRepository->countTotal();
+        
+        if ($totalLeads === 0) {
+            return 0;
+        }
+
+        return round(($count / $totalLeads) * 100, 2);
+    }
+}
+                }
+                
+                if (!empty($tagIds)) {
+                    $lead->tags()->attach($tagIds);
+                }
+            }
+            
+            // Create initial activity
+            LeadActivity::create([
+                'lead_id' => $lead->id,
+                'type' => 'created',
+                'description' => 'تم إنشاء العميل المحتمل',
+                'user_id' => Auth::id() ?? $data['created_by'] ?? null,
+            ]);
+            
+            // Calculate initial score
+            $this->calculateLeadScore($lead);
+            
+            DB::commit();
+            $this->clearCache();
+            
+            return $lead;
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    public function updateLead(Lead $lead, array $data, ?array $tags = null): Lead
+    {
+        DB::beginTransaction();
+        try {
+            $oldStatusId = $lead->status_id;
+            
+            $lead->update($data);
+            
+            // Sync tags
+            if ($tags !== null) {
+                $lead->tags()->sync($tags);
+            }
+            
+            // Create activity if status changed
+            if ($oldStatusId != $lead->status_id) {
+                LeadActivity::create([
+                    'lead_id' => $lead->id,
+                    'type' => 'status_changed',
+                    'description' => 'تم تغيير الحالة إلى ' . ($lead->status->name ?? $lead->status_id),
+                    'user_id' => Auth::id(),
+                ]);
+            }
+            
+            // Recalculate score
+            $this->calculateLeadScore($lead);
+            
+            DB::commit();
+            $this->clearCache();
+            
+            return $lead;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    public function deleteLead(Lead $lead): bool
+    {
+        $result = $lead->delete();
+        $this->clearCache();
+        return $result;
+    }
+
+    public function convertLead(Lead $lead, array $data): LeadConversion
+    {
+        DB::beginTransaction();
+        try {
+            $conversion = LeadConversion::create([
+                'lead_id' => $lead->id,
+                'converted_to_type' => $data['converted_to_type'],
+                'converted_to_id' => $data['converted_to_id'],
+                'conversion_value' => $data['conversion_value'] ?? 0,
+                'conversion_date' => now(),
+                'notes' => $data['notes'] ?? null,
+                'converted_by' => Auth::id(),
+            ]);
+            
+            $convertedStatus = LeadStatus::where('name', 'محول')->first();
+            $lead->update([
+                'converted_at' => now(),
+                'status_id' => $convertedStatus ? $convertedStatus->id : $lead->status_id,
+            ]);
+            
+            LeadActivity::create([
+                'lead_id' => $lead->id,
+                'type' => 'converted',
+                'description' => 'تم تحويل العميل المحتمل إلى ' . $data['converted_to_type'],
+                'user_id' => Auth::id(),
+            ]);
+            
+            DB::commit();
+            $this->clearCache();
+            return $conversion;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    public function scoreLead(Lead $lead, array $data): LeadScore
+    {
+        $score = LeadScore::create([
+            'lead_id' => $lead->id,
+            'score' => $data['score'],
+            'factors' => $data['factors'],
+            'calculated_by' => Auth::id(),
+        ]);
+        
+        $lead->update(['score' => $data['score']]);
+        
+        LeadActivity::create([
+            'lead_id' => $lead->id,
+            'type' => 'scored',
+            'description' => 'تم تقييم العميل المحتمل بدرجة ' . $data['score'],
+            'user_id' => Auth::id(),
+        ]);
+        
+        return $score;
+    }
+
+    public function calculateLeadScore(Lead $lead)
+    {
+        $score = 0;
+        $factors = [];
+        
+        // Base score based on source
+        if ($lead->source) {
+            $score += $lead->source->weight ?? 0;
+            $factors[] = 'المصدر: ' . $lead->source->name . ' (+' . ($lead->source->weight ?? 0) . ')';
+        }
+        
+        // Score based on completeness
+        $completeness = 0;
+        if ($lead->email) $completeness += 20;
+        if ($lead->phone) $completeness += 20;
+        if ($lead->company) $completeness += 15;
+        if ($lead->position) $completeness += 15;
+        if ($lead->estimated_value) $completeness += 30;
+        
+        $score += $completeness;
+        $factors[] = 'اكتمال البيانات: ' . $completeness . '%';
+        
+        // Score based on priority
+        $priorityScores = [
+            'low' => 5,
+            'medium' => 10,
+            'high' => 20,
+            'critical' => 30,
+        ];
+        
+        if (isset($priorityScores[$lead->priority])) {
+            $score += $priorityScores[$lead->priority];
+            $factors[] = 'الأولوية: ' . $lead->priority . ' (+' . $priorityScores[$lead->priority] . ')';
+        }
+        
+        // Create or update score record
+        LeadScore::updateOrCreate(
+            ['lead_id' => $lead->id],
+            [
+                'score' => $score,
+                'factors' => $factors,
+                'calculated_by' => Auth::id(),
+            ]
+        );
+        
+        $lead->update(['score' => $score]);
+    }
+
+    /**
+     * Get active lead sources with caching.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActiveSources()
+    {
+        return Cache::remember('active_lead_sources', 3600, function () {
+            return LeadSource::active()->get();
+        });
+    }
+
+    /**
+     * Get active lead statuses with caching.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActiveStatuses()
+    {
+        return Cache::remember('active_lead_statuses', 3600, function () {
+            return LeadStatus::where('is_active', 1)->orderBy('order')->get();
+        });
+    }
+
+    /**
+     * Get available agents/admins for assignment with caching.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAvailableAgents()
+    {
+        return Cache::remember('available_agents_for_leads', 3600, function () {
+            return User::whereIn('role', ['agent', 'admin'])->get(['id', 'full_name', 'email']);
+        });
+    }
+
+    /**
+     * Get pipeline data with eager loading and caching.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPipelineData()
+    {
+        return Cache::remember('lead_pipeline_data', 600, function () {
+            return LeadStatus::with(['leads' => function ($query) {
+                $query->with(['source', 'assignedTo'])
+                    ->orderBy('priority', 'desc')
+                    ->orderBy('created_at', 'desc');
+            }])->orderBy('order')->get();
+        });
+    }
+
+    /**
+     * Clear lead-related caches.
+     *
+     * @return void
+     */
+    public function clearCache(): void
+    {
+        Cache::forget('lead_dashboard_stats');
+        Cache::forget('active_lead_sources');
+        Cache::forget('active_lead_statuses');
+        Cache::forget('available_agents_for_leads');
+        Cache::forget('lead_pipeline_data');
+    }
+}

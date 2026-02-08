@@ -10,6 +10,8 @@ class ActivityLog extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'user_activity_logs';
+
     protected $fillable = [
         'user_id',
         'action',
@@ -17,6 +19,7 @@ class ActivityLog extends Model
         'subject_id',
         'description',
         'details',
+        'metadata',
         'ip_address',
         'user_agent',
         'created_at',
@@ -25,6 +28,7 @@ class ActivityLog extends Model
 
     protected $casts = [
         'details' => 'json',
+        'metadata' => 'json',
     ];
 
     public function user()

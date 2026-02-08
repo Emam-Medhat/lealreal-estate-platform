@@ -7,42 +7,29 @@ use App\Http\Requests\Agent\StoreLeadRequest;
 use App\Http\Requests\Agent\UpdateLeadRequest;
 use App\Models\Agent;
 use App\Models\AgentLead;
-use App\Models\Property;
 use App\Models\UserActivityLog;
+use App\Repositories\Contracts\AgentLeadRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class AgentLeadController extends Controller
 {
+    protected $agentLeadRepository;
+
+    public function __construct(AgentLeadRepositoryInterface $agentLeadRepository)
+    {
+        $this->agentLeadRepository = $agentLeadRepository;
+    }
+
     public function index(Request $request)
     {
         $agent = Auth::user()->agent;
         
-        $leads = $agent->leads()
-            ->with(['property', 'source'])
-            ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->priority, function ($query, $priority) {
-                $query->where('priority', $priority);
-            })
-            ->when($request->source_id, function ($query, $sourceId) {
-                $query->where('source_id', $sourceId);
-            })
-            ->when($request->date_from, function ($query, $date) {
-                $query->whereDate('created_at', '>=', $date);
-            })
-            ->when($request->date_to, function ($query, $date) {
-                $query->whereDate('created_at', '<=', $date);
-            })
-            ->latest()
-            ->paginate(20);
+        $filters = $request->all();
+        $filters['agent_id'] = $agent->id;
+
+        $leads = $this->agentLeadRepository->getFiltered($filters, 20);
 
         return view('agent.leads.index', compact('leads'));
     }
@@ -59,25 +46,13 @@ class AgentLeadController extends Controller
     {
         $agent = Auth::user()->agent;
         
-        $lead = AgentLead::create([
-            'agent_id' => $agent->id,
-            'property_id' => $request->property_id,
-            'source_id' => $request->source_id,
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'whatsapp' => $request->whatsapp,
-            'status' => $request->status ?? 'new',
-            'priority' => $request->priority ?? 'medium',
-            'budget_min' => $request->budget_min,
-            'budget_max' => $request->budget_max,
-            'preferred_areas' => $request->preferred_areas ?? [],
-            'preferred_property_types' => $request->preferred_property_types ?? [],
-            'message' => $request->message,
-            'notes' => $request->notes,
-            'next_follow_up' => $request->next_follow_up,
-            'assigned_at' => now(),
-        ]);
+        $data = $request->validated();
+        $data['agent_id'] = $agent->id;
+        $data['status'] = $data['status'] ?? 'new';
+        $data['priority'] = $data['priority'] ?? 'medium';
+        $data['assigned_at'] = now();
+
+        $lead = $this->agentLeadRepository->create($data);
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -114,21 +89,7 @@ class AgentLeadController extends Controller
     {
         $this->authorize('update', $lead);
         
-        $lead->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'whatsapp' => $request->whatsapp,
-            'status' => $request->status,
-            'priority' => $request->priority,
-            'budget_min' => $request->budget_min,
-            'budget_max' => $request->budget_max,
-            'preferred_areas' => $request->preferred_areas ?? [],
-            'preferred_property_types' => $request->preferred_property_types ?? [],
-            'message' => $request->message,
-            'notes' => $request->notes,
-            'next_follow_up' => $request->next_follow_up,
-        ]);
+        $this->agentLeadRepository->update($lead->id, $request->validated());
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -146,7 +107,7 @@ class AgentLeadController extends Controller
         $this->authorize('delete', $lead);
         
         $leadName = $lead->name;
-        $lead->delete();
+        $this->agentLeadRepository->delete($lead->id);
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -167,10 +128,7 @@ class AgentLeadController extends Controller
             'status' => 'required|in:new,contacted,qualified,converted,closed,lost',
         ]);
 
-        $lead->update([
-            'status' => $request->status,
-            'status_updated_at' => now(),
-        ]);
+        $this->agentLeadRepository->updateStatus($lead->id, $request->status);
 
         UserActivityLog::create([
             'user_id' => Auth::id(),
@@ -194,7 +152,7 @@ class AgentLeadController extends Controller
             'priority' => 'required|in:low,medium,high,urgent',
         ]);
 
-        $lead->update(['priority' => $request->priority]);
+        $this->agentLeadRepository->updatePriority($lead->id, $request->priority);
 
         UserActivityLog::create([
             'user_id' => Auth::id(),

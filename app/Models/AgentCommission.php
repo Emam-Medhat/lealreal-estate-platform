@@ -13,50 +13,160 @@ class AgentCommission extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        // Core Identifiers
         'agent_id',
         'property_id',
         'transaction_id',
+        'contract_id',
+        'client_id',
+        'company_id',
+        'commission_number',
+        
+        // Commission Details
+        'commission_type', // percentage, fixed, tiered, bonus, referral
+        'commission_rate',
+        'commission_amount',
+        'currency',
+        'base_amount',
+        
+        // Transaction Information
+        'transaction_amount',
+        'transaction_type',
+        'transaction_date',
+        'closing_date',
+        
+        // Commission Structure
+        'tier_level',
+        'tier_rate',
+        'bonus_amount',
+        'referral_fee',
+        'override_amount',
+        
+        // Payment Information
+        'payment_status', // pending, approved, paid, partially_paid, overdue
+        'payment_method',
+        'payment_date',
+        'paid_amount',
+        'outstanding_amount',
+        'due_date',
+        
+        // Commission Split
+        'split_type', // none, team, broker, referral
+        'split_percentage',
+        'agent_share',
+        'broker_share',
+        'referral_share',
+        'team_share',
+        
+        // Performance Metrics
+        'target_amount',
+        'target_achieved',
+        'performance_bonus',
+        'quarterly_bonus',
+        'annual_bonus',
+        
+        // Dates and Deadlines
+        'earned_date',
+        'approved_date',
+        'due_date',
+        'paid_date',
+        'void_date',
+        
+        // Status and Workflow
+        'status', // earned, pending_approval, approved, paid, voided, disputed
+        'approval_status', // pending, approved, rejected
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
+        
+        // Adjustments
+        'adjustment_amount',
+        'adjustment_reason',
+        'adjustment_date',
+        'adjusted_by',
+        
+        // Tax Information
+        'tax_rate',
+        'tax_amount',
+        'net_amount',
+        'withholding_tax',
+        
+        // Notes and Metadata
+        'notes',
+        'internal_notes',
+        'description',
+        'terms',
+        'conditions',
+        'metadata',
+        
+        // Legacy Fields (for backward compatibility)
         'type',
         'amount',
         'percentage',
-        'base_amount',
         'commission_date',
-        'status',
-        'payment_status',
-        'payment_date',
-        'payment_method',
         'payment_reference',
-        'description',
-        'notes',
         'client_name',
         'property_address',
         'transaction_value',
         'commission_rate',
         'bonus_amount',
         'deduction_amount',
-        'tax_amount',
-        'net_amount',
-        'due_date',
-        'paid_date',
-        'approved_by',
-        'approved_at',
-        'rejected_by',
-        'rejected_at',
-        'rejection_reason',
         'invoice_number',
         'receipt_number',
         'bank_account',
         'payment_terms',
         'split_with_agent_id',
-        'split_percentage',
-        'parent_commission_id',
-        'is_recurring',
-        'recurrence_period',
-        'next_due_date',
-        'custom_fields',
+        
+        // Audit
+        'created_by',
+        'updated_by',
+        'paid_by',
+        'voided_by',
     ];
 
     protected $casts = [
+        'commission_rate' => 'decimal:4',
+        'commission_amount' => 'decimal:2',
+        'base_amount' => 'decimal:2',
+        'transaction_amount' => 'decimal:2',
+        'tier_rate' => 'decimal:4',
+        'bonus_amount' => 'decimal:2',
+        'referral_fee' => 'decimal:2',
+        'override_amount' => 'decimal:2',
+        'split_percentage' => 'decimal:4',
+        'agent_share' => 'decimal:2',
+        'broker_share' => 'decimal:2',
+        'referral_share' => 'decimal:2',
+        'team_share' => 'decimal:2',
+        'target_amount' => 'decimal:2',
+        'target_achieved' => 'decimal:2',
+        'performance_bonus' => 'decimal:2',
+        'quarterly_bonus' => 'decimal:2',
+        'annual_bonus' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'outstanding_amount' => 'decimal:2',
+        'adjustment_amount' => 'decimal:2',
+        'tax_rate' => 'decimal:4',
+        'tax_amount' => 'decimal:2',
+        'net_amount' => 'decimal:2',
+        'withholding_tax' => 'decimal:2',
+        'transaction_date' => 'datetime',
+        'closing_date' => 'datetime',
+        'earned_date' => 'datetime',
+        'approved_date' => 'datetime',
+        'due_date' => 'datetime',
+        'paid_date' => 'datetime',
+        'void_date' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'adjustment_date' => 'datetime',
+        'terms' => 'array',
+        'conditions' => 'array',
+        'metadata' => 'json',
+        
+        // Legacy fields for backward compatibility
         'amount' => 'decimal:15,2',
         'percentage' => 'decimal:5,2',
         'base_amount' => 'decimal:15,2',

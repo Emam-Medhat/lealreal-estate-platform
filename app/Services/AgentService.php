@@ -6,10 +6,17 @@ use App\Models\Agent;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Repositories\Contracts\AgentRepositoryInterface;
 
 class AgentService
 {
+    protected $agentRepository;
     protected $cacheTTL = 3600; // 1 hour
+
+    public function __construct(AgentRepositoryInterface $agentRepository)
+    {
+        $this->agentRepository = $agentRepository;
+    }
 
     /**
      * Get agent profile data with eager loaded relationships.
@@ -29,20 +36,31 @@ class AgentService
         $cacheKey = "agent_stats_{$agent->id}";
 
         return Cache::remember($cacheKey, 600, function () use ($agent) {
+            $agent->loadCount([
+                'properties', 
+                'properties as active_properties' => fn($q) => $q->where('status', 'active'),
+                'properties as sold_properties' => fn($q) => $q->where('status', 'sold'),
+                'reviews',
+                'clients',
+                'commissions'
+            ]);
+            
+            $agent->loadAvg('reviews', 'rating');
+
             return [
-                'total_properties' => $agent->properties()->count(),
-                'active_properties' => $agent->properties()->where('status', 'active')->count(),
-                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-                'total_reviews' => $agent->reviews()->count(),
-                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-                'total_commissions' => $agent->commissions()->sum('amount'),
+                'total_properties' => $agent->properties_count,
+                'active_properties' => $agent->active_properties_count,
+                'sold_properties' => $agent->sold_properties_count,
+                'total_reviews' => $agent->reviews_count,
+                'average_rating' => $agent->reviews_avg_rating ?? 0,
+                'total_commissions' => $agent->commissions()->sum('amount'), // Still need sum
                 'this_month_commissions' => $agent->commissions()
                     ->whereMonth('created_at', now()->month)
                     ->sum('amount'),
-                'properties_sold' => $agent->properties()->where('status', 'sold')->count(),
-                'total_revenue' => $agent->commissions()->sum('amount'),
-                'active_clients' => $agent->clients()->count(),
-                'rating' => $agent->reviews()->avg('rating') ?? 0,
+                'properties_sold' => $agent->sold_properties_count,
+                'total_revenue' => $agent->commissions_count > 0 ? $agent->commissions()->sum('amount') : 0,
+                'active_clients' => $agent->clients_count,
+                'rating' => $agent->reviews_avg_rating ?? 0,
             ];
         });
     }
@@ -170,7 +188,7 @@ class AgentService
             $agent->load([
                 'profile',
                 'properties' => function ($query) {
-                    $query->where('status', 'active')->latest()->limit(6);
+                    $query->with(['media', 'propertyType', 'location', 'price'])->where('status', 'active')->latest()->limit(6);
                 },
                 'reviews' => function ($query) {
                     $query->latest()->limit(10);
@@ -179,11 +197,18 @@ class AgentService
                 'licenses'
             ]);
 
+            $agent->loadCount([
+                'properties',
+                'properties as sold_properties_count' => fn($q) => $q->where('status', 'sold'),
+                'reviews'
+            ]);
+            $agent->loadAvg('reviews', 'rating');
+
             $stats = [
-                'total_properties' => $agent->properties()->count(),
-                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-                'total_reviews' => $agent->reviews()->count(),
+                'total_properties' => $agent->properties_count,
+                'sold_properties' => $agent->sold_properties_count,
+                'average_rating' => $agent->reviews_avg_rating ?? 0,
+                'total_reviews' => $agent->reviews_count,
                 'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
             ];
 
@@ -199,60 +224,7 @@ class AgentService
         $cacheKey = 'agents_paginated_' . md5(json_encode($filters) . $perPage . $forDirectory);
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($filters, $perPage, $forDirectory) {
-            $query = Agent::with(['profile', 'user', 'company']);
-
-            if ($forDirectory) {
-                $query->where('status', 'active');
-            }
-
-            if (isset($filters['search'])) {
-                $search = $filters['search'];
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orWhereHas('profile', function ($q) use ($search) {
-                    $q->where('license_number', 'like', "%{$search}%")
-                      ->orWhere('bio', 'like', "%{$search}%");
-                });
-            }
-
-            if (isset($filters['specialization'])) {
-                $specialization = $filters['specialization'];
-                $query->whereHas('profile', function ($q) use ($specialization) {
-                    $q->whereJsonContains('specializations', $specialization);
-                });
-            }
-
-            if (isset($filters['location'])) {
-                $location = $filters['location'];
-                $query->whereHas('profile', function ($q) use ($location) {
-                    $q->whereJsonContains('service_areas', $location);
-                });
-            }
-
-            if (isset($filters['rating'])) {
-                $rating = $filters['rating'];
-                $query->whereHas('reviews', function ($q) use ($rating) {
-                    $q->havingRaw('AVG(rating) >= ?', [$rating]);
-                });
-            }
-
-            if (isset($filters['status']) && !$forDirectory) {
-                $query->where('status', $filters['status']);
-            }
-
-            if (isset($filters['company_id'])) {
-                $query->where('company_id', $filters['company_id']);
-            }
-
-            if ($forDirectory) {
-                $query->orderByRaw('(SELECT AVG(rating) FROM agent_reviews WHERE agent_id = agents.id) DESC');
-            } else {
-                $query->latest();
-            }
-
-            return $query->paginate($perPage);
+            return $this->agentRepository->getPaginated($filters, $perPage, $forDirectory);
         });
     }
 
@@ -262,14 +234,7 @@ class AgentService
     public function getAgentSpecializations(): \Illuminate\Support\Collection
     {
         return Cache::remember('agent_specializations', $this->cacheTTL, function () {
-            return \App\Models\AgentProfile::whereNotNull('specializations')
-                ->get()
-                ->flatMap(function ($profile) {
-                    return $profile->specializations ?? [];
-                })
-                ->unique()
-                ->sort()
-                ->values();
+            return $this->agentRepository->getSpecializations();
         });
     }
 
@@ -282,7 +247,7 @@ class AgentService
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
             $agent->load(['profile', 'user', 'company', 'properties' => function ($query) {
-                $query->latest()->limit(10);
+                $query->with(['media', 'propertyType', 'location', 'price'])->latest()->limit(10);
             }, 'reviews' => function ($query) {
                 $query->latest()->limit(5);
             }]);
@@ -307,21 +272,7 @@ class AgentService
         $cacheKey = 'filtered_agents_' . md5(json_encode($filters));
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($filters) {
-            $query = Agent::with(['user', 'company'])
-                ->where('status', 'active');
-
-            if (isset($filters['search'])) {
-                $search = $filters['search'];
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            }
-
-            if (isset($filters['company_id'])) {
-                $query->where('company_id', $filters['company_id']);
-            }
-
-            return $query->get(['id', 'user_id', 'company_id', 'license_number']);
+            return $this->agentRepository->getFiltered($filters);
         });
     }
 

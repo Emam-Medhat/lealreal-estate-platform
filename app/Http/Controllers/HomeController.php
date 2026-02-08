@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Property;
+use App\Repositories\Contracts\PropertyRepositoryInterface;
 
 class HomeController extends Controller
 {
+    protected $propertyRepository;
+
+    public function __construct(PropertyRepositoryInterface $propertyRepository)
+    {
+        $this->propertyRepository = $propertyRepository;
+    }
+
     public function index()
     {
         // Check if user is authenticated
@@ -16,51 +23,15 @@ class HomeController extends Controller
 
         // For non-authenticated users, show landing page
         // Get featured properties for home page - show all active properties
-        $featuredProperties = Property::where('status', 'active')
-            ->with(['media', 'propertyType'])
-            ->latest()
-            ->limit(6)
-            ->get();
+        $featuredProperties = $this->propertyRepository->getFeatured(6);
 
         // Get latest properties
-        $latestProperties = Property::where('status', 'active')
-            ->with(['media', 'propertyType'])
-            ->latest()
-            ->limit(6)
-            ->get();
-
-        // If no active properties, get all properties instead
-        if ($featuredProperties->count() == 0) {
-            $featuredProperties = Property::with(['media', 'propertyType'])
-                ->latest()
-                ->limit(6)
-                ->get();
-        }
+        $latestProperties = $this->propertyRepository->getLatestActive(6);
 
         // Get properties by type for different sections
-        $apartments = Property::where('status', 'active')
-            ->whereHas('propertyType', function($q) {
-                $q->where('slug', 'apartment');
-            })
-            ->with(['media', 'propertyType'])
-            ->limit(3)
-            ->get();
-
-        $villas = Property::where('status', 'active')
-            ->whereHas('propertyType', function($q) {
-                $q->where('slug', 'villa');
-            })
-            ->with(['media', 'propertyType'])
-            ->limit(3)
-            ->get();
-
-        $houses = Property::where('status', 'active')
-            ->whereHas('propertyType', function($q) {
-                $q->where('slug', 'house');
-            })
-            ->with(['media', 'propertyType'])
-            ->limit(3)
-            ->get();
+        $apartments = $this->propertyRepository->getByTypeSlug('apartment', 3);
+        $villas = $this->propertyRepository->getByTypeSlug('villa', 3);
+        $houses = $this->propertyRepository->getByTypeSlug('house', 3);
 
         return view('home', compact(
             'featuredProperties',

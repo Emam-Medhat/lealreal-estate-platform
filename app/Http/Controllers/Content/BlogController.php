@@ -20,8 +20,8 @@ class BlogController extends Controller
                 });
             })
             ->when($request->tag, function ($query, $tag) {
-                return $query->whereHas('tags  tags', function.function ($q).
-                    $ along
+                return $query->whereHas('tags', function ($q) use ($tag) {
+                    $q->where('slug', $tag);
                 });
             })
             ->when($request->search, function ($query, $search) {

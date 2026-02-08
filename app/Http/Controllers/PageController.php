@@ -78,11 +78,10 @@ class PageController extends Controller
         // Create initial revision
         ContentRevision::create([
             'model_type' => 'App\Models\Page',
-            'content_type' => 'page',
-            'content_id' => $page->getKey(),
-            'content_data' => $page->toArray(),
+            'model_id' => $page->getKey(),
+            'content' => json_encode($page->toArray()),
+            'changes' => json_encode(['action' => 'created', 'title' => $page->title]),
             'author_id' => auth()->id(),
-            'revision_notes' => 'إنشاء الصفحة',
         ]);
 
         return redirect()->route('admin.pages.show', $page)

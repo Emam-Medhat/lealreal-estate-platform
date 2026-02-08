@@ -20,7 +20,14 @@ class AgentPropertyService
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent, $request, $perPage) {
             $properties = Property::where('agent_id', $agent->id)
-                ->with(['media'])
+                ->with([
+                    'media',
+                    'location',
+                    'pricing',
+                    'details',
+                    'agent:id,name',
+                    'company:id,name,logo'
+                ])
                 ->when($request->boolean('featured'), function($query) {
                     $query->where('featured', true);
                 })
@@ -47,8 +54,33 @@ class AgentPropertyService
     public function invalidateCache(int $agentId)
     {
         // Invalidate all caches related to this agent's properties
-        // This is a broad invalidation, more granular invalidation can be implemented if needed
-        Cache::forget('agent_properties_' . $agentId . '_*');
+        // Laravel doesn't support wildcard cache deletion, so we need to track cache keys
+        // For now, we'll use a more specific approach by clearing common cache patterns
+        $cachePrefix = 'agent_properties_' . $agentId;
+        
+        // Clear common cache patterns (this is a simplified approach)
+        // In a production environment, consider using Redis with scan command or a cache tagging system
+        Cache::forget($cachePrefix . '_default');
+        Cache::forget($cachePrefix . '_featured');
+        Cache::forget($cachePrefix . '_active');
+        Cache::forget($cachePrefix . '_draft');
+        
+        // Clear any other specific cache patterns that might be used
+        $this->clearSearchCaches($agentId);
+    }
+
+    protected function clearSearchCaches(int $agentId)
+    {
+        // Clear search-related caches with common search parameters
+        $commonSearches = ['', 'sale', 'rent', 'apartment', 'villa', 'house'];
+        $commonStatuses = ['active', 'draft', 'inactive'];
+        
+        foreach ($commonSearches as $search) {
+            foreach ($commonStatuses as $status) {
+                $cacheKey = 'agent_properties_' . $agentId . '_' . md5(json_encode(['search' => $search, 'status' => $status]) . '12');
+                Cache::forget($cacheKey);
+            }
+        }
     }
 
     public function createProperty(User $agent, array $validatedData)

@@ -52,7 +52,8 @@ class PropertyComparisonController extends Controller
         $comparison = Session::get('property_comparison', []);
 
         // Check if property exists and is active
-        $property = Property::where('id', $propertyId)
+        $property = Property::with('media')
+            ->where('id', $propertyId)
             ->where('status', 'active')
             ->first();
 

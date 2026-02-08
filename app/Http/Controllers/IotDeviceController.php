@@ -12,11 +12,19 @@ class IotDeviceController extends Controller
 {
     public function dashboard()
     {
+        // Optimized aggregation query
+        $aggregates = IotDevice::selectRaw('
+            count(*) as total,
+            count(case when status = "active" then 1 end) as active,
+            count(case when status = "offline" then 1 end) as offline,
+            count(case when status = "maintenance" then 1 end) as maintenance
+        ')->first();
+
         $stats = [
-            'total_devices' => IotDevice::count(),
-            'active_devices' => IotDevice::where('status', 'active')->count(),
-            'offline_devices' => IotDevice::where('status', 'offline')->count(),
-            'maintenance_devices' => IotDevice::where('status', 'maintenance')->count(),
+            'total_devices' => $aggregates->total,
+            'active_devices' => $aggregates->active,
+            'offline_devices' => $aggregates->offline,
+            'maintenance_devices' => $aggregates->maintenance,
             'device_types' => $this->getDeviceTypeDistribution(),
             'battery_status' => $this->getBatteryStatusOverview(),
         ];

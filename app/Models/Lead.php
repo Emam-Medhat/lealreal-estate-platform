@@ -113,7 +113,7 @@ class Lead extends Model
 
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsTo(Agent::class, 'assigned_to');
     }
 
     public function createdBy(): BelongsTo

@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <?php if(auth()->guard()->check()): ?>
+        <meta name="user-id" content="<?php echo e(auth()->id()); ?>">
+    <?php endif; ?>
     <title><?php echo $__env->yieldContent('title', 'لوحة التحكم'); ?> - نظام إدارة العقارات</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -44,11 +47,28 @@
                         
                         <div class="flex items-center space-x-4">
                             <!-- Notifications -->
-                            <div class="relative">
-                                <button class="text-gray-500 hover:text-gray-700 relative">
+                            <div class="relative" id="notification-dropdown">
+                                <button class="text-gray-500 hover:text-gray-700 relative focus:outline-none" onclick="toggleNotifications()">
                                     <i class="fas fa-bell text-xl"></i>
-                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                                    <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
                                 </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div id="notification-menu" class="absolute left-0 mt-2 w-80 bg-white rounded-lg shadow-xl overflow-hidden z-50 hidden border border-gray-100" style="left: -10rem;">
+                                    <div class="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                        <h3 class="text-sm font-semibold text-gray-700">الإشعارات</h3>
+                                        <button class="text-xs text-blue-600 hover:text-blue-800" onclick="markAllAsRead()">تحديد الكل كمقروء</button>
+                                    </div>
+                                    <div id="notification-list" class="max-h-96 overflow-y-auto">
+                                        <!-- Notifications will be injected here -->
+                                        <div class="p-4 text-center text-gray-500 text-sm" id="no-notifications">
+                                            لا توجد إشعارات جديدة
+                                        </div>
+                                    </div>
+                                    <div class="p-2 bg-gray-50 border-t border-gray-100 text-center">
+                                        <a href="#" class="text-xs text-blue-600 hover:text-blue-800 font-medium">عرض كل الإشعارات</a>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Search -->

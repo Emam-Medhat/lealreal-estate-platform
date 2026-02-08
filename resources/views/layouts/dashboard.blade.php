@@ -391,15 +391,15 @@
                                 <i class="fas fa-brain w-4"></i>
                                 <span class="mr-3">رؤى الذكاء الاصطناعي</span>
                             </a>
-                            <a href="{{ route('ai.price-predictor.index') }}"
-                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
-                                <i class="fas fa-crystal-ball w-4"></i>
-                                <span class="mr-3">توقع الأسعار</span>
-                            </a>
-                            <a href="{{ route('ai.fraud.detection') }}"
-                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
-                                <i class="fas fa-user-secret w-4"></i>
-                                <span class="mr-3">كشف الاحتيال</span>
+                            <a href="{{ route('ai.price.prediction') }}" 
+                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50"> 
+                                <i class="fas fa-crystal-ball w-4"></i> 
+                                <span class="mr-3">توقع الأسعار</span> 
+                            </a> 
+                            <a href="{{ route('ai.fraud-detection.index') }}" 
+                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50"> 
+                                <i class="fas fa-user-secret w-4"></i> 
+                                <span class="mr-3">كشف الاحتيال</span> 
                             </a>
                             <a href="{{ route('ai.virtual-staging.index') }}"
                                 class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">

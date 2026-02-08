@@ -164,6 +164,11 @@ class Nft extends Model
     }
 
     // Relationships
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(CryptoWallet::class, 'owner_address', 'address');
+    }
+
     public function smartContract(): BelongsTo
     {
         return $this->belongsTo(SmartContract::class, 'contract_address', 'address');

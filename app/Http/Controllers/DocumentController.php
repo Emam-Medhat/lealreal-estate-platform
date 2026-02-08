@@ -14,7 +14,9 @@ class DocumentController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
             
-        return view('documents.index', compact('documents'));
+        $categories = DocumentCategory::all();
+            
+        return view('documents.index', compact('documents', 'categories'));
     }
     
     public function create()

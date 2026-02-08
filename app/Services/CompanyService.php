@@ -11,8 +11,75 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
+use App\Repositories\Contracts\CompanyRepositoryInterface;
+
 class CompanyService
 {
+    protected $companyRepository;
+
+    public function __construct(CompanyRepositoryInterface $companyRepository)
+    {
+        $this->companyRepository = $companyRepository;
+    }
+
+    /**
+     * Get paginated companies
+     */
+    public function getPaginatedCompanies(array $filters, int $perPage = 20)
+    {
+        return $this->companyRepository->getPaginated($filters, $perPage);
+    }
+
+    /**
+     * Get active companies
+     */
+    public function getActiveCompanies(array $filters = [])
+    {
+        return $this->companyRepository->getActiveCompanies($filters);
+    }
+
+    /**
+     * Get company by ID
+     */
+    public function getCompanyById(int $id): Company
+    {
+        return $this->companyRepository->findById($id);
+    }
+
+    /**
+     * Delete company
+     */
+    public function deleteCompany(int $id): bool
+    {
+        $company = $this->companyRepository->findById($id);
+
+        DB::beginTransaction();
+        try {
+            // Delete related data logic if needed
+            // For now, simple delete
+            $this->companyRepository->delete($id);
+
+            // Clear cache
+            Cache::tags(['company', 'company.' . $id])->flush();
+
+            DB::commit();
+
+            Log::info('Company deleted successfully', [
+                'company_id' => $id,
+                'deleted_by' => auth()->id()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete company', [
+                'company_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
     /**
      * Create a new company
      */
@@ -20,27 +87,48 @@ class CompanyService
     {
         DB::beginTransaction();
         try {
-            $company = Company::create([
+            $companyData = [
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
                 'website' => $data['website'] ?? null,
-                'description' => $data['description'] ?? null,
+                'type' => $data['type'] ?? null,
+                'registration_number' => $data['registration_number'] ?? null,
+                'tax_id' => $data['tax_id'] ?? null,
+                'status' => $data['status'] ?? 'pending',
+                'api_key' => $data['api_key'] ?? null,
+                'webhook_url' => $data['webhook_url'] ?? null,
+                'is_featured' => $data['is_featured'] ?? false,
+                'is_verified' => $data['is_verified'] ?? false,
+                'verification_level' => $data['verification_level'] ?? 0,
+                'rating' => $data['rating'] ?? 0,
+                'total_reviews' => $data['total_reviews'] ?? 0,
+                'cover_image_url' => $data['cover_image_url'] ?? null,
                 'logo_url' => $data['logo_url'] ?? null,
-                'license_number' => $data['license_number'],
-                'established_date' => $data['established_date'] ?? now(),
-                'company_size' => $data['company_size'] ?? 'small',
-                'industry' => $data['industry'] ?? 'real_estate',
-                'address' => $data['address'],
-                'city' => $data['city'],
-                'country' => $data['country'],
-                'postal_code' => $data['postal_code'] ?? null,
-                'status' => 'active',
-                'subscription_status' => 'active',
-                'subscription_plan_id' => $data['subscription_plan_id'] ?? null,
-                'subscription_expires_at' => $data['subscription_expires_at'] ?? null,
                 'created_by' => auth()->id()
-            ]);
+            ];
+            
+            $company = $this->companyRepository->create($companyData);
+
+            // Create profile
+            $profileData = [
+                'description' => $data['description'] ?? null,
+                'founded_date' => $data['founded_date'] ?? null,
+                'employee_count' => $data['employee_count'] ?? null,
+                'annual_revenue' => $data['annual_revenue'] ?? null,
+                'address' => $data['address'] ?? null,
+                'city' => $data['city'] ?? null,
+                'state' => $data['state'] ?? null,
+                'country' => $data['country'] ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+                'services' => $data['services'] ?? null,
+                'specializations' => $data['specializations'] ?? null,
+                'certifications' => $data['certifications'] ?? null,
+                'awards' => $data['awards'] ?? null,
+                'logo' => $data['logo'] ?? null,
+            ];
+            
+            $company->profile()->create($profileData);
 
             // Create default settings
             $this->createDefaultSettings($company);
@@ -81,13 +169,59 @@ class CompanyService
      */
     public function updateCompany(int $companyId, array $data): Company
     {
-        $company = Company::findOrFail($companyId);
+        $company = $this->companyRepository->findById($companyId);
 
         DB::beginTransaction();
         try {
             $oldData = $company->toArray();
             
-            $company->update($data);
+            // Update Company
+            $companyData = array_intersect_key($data, array_flip([
+                'name', 'email', 'phone', 'website', 'type', 
+                'registration_number', 'tax_id', 'status',
+                'api_key', 'webhook_url', 'is_featured', 'is_verified',
+                'verification_level', 'rating', 'total_reviews',
+                'cover_image_url', 'logo_url'
+            ]));
+            
+            if (!empty($companyData)) {
+                $this->companyRepository->update($company->id, $companyData);
+            }
+
+            // Update Profile
+            $profileData = [
+                'description' => $data['description'] ?? null,
+                'founded_date' => $data['founded_date'] ?? null,
+                'employee_count' => $data['employee_count'] ?? null,
+                'annual_revenue' => $data['annual_revenue'] ?? null,
+                'address' => $data['address'] ?? null,
+                'city' => $data['city'] ?? null,
+                'state' => $data['state'] ?? null,
+                'country' => $data['country'] ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+                'services' => $data['services'] ?? null,
+                'specializations' => $data['specializations'] ?? null,
+                'certifications' => $data['certifications'] ?? null,
+                'awards' => $data['awards'] ?? null,
+                'logo' => $data['logo'] ?? null,
+            ];
+            
+            // Filter out null values to avoid overwriting with null unless explicitly intended
+            // But here we rely on the fact that if it's not in $data it's null in mapping.
+            // If $data comes from request->all(), it might have everything.
+            // Let's filter based on keys present in $data.
+            $profileData = array_intersect_key($data, array_flip([
+                'description', 'founded_date', 'employee_count', 'annual_revenue',
+                'address', 'city', 'state', 'country', 'postal_code',
+                'services', 'specializations', 'certifications', 'awards', 'logo'
+            ]));
+
+            if (!empty($profileData)) {
+                $company->profile()->updateOrCreate(
+                    ['company_id' => $company->id],
+                    $profileData
+                );
+            }
 
             // Log changes
             $this->logCompanyChanges($company, $oldData, $data);
@@ -120,7 +254,7 @@ class CompanyService
      */
     public function addMember(int $companyId, int $userId, string $role = 'member'): CompanyMember
     {
-        $company = Company::findOrFail($companyId);
+        $company = $this->companyRepository->findById($companyId);
 
         // Check if user is already a member
         $existingMember = $company->members()
@@ -175,7 +309,7 @@ class CompanyService
      */
     public function removeMember(int $companyId, int $userId): bool
     {
-        $company = Company::findOrFail($companyId);
+        $company = $this->companyRepository->findById($companyId);
         $member = $company->members()
             ->where('user_id', $userId)
             ->first();
@@ -225,7 +359,7 @@ class CompanyService
      */
     public function updateMemberRole(int $companyId, int $userId, string $role): bool
     {
-        $company = Company::findOrFail($companyId);
+        $company = $this->companyRepository->findById($companyId);
         $member = $company->members()
             ->where('user_id', $userId)
             ->first();
@@ -274,7 +408,7 @@ class CompanyService
      */
     public function createBranch(int $companyId, array $data): CompanyBranch
     {
-        $company = Company::findOrFail($companyId);
+        $company = $this->companyRepository->findById($companyId);
 
         DB::beginTransaction();
         try {
@@ -324,7 +458,7 @@ class CompanyService
      */
     public function getCompanyStatistics(int $companyId): array
     {
-        $company = Company::findOrFail($companyId);
+        $company = $this->companyRepository->findById($companyId);
 
         $memberCount = $company->members()->count();
         $branchCount = $company->branches()->count();

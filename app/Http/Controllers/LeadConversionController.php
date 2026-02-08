@@ -169,12 +169,19 @@ class LeadConversionController extends Controller
     
     public function conversionFunnel()
     {
+        // Get lead status IDs with null checks
+        $newStatus = \App\Models\LeadStatus::where('name', 'جديد')->first();
+        $contactedStatus = \App\Models\LeadStatus::where('name', 'تم التواصل')->first();
+        $qualifiedStatus = \App\Models\LeadStatus::where('name', 'مؤهل')->first();
+        $proposalStatus = \App\Models\LeadStatus::where('name', 'عرض')->first();
+        $negotiationStatus = \App\Models\LeadStatus::where('name', 'تفاوض')->first();
+        
         $stages = [
-            'new' => Lead::where('status_id', \App\Models\LeadStatus::where('name', 'جديد')->first()->id)->count(),
-            'contacted' => Lead::where('status_id', \App\Models\LeadStatus::where('name', 'تم التواصل')->first()->id)->count(),
-            'qualified' => Lead::where('status_id', \App\Models\LeadStatus::where('name', 'مؤهل')->first()->id)->count(),
-            'proposal' => Lead::where('status_id', \App\Models\LeadStatus::where('name', 'عرض')->first()->id)->count(),
-            'negotiation' => Lead::where('status_id', \App\Models\LeadStatus::where('name', 'تفاوض')->first()->id)->count(),
+            'new' => $newStatus ? Lead::where('status_id', $newStatus->id)->count() : 0,
+            'contacted' => $contactedStatus ? Lead::where('status_id', $contactedStatus->id)->count() : 0,
+            'qualified' => $qualifiedStatus ? Lead::where('status_id', $qualifiedStatus->id)->count() : 0,
+            'proposal' => $proposalStatus ? Lead::where('status_id', $proposalStatus->id)->count() : 0,
+            'negotiation' => $negotiationStatus ? Lead::where('status_id', $negotiationStatus->id)->count() : 0,
             'converted' => Lead::where('converted_at', '!=', null)->count(),
         ];
         

@@ -4,54 +4,58 @@ namespace App\Http\Controllers\Payment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\UserActivityLog;
+use App\Models\Client;
+use App\Models\Property;
+use App\Models\Company;
+use App\Services\InvoiceService;
+use App\Repositories\InvoiceRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use PDF;
 
 class InvoiceController extends Controller
 {
+    protected InvoiceService $invoiceService;
+    protected InvoiceRepositoryInterface $invoiceRepository;
+
+    public function __construct(InvoiceService $invoiceService, InvoiceRepositoryInterface $invoiceRepository)
+    {
+        $this->invoiceService = $invoiceService;
+        $this->invoiceRepository = $invoiceRepository;
+    }
+
     public function index(Request $request)
     {
-        $invoices = Invoice::with(['user', 'payments'])
-            ->when($request->search, function ($query, $search) {
-                $query->where('invoice_number', 'like', "%{$search}%")
-                    ->orWhereHas('user', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                          ->orWhere('email', 'like', "%{$search}%");
-                    });
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->type, function ($query, $type) {
-                $query->where('type', $type);
-            })
-            ->when($request->date_from, function ($query, $date) {
-                $query->whereDate('created_at', '>=', $date);
-            })
-            ->when($request->date_to, function ($query, $date) {
-                $query->whereDate('created_at', '<=', $date);
-            })
-            ->latest('created_at')
-            ->paginate(20);
+        $filters = $request->only([
+            'status', 'type', 'client_id', 'property_id', 'company_id', 
+            'agent_id', 'date_from', 'date_to', 'min_amount', 'max_amount', 'search'
+        ]);
 
-        return view('payments.invoices.index', compact('invoices'));
+        $invoices = $this->invoiceRepository->paginate($filters, 20);
+        $stats = $this->invoiceService->getInvoiceStats($filters);
+
+        return view('payments.invoices.index', compact('invoices', 'stats'));
     }
 
     public function create()
     {
-        return view('payments.invoices.create');
+        $clients = Client::orderBy('full_name')->get();
+        $properties = Property::orderBy('title')->get();
+        $companies = Company::orderBy('name')->get();
+
+        return view('payments.invoices.create', compact('clients', 'properties', 'companies'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'type' => 'required|in:subscription,property,service,penalty,other',
+            'client_id' => 'required|exists:clients,id',
+            'property_id' => 'nullable|exists:properties,id',
+            'company_id' => 'nullable|exists:companies,id',
+            'type' => 'required|in:subscription,property,service,penalty,other,maintenance,consultation,commission',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:2000',
             'items' => 'required|array|min:1',
@@ -62,53 +66,30 @@ class InvoiceController extends Controller
             'subtotal' => 'required|numeric|min:0',
             'tax_amount' => 'required|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
-            'total_amount' => 'required|numeric|min:0',
-            'currency' => 'required|string|size:3',
-            'due_date' => 'required|date|after:today',
+            'total' => 'required|numeric|min:0',
+            'issue_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:issue_date',
+            'payment_method' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:1000',
-            'terms' => 'nullable|string|max:2000',
-            'metadata' => 'nullable|array',
         ]);
 
         try {
-            $invoice = Invoice::create([
-                'user_id' => $request->user_id,
-                'invoice_number' => $this->generateInvoiceNumber(),
-                'type' => $request->type,
-                'title' => $request->title,
-                'description' => $request->description,
-                'items' => $request->items,
-                'subtotal' => $request->subtotal,
-                'tax_amount' => $request->tax_amount,
-                'discount_amount' => $request->discount_amount ?? 0,
-                'total_amount' => $request->total_amount,
-                'currency' => $request->currency,
-                'due_date' => $request->due_date,
-                'status' => 'draft',
-                'notes' => $request->notes,
-                'terms' => $request->terms,
-                'metadata' => $request->metadata ?? [],
-                'created_by' => Auth::id(),
-            ]);
+            $invoice = $this->invoiceService->createInvoice($request->all());
 
-            UserActivityLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'created_invoice',
-                'details' => "Created invoice: {$invoice->invoice_number} for {$request->total_amount} {$request->currency}",
-                'ip_address' => $request->ip(),
-            ]);
-
-            return redirect()->route('payments.invoices.show', $invoice)
-                ->with('success', 'Invoice created successfully.');
+            return redirect()
+                ->route('payments.invoices.show', $invoice)
+                ->with('success', 'تم إنشاء الفاتورة بنجاح');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error creating invoice: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'حدث خطأ أثناء إنشاء الفاتورة: ' . $e->getMessage());
         }
     }
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['user', 'payments']);
+        $invoice->load(['client', 'property', 'company', 'agent', 'payments']);
         return view('payments.invoices.show', compact('invoice'));
     }
 
@@ -118,7 +99,12 @@ class InvoiceController extends Controller
             return back()->with('error', 'Cannot edit paid or cancelled invoices.');
         }
 
-        return view('payments.invoices.edit', compact('invoice'));
+        $invoice->load(['client', 'property', 'company']);
+        $clients = Client::orderBy('full_name')->get();
+        $properties = Property::orderBy('title')->get();
+        $companies = Company::orderBy('name')->get();
+
+        return view('payments.invoices.edit', compact('invoice', 'clients', 'properties', 'companies'));
     }
 
     public function update(Request $request, Invoice $invoice)
@@ -128,6 +114,10 @@ class InvoiceController extends Controller
         }
 
         $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'property_id' => 'nullable|exists:properties,id',
+            'company_id' => 'nullable|exists:companies,id',
+            'type' => 'required|in:subscription,property,service,penalty,other,maintenance,consultation,commission',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:2000',
             'items' => 'required|array|min:1',
@@ -138,250 +128,189 @@ class InvoiceController extends Controller
             'subtotal' => 'required|numeric|min:0',
             'tax_amount' => 'required|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
-            'total_amount' => 'required|numeric|min:0',
-            'due_date' => 'required|date|after:today',
+            'total' => 'required|numeric|min:0',
+            'issue_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:issue_date',
+            'payment_method' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:1000',
-            'terms' => 'nullable|string|max:2000',
         ]);
 
         try {
-            $invoice->update([
-                'title' => $request->title,
-                'description' => $request->description,
-                'items' => $request->items,
-                'subtotal' => $request->subtotal,
-                'tax_amount' => $request->tax_amount,
-                'discount_amount' => $request->discount_amount ?? 0,
-                'total_amount' => $request->total_amount,
-                'due_date' => $request->due_date,
-                'notes' => $request->notes,
-                'terms' => $request->terms,
-                'updated_by' => Auth::id(),
-            ]);
+            $updatedInvoice = $this->invoiceService->updateInvoice($invoice->id, $request->all());
 
-            UserActivityLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'updated_invoice',
-                'details' => "Updated invoice: {$invoice->invoice_number}",
-                'ip_address' => $request->ip(),
-            ]);
-
-            return redirect()->route('payments.invoices.show', $invoice)
-                ->with('success', 'Invoice updated successfully.');
+            return redirect()
+                ->route('payments.invoices.show', $updatedInvoice)
+                ->with('success', 'تم تحديث الفاتورة بنجاح');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error updating invoice: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'حدث خطأ أثناء تحديث الفاتورة: ' . $e->getMessage());
         }
     }
 
-    public function send(Request $request, Invoice $invoice): JsonResponse
+    public function destroy(Invoice $invoice)
+    {
+        try {
+            if ($invoice->status === 'paid') {
+                return back()->with('error', 'Cannot delete paid invoices.');
+            }
+
+            $this->invoiceRepository->delete($invoice->id);
+
+            return redirect()
+                ->route('payments.invoices.index')
+                ->with('success', 'تم حذف الفاتورة بنجاح');
+
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', 'حدث خطأ أثناء حذف الفاتورة: ' . $e->getMessage());
+        }
+    }
+
+    // Approval Actions
+    public function approve(Request $request, Invoice $invoice)
     {
         $request->validate([
-            'email' => 'required|email',
-            'subject' => 'required|string|max:255',
-            'message' => 'nullable|string|max:2000',
+            'reason' => 'nullable|string|max:500'
         ]);
 
         try {
-            // Send invoice email (mock implementation)
-            // In real implementation, use Laravel's Mail facade
-            
-            $invoice->update([
-                'status' => 'sent',
-                'sent_at' => now(),
-                'sent_to' => $request->email,
-                'updated_by' => Auth::id(),
-            ]);
+            $approvedInvoice = $this->invoiceService->approveInvoice(
+                $invoice->id, 
+                $request->reason
+            );
 
-            UserActivityLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'sent_invoice',
-                'details' => "Sent invoice {$invoice->invoice_number} to {$request->email}",
-                'ip_address' => $request->ip(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invoice sent successfully'
-            ]);
+            return back()
+                ->with('success', 'تم اعتماد الفاتورة بنجاح');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error sending invoice: ' . $e->getMessage()
-            ], 500);
+            return back()
+                ->with('error', 'حدث خطأ أثناء اعتماد الفاتورة: ' . $e->getMessage());
         }
     }
 
-    public function markAsPaid(Request $request, Invoice $invoice): JsonResponse
+    public function reject(Request $request, Invoice $invoice)
     {
         $request->validate([
-            'payment_method' => 'required|string|max:100',
-            'payment_reference' => 'nullable|string|max:255',
-            'notes' => 'nullable|string|max:500',
+            'reason' => 'required|string|max:500'
         ]);
 
         try {
-            $invoice->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-                'payment_method' => $request->payment_method,
-                'payment_reference' => $request->payment_reference,
-                'updated_by' => Auth::id(),
-            ]);
+            $rejectedInvoice = $this->invoiceService->rejectInvoice(
+                $invoice->id, 
+                $request->reason
+            );
 
-            UserActivityLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'marked_invoice_paid',
-                'details' => "Marked invoice {$invoice->invoice_number} as paid",
-                'ip_address' => $request->ip(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invoice marked as paid successfully'
-            ]);
+            return back()
+                ->with('success', 'تم رفض الفاتورة بنجاح');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating invoice: ' . $e->getMessage()
-            ], 500);
+            return back()
+                ->with('error', 'حدث خطأ أثناء رفض الفاتورة: ' . $e->getMessage());
         }
     }
 
-    public function cancel(Request $request, Invoice $invoice): JsonResponse
+    public function cancel(Request $request, Invoice $invoice)
     {
         $request->validate([
-            'cancellation_reason' => 'required|string|max:500',
+            'reason' => 'nullable|string|max:500'
         ]);
 
-        if ($invoice->status === 'paid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot cancel paid invoices'
-            ], 400);
-        }
-
         try {
-            $invoice->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-                'cancellation_reason' => $request->cancellation_reason,
-                'updated_by' => Auth::id(),
-            ]);
+            $cancelledInvoice = $this->invoiceService->cancelInvoice(
+                $invoice->id, 
+                $request->reason
+            );
 
-            UserActivityLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'cancelled_invoice',
-                'details' => "Cancelled invoice {$invoice->invoice_number}: {$request->cancellation_reason}",
-                'ip_address' => $request->ip(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invoice cancelled successfully'
-            ]);
+            return back()
+                ->with('success', 'تم إلغاء الفاتورة بنجاح');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error cancelling invoice: ' . $e->getMessage()
-            ], 500);
+            return back()
+                ->with('error', 'حدث خطأ أثناء إلغاء الفاتورة: ' . $e->getMessage());
         }
     }
 
-    public function downloadPDF(Invoice $invoice)
+    // Payment Actions
+    public function addPayment(Request $request, Invoice $invoice)
     {
-        $invoice->load(['user', 'payments']);
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|max:50',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $payment = $this->invoiceService->addPayment(
+                $invoice->id,
+                $request->amount,
+                $request->payment_method,
+                ['notes' => $request->notes]
+            );
+
+            return back()
+                ->with('success', 'تم إضافة الدفعة بنجاح');
+
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', 'حدث خطأ أثناء إضافة الدفعة: ' . $e->getMessage());
+        }
+    }
+
+    // Reports and Analytics
+    public function analytics(Request $request)
+    {
+        $filters = $request->only([
+            'date_from', 'date_to', 'client_id', 'property_id', 'company_id'
+        ]);
+
+        $analytics = $this->invoiceService->getRevenueAnalytics($filters);
+        $overdueAging = $this->invoiceService->getOverdueInvoicesWithAging();
+
+        return view('payments.invoices.analytics', compact('analytics', 'overdueAging'));
+    }
+
+    public function report(Request $request)
+    {
+        $filters = $request->only([
+            'status', 'type', 'client_id', 'property_id', 'company_id', 
+            'agent_id', 'date_from', 'date_to', 'min_amount', 'max_amount'
+        ]);
+
+        $report = $this->invoiceService->generateInvoiceReport($filters);
+
+        if ($request->has('download')) {
+            return $this->downloadReport($report);
+        }
+
+        return view('payments.invoices.report', compact('report'));
+    }
+
+    // API Endpoints
+    public function apiStats(Request $request): JsonResponse
+    {
+        $filters = $request->only([
+            'date_from', 'date_to', 'client_id', 'property_id', 'company_id'
+        ]);
+
+        $stats = $this->invoiceService->getInvoiceStats($filters);
+
+        return response()->json($stats);
+    }
+
+    public function apiOverdue(): JsonResponse
+    {
+        $overdueAging = $this->invoiceService->getOverdueInvoicesWithAging();
+
+        return response()->json($overdueAging);
+    }
+
+    // Private Methods
+    private function downloadReport(array $report): \Illuminate\Http\Response
+    {
+        $pdf = PDF::loadView('payments.invoices.pdf-report', $report);
         
-        $pdf = PDF::loadView('payments.invoices.pdf', compact('invoice'));
-        
-        return $pdf->download("invoice_{$invoice->invoice_number}.pdf");
-    }
-
-    public function getInvoiceStats(): JsonResponse
-    {
-        $stats = [
-            'total_invoices' => Invoice::count(),
-            'draft_invoices' => Invoice::where('status', 'draft')->count(),
-            'sent_invoices' => Invoice::where('status', 'sent')->count(),
-            'paid_invoices' => Invoice::where('status', 'paid')->count(),
-            'overdue_invoices' => Invoice::where('due_date', '<', now())
-                ->where('status', '!=', 'paid')
-                ->where('status', '!=', 'cancelled')
-                ->count(),
-            'total_amount' => Invoice::sum('total_amount'),
-            'paid_amount' => Invoice::where('status', 'paid')->sum('total_amount'),
-            'outstanding_amount' => Invoice::where('status', '!=', 'paid')
-                ->where('status', '!=', 'cancelled')
-                ->sum('total_amount'),
-            'by_type' => Invoice::groupBy('type')
-                ->selectRaw('type, COUNT(*) as count, SUM(total_amount) as total')
-                ->get(),
-            'by_status' => Invoice::groupBy('status')
-                ->selectRaw('status, COUNT(*) as count, SUM(total_amount) as total')
-                ->get(),
-            'monthly_stats' => Invoice::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count, SUM(total_amount) as total')
-                ->where('created_at', '>=', now()->subYear())
-                ->groupBy('year', 'month')
-                ->orderBy('year', 'desc')
-                ->orderBy('month', 'desc')
-                ->get(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'stats' => $stats
-        ]);
-    }
-
-    public function exportInvoices(Request $request): JsonResponse
-    {
-        $request->validate([
-            'format' => 'required|in:json,csv,xlsx',
-            'status' => 'nullable|in:draft,sent,paid,overdue,cancelled',
-            'type' => 'nullable|in:subscription,property,service,penalty,other',
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
-        ]);
-
-        $query = Invoice::with(['user', 'payments']);
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->type) {
-            $query->where('type', $request->type);
-        }
-
-        if ($request->date_from) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->date_to) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $invoices = $query->get();
-
-        $filename = "invoices_export_" . now()->format('Y-m-d_H-i-s');
-
-        return response()->json([
-            'success' => true,
-            'data' => $invoices,
-            'filename' => $filename,
-            'message' => 'Invoices exported successfully'
-        ]);
-    }
-
-    private function generateInvoiceNumber()
-    {
-        $prefix = 'INV';
-        $year = date('Y');
-        $sequence = Invoice::whereYear('created_at', $year)->count() + 1;
-        
-        return sprintf('%s-%s-%06d', $prefix, $year, $sequence);
+        return $pdf->download('invoice-report-' . now()->format('Y-m-d') . '.pdf');
     }
 }

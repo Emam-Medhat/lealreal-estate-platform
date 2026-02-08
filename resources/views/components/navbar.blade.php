@@ -28,7 +28,7 @@
 
                 <!-- Properties -->
                 <a href="{{ route('properties.index') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                    <i class="fas fa-search mr-2"></i>
+                    <i class="fas fa-building mr-2"></i>
                     Properties
                 </a>
 
@@ -73,10 +73,50 @@
         <!-- Right Side - User Menu -->
         <div class="flex items-center space-x-4">
             <!-- Notifications -->
-            <button onclick="toggleNotifications()" class="relative text-gray-700 hover:text-blue-600 p-2 rounded-lg transition-colors">
-                <i class="fas fa-bell text-lg"></i>
-                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            @php
+                $notifications = auth()->user()->unreadNotifications;
+            @endphp
+            <div class="relative">
+                <button onclick="toggleNotifications()" class="relative text-gray-700 hover:text-blue-600 p-2 rounded-lg transition-colors">
+                    <i class="fas fa-bell text-lg"></i>
+                    @if($notifications->count() > 0)
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    @endif
+                </button>
+
+                <!-- Notifications Dropdown -->
+                <div id="notificationsDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible transition-all duration-200 z-50 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">Notifications</p>
+                        @if($notifications->count() > 0)
+                            <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{{ $notifications->count() }} New</span>
+                        @endif
+                    </div>
+
+                    <div class="max-h-96 overflow-y-auto">
+                        @forelse($notifications as $notification)
+                            <div class="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-building text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 w-0 flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ $notification->data['title'] ?? 'Notification' }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ $notification->data['message'] ?? '' }}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="px-4 py-6 text-center text-gray-500">
+                                <p class="text-sm">No new notifications</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
 
             <!-- User Menu -->
             <div class="relative">
@@ -194,12 +234,20 @@
         }
 
         document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
-            const button = event.target.closest('button[onclick="toggleUserMenu()"]');
+            const userDropdown = document.getElementById('userDropdown');
+            const userButton = event.target.closest('button[onclick="toggleUserMenu()"]');
             
-            if (dropdown && !button && !dropdown.contains(event.target)) {
-                dropdown.classList.remove('opacity-100', 'visible');
-                dropdown.classList.add('opacity-0', 'invisible');
+            if (userDropdown && !userButton && !userDropdown.contains(event.target)) {
+                userDropdown.classList.remove('opacity-100', 'visible');
+                userDropdown.classList.add('opacity-0', 'invisible');
+            }
+
+            const notifDropdown = document.getElementById('notificationsDropdown');
+            const notifButton = event.target.closest('button[onclick="toggleNotifications()"]');
+            
+            if (notifDropdown && !notifButton && !notifDropdown.contains(event.target)) {
+                notifDropdown.classList.remove('opacity-100', 'visible');
+                notifDropdown.classList.add('opacity-0', 'invisible');
             }
         });
     </script>

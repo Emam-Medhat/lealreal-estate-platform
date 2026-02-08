@@ -16,8 +16,14 @@ class Property extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        // Basic Information
         'agent_id',
         'company_id',
+        'owner_id',
+        'developer_id',
+        'manager_id',
+        'user_id',
+        'property_type_id',
         'title',
         'slug',
         'property_code',
@@ -25,6 +31,8 @@ class Property extends Model
         'property_type',
         'listing_type',
         'status',
+        
+        // Property Details
         'bedrooms',
         'bathrooms',
         'area',
@@ -34,6 +42,24 @@ class Property extends Model
         'parking_spaces',
         'land_area',
         'land_area_unit',
+        'price',
+        'price_per_sqm',
+        'original_price',
+        'rental_price',
+        'rental_frequency',
+        
+        // Location Information
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
+        'latitude',
+        'longitude',
+        'google_maps_embed',
+        'map_embed',
+        
+        // Property Features
         'featured',
         'premium',
         'views_count',
@@ -48,12 +74,42 @@ class Property extends Model
         'hospitals',
         'shopping_centers',
         'restaurants',
-        'public_transport',
-        'ownership_type',
+        'transportation',
+        
+        // Financial Information
+        'purchase_price',
+        'rental_price',
+        'service_charges',
+        'maintenance_fees',
+        'property_tax',
+        'insurance_cost',
+        
+        // Status and Dates
+        'listed_date',
+        'sold_date',
+        'rental_start_date',
+        'rental_end_date',
+        'expiry_date',
+        'available_from',
+        
+        // Media
+        'main_image',
+        'images',
+        'virtual_tour_url',
+        'video_url',
+        'floor_plan_url',
+        
+        // Legal Information
         'deed_number',
-        'registration_number',
-        'zoning',
+        'ownership_certificate',
         'building_permit',
+        'business_license',
+        'zoning_certificate',
+        
+        // Metadata
+        'metadata',
+        'created_by',
+        'updated_by',
         'occupancy_permit',
         'energy_rating',
         'solar_panels',
@@ -76,10 +132,20 @@ class Property extends Model
     protected $casts = [
         'area' => 'decimal:2',
         'land_area' => 'decimal:2',
+        'price' => 'decimal:2',
+        'price_per_sqm' => 'decimal:2',
+        'original_price' => 'decimal:2',
+        'rental_price' => 'decimal:2',
+        'purchase_price' => 'decimal:2',
+        'service_charges' => 'decimal:2',
+        'maintenance_fees' => 'decimal:2',
+        'property_tax' => 'decimal:2',
+        'insurance_cost' => 'decimal:2',
         'featured' => 'boolean',
         'premium' => 'boolean',
         'solar_panels' => 'boolean',
         'double_glazing' => 'boolean',
+        'air_conditioning' => 'boolean',
         'views_count' => 'integer',
         'favorites_count' => 'integer',
         'inquiries_count' => 'integer',
@@ -92,7 +158,15 @@ class Property extends Model
         'hospitals' => 'array',
         'shopping_centers' => 'array',
         'restaurants' => 'array',
-        'public_transport' => 'array',
+        'transportation' => 'array',
+        'images' => 'array',
+        'metadata' => 'json',
+        'listed_date' => 'datetime',
+        'sold_date' => 'datetime',
+        'rental_start_date' => 'datetime',
+        'rental_end_date' => 'datetime',
+        'expiry_date' => 'datetime',
+        'available_from' => 'datetime',
     ];
 
     public function agent(): BelongsTo
@@ -103,6 +177,69 @@ class Property extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'owner_id');
+    }
+
+    public function developer(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'developer_id');
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(Agent::class, 'manager_id');
+    }
+
+    // Analytics Relationships
+    public function analytics(): HasMany
+    {
+        return $this->hasMany(PropertyAnalytic::class);
+    }
+
+    // Financial Relationships
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function ownershipHistory(): HasMany
+    {
+        return $this->hasMany(PropertyOwnership::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(PropertyTransaction::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(AgentCommission::class);
+    }
+
+    // Document Relationships
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    public function legalDocuments(): HasMany
+    {
+        return $this->hasMany(Document::class)->where('type', 'legal');
     }
 
     public function media(): HasMany
@@ -160,7 +297,7 @@ class Property extends Model
         return $this->belongsToMany(PropertyFeature::class, 'property_feature_property');
     }
 
-    public function documents(): HasMany
+    public function propertyDocuments(): HasMany
     {
         return $this->hasMany(PropertyDocument::class);
     }
@@ -261,7 +398,7 @@ class Property extends Model
             return asset('storage/properties/' . $firstImage->file_path);
         }
 
-        return asset('images/default-property.jpg');
+        return null;
     }
 
     public function incrementViews(): void

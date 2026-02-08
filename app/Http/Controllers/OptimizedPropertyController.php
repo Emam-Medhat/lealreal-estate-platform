@@ -524,7 +524,7 @@ class OptimizedPropertyController extends Controller
                 },
                 'propertyAmenities:id,name,icon',
                 'features:id,name,icon',
-                'documents',
+                'propertyDocuments',
                 'floorPlans',
                 'virtualTours'
             ])->findOrFail($property->id);

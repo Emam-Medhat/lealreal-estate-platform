@@ -10,16 +10,20 @@ class SetupDefaultPreferences
 {
     public function handle(UserRegistered $event): void
     {
-        $user = $event->user;
-        $user->update([
-            'notifications_preferences' => [
-                'email' => true,
-                'sms' => false,
-                'security' => true,
-                'marketing' => false
-            ],
-            // 'currency' => 'USD', // already default
-            // 'language' => 'en', // already default
-        ]);
+        try {
+            $user = $event->user;
+            $user->update([
+                'notifications_preferences' => [
+                    'email' => true,
+                    'sms' => false,
+                    'security' => true,
+                    'marketing' => false
+                ],
+                // 'currency' => 'USD', // already default
+                // 'language' => 'en', // already default
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to setup default preferences: ' . $e->getMessage());
+        }
     }
 }

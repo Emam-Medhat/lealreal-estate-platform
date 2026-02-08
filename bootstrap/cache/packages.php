@@ -20,6 +20,13 @@
       0 => 'Laravel\\Sail\\SailServiceProvider',
     ),
   ),
+  'laravel/sanctum' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+    ),
+  ),
   'laravel/socialite' => 
   array (
     'aliases' => 
@@ -64,17 +71,6 @@
     'providers' => 
     array (
       0 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    ),
-  ),
-  'pragmarx/google2fa-laravel' => 
-  array (
-    'aliases' => 
-    array (
-      'Google2FA' => 'PragmaRX\\Google2FALaravel\\Facade',
-    ),
-    'providers' => 
-    array (
-      0 => 'PragmaRX\\Google2FALaravel\\ServiceProvider',
     ),
   ),
 );

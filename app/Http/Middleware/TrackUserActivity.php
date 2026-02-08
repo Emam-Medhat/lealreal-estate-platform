@@ -5,10 +5,17 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\UserActivity;
+use App\Services\ActivityLogService;
 
 class TrackUserActivity
 {
+    protected ActivityLogService $activityLogService;
+
+    public function __construct(ActivityLogService $activityLogService)
+    {
+        $this->activityLogService = $activityLogService;
+    }
+
     /**
      * Handle an incoming request.
      *
@@ -47,101 +54,48 @@ class TrackUserActivity
         // Get activity details
         $activityData = $this->getActivityData($request, $response);
         
-        // Create activity record
-        UserActivity::create(array_merge($activityData, [
-            'user_id' => $user->id,
-            'session_id' => session()->getId() ?? 'no-session',
-            'method' => $request->method(),
-            'url' => $request->path(),
-            'full_url' => $request->fullUrl(),
-            'query_parameters' => $request->query(),
-            'request_data' => $request->except(['password', 'password_confirmation', '_token']),
-            'response_status' => $response->getStatusCode(),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'referrer' => $request->header('referer'),
-            'is_authenticated' => true,
-            'is_admin' => $user->is_admin ?? false,
-            'is_premium' => $user->is_premium ?? false,
-            'subscription_tier' => $user->subscription_tier ?? null,
-            'last_activity_at' => now(),
-        ]));
-
-        // Update user's last seen timestamp
-        if (method_exists($user, 'update')) {
-            $user->update(['last_seen_at' => now()]);
-        }
+        // Create activity record using the new service
+        $this->activityLogService->logActivity(
+            $activityData['action'],
+            $activityData['description'],
+            $activityData['metadata'],
+            $user->id
+        );
     }
 
     /**
-     * Check if tracking should be skipped
+     * Determine if tracking should be skipped
      *
      * @param  \Illuminate\Http\Request  $request
      * @return bool
      */
     private function shouldSkipTracking($request)
     {
+        // Skip AJAX requests
+        if ($request->ajax()) {
+            return true;
+        }
+
+        // Skip GET requests to reduce noise
+        if ($request->isMethod('GET')) {
+            return true;
+        }
+
+        // Skip certain routes
         $skipRoutes = [
-            'telescope.*',
-            'horizon.*',
-            'debugbar.*',
-            'ignition.*',
-            'routes.*',
+            'admin.logs.index',
+            'admin.activity.index',
+            'login',
+            'logout',
+            'password.request',
+            'password.reset',
         ];
 
-        $routeName = $request->route() ? $request->route()->getName() : null;
-
-        // Skip if route is in skip list
-        if ($routeName && in_array($routeName, $skipRoutes)) {
-            return true;
-        }
-
-        // Skip if request is to static assets
-        if ($request->is('assets/*') || $request->is('storage/*') || $request->is('css/*') || $request->is('js/*')) {
-            return true;
-        }
-
-        // Skip if request method is GET and to API endpoints (to reduce noise)
-        if ($request->isMethod('GET') && $request->is('api/*')) {
-            return true;
-        }
-
-        // Skip if request is AJAX and to certain endpoints
-        if ($request->ajax() && $this->isAjaxTrackingSkippable($request)) {
-            return true;
-        }
-
-        return false;
+        return in_array($request->route()?->getName(), $skipRoutes);
     }
 
     /**
-     * Check if AJAX request should be skipped from tracking
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return bool
-     */
-    private function isAjaxTrackingSkippable($request)
-    {
-        $skippablePatterns = [
-            'notifications',
-            'search',
-            'autocomplete',
-            'preview',
-            'validate',
-            'check'
-        ];
-
-        foreach ($skippablePatterns as $pattern) {
-            if (strpos($request->path(), $pattern) !== false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Get activity data
+     * Get activity data from request and response
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  mixed  $response
@@ -149,202 +103,220 @@ class TrackUserActivity
      */
     private function getActivityData($request, $response)
     {
-        $routeName = $request->route() ? $request->route()->getName() : 'unknown';
-        
-        // Get device info
-        $deviceInfo = $this->getDeviceInfo($request);
-        
+        $routeName = $request->route()?->getName();
+        $method = $request->method();
+        $status = $response->getStatusCode();
+
+        // Determine action
+        $action = $this->getActionFromRoute($routeName, $method);
+
+        // Generate description
+        $description = $this->generateDescription($routeName, $method, $status);
+
+        // Build metadata
+        $metadata = [
+            'method' => $method,
+            'route' => $routeName,
+            'url' => $request->fullUrl(),
+            'status_code' => $status,
+            'user_agent' => $request->userAgent(),
+            'ip_address' => $request->ip(),
+            'type' => $this->getActivityType($routeName),
+            'priority' => $this->getActivityPriority($routeName, $status),
+        ];
+
+        // Add request data for debugging (excluding sensitive fields)
+        if ($request->isMethod('POST') || $request->isMethod('PUT') || $request->isMethod('PATCH')) {
+            $requestData = $request->all();
+            
+            // Remove sensitive fields
+            $sensitiveFields = ['password', 'password_confirmation', 'token', 'secret', 'key', 'api_key'];
+            foreach ($sensitiveFields as $field) {
+                unset($requestData[$field]);
+            }
+            
+            $metadata['request_data'] = $requestData;
+        }
+
+        // Add response data for errors
+        if ($status >= 400) {
+            $metadata['response_data'] = [
+                'status' => $status,
+                'message' => $response->exception?->getMessage(),
+            ];
+        }
+
         return [
-            'activity_type' => $this->getActivityType($request),
-            'activity_category' => $this->getActivityCategory($request, $routeName),
-            'activity_description' => $this->getActivityDescription($request, $routeName),
-            'duration' => $this->getRequestDuration($request),
-            'device_type' => $deviceInfo['type'] ?? null,
-            'browser' => $deviceInfo['browser'] ?? null,
-            'platform' => $deviceInfo['platform'] ?? null,
-            'is_mobile' => $deviceInfo['is_mobile'] ?? false,
-            'is_tablet' => $deviceInfo['is_tablet'] ?? false,
-            'is_desktop' => $deviceInfo['is_desktop'] ?? false,
-            'is_bot' => $deviceInfo['is_bot'] ?? false,
-            'bot_name' => $deviceInfo['bot_name'] ?? null,
-            'location_country' => $this->getLocationCountry($request),
-            'location_city' => $this->getLocationCity($request),
-            'metadata' => [
-                'route_name' => $routeName,
-                'is_ajax' => $request->ajax(),
-                'is_api' => $request->is('api/*'),
-                'response_size' => strlen($response->getContent() ?? ''),
-            ]
+            'action' => $action,
+            'description' => $description,
+            'metadata' => $metadata,
         ];
     }
 
     /**
-     * Get activity type based on request
+     * Get action from route name and method
+     *
+     * @param  string|null  $routeName
+     * @param  string  $method
+     * @return string
      */
-    private function getActivityType($request)
+    private function getActionFromRoute($routeName, $method)
     {
-        if ($request->isMethod('GET')) {
-            return 'page_view';
-        } elseif (in_array($request->method(), ['POST', 'PUT', 'PATCH'])) {
-            return 'form_submit';
-        } elseif ($request->method() === 'DELETE') {
-            return 'delete_action';
-        } elseif ($request->is('api/*')) {
-            return 'api_call';
+        if (!$routeName) {
+            return $method . '_request';
         }
-        
-        return 'other';
+
+        // Extract action from route name
+        $parts = explode('.', $routeName);
+        $action = end($parts);
+
+        // Map common actions
+        $actionMap = [
+            'store' => 'created',
+            'update' => 'updated',
+            'destroy' => 'deleted',
+            'show' => 'viewed',
+            'index' => 'listed',
+            'create' => 'viewed_create',
+            'edit' => 'viewed_edit',
+            'login' => 'login_success',
+            'logout' => 'logout_success',
+        ];
+
+        return $actionMap[$action] ?? $action;
     }
 
     /**
-     * Get activity category based on route
+     * Generate activity description
+     *
+     * @param  string|null  $routeName
+     * @param  string  $method
+     * @param  int  $status
+     * @return string
      */
-    private function getActivityCategory($request, $routeName)
+    private function generateDescription($routeName, $method, $status)
     {
-        if (!$routeName) return 'general';
-        
-        if (str_contains($routeName, 'properties')) return 'property';
-        if (str_contains($routeName, 'users') || str_contains($routeName, 'profile')) return 'user';
-        if (str_contains($routeName, 'admin')) return 'admin';
-        if (str_contains($routeName, 'search')) return 'search';
-        if (str_contains($routeName, 'analytics')) return 'analytics';
-        if (str_contains($routeName, 'reports')) return 'reports';
-        if (str_contains($routeName, 'payment')) return 'payment';
-        if (str_contains($routeName, 'messages')) return 'communication';
-        
+        if ($status >= 400) {
+            return "Error occurred in {$routeName}: HTTP {$status}";
+        }
+
+        if ($method === 'POST') {
+            return "Successfully created resource via {$routeName}";
+        } elseif ($method === 'PUT' || $method === 'PATCH') {
+            return "Successfully updated resource via {$routeName}";
+        } elseif ($method === 'DELETE') {
+            return "Successfully deleted resource via {$routeName}";
+        }
+
+        return "Accessed {$routeName}";
+    }
+
+    /**
+     * Determine activity type
+     *
+     * @param  string|null  $routeName
+     * @return string
+     */
+    private function getActivityType($routeName)
+    {
+        if (!$routeName) {
+            return 'general';
+        }
+
+        // Financial routes
+        $financialRoutes = [
+            'payments.',
+            'invoices.',
+            'financial.',
+            'billing.',
+            'transactions.',
+        ];
+
+        // Security routes
+        $securityRoutes = [
+            'login',
+            'logout',
+            'register',
+            'password.',
+            '2fa.',
+            'auth.',
+            'admin.users.',
+        ];
+
+        // System routes
+        $systemRoutes = [
+            'admin.system.',
+            'admin.settings.',
+            'admin.logs.',
+            'admin.backup.',
+        ];
+
+        foreach ($financialRoutes as $route) {
+            if (str_starts_with($routeName, $route)) {
+                return 'financial';
+            }
+        }
+
+        foreach ($securityRoutes as $route) {
+            if (str_starts_with($routeName, $route)) {
+                return 'security';
+            }
+        }
+
+        foreach ($systemRoutes as $route) {
+            if (str_starts_with($routeName, $route)) {
+                return 'system';
+            }
+        }
+
         return 'general';
     }
 
     /**
-     * Get activity description
+     * Determine activity priority
+     *
+     * @param  string|null  $routeName
+     * @param  int  $status
+     * @return string
      */
-    private function getActivityDescription($request, $routeName)
+    private function getActivityPriority($routeName, $status)
     {
-        $method = $request->method();
-        $path = $request->path();
-        
-        if ($method === 'GET') {
-            return "Visited {$path}";
-        } elseif ($method === 'POST') {
-            return "Submitted form to {$path}";
-        } elseif ($method === 'PUT' || $method === 'PATCH') {
-            return "Updated resource at {$path}";
-        } elseif ($method === 'DELETE') {
-            return "Deleted resource at {$path}";
+        // High priority for errors
+        if ($status >= 400) {
+            return 'high';
         }
-        
-        return "Accessed {$path}";
-    }
 
-    /**
-     * Get request duration
-     */
-    private function getRequestDuration($request)
-    {
-        if (defined('LARAVEL_START')) {
-            return microtime(true) - LARAVEL_START;
-        }
-        return null;
-    }
-
-    /**
-     * Get location country (simplified)
-     */
-    private function getLocationCountry($request)
-    {
-        // You can integrate with a GeoIP service here
-        return null;
-    }
-
-    /**
-     * Get location city (simplified)
-     */
-    private function getLocationCity($request)
-    {
-        // You can integrate with a GeoIP service here
-        return null;
-    }
-
-    /**
-     * Get device info
-     */
-    private function getDeviceInfo($request)
-    {
-        $userAgent = $request->userAgent();
-        
-        // Simple device detection
-        $isMobile = preg_match('/Mobile|Android|iPhone|iPad|iPod/', $userAgent);
-        $isTablet = preg_match('/iPad|Tablet/', $userAgent);
-        $isDesktop = !$isMobile && !$isTablet;
-        $isBot = $this->isBot($userAgent);
-        
-        return [
-            'type' => $isMobile ? 'mobile' : ($isTablet ? 'tablet' : 'desktop'),
-            'browser' => $this->getBrowser($userAgent),
-            'platform' => $this->getPlatform($userAgent),
-            'is_mobile' => $isMobile,
-            'is_tablet' => $isTablet,
-            'is_desktop' => $isDesktop,
-            'is_bot' => $isBot,
-            'bot_name' => $isBot ? $this->getBotName($userAgent) : null,
+        // Critical priority for security routes
+        $criticalRoutes = [
+            'login',
+            'logout',
+            'register',
+            'password.',
+            '2fa.',
+            'auth.',
         ];
-    }
 
-    /**
-     * Check if user agent is a bot
-     */
-    private function isBot($userAgent)
-    {
-        $bots = ['Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider'];
-        
-        foreach ($bots as $bot) {
-            if (strpos($userAgent, $bot) !== false) {
-                return true;
+        foreach ($criticalRoutes as $route) {
+            if (str_starts_with($routeName, $route)) {
+                return 'critical';
             }
         }
-        
-        return false;
-    }
 
-    /**
-     * Get browser name
-     */
-    private function getBrowser($userAgent)
-    {
-        if (preg_match('/Chrome/', $userAgent)) return 'Chrome';
-        if (preg_match('/Firefox/', $userAgent)) return 'Firefox';
-        if (preg_match('/Safari/', $userAgent)) return 'Safari';
-        if (preg_match('/Edge/', $userAgent)) return 'Edge';
-        if (preg_match('/Opera/', $userAgent)) return 'Opera';
-        
-        return 'Unknown';
-    }
+        // High priority for financial routes
+        $highPriorityRoutes = [
+            'payments.',
+            'invoices.',
+            'financial.',
+            'billing.',
+            'transactions.',
+        ];
 
-    /**
-     * Get platform name
-     */
-    private function getPlatform($userAgent)
-    {
-        if (preg_match('/Windows/', $userAgent)) return 'Windows';
-        if (preg_match('/Mac/', $userAgent)) return 'MacOS';
-        if (preg_match('/Linux/', $userAgent)) return 'Linux';
-        if (preg_match('/Android/', $userAgent)) return 'Android';
-        if (preg_match('/iOS/', $userAgent)) return 'iOS';
-        
-        return 'Unknown';
-    }
+        foreach ($highPriorityRoutes as $route) {
+            if (str_starts_with($routeName, $route)) {
+                return 'high';
+            }
+        }
 
-    /**
-     * Get bot name
-     */
-    private function getBotName($userAgent)
-    {
-        if (strpos($userAgent, 'Googlebot') !== false) return 'Googlebot';
-        if (strpos($userAgent, 'Bingbot') !== false) return 'Bingbot';
-        if (strpos($userAgent, 'Slurp') !== false) return 'Yahoo Slurp';
-        if (strpos($userAgent, 'DuckDuckBot') !== false) return 'DuckDuckBot';
-        if (strpos($userAgent, 'Baiduspider') !== false) return 'Baidu Spider';
-        
-        return 'Unknown Bot';
+        return 'medium';
     }
 }

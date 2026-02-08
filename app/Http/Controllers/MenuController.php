@@ -43,6 +43,9 @@ class MenuController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
+        // Add items field with default empty array
+        $validated['items'] = [];
+
         Menu::create($validated);
 
         return redirect()->route('admin.menus.index')
@@ -51,8 +54,8 @@ class MenuController extends Controller
 
     public function show(Menu $menu): View
     {
-        $menu->load(['items' => function($query) {
-            $query->orderBy('order');
+        $menu->load(['menuItems' => function($query) {
+            $query->orderBy('sort_order');
         }]);
 
         return view('admin.menus.show', compact('menu'));
@@ -90,8 +93,8 @@ class MenuController extends Controller
 
     public function builder(Menu $menu): View
     {
-        $menu->load(['items' => function($query) {
-            $query->orderBy('order');
+        $menu->load(['menuItems' => function($query) {
+            $query->orderBy('sort_order');
         }]);
 
         return view('admin.menus.builder', compact('menu'));
@@ -103,26 +106,26 @@ class MenuController extends Controller
             'title' => 'required|string|max:255',
             'url' => 'required|string|max:500',
             'parent_id' => 'nullable|exists:menu_items,id',
-            'order' => 'nullable|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
             'target' => 'nullable|in:_blank,_self,_parent,_top',
-            'icon_class' => 'nullable|string|max:100',
+            'icon' => 'nullable|string|max:100',
             'is_active' => 'boolean',
         ]);
 
         $maxOrder = MenuItem::where('menu_id', $menu->id)
             ->where('parent_id', $validated['parent_id'] ?? null)
-            ->max('order') ?? 0;
+            ->max('sort_order') ?? 0;
 
-        $validated['order'] = $validated['order'] ?? $maxOrder + 1;
+        $validated['sort_order'] = $validated['sort_order'] ?? $maxOrder + 1;
 
         MenuItem::create([
             'menu_id' => $menu->id,
             'title' => $validated['title'],
             'url' => $validated['url'],
             'parent_id' => $validated['parent_id'] ?? null,
-            'order' => $validated['order'],
+            'sort_order' => $validated['sort_order'],
             'target' => $validated['target'] ?? '_self',
-            'icon_class' => $validated['icon_class'] ?? null,
+            'icon' => $validated['icon'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
@@ -136,9 +139,9 @@ class MenuController extends Controller
             'title' => 'required|string|max:255',
             'url' => 'required|string|max:500',
             'parent_id' => 'nullable|exists:menu_items,id',
-            'order' => 'nullable|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
             'target' => 'nullable|in:_blank,_self,_parent,_top',
-            'icon_class' => 'nullable|string|max:100',
+            'icon' => 'nullable|string|max:100',
             'is_active' => 'boolean',
         ]);
 
@@ -166,13 +169,13 @@ class MenuController extends Controller
             'items' => 'required|array',
             'items.*.id' => 'required|exists:menu_items,id',
             'items.*.parent_id' => 'nullable|exists:menu_items,id',
-            'items.*.order' => 'required|integer|min:0',
+            'items.*.sort_order' => 'required|integer|min:0',
         ]);
 
         foreach ($validated['items'] as $itemData) {
             MenuItem::where('id', $itemData['id'])->update([
                 'parent_id' => $itemData['parent_id'],
-                'order' => $itemData['order'],
+                'sort_order' => $itemData['sort_order'],
             ]);
         }
 

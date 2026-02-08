@@ -77,7 +77,62 @@
 
     <!-- Rewards Grid -->
     <div class="row" id="rewards-grid">
-        <!-- Reward cards will be loaded here -->
+        @if($availableRewards && count($availableRewards) > 0)
+            @foreach($availableRewards as $reward)
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100 reward-card" data-reward-id="{{ $reward['id'] }}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="reward-icon">
+                                    <i class="{{ $reward['icon'] ?? 'fas fa-gift' }} fa-2x text-primary"></i>
+                                </div>
+                                <span class="badge bg-{{ $reward['is_active'] ? 'success' : 'secondary' }}">
+                                    {{ $reward['is_active'] ? 'نشط' : 'غير نشط' }}
+                                </span>
+                            </div>
+                            
+                            <h5 class="card-title">{{ $reward['name'] ?? 'مكافأة' }}</h5>
+                            <p class="card-text text-muted small">{{ Str::limit($reward['description'] ?? '', 80) }}</p>
+                            
+                            <div class="reward-meta">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-coins me-1"></i>
+                                        {{ $reward['points_required'] ?? 0 }} نقطة
+                                    </span>
+                                    <span class="badge bg-light text-dark">
+                                        {{ $reward['category'] ?? 'عام' }}
+                                    </span>
+                                </div>
+                                
+                                @if($reward['reward_value'] && $reward['reward_value'] > 0)
+                                    <div class="text-success fw-bold">
+                                        {{ $reward['reward_type'] == 'discount' ? 'خصم ' : 'قيمة ' }} 
+                                        {{ number_format($reward['reward_value'], 2) }}
+                                        {{ $reward['reward_type'] == 'discount' ? '%' : 'ريال' }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-primary btn-sm w-100" onclick="showRewardDetails({{ $reward['id'] }})">
+                                <i class="fas fa-eye me-1"></i>
+                                عرض التفاصيل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        @else
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">لا توجد مكافآت متاحة حالياً</h4>
+                    <p class="text-muted">سيتم إضافة مكافآت جديدة قريباً</p>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Pagination -->
@@ -728,7 +783,7 @@ function showNotification(message, type) {
 
 // Load initial data
 document.addEventListener('DOMContentLoaded', function() {
-    loadRewards();
+    // Only load via AJAX when filtering or searching, not on initial page load
     updateUserPointsSummary();
 });
 </script>

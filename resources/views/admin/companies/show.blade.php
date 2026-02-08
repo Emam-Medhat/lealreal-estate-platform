@@ -239,8 +239,8 @@
         <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
             <div class="flex justify-between items-center">
                 <div class="text-sm text-gray-500">
-                    Created: {{ $company->created_at->format('M j, Y g:i A') }} | 
-                    Updated: {{ $company->updated_at->format('M j, Y g:i A') }}
+                    Created: {{ $company->created_at?->format('M j, Y g:i A') ?? 'N/A' }} | 
+                    Updated: {{ $company->updated_at?->format('M j, Y g:i A') ?? 'N/A' }}
                 </div>
                 <div class="flex space-x-2">
                     <form action="{{ route('admin.companies.destroy', $company->id) }}" method="POST" class="inline">

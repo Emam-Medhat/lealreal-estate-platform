@@ -27,10 +27,16 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Get comprehensive statistics
-        $stats = $this->getComprehensiveStats($user);
-        
-        return view('dashboard.index', compact('user', 'stats'));
+        // Redirect to appropriate dashboard based on user role
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->is_agent) {
+            return redirect()->route('agents.dashboard');
+        } else {
+            // Regular user dashboard
+            $stats = $this->getComprehensiveStats($user);
+            return view('dashboard.index', compact('user', 'stats'));
+        }
     }
 
     /**

@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class AIController extends Controller
 {
-    public function index()
+    public function dashboard()
     {
         try {
             $stats = [
@@ -18,34 +18,44 @@ class AIController extends Controller
                 'vr_tours_count' => DB::table('virtual_reality_tours')->where('status', 'published')->count(),
                 'avg_prediction_accuracy' => DB::table('price_predictions')->whereNotNull('accuracy_score')->avg('accuracy_score') ?? 0
             ];
-
-            $recentPredictions = DB::table('price_predictions')
-                ->join('properties', 'price_predictions.property_id', '=', 'properties.id')
-                ->select('price_predictions.*', 'properties.title as property_title')
-                ->orderBy('price_predictions.created_at', 'desc')
-                ->limit(5)
-                ->get();
-
-            $fraudCases = DB::table('fraud_detections')
-                ->join('users', 'fraud_detections.user_id', '=', 'users.id')
-                ->select('fraud_detections.*', DB::raw('CONCAT(users.first_name, " ", users.last_name) as user_name'))
-                ->orderBy('fraud_detections.detected_at', 'desc')
-                ->limit(5)
-                ->get();
-
-            return view('ai.dashboard', compact('stats', 'recentPredictions', 'fraudCases'));
+            
+            return view('ai.dashboard', compact('stats'));
         } catch (\Exception $e) {
-            return view('ai.dashboard', [
-                'stats' => [
-                    'total_predictions' => 1250,
-                    'active_fraud_cases' => 8,
-                    'vr_tours_count' => 45,
-                    'avg_prediction_accuracy' => 87.5
-                ],
-                'recentPredictions' => collect(),
-                'fraudCases' => collect()
-            ]);
+            return view('ai.dashboard', ['stats' => []]);
         }
+    }
+
+    public function descriptions()
+    {
+        $descriptions = DB::table('ai_generated_descriptions')->with('property')->get();
+        return view('ai.descriptions', compact('descriptions'));
+    }
+
+    public function images()
+    {
+        $images = DB::table('ai_generated_images')->with('property')->get();
+        return view('ai.images', compact('images'));
+    }
+
+    public function chat()
+    {
+        return view('ai.chat');
+    }
+
+    public function analytics()
+    {
+        $analytics = [
+            'prediction_accuracy' => DB::table('price_predictions')->whereNotNull('accuracy_score')->avg('accuracy_score') ?? 0,
+            'fraud_detection_rate' => DB::table('fraud_detections')->where('status', 'confirmed')->count() / DB::table('fraud_detections')->count() * 100,
+            'vr_tour_usage' => DB::table('virtual_reality_tours')->count(),
+        ];
+        
+        return view('ai.analytics', compact('analytics'));
+    }
+
+    public function index()
+    {
+        return $this->dashboard();
     }
 
     public function pricePrediction()

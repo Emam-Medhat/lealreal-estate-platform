@@ -140,6 +140,9 @@ class MessageController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
+            // Broadcast message
+            broadcast(new MessageSent($message, Auth::user()))->toOthers();
+
             DB::commit();
 
             return response()->json([
@@ -228,6 +231,9 @@ class MessageController extends Controller
                 'description' => "Sent message to {$recipient->full_name}",
                 'ip_address' => $request->ip(),
             ]);
+
+            // Broadcast message
+            broadcast(new MessageSent($message, Auth::user()))->toOthers();
 
             DB::commit();
 
@@ -322,6 +328,9 @@ class MessageController extends Controller
                 'description' => "Replied to message in conversation with {$recipient->full_name}",
                 'ip_address' => $request->ip(),
             ]);
+
+            // Broadcast message
+            broadcast(new MessageSent($message, Auth::user()))->toOthers();
 
             DB::commit();
 

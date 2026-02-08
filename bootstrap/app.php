@@ -12,8 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
         then: function () {
-            // Register custom route files with web middleware
+            // Register public routes first (without auth)
+            Route::middleware(['web', 'request.logger'])->group(base_path('routes/public.php'));
+
+            // Register custom route files with web middleware and auth
             $routeFiles = [
+                'admin.php',
                 'properties.php',
                 'optimized_properties.php',
                 'projects.php',
@@ -44,17 +48,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 'marketing.php',
                 'subscription.php',
                 'user.php',
+                'modules.php',
+                'performance.php',
             ];
 
             foreach ($routeFiles as $file) {
                 $path = base_path("routes/{$file}");
                 if (file_exists($path)) {
-                    Route::middleware(['web', 'request.logger'])->group($path);
+                    Route::middleware(['web', 'request.logger', 'auth'])->group($path);
                 }
             }
-            
-            // Also apply to main web.php routes
-            Route::middleware(['web', 'request.logger'])->group(base_path('routes/web.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -69,6 +72,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'fingerprint' => \App\Http\Middleware\TrackDeviceFingerprint::class,
             'request.logger' => \App\Http\Middleware\RequestLogger::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+            'financial.permission' => \App\Http\Middleware\FinancialPermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

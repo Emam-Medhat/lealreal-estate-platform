@@ -48,10 +48,12 @@
                         </span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <input type="text" placeholder="Search users..." class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                            <i class="fas fa-search"></i>
-                        </button>
+                        <form method="GET" action="{{ route('admin.users.index') }}" class="flex items-center space-x-2">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search users..." class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

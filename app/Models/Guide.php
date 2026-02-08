@@ -23,14 +23,21 @@ class Guide extends Model
         'category',
         'difficulty',
         'reading_time',
+        'estimated_time',
         'views',
         'is_featured',
         'seo_data',
+        'published_at',
+        'meta_title',
+        'meta_description',
+        'prerequisites',
+        'learning_objectives',
     ];
 
     protected $casts = [
         'seo_data' => 'array',
         'is_featured' => 'boolean',
+        'published_at' => 'datetime',
     ];
 
     public function author(): BelongsTo

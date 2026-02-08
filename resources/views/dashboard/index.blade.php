@@ -281,7 +281,7 @@
                         <i class="fas fa-user-tie text-green-600 mr-2"></i>الوكلاء
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <a href="{{ route('agents.directory') }}" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <a href="{{ route('agents.directory.full') }}" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <i class="fas fa-address-book text-gray-400 ml-3"></i>
                             <span class="text-sm">دليل الوكلاء</span>
                         </a>

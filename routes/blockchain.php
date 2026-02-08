@@ -33,6 +33,8 @@ Route::middleware(['auth'])->prefix('blockchain')->name('blockchain.')->group(fu
     
     // Smart Contracts & NFTs
     Route::resource('/smartcontracts', SmartContractController::class);
+    Route::get('/nfts/{nft}/buy', [NftController::class, 'showBuy'])->name('nfts.buy');
+    Route::get('/nfts/{nft}/auction', [NftController::class, 'showAuction'])->name('nfts.auction');
     Route::resource('/nfts', NftController::class);
     
     // DAO & DeFi

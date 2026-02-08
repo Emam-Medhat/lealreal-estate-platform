@@ -62,12 +62,19 @@ class AuthService
      */
     public function register(array $data): User
     {
-        return DB::transaction(function () use ($data) {
+        try {
+            return DB::transaction(function () use ($data) {
             // Generate UUID and referral code if not provided
             $uuid = Str::uuid();
             $referralCode = $this->generateUniqueReferralCode();
 
-            $userData = array_merge($data, [
+            // Remove password_confirmation and terms from data before creating user
+            $filteredData = $data;
+            unset($filteredData['password_confirmation']);
+            unset($filteredData['terms']);
+            unset($filteredData['sms_notifications']);
+
+            $userData = array_merge($filteredData, [
                 'uuid' => $uuid,
                 'password' => $this->passwordService->hash($data['password']),
                 'referral_code' => $referralCode,
@@ -80,7 +87,6 @@ class AuthService
                 'subscription_end_date' => now()->addDays(30),
                 'wallet_balance' => 0,
                 'login_count' => 0,
-                'registration_ip' => request()->ip(),
             ]);
 
             // Set role-specific booleans
@@ -94,7 +100,17 @@ class AuthService
             event(new UserRegistered($user));
 
             return $user;
-        });
+            });
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Registration failed: ' . $e->getMessage(), [
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Re-throw the exception to be caught by controller
+            throw $e;
+        }
     }
 
     private function setRoleFlags(array $userData, string $userType): array

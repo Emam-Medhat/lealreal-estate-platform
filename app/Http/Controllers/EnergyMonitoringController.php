@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EnergyMonitoring;
 use App\Models\SmartProperty;
-use App\Models\IotDevice;
+use App\Models\IoTDevice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -22,7 +22,7 @@ class EnergyMonitoringController extends Controller
             'efficiency_score' => $this->getAverageEfficiencyScore(),
         ];
 
-        $recentData = EnergyMonitoring::with(['property', 'devices'])
+        $recentData = EnergyMonitoring::with(['property', 'device'])
             ->latest()
             ->take(10)
             ->get();
@@ -37,513 +37,240 @@ class EnergyMonitoringController extends Controller
             'costAnalysis'
         ));
     }
-
-    public function index(Request $request)
-    {
-        $query = EnergyMonitoring::with(['property', 'devices']);
-
-        if ($request->filled('property_id')) {
-            $query->where('property_id', $request->property_id);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $monitoringData = $query->latest()->paginate(12);
-
-        $statuses = ['active', 'inactive', 'maintenance', 'error'];
-        $monitoringTypes = ['basic', 'comprehensive', 'advanced', 'premium'];
-
-        return view('iot.energy-monitoring.index', compact(
-            'monitoringData', 
-            'statuses', 
-            'monitoringTypes'
-        ));
-    }
-
+    
     public function create()
     {
-        $properties = SmartProperty::all();
-        $devices = IotDevice::where('device_type', 'sensor')->get();
-        $monitoringTypes = ['basic', 'comprehensive', 'advanced', 'premium'];
-
-        return view('iot.energy-monitoring.create', compact(
-            'properties', 
-            'devices', 
-            'monitoringTypes'
-        ));
+        $properties = \App\Models\SmartProperty::with('property')
+            ->get()
+            ->sortBy(function($item) {
+                return $item->property ? $item->property->title : '';
+            });
+        $devices = \App\Models\IoTDevice::orderBy('brand')->orderBy('model')->get();
+        
+        return view('iot.energy-monitoring.create', compact('properties', 'devices'));
     }
-
+    
+    public function addMonitoring()
+    {
+        return redirect()->route('iot.energy.create');
+    }
+    
     public function store(Request $request)
     {
-        DB::beginTransaction();
-        try {
-            $monitoringData = $request->validate([
-                'property_id' => 'required|exists:smart_properties,id',
-                'monitoring_type' => 'required|in:basic,comprehensive,advanced,premium',
-                'target_consumption' => 'required|numeric|min:0',
-                'alert_thresholds' => 'nullable|array',
-                'optimization_enabled' => 'required|boolean',
-                'renewable_sources' => 'nullable|array',
-                'peak_hours' => 'nullable|array',
-                'status' => 'required|in:active,inactive,maintenance,error',
-            ]);
-
-            $monitoringData['created_by'] = auth()->id();
-            $monitoringData['energy_metadata'] = $this->generateEnergyMetadata($request);
-
-            $monitoring = EnergyMonitoring::create($monitoringData);
-
-            // Link devices to monitoring
-            if ($request->has('device_ids')) {
-                $this->linkDevicesToMonitoring($monitoring, $request->device_ids);
-            }
-
-            // Set up alert thresholds
-            if ($request->has('alert_thresholds')) {
-                $this->setupAlertThresholds($monitoring, $request->alert_thresholds);
-            }
-
-            // Configure renewable sources
-            if ($request->has('renewable_sources')) {
-                $this->configureRenewableSources($monitoring, $request->renewable_sources);
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('energy-monitoring.show', $monitoring)
-                ->with('success', 'تم إعداد مراقبة استهلاك الطاقة بنجاح');
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()
-                ->withInput()
-                ->with('error', 'حدث خطأ أثناء إعداد المراقبة: ' . $e->getMessage());
-        }
-    }
-
-    public function show(EnergyMonitoring $monitoring)
-    {
-        $monitoring->load(['property', 'devices']);
-        $consumptionData = $this->getConsumptionData($monitoring);
-        $costAnalysis = $this->getPropertyCostAnalysis($monitoring);
-        $efficiencyMetrics = $this->getEfficiencyMetrics($monitoring);
-
-        return view('iot.energy-monitoring.show', compact(
-            'monitoring', 
-            'consumptionData', 
-            'costAnalysis', 
-            'efficiencyMetrics'
-        ));
-    }
-
-    public function edit(EnergyMonitoring $monitoring)
-    {
-        $properties = SmartProperty::all();
-        $devices = IotDevice::where('device_type', 'sensor')->get();
-        $monitoringTypes = ['basic', 'comprehensive', 'advanced', 'premium'];
-
-        return view('iot.energy-monitoring.edit', compact(
-            'monitoring', 
-            'properties', 
-            'devices', 
-            'monitoringTypes'
-        ));
-    }
-
-    public function update(Request $request, EnergyMonitoring $monitoring)
-    {
-        DB::beginTransaction();
-        try {
-            $monitoringData = $request->validate([
-                'monitoring_type' => 'required|in:basic,comprehensive,advanced,premium',
-                'target_consumption' => 'required|numeric|min:0',
-                'alert_thresholds' => 'nullable|array',
-                'optimization_enabled' => 'required|boolean',
-                'renewable_sources' => 'nullable|array',
-                'peak_hours' => 'nullable|array',
-                'status' => 'required|in:active,inactive,maintenance,error',
-            ]);
-
-            $monitoringData['updated_by'] = auth()->id();
-            $monitoringData['energy_metadata'] = $this->generateEnergyMetadata($request);
-
-            $monitoring->update($monitoringData);
-
-            // Update linked devices
-            if ($request->has('device_ids')) {
-                $this->updateLinkedDevices($monitoring, $request->device_ids);
-            }
-
-            // Update alert thresholds
-            if ($request->has('alert_thresholds')) {
-                $this->updateAlertThresholds($monitoring, $request->alert_thresholds);
-            }
-
-            // Update renewable sources
-            if ($request->has('renewable_sources')) {
-                $this->updateRenewableSources($monitoring, $request->renewable_sources);
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('energy-monitoring.show', $monitoring)
-                ->with('success', 'تم تحديث مراقبة استهلاك الطاقة بنجاح');
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()
-                ->withInput()
-                ->with('error', 'حدث خطأ أثناء تحديث المراقبة: ' . $e->getMessage());
-        }
-    }
-
-    public function destroy(EnergyMonitoring $monitoring)
-    {
-        try {
-            // Unlink devices
-            $this->unlinkDevicesFromMonitoring($monitoring);
-
-            // Delete monitoring
-            $monitoring->delete();
-
-            return redirect()
-                ->route('energy-monitoring.index')
-                ->with('success', 'تم حذف مراقبة استهلاك الطاقة بنجاح');
-        } catch (\Exception $e) {
-            return back()
-                ->with('error', 'حدث خطأ أثناء حذف المراقبة: ' . $e->getMessage());
-        }
-    }
-
-    public function getRealTimeData(EnergyMonitoring $monitoring)
-    {
-        try {
-            $realTimeData = [
-                'current_consumption' => $this->getCurrentConsumption($monitoring),
-                'daily_consumption' => $this->getDailyConsumption($monitoring),
-                'monthly_consumption' => $this->getMonthlyConsumption($monitoring),
-                'cost_estimate' => $this->getCostEstimate($monitoring),
-                'efficiency_score' => $this->getEfficiencyScore($monitoring),
-                'device_status' => $this->getDeviceStatus($monitoring),
-                'timestamp' => now()->toDateTimeString(),
-            ];
-
-            return response()->json($realTimeData);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function generateReport(EnergyMonitoring $monitoring, Request $request)
-    {
-        try {
-            $reportData = $request->validate([
-                'report_type' => 'required|in:daily,weekly,monthly,custom',
-                'date_from' => 'required|date',
-                'date_to' => 'required|date|after_or_equal:date_from',
-                'format' => 'required|in:json,csv,pdf',
-            ]);
-
-            $report = $this->generateEnergyReport($monitoring, $reportData);
-
-            return response()->json([
-                'success' => true,
-                'report' => $report
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function optimizeUsage(EnergyMonitoring $monitoring)
-    {
-        try {
-            $optimization = $this->optimizeEnergyUsage($monitoring);
-
-            return response()->json([
-                'success' => true,
-                'optimization' => $optimization
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function setAlertThresholds(EnergyMonitoring $monitoring, Request $request)
-    {
-        try {
-            $thresholds = $request->validate([
-                'daily_limit' => 'nullable|numeric|min:0',
-                'monthly_limit' => 'nullable|numeric|min:0',
-                'peak_threshold' => 'nullable|numeric|min:0',
-                'efficiency_threshold' => 'nullable|numeric|min:0|max:100',
-            ]);
-
-            $this->updateAlertThresholds($monitoring, $thresholds);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'تم تحديث حدود التنبيه بنجاح'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    private function generateEnergyMetadata($request)
-    {
-        return [
-            'monitoring_level' => $this->calculateMonitoringLevel($request),
-            'device_count' => count($request->device_ids ?? []),
-            'renewable_percentage' => $this->calculateRenewablePercentage($request),
-            'optimization_potential' => $this->calculateOptimizationPotential($request),
-            'estimated_savings' => $this->estimateSavings($request),
-            'created_at' => now()->toDateTimeString(),
-        ];
-    }
-
-    private function linkDevicesToMonitoring($monitoring, $deviceIds)
-    {
-        foreach ($deviceIds as $deviceId) {
-            $monitoring->devices()->attach($deviceId, [
-                'role' => 'monitor',
-                'created_at' => now(),
-            ]);
-        }
-    }
-
-    private function setupAlertThresholds($monitoring, $thresholds)
-    {
-        $monitoring->update([
-            'alert_thresholds' => $thresholds,
+        $validated = $request->validate([
+            'property_id' => 'required|exists:smart_properties,id',
+            'device_id' => 'nullable|exists:iot_devices,id',
+            'consumption_kwh' => 'required|numeric|min:0',
+            'savings_amount' => 'nullable|numeric|min:0',
+            'efficiency_score' => 'nullable|numeric|min:0|max:100',
+            'status' => 'required|in:active,inactive,maintenance',
+            'monitoring_type' => 'required|string',
+            'last_reading_at' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000'
         ]);
+
+        try {
+            EnergyMonitoring::create($validated);
+
+            return redirect()
+                ->route('iot.energy.dashboard')
+                ->with('success', 'Energy monitoring data created successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to create energy monitoring data: ' . $e->getMessage());
+        }
     }
 
-    private function configureRenewableSources($monitoring, $renewableSources)
+    public function show($id)
     {
-        $monitoring->update([
-            'renewable_sources' => $renewableSources,
-        ]);
+        try {
+            // Try to find the record
+            $data = EnergyMonitoring::find($id);
+            
+            if (!$data) {
+                \Log::info("Energy monitoring record not found for ID: {$id}");
+                return redirect()->route('iot.energy.dashboard')->with('error', 'Energy monitoring data not found');
+            }
+            
+            // Load relationships separately with error handling
+            try {
+                $data->load(['property', 'device']);
+            } catch (\Exception $e) {
+                \Log::warning("Failed to load relationships for energy monitoring ID {$id}: " . $e->getMessage());
+                // Continue without relationships if they fail
+            }
+
+            return view('iot.energy-monitoring.show', compact('data'));
+            
+        } catch (\Exception $e) {
+            \Log::error("Error in show method: " . $e->getMessage());
+            return redirect()->route('iot.energy.dashboard')->with('error', 'Error loading energy monitoring data');
+        }
     }
 
-    private function getCurrentConsumption($monitoring)
+    public function edit($id)
     {
-        // Get current consumption from devices
-        return rand(1.5, 8.5); // Placeholder
-    }
-
-    private function getDailyConsumption($monitoring)
-    {
-        return $monitoring->consumptionData()
-            ->whereDate('created_at', today())
-            ->sum('consumption_kwh');
-    }
-
-    private function getMonthlyConsumption($monitoring)
-    {
-        return $monitoring->consumptionData()
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->sum('consumption_kwh');
-    }
-
-    private function getCostEstimate($monitoring)
-    {
-        $consumption = $this->getDailyConsumption($monitoring);
-        $rate = 0.15; // $0.15 per kWh
-        
-        return $consumption * $rate;
-    }
-
-    private function getEfficiencyScore($monitoring)
-    {
-        $actualConsumption = $this->getDailyConsumption($monitoring);
-        $targetConsumption = $monitoring->target_consumption;
-        
-        if ($targetConsumption === 0) return 100;
-        
-        $efficiency = ($targetConsumption / $actualConsumption) * 100;
-        return min(100, $efficiency);
-    }
-
-    private function getDeviceStatus($monitoring)
-    {
-        return $monitoring->devices()
-            ->select('device_name', 'status', 'last_heartbeat')
+        $data = EnergyMonitoring::find($id);
+        $properties = \App\Models\SmartProperty::with('property')
             ->get()
-            ->toArray();
+            ->sortBy(function($item) {
+                return $item->property ? $item->property->title : '';
+            });
+        $devices = \App\Models\IoTDevice::orderBy('brand')->orderBy('model')->get();
+        
+        if (!$data) {
+            return redirect()->route('iot.energy.dashboard')->with('error', 'Energy monitoring data not found');
+        }
+
+        return view('iot.energy-monitoring.edit', compact('data', 'properties', 'devices'));
     }
 
-    private function generateEnergyReport($monitoring, $reportData)
+    public function update(Request $request, $id)
     {
-        // Generate report based on type and date range
-        return [
-            'report_id' => uniqid('report_'),
-            'type' => $reportData['report_type'],
-            'period' => [
-                'from' => $reportData['date_from'],
-                'to' => $reportData['date_to'],
-            ],
-            'data' => $this->getReportData($monitoring, $reportData),
-            'generated_at' => now()->toDateTimeString(),
-        ];
-    }
+        $data = EnergyMonitoring::find($id);
+        
+        if (!$data) {
+            return redirect()->route('iot.energy.dashboard')->with('error', 'Energy monitoring data not found');
+        }
 
-    private function optimizeEnergyUsage($monitoring)
-    {
-        return [
-            'optimization_id' => uniqid('opt_'),
-            'recommendations' => [
-                'reduce_peak_usage' => true,
-                'adjust_thermostat' => true,
-                'optimize_lighting' => true,
-                'schedule_appliances' => true,
-            ],
-            'estimated_savings' => rand(10, 30), // 10-30% savings
-            'implementation_priority' => 'high',
-        ];
-    }
-
-    private function calculateMonitoringLevel($request)
-    {
-        $score = 0;
-        
-        if ($request->monitoring_type === 'comprehensive') $score += 25;
-        if ($request->monitoring_type === 'advanced') $score += 50;
-        if ($request->monitoring_type === 'premium') $score += 75;
-        
-        if ($request->optimization_enabled) $score += 15;
-        if ($request->has('renewable_sources')) $score += 10;
-        
-        if ($score < 30) return 'basic';
-        if ($score < 60) return 'intermediate';
-        if ($score < 80) return 'advanced';
-        return 'premium';
-    }
-
-    private function calculateRenewablePercentage($request)
-    {
-        $totalSources = count($request->renewable_sources ?? []);
-        $renewableSources = $totalSources; // Assuming all provided are renewable
-        
-        if ($totalSources === 0) return 0;
-        
-        return ($renewableSources / $totalSources) * 100;
-    }
-
-    private function calculateOptimizationPotential($request)
-    {
-        $potential = 20; // Base 20%
-        
-        if ($request->optimization_enabled) $potential += 10;
-        if ($request->has('peak_hours')) $potential += 15;
-        
-        return min(50, $potential);
-    }
-
-    private function estimateSavings($request)
-    {
-        $baseSavings = 50; // $50 base savings
-        
-        if ($request->optimization_enabled) $baseSavings *= 1.5;
-        if ($request->has('renewable_sources')) $baseSavings *= 1.2;
-        
-        return $baseSavings;
-    }
-
-    private function getReportData($monitoring, $reportData)
-    {
-        // Get consumption data for the report period
-        return $monitoring->consumptionData()
-            ->whereBetween('created_at', [$reportData['date_from'], $reportData['date_to']])
-            ->get();
-    }
-
-    private function updateLinkedDevices($monitoring, $deviceIds)
-    {
-        $monitoring->devices()->sync($deviceIds);
-    }
-
-    private function updateAlertThresholds($monitoring, $thresholds)
-    {
-        $monitoring->update([
-            'alert_thresholds' => $thresholds,
+        $validated = $request->validate([
+            'property_id' => 'required|exists:smart_properties,id',
+            'device_id' => 'nullable|exists:iot_devices,id',
+            'consumption_kwh' => 'required|numeric|min:0',
+            'savings_amount' => 'nullable|numeric|min:0',
+            'efficiency_score' => 'nullable|numeric|min:0|max:100',
+            'status' => 'required|in:active,inactive,maintenance',
+            'monitoring_type' => 'required|string',
+            'last_reading_at' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000'
         ]);
+
+        try {
+            $data->update($validated);
+
+            return redirect()
+                ->route('iot.energy.dashboard')
+                ->with('success', 'Energy monitoring data updated successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to update energy monitoring data: ' . $e->getMessage());
+        }
     }
 
-    private function updateRenewableSources($monitoring, $renewableSources)
+    public function destroy($id)
     {
-        $monitoring->update([
-            'renewable_sources' => $renewableSources,
-        ]);
+        $data = EnergyMonitoring::find($id);
+        
+        if (!$data) {
+            return redirect()->route('iot.energy.dashboard')->with('error', 'Energy monitoring data not found');
+        }
+
+        try {
+            $data->delete();
+
+            return redirect()
+                ->route('iot.energy.dashboard')
+                ->with('success', 'Energy monitoring data deleted successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to delete energy monitoring data: ' . $e->getMessage());
+        }
     }
 
-    private function unlinkDevicesFromMonitoring($monitoring)
+    public function generateReport()
     {
-        $monitoring->devices()->detach();
+        $data = EnergyMonitoring::with(['property', 'device'])->get();
+        
+        return view('iot.energy-monitoring.report', compact('data'));
     }
 
+    public function viewTrends()
+    {
+        $consumptionTrends = $this->getConsumptionTrends();
+        $costAnalysis = $this->getCostAnalysis();
+        $monthlyData = $this->getMonthlyTrends();
+        $deviceEfficiency = $this->getDeviceEfficiency();
+        
+        return view('iot.energy-monitoring.trends', compact(
+            'consumptionTrends', 
+            'costAnalysis', 
+            'monthlyData', 
+            'deviceEfficiency'
+        ));
+    }
+
+    // Helper methods
     private function getAverageDailyConsumption()
     {
-        return EnergyMonitoring::avg('consumption_kwh') ?? 0;
+        return EnergyMonitoring::avg('consumption_kwh');
     }
 
     private function getAverageEfficiencyScore()
     {
-        return EnergyMonitoring::avg('efficiency_score') ?? 0;
+        return EnergyMonitoring::avg('efficiency_score');
+    }
+
+    private function getMonthlyTrends()
+    {
+        return EnergyMonitoring::selectRaw('
+                DATE_FORMAT(created_at, "%Y-%m") as month,
+                AVG(consumption_kwh) as avg_consumption,
+                SUM(consumption_kwh) as total_consumption,
+                AVG(efficiency_score) as avg_efficiency,
+                COUNT(*) as count
+            ')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+    }
+
+    private function getDeviceEfficiency()
+    {
+        return EnergyMonitoring::with('device')
+            ->selectRaw('
+                device_id,
+                AVG(consumption_kwh) as avg_consumption,
+                AVG(efficiency_score) as avg_efficiency,
+                COUNT(*) as count
+            ')
+            ->whereNotNull('device_id')
+            ->groupBy('device_id')
+            ->get();
     }
 
     private function getConsumptionTrends()
     {
-        return EnergyMonitoring::selectRaw('DATE(created_at) as date, AVG(consumption_kwh) as avg_consumption')
-            ->groupBy('date')
-            ->orderBy('date', 'desc')
-            ->take(30)
-            ->get();
+        // Get last 30 days of consumption data
+        return EnergyMonitoring::where('created_at', '>=', now()->subDays(30))
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->created_at->format('Y-m-d');
+            })
+            ->map(function($group, $date) {
+                return [
+                    'date' => $date,
+                    'consumption' => $group->sum('consumption_kwh'),
+                    'count' => $group->count()
+                ];
+            });
     }
 
     private function getCostAnalysis()
     {
         return [
-            'total_cost' => EnergyMonitoring::sum('consumption_kwh') * 0.15,
-            'average_daily_cost' => EnergyMonitoring::avg('consumption_kwh') * 0.15,
-            'cost_trend' => 'decreasing',
-        ];
-    }
-
-    private function getConsumptionData($monitoring)
-    {
-        return $monitoring->consumptionData()
-            ->latest()
-            ->take(30)
-            ->get();
-    }
-
-    private function getPropertyCostAnalysis($monitoring)
-    {
-        return [
-            'current_month_cost' => $this->getMonthlyConsumption($monitoring) * 0.15,
-            'target_monthly_cost' => $monitoring->target_consumption * 0.15,
-            'savings_potential' => ($monitoring->target_consumption - $this->getMonthlyConsumption($monitoring)) * 0.15,
-        ];
-    }
-
-    private function getEfficiencyMetrics($monitoring)
-    {
-        return [
-            'current_efficiency' => $this->getEfficiencyScore($monitoring),
-            'target_efficiency' => 85,
-            'improvement_needed' => max(0, 85 - $this->getEfficiencyScore($monitoring)),
+            'total_cost' => EnergyMonitoring::sum('consumption_kwh') * 0.12, // Assuming $0.12 per kWh
+            'average_monthly' => EnergyMonitoring::avg('consumption_kwh') * 0.12 * 30,
+            'potential_savings' => EnergyMonitoring::sum('savings_amount'),
+            'efficiency_improvement' => $this->getAverageEfficiencyScore() - 75 // Baseline efficiency
         ];
     }
 }

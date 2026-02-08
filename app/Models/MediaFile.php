@@ -24,6 +24,10 @@ class MediaFile extends Model
         'description',
         'metadata',
         'uploaded_by',
+        'path',
+        'size',
+        'caption',
+        'category',
     ];
 
     protected $casts = [

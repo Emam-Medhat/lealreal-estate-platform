@@ -24,7 +24,7 @@ class OptimizedPropertyService
     public function getProperties(array $filters = [], int $perPage = 12): LengthAwarePaginator
     {
         $cacheKey = $this->generatePropertiesCacheKey($filters, $perPage);
-        
+
         return Cache::remember($cacheKey, 300, function () use ($filters, $perPage) {
             return $this->buildPropertiesQuery($filters)->paginate($perPage);
         });
@@ -36,14 +36,14 @@ class OptimizedPropertyService
     public function getPropertyDetails(int $propertyId): ?Property
     {
         $cacheKey = "property_details_{$propertyId}";
-        
+
         return Cache::remember($cacheKey, 1800, function () use ($propertyId) {
             return Property::with([
                 'propertyType:id,name,slug',
                 'location',
                 'details',
                 'price',
-                'media' => function($query) {
+                'media' => function ($query) {
                     $query->where('media_type', 'image')->orderBy('sort_order');
                 },
                 'amenities:id,name,icon',
@@ -58,34 +58,41 @@ class OptimizedPropertyService
     public function searchProperties(string $searchTerm, array $filters = []): Collection
     {
         $cacheKey = 'search_' . md5($searchTerm . serialize($filters));
-        
+
         return Cache::remember($cacheKey, 600, function () use ($searchTerm, $filters) {
             return Property::select([
-                'id', 'title', 'slug', 'description', 'listing_type', 
-                'featured', 'premium', 'views_count', 'created_at'
+                'id',
+                'title',
+                'slug',
+                'description',
+                'listing_type',
+                'featured',
+                'premium',
+                'views_count',
+                'created_at'
             ])->with([
-                'propertyType:id,name,slug',
-                'location:id,city,country,address',
-                'price:property_id,price,currency',
-                'media' => function($query) {
-                    $query->select('id', 'property_id', 'file_path', 'media_type')
-                          ->where('media_type', 'image')
-                          ->limit(1);
-                }
-            ])
-            ->where(function ($query) use ($searchTerm) {
-                $query->where('title', 'like', '%' . $searchTerm . '%')
-                      ->orWhere('description', 'like', '%' . $searchTerm . '%')
-                      ->orWhereHas('location', function ($q) use ($searchTerm) {
-                          $q->where('city', 'like', '%' . $searchTerm . '%')
-                            ->orWhere('country', 'like', '%' . $searchTerm . '%');
-                      });
-            })
-            ->where('status', 'active')
-            ->orderBy('featured', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get();
+                        'propertyType:id,name,slug',
+                        'location:id,city,country,address',
+                        'price:property_id,price,currency',
+                        'media' => function ($query) {
+                            $query->select('id', 'property_id', 'file_path', 'media_type')
+                                ->where('media_type', 'image')
+                                ->limit(1);
+                        }
+                    ])
+                ->where(function ($query) use ($searchTerm) {
+                    $query->where('title', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                        ->orWhereHas('location', function ($q) use ($searchTerm) {
+                            $q->where('city', 'like', '%' . $searchTerm . '%')
+                                ->orWhere('country', 'like', '%' . $searchTerm . '%');
+                        });
+                })
+                ->where('status', 'active')
+                ->orderBy('featured', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get();
         });
     }
 
@@ -95,21 +102,21 @@ class OptimizedPropertyService
     public function getSimilarProperties(int $propertyId, int $limit = 6): Collection
     {
         $property = Property::select('property_type')->find($propertyId);
-        
+
         if (!$property) {
             return new Collection();
         }
 
         $cacheKey = "similar_properties_{$propertyId}_{$limit}";
-        
+
         return Cache::remember($cacheKey, 900, function () use ($property, $limit, $propertyId) {
             return Property::select(['id', 'title', 'slug', 'listing_type'])
                 ->with([
                     'price:property_id,price,currency',
-                    'media' => function($query) {
+                    'media' => function ($query) {
                         $query->select('id', 'property_id', 'file_path', 'media_type')
-                              ->where('media_type', 'image')
-                              ->limit(1);
+                            ->where('media_type', 'image')
+                            ->limit(1);
                     }
                 ])
                 ->where('property_type', $property->property_type)
@@ -128,23 +135,30 @@ class OptimizedPropertyService
     {
         return Cache::remember('featured_properties', 3600, function () use ($limit) {
             return Property::select([
-                'id', 'title', 'slug', 'description', 'listing_type', 
-                'featured', 'premium', 'views_count', 'created_at'
+                'id',
+                'title',
+                'slug',
+                'description',
+                'listing_type',
+                'featured',
+                'premium',
+                'views_count',
+                'created_at'
             ])->with([
-                'propertyType:id,name,slug',
-                'location:id,city,country',
-                'price:property_id,price,currency',
-                'media' => function($query) {
-                    $query->select('id', 'property_id', 'file_path', 'media_type')
-                          ->where('media_type', 'image')
-                          ->limit(1);
-                }
-            ])
-            ->where('featured', true)
-            ->where('status', 'active')
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
+                        'propertyType:id,name,slug',
+                        'location:id,city,country',
+                        'price:property_id,price,currency',
+                        'media' => function ($query) {
+                            $query->select('id', 'property_id', 'file_path', 'media_type')
+                                ->where('media_type', 'image')
+                                ->limit(1);
+                        }
+                    ])
+                ->where('featured', true)
+                ->where('status', 'active')
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get();
         });
     }
 
@@ -169,13 +183,33 @@ class OptimizedPropertyService
     }
 
     /**
+     * Get property analytics
+     */
+    public function getPropertyAnalytics(int $propertyId): array
+    {
+        return Cache::remember("property_analytics_{$propertyId}", 1800, function () use ($propertyId) {
+            $property = Property::findOrFail($propertyId);
+
+            return [
+                'views_count' => $property->views_count,
+                'favorites_count' => $property->favorites_count,
+                'inquiries_count' => $property->inquiries_count,
+                'status' => $property->status,
+                'featured' => $property->featured,
+                'price_history' => $property->priceHistory()->latest()->take(10)->get(),
+                'status_history' => $property->statusHistory()->latest()->take(10)->get(),
+            ];
+        });
+    }
+
+    /**
      * Increment view count asynchronously
      */
     public function incrementViewCount(int $propertyId): void
     {
         Queue::push(function () use ($propertyId) {
             Property::where('id', $propertyId)->increment('views_count');
-            
+
             // Clear cache for this property
             Cache::forget("property_details_{$propertyId}");
         });
@@ -188,48 +222,91 @@ class OptimizedPropertyService
     {
         return DB::transaction(function () use ($data, $user) {
             $property = Property::create([
+                'agent_id' => $user->id, // Assuming current user is the agent
+                'property_type' => $data['property_type_id'] ?? null, // Correct column name from model definition
                 'title' => $data['title'],
-                'description' => $data['description'] ?? null,
+                'description' => $data['description'],
                 'listing_type' => $data['listing_type'],
-                'property_type' => $data['property_type_id'],
-                'agent_id' => $user->id,
-                'status' => $data['status'] ?? 'draft',
+                'status' => $data['status'] ?? 'active',
                 'featured' => $data['featured'] ?? false,
                 'premium' => $data['premium'] ?? false,
+                'property_code' => $this->generatePropertyCode(),
                 'views_count' => 0,
-                'slug' => Str::slug($data['title']) . '-' . Str::random(5),
-                'property_code' => 'PROP-' . strtoupper(Str::random(8)),
-                'price' => $data['price'] ?? 0,
+                'favorites_count' => 0,
+                'inquiries_count' => 0,
+                'price' => $data['price'],
                 'currency' => $data['currency'] ?? 'SAR',
-                'address' => $data['location']['address'] ?? null,
-                'city' => $data['location']['city'] ?? null,
-                'country' => $data['location']['country'] ?? null,
-                'latitude' => $data['location']['latitude'] ?? null,
-                'longitude' => $data['location']['longitude'] ?? null,
-                'bedrooms' => $data['details']['bedrooms'] ?? null,
-                'bathrooms' => $data['details']['bathrooms'] ?? null,
-                'area' => $data['details']['area'] ?? null,
+                'address' => $data['address'] ?? '', // Fallback to empty string if missing
+                'city' => $data['city'] ?? '',       // Fallback to empty string if missing
+                'state' => $data['state'] ?? null,
+                'country' => $data['country'] ?? '',     // Fallback to empty string if missing
+                'postal_code' => $data['postal_code'] ?? null, // Mapped directly to properties table
+                'latitude' => $data['latitude'] ?? null,      // Mapped directly to properties table
+                'longitude' => $data['longitude'] ?? null,    // Mapped directly to properties table
+                'bedrooms' => $data['bedrooms'] ?? 0,
+                'bathrooms' => $data['bathrooms'] ?? 0,
+                'floors' => $data['floors'] ?? 0,
+                'year_built' => $data['year_built'] ?? null,
+                'area' => $data['area'] ?? 0, // Ensure area is not null
+                'area_unit' => $data['area_unit'] ?? 'sq_m',
+                'virtual_tour_url' => $data['virtual_tour_url'] ?? null,
+                'slug' => Str::slug($data['title']) . '-' . Str::random(5),
             ]);
 
             // Create related records
-            if (isset($data['location'])) {
-                $property->location()->create($data['location']);
+            $property->details()->create([
+                'bedrooms' => $data['bedrooms'] ?? null,
+                'bathrooms' => $data['bathrooms'] ?? null,
+                'floors' => $data['floors'] ?? null,
+                'parking_spaces' => $data['parking_spaces'] ?? null,
+                'year_built' => $data['year_built'] ?? null,
+                'area' => $data['area'] ?? 0,
+                'area_unit' => $data['area_unit'] ?? 'sq_m',
+                'land_area' => $data['land_area'] ?? null,
+                'land_area_unit' => $data['land_area_unit'] ?? 'sq_m',
+                'specifications' => $data['specifications'] ?? null,
+                'materials' => $data['materials'] ?? null,
+                'interior_features' => $data['interior_features'] ?? null,
+                'exterior_features' => $data['exterior_features'] ?? null,
+            ]);
+
+            $property->location()->create([
+                'address' => $data['address'] ?? '',
+                'city' => $data['city'] ?? '',
+                'state' => $data['state'] ?? '',
+                'country' => $data['country'] ?? '',
+                'postal_code' => $data['postal_code'] ?? null,
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
+                'neighborhood' => $data['neighborhood'] ?? null,
+                'district' => $data['district'] ?? null,
+                'coordinates' => $data['coordinates'] ?? null,
+                'nearby_landmarks' => $data['nearby_landmarks'] ?? null,
+                'transportation' => $data['transportation'] ?? null,
+            ]);
+
+            $property->price()->create([
+                'price' => $data['price'],
+                'currency' => $data['currency'] ?? 'SAR',
+                'price_type' => $data['listing_type'],
+                'price_per_sqm' => (isset($data['area']) && $data['area'] > 0) ? $data['price'] / $data['area'] : null,
+                'is_negotiable' => $data['is_negotiable'] ?? false,
+                'includes_vat' => $data['includes_vat'] ?? false,
+                'vat_rate' => $data['vat_rate'] ?? 0,
+                'service_charges' => $data['service_charges'] ?? 0,
+                'maintenance_fees' => $data['maintenance_fees'] ?? 0,
+                'payment_frequency' => $data['payment_frequency'] ?? null,
+                'payment_terms' => $data['payment_terms'] ?? null,
+                'effective_date' => now()->toDateString(),
+                'is_active' => true,
+            ]);
+
+            if (isset($data['amenities'])) {
+                $property->amenities()->sync($data['amenities']);
             }
 
-            if (isset($data['price'])) {
-                $priceData = is_array($data['price']) ? $data['price'] : [
-                    'price' => $data['price'],
-                    'currency' => $data['currency'] ?? 'SAR',
-                    'price_type' => $data['listing_type'],
-                    'effective_date' => now()->toDateString(),
-                    'is_active' => true,
-                    'set_by' => $user->id
-                ];
-                $property->price()->create($priceData);
-            }
-
-            if (isset($data['details'])) {
-                $property->details()->create($data['details']);
+            if (isset($data['features'])) {
+                $property->features()->sync($data['features']);
             }
 
             // Clear relevant caches
@@ -239,45 +316,93 @@ class OptimizedPropertyService
         });
     }
 
+    private function generatePropertyCode(): string
+    {
+        do {
+            $code = 'PROP-' . strtoupper(Str::random(8));
+        } while (Property::where('property_code', $code)->exists());
+
+        return $code;
+    }
+
     /**
      * Update property with cache clearing
      */
     public function updateProperty(Property $property, array $data): Property
     {
         return DB::transaction(function () use ($property, $data) {
+            $oldStatus = $property->status;
+
+            // Update property
             $property->update($data);
 
-            // Update related records for legacy support
-            if (isset($data['address']) || isset($data['city']) || isset($data['country'])) {
-                $property->location()->updateOrCreate([], [
-                    'address' => $data['address'] ?? $property->address,
-                    'city' => $data['city'] ?? $property->city,
-                    'state' => $data['state'] ?? $property->state,
-                    'country' => $data['country'] ?? $property->country,
-                    'postal_code' => $data['postal_code'] ?? $property->postal_code,
-                    'latitude' => $data['latitude'] ?? $property->latitude,
-                    'longitude' => $data['longitude'] ?? $property->longitude,
-                ]);
+            // Update related records
+            if ($property->details) {
+                $property->details->update($data);
+            } else {
+                $property->details()->create($data);
+            }
+
+            if ($property->location) {
+                $property->location->update($data);
+            } else {
+                $property->location()->create($data);
             }
 
             if (isset($data['price'])) {
-                $property->price()->updateOrCreate([], [
-                    'price' => $data['price'],
-                    'currency' => $data['currency'] ?? $property->currency,
-                    'price_type' => $data['listing_type'] ?? $property->listing_type,
-                ]);
+                $propertyPrice = $property->price;
+                if ($propertyPrice) {
+                    $oldPrice = $propertyPrice->price;
+                    $newPrice = $data['price'];
+
+                    $propertyPrice->update([
+                        'price' => $newPrice,
+                        'currency' => $data['currency'] ?? $propertyPrice->currency,
+                        'price_type' => $data['listing_type'] ?? $propertyPrice->price_type,
+                        'price_per_sqm' => (isset($data['area']) && $data['area'] > 0) ? $newPrice / $data['area'] : null,
+                        'is_negotiable' => $data['is_negotiable'] ?? $propertyPrice->is_negotiable,
+                        'includes_vat' => $data['includes_vat'] ?? $propertyPrice->includes_vat,
+                        'vat_rate' => $data['vat_rate'] ?? $propertyPrice->vat_rate,
+                        'service_charges' => $data['service_charges'] ?? $propertyPrice->service_charges,
+                        'maintenance_fees' => $data['maintenance_fees'] ?? $propertyPrice->maintenance_fees,
+                        'payment_frequency' => $data['payment_frequency'] ?? $propertyPrice->payment_frequency,
+                        'payment_terms' => $data['payment_terms'] ?? $propertyPrice->payment_terms,
+                    ]);
+
+                    // Record price history
+                    if ($oldPrice != $newPrice) {
+                        \App\Models\PropertyPriceHistory::create([
+                            'property_id' => $property->id,
+                            'old_price' => $oldPrice,
+                            'new_price' => $newPrice,
+                            'currency' => $data['currency'] ?? $propertyPrice->currency,
+                            'change_type' => $newPrice > $oldPrice ? 'increase' : 'decrease',
+                            'change_percentage' => abs(($newPrice - $oldPrice) / $oldPrice * 100),
+                            'changed_by' => auth()->id(),
+                        ]);
+                    }
+                } else {
+                    $property->price()->create($data);
+                }
             }
 
-            if (isset($data['bedrooms']) || isset($data['bathrooms']) || isset($data['area'])) {
-                $property->details()->updateOrCreate([], [
-                    'bedrooms' => $data['bedrooms'] ?? $property->bedrooms,
-                    'bathrooms' => $data['bathrooms'] ?? $property->bathrooms,
-                    'floors' => $data['floors'] ?? $property->floors,
-                    'parking_spaces' => $data['parking_spaces'] ?? $property->parking_spaces,
-                    'year_built' => $data['year_built'] ?? $property->year_built,
-                    'area' => $data['area'] ?? $property->area,
-                    'area_unit' => $data['area_unit'] ?? $property->area_unit,
-                ]);
+            if (isset($data['amenities'])) {
+                $property->amenities()->sync($data['amenities']);
+            }
+
+            if (isset($data['features'])) {
+                $property->features()->sync($data['features']);
+            }
+
+            // Record status change
+            if ($oldStatus != ($data['status'] ?? $oldStatus)) {
+                \App\Models\PropertyStatusHistory::recordStatusChange(
+                    $property->id,
+                    $oldStatus,
+                    $data['status'],
+                    $data['status_change_reason'] ?? null,
+                    auth()->id()
+                );
             }
 
             // Clear caches
@@ -289,26 +414,51 @@ class OptimizedPropertyService
     }
 
     /**
+     * Toggle property featured status
+     */
+    public function toggleFeatured(int $propertyId): Property
+    {
+        $property = Property::findOrFail($propertyId);
+        $property->featured = !$property->featured;
+
+        if ($property->featured) {
+            $property->featured_at = now();
+        }
+
+        $property->save();
+        $this->clearPropertyCaches();
+        Cache::forget("property_details_{$propertyId}");
+        Cache::forget("property_analytics_{$propertyId}");
+
+        return $property;
+    }
+
+    /**
      * Delete property and clean up
      */
-    public function deleteProperty(Property $property): bool
+    public function deleteProperty(int $propertyId): bool
     {
-        DB::transaction(function () use ($property) {
+        $property = Property::find($propertyId);
+        if (!$property)
+            return false;
+
+        return DB::transaction(function () use ($property) {
             // Delete related records
             $property->location()?->delete();
             $property->price()?->delete();
             $property->details()?->delete();
             $property->media()?->delete();
-            
+
             // Delete property
             $property->delete();
 
             // Clear caches
             Cache::forget("property_details_{$property->id}");
+            Cache::forget("property_analytics_{$property->id}");
             $this->clearPropertyCaches();
-        });
 
-        return true;
+            return true;
+        });
     }
 
     /**
@@ -320,10 +470,10 @@ class OptimizedPropertyService
             'propertyType:id,name,slug',
             'location:id,property_id,city,country,address',
             'price:id,property_id,price,currency',
-            'media' => function($query) {
+            'media' => function ($query) {
                 $query->select('id', 'property_id', 'file_path', 'media_type')
-                      ->where('media_type', 'image')
-                      ->orderBy('sort_order');
+                    ->where('media_type', 'image')
+                    ->orderBy('sort_order');
             },
             'agent:id,name,avatar'
         ]);
@@ -335,7 +485,7 @@ class OptimizedPropertyService
         if (!empty($filters['q'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('title', 'like', '%' . $filters['q'] . '%')
-                  ->orWhere('description', 'like', '%' . $filters['q'] . '%');
+                    ->orWhere('description', 'like', '%' . $filters['q'] . '%');
             });
         }
 
@@ -417,11 +567,14 @@ class OptimizedPropertyService
      */
     public function clearPropertyCaches(): void
     {
-        // In a real app, you might use cache tags if supported by driver
-        // For simplicity, we can use a versioning system or just clear broad keys
         Cache::forget('property_stats');
-        // More specific clearing logic here
+        Cache::forget('featured_properties');
+        Cache::forget('property_types_active');
+        // Since we can't easily clear dynamic keys like 'properties_list_*' without tags,
+        // we rely on TTL or we could implement a versioning strategy.
+        // For now, these main static keys are important.
     }
+
 
     /**
      * Get property types from cache
@@ -442,11 +595,11 @@ class OptimizedPropertyService
     public function bulkUpdateStatus(array $propertyIds, string $status): int
     {
         $updated = Property::whereIn('id', $propertyIds)->update(['status' => $status]);
-        
+
         if ($updated > 0) {
             $this->clearPropertyCaches();
         }
-        
+
         return $updated;
     }
 
@@ -456,26 +609,31 @@ class OptimizedPropertyService
     public function getPropertiesForMap(array $bounds, array $filters = []): Collection
     {
         $cacheKey = 'map_properties_' . md5(serialize($bounds) . serialize($filters));
-        
+
         return Cache::remember($cacheKey, 600, function () use ($bounds, $filters) {
             return Property::select([
-                'id', 'title', 'slug', 'listing_type', 'featured', 'premium'
+                'id',
+                'title',
+                'slug',
+                'listing_type',
+                'featured',
+                'premium'
             ])
-            ->with([
-                'location:id,property_id,latitude,longitude,city,address',
-                'price:property_id,price,currency',
-                'media' => function($query) {
-                    $query->select('id', 'property_id', 'file_path', 'media_type')
-                          ->where('media_type', 'image')
-                          ->limit(1);
-                }
-            ])
-            ->whereHas('location', function($query) use ($bounds) {
-                $query->whereBetween('latitude', [$bounds['south'], $bounds['north']])
-                      ->whereBetween('longitude', [$bounds['west'], $bounds['east']]);
-            })
-            ->where('status', 'active')
-            ->get();
+                ->with([
+                    'location:id,property_id,latitude,longitude,city,address',
+                    'price:property_id,price,currency',
+                    'media' => function ($query) {
+                        $query->select('id', 'property_id', 'file_path', 'media_type')
+                            ->where('media_type', 'image')
+                            ->limit(1);
+                    }
+                ])
+                ->whereHas('location', function ($query) use ($bounds) {
+                    $query->whereBetween('latitude', [$bounds['south'], $bounds['north']])
+                        ->whereBetween('longitude', [$bounds['west'], $bounds['east']]);
+                })
+                ->where('status', 'active')
+                ->get();
         });
     }
 }

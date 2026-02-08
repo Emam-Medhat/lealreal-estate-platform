@@ -61,6 +61,9 @@ class DatabaseSeeder extends Seeder
         // Seed Performance Reports
         $this->seedPerformanceReports();
         
+        // Seed Gamification
+        $this->call(GamificationSeeder::class);
+        
         echo "Database seeded successfully!\n";
     }
     

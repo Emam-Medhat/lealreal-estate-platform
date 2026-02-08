@@ -13,8 +13,8 @@
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS & Vite -->
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     
     <!-- Custom CSS -->
     <style>
@@ -149,7 +149,7 @@
             min-width: 250px;
         }
         
-        /* Remove underline from all links */
+        Remove underline from all links
         a {
             text-decoration: none !important;
         }
@@ -165,6 +165,27 @@
     <!-- Navigation Functions -->
     <script>
     console.log('Layout script loaded');
+
+    // Global CSRF setup for fetch requests
+    const originalFetch = window.fetch;
+    window.fetch = function() {
+        let [resource, config] = arguments;
+        if(config == null) {
+            return originalFetch(resource);
+        }
+
+        if(config.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method.toUpperCase())) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if(csrfToken) {
+                config.headers = {
+                    ...config.headers,
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                };
+            }
+        }
+        return originalFetch(resource, config);
+    };
 
     function toggleMobileMenu() {
         const menu = document.getElementById('mobileMenu');
@@ -269,7 +290,7 @@
                 <?php else: ?>
                     <!-- Public Routes -->
                     <a href="<?php echo e(route('properties.index')); ?>" class="text-white hover:text-blue-200 transition font-medium"><?php echo e(__('Properties')); ?></a>
-                    <a href="<?php echo e(route('agents.directory')); ?>" class="text-white hover:text-blue-200 transition font-medium"><?php echo e(__('Agents')); ?></a>
+                    <a href="<?php echo e(route('agents.directory.full')); ?>" class="text-white hover:text-blue-200 transition font-medium"><?php echo e(__('Agents')); ?></a>
                     <a href="<?php echo e(route('about')); ?>" class="text-white hover:text-blue-200 transition font-medium"><?php echo e(__('About')); ?></a>
                     <a href="<?php echo e(route('contact')); ?>" class="text-white hover:text-blue-200 transition font-medium"><?php echo e(__('Contact')); ?></a>
                     
@@ -586,7 +607,7 @@
             <?php else: ?>
                 <a href="/" class="block py-2 text-white hover:text-blue-200"><?php echo e(__('Home')); ?></a>
                 <a href="<?php echo e(route('properties.index')); ?>" class="block py-2 text-white hover:text-blue-200"><?php echo e(__('Properties')); ?></a>
-                <a href="<?php echo e(route('agents.directory')); ?>" class="block py-2 text-white hover:text-blue-200"><?php echo e(__('Agents')); ?></a>
+                <a href="<?php echo e(route('agents.directory.full')); ?>" class="block py-2 text-white hover:text-blue-200"><?php echo e(__('Agents')); ?></a>
                 <a href="<?php echo e(route('about')); ?>" class="block py-2 text-white hover:text-blue-200"><?php echo e(__('About')); ?></a>
                 <a href="<?php echo e(route('contact')); ?>" class="block py-2 text-white hover:text-blue-200"><?php echo e(__('Contact')); ?></a>
                 
@@ -859,6 +880,7 @@ function updateNotificationCount() {
 </footer>
 
     <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     

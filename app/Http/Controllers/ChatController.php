@@ -96,6 +96,9 @@ class ChatController extends Controller
         
         // Load relationships for response
         $message->load('user');
+
+        // Broadcast the message
+        broadcast(new MessageSent($message, $user))->toOthers();
         
         return response()->json([
             'success' => true,

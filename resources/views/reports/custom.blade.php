@@ -213,15 +213,21 @@
                                             
                                             <div class="d-flex justify-content-between">
                                                 <div class="btn-group">
-                                                    <a href="{{ $report->getRunUrl() }}" class="btn btn-sm btn-primary" title="تشغيل">
-                                                        <i class="fas fa-play"></i>
-                                                    </a>
+                                                    <form action="{{ $report->getRunUrl() }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-primary" title="تشغيل">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                    </form>
                                                     <a href="{{ $report->getEditUrl() }}" class="btn btn-sm btn-outline-secondary" title="تعديل">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <a href="{{ $report->getDuplicateUrl() }}" class="btn btn-sm btn-outline-info" title="نسخ">
-                                                        <i class="fas fa-copy"></i>
-                                                    </a>
+                                                    <form action="{{ $report->getDuplicateUrl() }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-info" title="نسخ">
+                                                            <i class="fas fa-copy"></i>
+                                                        </button>
+                                                    </form>
                                                     @if($report->is_public)
                                                         <a href="{{ $report->getShareUrl() }}" class="btn btn-sm btn-outline-success" title="مشاركة">
                                                             <i class="fas fa-share"></i>

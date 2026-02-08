@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Transaction;
 use App\Models\Invoice;
 use App\Models\UserActivityLog;
+use App\Services\FraudDetectionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Storage;
 
 class PaymentController extends Controller
 {
+    protected $fraudDetectionService;
+
+    public function __construct(FraudDetectionService $fraudDetectionService)
+    {
+        $this->fraudDetectionService = $fraudDetectionService;
+    }
+
     public function index(Request $request)
     {
         $payments = Payment::with(['user', 'paymentMethod', 'transaction', 'invoice'])
@@ -67,6 +75,42 @@ class PaymentController extends Controller
                 'metadata' => $request->metadata ?? [],
                 'created_by' => Auth::id(),
             ]);
+
+            // Fraud Detection Analysis
+            $fraudAnalysis = $this->fraudDetectionService->analyzeTransaction([
+                'user_id' => Auth::id(),
+                'amount' => $request->amount,
+                'ip_address' => $request->ip(),
+                'payment_method_id' => $request->payment_method_id,
+                'transaction_id' => $payment->id,
+            ]);
+
+            // If risk is critical, block the payment
+            if ($fraudAnalysis['should_block']) {
+                $payment->update([
+                    'status' => 'failed',
+                    'verification_status' => 'rejected',
+                    'notes' => 'Blocked by fraud detection system. Risk Score: ' . $fraudAnalysis['risk_score'],
+                    'fraud_check_details' => $fraudAnalysis,
+                    'failed_at' => now(),
+                ]);
+
+                DB::commit(); // Commit the failed payment record
+
+                return back()->with('error', 'Payment blocked due to security risk. Please contact support.');
+            }
+
+            // If risk is high/medium, flag it but might allow processing (or set to pending review)
+            if ($fraudAnalysis['requires_review']) {
+                $payment->update([
+                    'verification_status' => 'flagged',
+                    'risk_score' => $fraudAnalysis['risk_score'] * 10, // Convert 0-1 to 0-10
+                    'fraud_check_details' => $fraudAnalysis,
+                ]);
+                
+                // You might want to stop auto-processing here if it requires manual review
+                // For now, we'll proceed but keeping the flag
+            }
 
             // Process payment through gateway
             $gatewayResult = $this->processPaymentGateway($payment, $request);

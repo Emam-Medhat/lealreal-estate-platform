@@ -12,7 +12,7 @@
                     <a href="{{ route('blockchain.nfts.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> إنشاء NFT
                     </a>
-                    <a href="{{ route('blockchain.nfts.marketplace') }}" class="btn btn-outline-primary">
+                    <a href="{{ route('blockchain.metaverse.marketplace') }}" class="btn btn-outline-primary">
                         <i class="fas fa-store"></i> السوق
                     </a>
                 </div>

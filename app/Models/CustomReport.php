@@ -12,21 +12,17 @@ class CustomReport extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'report_id',
         'name',
         'description',
-        'configuration',
         'data_sources',
-        'filters',
-        'columns',
-        'group_by',
-        'aggregations',
-        'sort_by',
-        'limit',
+        'query_config',
+        'visualization_config',
+        'custom_fields',
+        'report_data',
         'is_public',
         'is_template',
-        'template_name',
-        'template_description',
+        'created_by',
         'category',
         'tags',
         'active',
@@ -34,13 +30,11 @@ class CustomReport extends Model
     ];
 
     protected $casts = [
-        'configuration' => 'array',
         'data_sources' => 'array',
-        'filters' => 'array',
-        'columns' => 'array',
-        'group_by' => 'array',
-        'aggregations' => 'array',
-        'sort_by' => 'array',
+        'query_config' => 'array',
+        'visualization_config' => 'array',
+        'custom_fields' => 'array',
+        'report_data' => 'array',
         'is_public' => 'boolean',
         'is_template' => 'boolean',
         'tags' => 'array',
@@ -48,19 +42,19 @@ class CustomReport extends Model
         'usage_count' => 'integer'
     ];
 
-    public function user(): BelongsTo
+    public function report(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Report::class);
     }
 
-    public function reports(): HasMany
+    public function creator()
     {
-        return $this->hasMany(Report::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function scopeForUser($query, $userId)
     {
-        return $query->where('user_id', $userId);
+        return $query->where('created_by', $userId);
     }
 
     public function scopePublic($query)

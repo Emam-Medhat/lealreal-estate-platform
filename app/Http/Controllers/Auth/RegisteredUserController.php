@@ -56,9 +56,15 @@ class RegisteredUserController extends Controller
         } catch (\Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());
 
+            $errorMessage = 'حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.';
+            
+            if (app()->environment('local', 'staging')) {
+                $errorMessage .= ' Error: ' . $e->getMessage();
+            }
+
             return back()
                 ->withInput()
-                ->withErrors(['error' => 'حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.']);
+                ->withErrors(['error' => $errorMessage]);
         }
     }
 }

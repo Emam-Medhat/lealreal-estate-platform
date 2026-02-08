@@ -16,13 +16,20 @@ class Menu extends Model
         'description',
         'location',
         'is_active',
+        'items',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'items' => 'array',
     ];
 
     public function items(): HasMany
+    {
+        return $this->hasMany(MenuItem::class)->orderBy('sort_order');
+    }
+
+    public function menuItems(): HasMany
     {
         return $this->hasMany(MenuItem::class)->orderBy('sort_order');
     }

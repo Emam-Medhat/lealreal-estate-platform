@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Property;
@@ -16,551 +15,551 @@ use App\Models\PropertyAnalytic;
 use App\Models\PropertyStatusHistory;
 use App\Models\PropertyAmenity;
 use App\Models\PropertyFeature;
+use App\Models\PropertyDocument;
+use App\Models\PropertyView;
 use App\Services\OptimizedPropertyService;
-use App\Helpers\RealTimeNotificationHelper;
+use App\Repositories\Contracts\PropertyRepositoryInterface;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class PropertyController extends Controller
+class PropertyController extends BaseController
 {
     protected $propertyService;
+    protected $propertyRepository;
 
-    public function __construct(OptimizedPropertyService $propertyService)
-    {
+    public function __construct(
+        OptimizedPropertyService $propertyService,
+        PropertyRepositoryInterface $propertyRepository
+    ) {
         $this->propertyService = $propertyService;
+        $this->propertyRepository = $propertyRepository;
         $this->middleware('auth')->except(['index', 'show', 'search']);
     }
 
+    /**
+     * Display a listing of properties with optimized caching and filtering
+     */
     public function index(Request $request)
     {
+        $this->rateLimit($request, 100, 5);
+
         $filters = $request->only([
-            'property_type', 'listing_type', 'min_price', 'max_price', 
-            'city', 'bedrooms', 'featured', 'premium', 'sort', 'order'
+            'property_type',
+            'listing_type',
+            'min_price',
+            'max_price',
+            'city',
+            'bedrooms',
+            'featured',
+            'premium',
+            'sort',
+            'order'
         ]);
 
-        $properties = $this->propertyService->getProperties($filters, 12);
-        
-        // Use caching for property types as they don't change often
-        $propertyTypes = \Illuminate\Support\Facades\Cache::remember('property_types_active', 3600, function() {
-            return PropertyType::active()->ordered()->get();
-        });
+        $perPage = $this->getPerPage($request, 12, 50);
+
+        $properties = $this->getCachedData(
+            'properties_index_' . md5(serialize($filters) . $perPage),
+            function () use ($filters, $perPage) {
+                return $this->propertyRepository->getFilteredProperties($filters, $perPage);
+            },
+            'short'
+        );
+
+        $propertyTypes = $this->getCachedData(
+            'property_types_active',
+            function () {
+                return PropertyType::active()->ordered()->get(['id', 'name', 'description']);
+            },
+            'medium'
+        );
 
         return view('properties.index', compact('properties', 'propertyTypes'));
     }
 
-    public function show(Property $property)
+    /**
+     * Display the specified property with optimized loading and view tracking
+     */
+    public function show(Request $request, $id)
     {
-        // Use optimized service for details
-        $property = $this->propertyService->getPropertyDetails($property->id);
+        $this->rateLimit($request, 100, 5);
+
+        $property = $this->getCachedData(
+            "property_show_{$id}",
+            function () use ($id) {
+                return $this->propertyRepository->findById($id, ['*'], [
+                    'agent:id,name,phone,email',
+                    'company:id,name,logo',
+                    'media' => function ($query) {
+                        return $query->orderBy('sort_order', 'asc')->get(['id', 'property_id', 'file_path', 'media_type', 'sort_order']);
+                    },
+                    'location:id,property_id,city,state,country,address,latitude,longitude',
+                    'price:id,property_id,price,currency,price_per_sqm',
+                    'details:id,property_id,bedrooms,bathrooms,area,area_unit,year_built,parking_spaces',
+                    'amenities:id,name,icon',
+                    'features:id,name,description',
+                    'analytics' => function ($query) {
+                        return $query->latest()->take(10);
+                    }
+                ]);
+            },
+            'medium'
+        );
 
         if (!$property) {
-            abort(404);
+            return $this->errorResponse('Property not found', 404);
         }
 
-        // Increment views asynchronously
-        $this->propertyService->incrementViewCount($property->id);
+        // Increment view count asynchronously
+        dispatch(function () use ($property) {
+            $this->propertyService->incrementViewCount($property->id);
+        });
 
-        // Get similar properties efficiently
-        $similarProperties = $this->propertyService->getSimilarProperties($property->id);
+        $similarProperties = $this->getCachedData(
+            "similar_properties_{$id}",
+            function () use ($property) {
+                return $this->propertyService->getSimilarProperties($property->id, 6);
+            },
+            'medium'
+        );
 
         return view('properties.show', compact('property', 'similarProperties'));
     }
 
-    public function create()
+    /**
+     * Show the form for creating a new property with optimized data loading
+     */
+    public function create(Request $request)
     {
-        $propertyTypes = PropertyType::active()->ordered()->get();
-        $amenities = PropertyAmenity::active()->ordered()->get();
-        $features = PropertyFeature::active()->ordered()->get();
+        $this->rateLimit($request, 50, 5);
+
+        $propertyTypes = $this->getCachedData(
+            'property_types_active',
+            function () {
+                return PropertyType::active()->ordered()->get(['id', 'name', 'description']);
+            },
+            'medium'
+        );
+
+        $amenities = $this->getCachedData(
+            'property_amenities_active',
+            function () {
+                return PropertyAmenity::active()->ordered()->get(['id', 'name', 'icon', 'description']);
+            },
+            'medium'
+        );
+
+        $features = $this->getCachedData(
+            'property_features_active',
+            function () {
+                return PropertyFeature::active()->ordered()->get(['id', 'name', 'description']);
+            },
+            'medium'
+        );
 
         return view('properties.create', compact('propertyTypes', 'amenities', 'features'));
     }
 
+    /**
+     * Store a newly created property with validation, caching, and error handling
+     */
     public function store(StorePropertyRequest $request)
     {
+        $this->rateLimit($request, 30, 5);
+
         try {
             DB::beginTransaction();
 
             $user = Auth::user();
-
-            // Create property with all data in single table
-            $property = Property::create([
-                'agent_id' => $user->id,
-                'property_type' => $request->property_type_id,
-                'title' => $request->title,
-                'description' => $request->description,
-                'listing_type' => $request->listing_type,
-                'status' => $request->status ?? 'draft',
-                'featured' => $request->featured ?? false,
-                'premium' => $request->premium ?? false,
-                'property_code' => $this->generatePropertyCode(),
-                'views_count' => 0,
-                'favorites_count' => 0,
-                'inquiries_count' => 0,
-                'price' => $request->price,
-                'currency' => $request->currency,
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'postal_code' => $request->postal_code,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'bedrooms' => $request->bedrooms,
-                'bathrooms' => $request->bathrooms,
-                'floors' => $request->floors,
-                'year_built' => $request->year_built,
-                'area' => $request->area,
-                'area_unit' => $request->area_unit,
-                'virtual_tour_url' => $request->virtual_tour_url,
-            ]);
-
-            // Create related records
-            $property->details()->create([
-                'bedrooms' => $request->bedrooms,
-                'bathrooms' => $request->bathrooms,
-                'floors' => $request->floors,
-                'parking_spaces' => $request->parking_spaces,
-                'year_built' => $request->year_built,
-                'area' => $request->area,
-                'area_unit' => $request->area_unit,
-                'land_area' => $request->land_area,
-                'land_area_unit' => $request->land_area_unit,
-                'specifications' => $request->specifications,
-                'materials' => $request->materials,
-                'interior_features' => $request->interior_features,
-                'exterior_features' => $request->exterior_features,
-            ]);
-
-            $property->location()->create([
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'postal_code' => $request->postal_code,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'neighborhood' => $request->neighborhood,
-                'district' => $request->district,
-                'coordinates' => $request->coordinates,
-                'nearby_landmarks' => $request->nearby_landmarks,
-                'transportation' => $request->transportation,
-            ]);
-
-            $property->pricing()->create([
-                'price' => $request->price,
-                'currency' => $request->currency,
-                'price_type' => $request->listing_type,
-                'price_per_sqm' => $request->area > 0 ? $request->price / $request->area : null,
-                'is_negotiable' => $request->is_negotiable ?? false,
-                'includes_vat' => $request->includes_vat ?? false,
-                'vat_rate' => $request->vat_rate ?? 0,
-                'service_charges' => $request->service_charges,
-                'maintenance_fees' => $request->maintenance_fees,
-                'payment_frequency' => $request->payment_frequency,
-                'payment_terms' => $request->payment_terms,
-                'effective_date' => now()->toDateString(),
-                'is_active' => true,
-            ]);
-
-            // Attach amenities and features if they exist
-            if ($request->amenities) {
-                $property->amenities()->attach($request->amenities);
-            }
-
-            if ($request->features) {
-                $property->features()->attach($request->features);
-            }
+            $property = $this->propertyService->createProperty($request->validated(), $user);
 
             // Upload images if they exist
             if ($request->hasFile('images')) {
-                $this->uploadImages($property, $request->file('images'));
+                $this->handleImageUpload($request->file('images'), $property->id);
             }
 
-            // Upload documents if they exist
+            // Handle documents upload
             if ($request->hasFile('documents')) {
-                $this->uploadDocuments($property, $request->file('documents'));
+                $this->handleDocumentUpload($request->file('documents'), $property->id);
             }
 
             DB::commit();
 
-            // Send real-time notifications
+            // Notify all users about the new property
             try {
-                RealTimeNotificationHelper::propertyCreated(
-                    $property->id,
-                    $property->title,
-                    $user->id
-                );
-                \Log::info('Property notification sent successfully', [
-                    'property_id' => $property->id,
-                    'agent_id' => $user->id,
-                    'title' => $property->title
-                ]);
+                $users = User::all();
+                Notification::send($users, new PropertyCreated($property));
             } catch (\Exception $e) {
-                \Log::error('Failed to send property notification', [
-                    'error' => $e->getMessage(),
-                    'property_id' => $property->id,
-                    'agent_id' => $user->id
-                ]);
+                Log::error('Failed to send property notifications: ' . $e->getMessage());
+                // Continue execution as the property is already created
             }
 
-            return redirect()
-                ->route('properties.show', $property)
-                ->with('success', 'تم إنشاء العقار بنجاح!');
+            // Clear relevant caches
+            $this->clearCache('properties_index');
+            $this->clearCache('property_types_active');
+            $this->clearCache('featured_properties');
+            $this->clearCache('latest_properties');
+
+            return redirect()->route('properties.show', $property)
+                ->with('success', 'Property created successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()
+            Log::error('Property creation failed: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'user_id' => auth()->id()
+            ]);
+
+            return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create property: ' . $e->getMessage());
         }
     }
 
-    public function edit(Property $property)
+    /**
+     * Show the form for editing the specified property
+     */
+    public function edit(Request $request, $id)
     {
-        $this->authorize('update', $property);
+        $this->rateLimit($request, 50, 5);
 
-        $property->load([
-            'details',
+        $property = $this->propertyRepository->findById($id, ['*'], [
+            'media',
             'location',
             'price',
+            'details',
             'amenities',
             'features',
-            'documents',
-            'virtualTours',
-            'floorPlans',
-            'neighborhoods'
+            'documents'
         ]);
 
-        $propertyTypes = PropertyType::active()->ordered()->get();
-        $amenities = PropertyAmenity::active()->ordered()->get();
-        $features = PropertyFeature::active()->ordered()->get();
+        if (!$property) {
+            return $this->errorResponse('Property not found', 404);
+        }
+
+        $propertyTypes = $this->getCachedData(
+            'property_types_active',
+            function () {
+                return PropertyType::active()->ordered()->get(['id', 'name', 'icon', 'description']);
+            },
+            'medium'
+        );
+
+        $amenities = $this->getCachedData(
+            'property_amenities_active',
+            function () {
+                return PropertyAmenity::active()->ordered()->get(['id', 'name', 'icon', 'description']);
+            },
+            'medium'
+        );
+
+        $features = $this->getCachedData(
+            'property_features_active',
+            function () {
+                return PropertyFeature::active()->ordered()->get(['id', 'name', 'description']);
+            },
+            'medium'
+        );
 
         return view('properties.edit', compact('property', 'propertyTypes', 'amenities', 'features'));
     }
 
-    public function update(UpdatePropertyRequest $request, Property $property)
+    /**
+     * Update the specified property with validation and cache management
+     */
+    public function update(UpdatePropertyRequest $request, $id)
     {
-        $this->authorize('update', $property);
+        $this->rateLimit($request, 50, 5);
 
         try {
             DB::beginTransaction();
 
-            $oldStatus = $property->status;
+            $property = $this->propertyService->updateProperty($id, $request->validated());
 
-            // Update property
-            $property->update([
-                'property_type' => $request->property_type_id,
-                'title' => $request->title,
-                'description' => $request->description,
-                'listing_type' => $request->listing_type,
-                'status' => $request->status,
-                'featured' => $request->featured ?? false,
-                'premium' => $request->premium ?? false,
-                'price' => $request->price,
-                'currency' => $request->currency,
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'postal_code' => $request->postal_code,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'bedrooms' => $request->bedrooms,
-                'bathrooms' => $request->bathrooms,
-                'floors' => $request->floors,
-                'year_built' => $request->year_built,
-                'area' => $request->area,
-                'area_unit' => $request->area_unit,
-                'virtual_tour_url' => $request->virtual_tour_url,
-            ]);
-
-            // Update details
-            $property->details->update([
-                'bedrooms' => $request->bedrooms,
-                'bathrooms' => $request->bathrooms,
-                'floors' => $request->floors,
-                'parking_spaces' => $request->parking_spaces,
-                'year_built' => $request->year_built,
-                'area' => $request->area,
-                'area_unit' => $request->area_unit,
-                'land_area' => $request->land_area,
-                'land_area_unit' => $request->land_area_unit,
-                'specifications' => $request->specifications,
-                'materials' => $request->materials,
-                'interior_features' => $request->interior_features,
-                'exterior_features' => $request->exterior_features,
-            ]);
-
-            // Update location
-            $property->location->update([
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'postal_code' => $request->postal_code,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'neighborhood' => $request->neighborhood,
-                'district' => $request->district,
-                'coordinates' => $request->coordinates,
-                'nearby_landmarks' => $request->nearby_landmarks,
-                'transportation' => $request->transportation,
-            ]);
-
-            // Update price
-            // Save to main table as well
-            $property->update(['price' => $request->price]);
-
-            $propertyPrice = $property->price()->first();
-
-            if ($propertyPrice) {
-                $oldPrice = $propertyPrice->price;
-                $newPrice = $request->price;
-
-                $propertyPrice->update([
-                    'price' => $newPrice,
-                    'currency' => $request->currency,
-                    'price_type' => $request->listing_type,
-                    'price_per_sqm' => $request->area > 0 ? $newPrice / $request->area : null,
-                    'is_negotiable' => $request->is_negotiable ?? false,
-                    'includes_vat' => $request->includes_vat ?? false,
-                    'vat_rate' => $request->vat_rate ?? 0,
-                    'service_charges' => $request->service_charges,
-                    'maintenance_fees' => $request->maintenance_fees,
-                    'payment_frequency' => $request->payment_frequency,
-                    'payment_terms' => $request->payment_terms,
-                ]);
-
-                // Record price history if changed
-                if ($oldPrice != $newPrice) {
-                    $changeType = $newPrice > $oldPrice ? 'increase' : 'decrease';
-                    $changePercentage = abs(($newPrice - $oldPrice) / $oldPrice * 100);
-
-                    PropertyPriceHistory::create([
-                        'property_id' => $property->id,
-                        'old_price' => $oldPrice,
-                        'new_price' => $newPrice,
-                        'currency' => $request->currency,
-                        'change_reason' => $request->price_change_reason,
-                        'change_type' => $changeType,
-                        'change_percentage' => $changePercentage,
-                        'changed_by' => Auth::id(),
-                    ]);
-                }
-            } else {
-                // Create price if it doesn't exist
-                PropertyPrice::create([
-                    'property_id' => $property->id,
-                    'price' => $request->price,
-                    'currency' => $request->currency,
-                    'price_type' => $request->listing_type,
-                    'price_per_sqm' => $request->area > 0 ? $request->price / $request->area : null,
-                    'is_negotiable' => $request->is_negotiable ?? false,
-                    'includes_vat' => $request->includes_vat ?? false,
-                    'vat_rate' => $request->vat_rate ?? 0,
-                    'service_charges' => $request->service_charges,
-                    'maintenance_fees' => $request->maintenance_fees,
-                    'payment_frequency' => $request->payment_frequency,
-                    'payment_terms' => $request->payment_terms,
-                    'effective_date' => now()->toDateString(),
-                    'is_active' => true,
-                ]);
+            if (!$property) {
+                return $this->errorResponse('Property not found', 404);
             }
 
-            // Sync amenities
-            $property->amenities()->sync($request->amenities ?? []);
-
-            // Sync features
-            $property->features()->sync($request->features ?? []);
-
-            // Upload new images
+            // Handle new image uploads
             if ($request->hasFile('images')) {
-                $this->uploadImages($property, $request->file('images'));
+                $this->handleImageUpload($request->file('images'), $property->id);
             }
 
-            // Upload new documents
+            // Handle new document uploads
             if ($request->hasFile('documents')) {
-                $this->uploadDocuments($property, $request->file('documents'));
-            }
-
-            // Record status change if changed
-            if ($oldStatus != $request->status) {
-                PropertyStatusHistory::recordStatusChange(
-                    $property->id,
-                    $oldStatus,
-                    $request->status,
-                    $request->status_change_reason,
-                    Auth::id()
-                );
+                $this->handleDocumentUpload($request->file('documents'), $property->id);
             }
 
             DB::commit();
 
-            return redirect()
-                ->route('properties.show', $property)
-                ->with('success', 'Property updated successfully!');
+            // Clear relevant caches
+            $this->clearCache("property_show_{$id}");
+            $this->clearCache('properties_index');
+            $this->clearCache('featured_properties');
+            $this->clearCache('latest_properties');
+
+            return redirect()->route('properties.show', $property)
+                ->with('success', 'Property updated successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()
+            Log::error('Property update failed: ' . $e->getMessage(), [
+                'property_id' => $id,
+                'request_data' => $request->all(),
+                'user_id' => auth()->id()
+            ]);
+
+            return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update property: ' . $e->getMessage());
         }
     }
 
-    public function destroy(Property $property)
+    /**
+     * Remove the specified property with proper cleanup
+     */
+    public function destroy(Request $request, $id)
     {
-        $this->authorize('delete', $property);
+        $this->rateLimit($request, 30, 5);
 
         try {
-            DB::beginTransaction();
+            $success = $this->propertyService->deleteProperty($id);
 
-            // Soft delete property (cascade will handle related records)
-            $property->delete();
+            if (!$success) {
+                return $this->errorResponse('Property not found', 404);
+            }
 
-            DB::commit();
+            // Clear relevant caches
+            $this->clearCache("property_show_{$id}");
+            $this->clearCache('properties_index');
+            $this->clearCache('featured_properties');
+            $this->clearCache('latest_properties');
 
-            return redirect()
-                ->route('properties.index')
-                ->with('success', 'Property deleted successfully!');
+            return redirect()->route('properties.index')
+                ->with('success', 'Property deleted successfully');
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('Property deletion failed: ' . $e->getMessage(), [
+                'property_id' => $id,
+                'user_id' => auth()->id()
+            ]);
 
-            return back()
+            return redirect()->back()
                 ->with('error', 'Failed to delete property: ' . $e->getMessage());
         }
     }
 
-    private function uploadImages(Property $property, $images)
+    /**
+     * Search properties with advanced filtering and caching
+     */
+    public function search(Request $request)
     {
-        foreach ($images as $index => $image) {
-            $path = $image->store('properties/images', 'public');
+        $this->rateLimit($request, 100, 5);
 
-            PropertyMedia::create([
-                'property_id' => $property->id,
-                'media_type' => 'image',
-                'file_name' => $image->getClientOriginalName(),
-                'file_path' => $path,
-                'file_size' => $image->getSize(),
-                'mime_type' => $image->getMimeType(),
-                'width' => getimagesize($image)[0] ?? null,
-                'height' => getimagesize($image)[1] ?? null,
-                'is_primary' => $index === 0, // First image is primary
-                'sort_order' => $index,
-                'uploaded_by' => Auth::id(),
-            ]);
-        }
-    }
-
-    private function uploadDocuments(Property $property, $documents)
-    {
-        foreach ($documents as $document) {
-            $path = $document->store('properties/documents', 'public');
-
-            PropertyDocument::create([
-                'property_id' => $property->id,
-                'title' => $document->getClientOriginalName(),
-                'file_name' => $document->getClientOriginalName(),
-                'file_path' => $path,
-                'file_type' => pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION),
-                'file_size' => $document->getSize(),
-                'mime_type' => $document->getMimeType(),
-            ]);
-        }
-    }
-
-    private function recordView(Property $property)
-    {
-        PropertyView::create([
-            'property_id' => $property->id,
-            'session_id' => session()->getId(),
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'user_id' => Auth::id(),
-            'referrer' => request()->header('referer'),
-            'view_type' => 'detail',
+        $filters = $request->only([
+            'query',
+            'property_type',
+            'listing_type',
+            'min_price',
+            'max_price',
+            'city',
+            'state',
+            'bedrooms',
+            'bathrooms',
+            'area_min',
+            'area_max',
+            'featured',
+            'premium',
+            'sort',
+            'order'
         ]);
 
-        // Increment view count
-        $property->increment('views_count');
+        $perPage = $this->getPerPage($request, 12, 50);
 
-        // Record analytics
-        PropertyAnalytic::recordMetric($property->id, 'views');
-    }
-
-    private function generatePropertyCode(): string
-    {
-        do {
-            $code = 'PROP-' . strtoupper(Str::random(8));
-        } while (Property::where('property_code', $code)->exists());
-
-        return $code;
-    }
-
-    public function recommendations(Request $request)
-    {
-        $user = Auth::user();
-        
-        // Get user's preferences and history
-        $userFavorites = $user->favoriteProperties()->pluck('properties.id')->toArray();
-        
-        // Get user views safely - handle missing table
-        $userViews = [];
-        try {
-            if (Schema::hasTable('property_views')) {
-                $userViews = \App\Models\PropertyView::where('user_id', $user->id)->pluck('property_id')->toArray();
-            }
-        } catch (\Exception $e) {
-            // Table doesn't exist, continue with empty views
-            $userViews = [];
-        }
-        
-        // Get properties user has interacted with
-        $interactedProperties = array_unique(array_merge($userFavorites, $userViews));
-        
-        // Get recommended properties based on user behavior
-        $recommendedProperties = Property::with([
-            'agent.profile',
-            'location',
-            'propertyType',
-            'media' => function ($query) {
-                $query->where('media_type', 'image')->orderBy('sort_order');
+        $properties = $this->getCachedData(
+            'property_search_' . md5(serialize($filters) . $perPage),
+            function () use ($filters, $perPage) {
+                return $this->propertyRepository->searchProperties($filters['query'] ?? '', $filters, $perPage);
             },
-            'propertyAmenities',
-            'features'
-        ])
-        ->where('status', 'active')
-        ->whereNotIn('id', $interactedProperties) // Exclude already interacted properties
-        ->inRandomOrder()
-        ->limit(12)
-        ->get();
-        
-        // If user has no history, get featured properties
-        if ($recommendedProperties->isEmpty()) {
-            $recommendedProperties = Property::with([
-                'agent.profile',
-                'location',
-                'propertyType',
-                'media' => function ($query) {
-                    $query->where('media_type', 'image')->orderBy('sort_order');
-                },
-                'propertyAmenities',
-                'features'
-            ])
-            ->where('status', 'active')
-            ->where('featured', true)
-            ->latest()
-            ->limit(12)
-            ->get();
+            'short'
+        );
+
+        $propertyTypes = $this->getCachedData(
+            'property_types_active',
+            function () {
+                return PropertyType::active()->ordered()->get(['id', 'name', 'icon']);
+            },
+            'medium'
+        );
+
+        return view('properties.search', compact('properties', 'propertyTypes', 'filters'));
+    }
+
+    /**
+     * Get featured properties with caching
+     */
+    public function featured(Request $request)
+    {
+        $this->rateLimit($request, 100, 5);
+
+        $limit = min($request->get('limit', 6), 20);
+
+        $properties = $this->getCachedData(
+            "featured_properties_{$limit}",
+            function () use ($limit) {
+                return $this->propertyRepository->getFeatured($limit);
+            },
+            'medium'
+        );
+
+        return $this->jsonResponse($properties, 'Featured properties retrieved successfully');
+    }
+
+    /**
+     * Get latest properties with caching
+     */
+    public function latest(Request $request)
+    {
+        $this->rateLimit($request, 100, 5);
+
+        $limit = min($request->get('limit', 6), 20);
+
+        $properties = $this->getCachedData(
+            "latest_properties_{$limit}",
+            function () use ($limit) {
+                return $this->propertyRepository->getLatest($limit);
+            },
+            'short'
+        );
+
+        return $this->jsonResponse($properties, 'Latest properties retrieved successfully');
+    }
+
+    /**
+     * Toggle property featured status
+     */
+    public function toggleFeatured(Request $request, $id)
+    {
+        $this->rateLimit($request, 30, 5);
+
+        try {
+            $property = $this->propertyService->toggleFeatured($id);
+
+            if (!$property) {
+                return $this->errorResponse('Property not found', 404);
+            }
+
+            // Clear relevant caches
+            $this->clearCache("property_show_{$id}");
+            $this->clearCache('featured_properties');
+            $this->clearCache('properties_index');
+
+            return $this->jsonResponse($property, 'Property featured status updated successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Toggle featured failed: ' . $e->getMessage(), [
+                'property_id' => $id,
+                'user_id' => auth()->id()
+            ]);
+
+            return $this->errorResponse('Failed to toggle featured status', 500);
         }
-        
-        return view('properties.recommendations', compact('recommendedProperties'));
+    }
+
+    /**
+     * Get property analytics
+     */
+    public function analytics(Request $request, $id)
+    {
+        $this->rateLimit($request, 60, 5);
+
+        $analytics = $this->getCachedData(
+            "property_analytics_{$id}",
+            function () use ($id) {
+                return $this->propertyService->getPropertyAnalytics($id);
+            },
+            'medium'
+        );
+
+        return $this->jsonResponse($analytics, 'Property analytics retrieved successfully');
+    }
+
+    /**
+     * Export properties with memory-efficient processing
+     */
+    public function export(Request $request)
+    {
+        $this->rateLimit($request, 10, 5);
+
+        $filters = $request->only([
+            'property_type',
+            'listing_type',
+            'min_price',
+            'max_price',
+            'city',
+            'featured',
+            'premium'
+        ]);
+        $format = $request->get('format', 'csv');
+
+        try {
+            $job = new \App\Jobs\ExportPropertiesJob($filters, $format, auth()->id());
+            dispatch($job);
+
+            return $this->jsonResponse(['job_id' => $job->getJobId()], 'Export job started successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Property export failed: ' . $e->getMessage(), [
+                'filters' => $filters,
+                'format' => $format,
+                'user_id' => auth()->id()
+            ]);
+
+            return $this->errorResponse('Export failed', 500);
+        }
+    }
+
+    /**
+     * Handle image upload with optimization
+     */
+    private function handleImageUpload($images, $propertyId)
+    {
+        foreach ($images as $index => $image) {
+            $path = $image->store('properties/' . $propertyId, 'public');
+
+            PropertyMedia::create([
+                'property_id' => $propertyId,
+                'image_url' => $path,
+                'image_type' => $image->getMimeType(),
+                'sort_order' => $index,
+                'is_primary' => $index === 0
+            ]);
+        }
+    }
+
+    /**
+     * Handle document upload
+     */
+    private function handleDocumentUpload($documents, $propertyId)
+    {
+        foreach ($documents as $document) {
+            $path = $document->store('properties/' . $propertyId . '/documents', 'public');
+
+            PropertyDocument::create([
+                'property_id' => $propertyId,
+                'document_url' => $path,
+                'document_name' => $document->getClientOriginalName(),
+                'document_type' => $document->getMimeType(),
+                'file_size' => $document->getSize()
+            ]);
+        }
     }
 }

@@ -17,8 +17,17 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+use App\Repositories\Contracts\PropertyRepositoryInterface;
+
 class AgentPropertyController extends Controller
 {
+    protected $propertyRepository;
+
+    public function __construct(PropertyRepositoryInterface $propertyRepository)
+    {
+        $this->propertyRepository = $propertyRepository;
+    }
+
     public function index(Request $request)
     {
         $agent = Auth::user()->agent;
@@ -28,30 +37,9 @@ class AgentPropertyController extends Controller
             return redirect()->route('dashboard')->with('error', 'Agent profile not found. Please contact administrator.');
         }
         
-        $properties = $agent->properties()
-            ->with(['location', 'pricing', 'media'])
-            ->when($request->search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->property_type, function ($query, $type) {
-                $query->where('property_type', $type);
-            })
-            ->when($request->min_price, function ($query, $price) {
-                $query->whereHas('pricing', function ($priceQuery) use ($price) {
-                    $priceQuery->where('price', '>=', $price);
-                });
-            })
-            ->when($request->max_price, function ($query, $price) {
-                $query->whereHas('pricing', function ($priceQuery) use ($price) {
-                    $priceQuery->where('price', '<=', $price);
-                });
-            })
-            ->latest()
-            ->paginate(20);
+        $filters = $request->only(['search', 'status', 'property_type', 'min_price', 'max_price']);
+        
+        $properties = $this->propertyRepository->getAgentPropertiesPaginated($agent->id, $filters, 20);
 
         return view('agent.properties.index', compact('properties'));
     }

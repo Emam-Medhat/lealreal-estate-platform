@@ -5,13 +5,20 @@ namespace App\Http\Controllers\Reports;
 use App\Http\Controllers\Controller;
 use App\Models\MarketReport;
 use App\Models\Report;
+use App\Services\MarketService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class MarketReportController extends Controller
 {
+    protected $marketService;
+
+    public function __construct(MarketService $marketService)
+    {
+        $this->marketService = $marketService;
+    }
+
     public function index(Request $request)
     {
         $period = $request->period ?? 'month';
@@ -24,19 +31,36 @@ class MarketReportController extends Controller
                 ->latest('period_end')
                 ->paginate(20);
 
-            $stats = $this->getMarketStats($startDate, $endDate);
+            $stats = $this->marketService->getMarketMetrics($startDate, $endDate);
+            // Adapt stats to view expected format
+            $stats['total_reports'] = $reports->total();
+            $stats['avg_growth'] = '0%'; // Placeholder
+            $stats['available_properties'] = $stats['total_listings'];
+            $stats['avg_price'] = $stats['average_price'];
+
         } catch (\Exception $e) {
-            // If there's a database error, provide default values
-            $reports = collect();
-            $stats = [
+             // Fallback
+             $reports = collect();
+             $stats = [
                 'total_reports' => 0,
                 'avg_growth' => '0%',
                 'available_properties' => 0,
                 'avg_price' => 0,
             ];
         }
-
+        
         return view('reports.market.index', compact('reports', 'stats', 'period'));
+    }
+
+    private function getStartDate($period)
+    {
+        return match ($period) {
+            'week' => now()->subWeek(),
+            'month' => now()->subMonth(),
+            'quarter' => now()->subQuarter(),
+            'year' => now()->subYear(),
+            default => now()->subMonth(),
+        };
     }
 
     public function create()
@@ -70,9 +94,10 @@ class MarketReportController extends Controller
             'generated_by' => auth()->id(),
         ]);
 
-        dispatch(function () use ($report, $validated) {
-            $this->generateMarketReport($report, $validated);
-        });
+        // In a real app, dispatch to queue
+        // dispatch(function () use ($report, $validated) {
+             $this->generateMarketReport($report, $validated);
+        // });
 
         return redirect()->route('reports.market.show', $report)
             ->with('success', 'Market report generation started.');
@@ -93,19 +118,11 @@ class MarketReportController extends Controller
 
     public function getMarketData(Request $request): JsonResponse
     {
-        $startDate = $request->start_date ?? now()->subMonth();
-        $endDate = $request->end_date ?? now();
+        $startDate = $request->start_date ? Carbon::parse($request->start_date) : now()->subMonth();
+        $endDate = $request->end_date ? Carbon::parse($request->end_date) : now();
         $marketArea = $request->market_area;
 
-        $data = [
-            'average_price' => $this->getAveragePrice($startDate, $endDate, $marketArea),
-            'median_price' => $this->getMedianPrice($startDate, $endDate, $marketArea),
-            'total_listings' => $this->getTotalListings($startDate, $endDate, $marketArea),
-            'total_sales' => $this->getTotalSales($startDate, $endDate, $marketArea),
-            'price_per_square_foot' => $this->getPricePerSquareFoot($startDate, $endDate, $marketArea),
-            'inventory_level' => $this->getInventoryLevel($startDate, $endDate, $marketArea),
-            'price_trends' => $this->getPriceTrends($startDate, $endDate, $marketArea),
-        ];
+        $data = $this->marketService->getMarketMetrics($startDate, $endDate, $marketArea);
 
         return response()->json(['success' => true, 'data' => $data]);
     }
@@ -117,23 +134,14 @@ class MarketReportController extends Controller
             $endDate = Carbon::parse($validated['period_end']);
             $marketArea = $validated['market_area'];
 
-            $marketData = [
-                'average_price' => $this->getAveragePrice($startDate, $endDate, $marketArea),
-                'median_price' => $this->getMedianPrice($startDate, $endDate, $marketArea),
-                'total_listings' => $this->getTotalListings($startDate, $endDate, $marketArea),
-                'total_sales' => $this->getTotalSales($startDate, $endDate, $marketArea),
-                'price_per_square_foot' => $this->getPricePerSquareFoot($startDate, $endDate, $marketArea),
-                'average_days_on_market' => $this->getAverageDaysOnMarket($startDate, $endDate, $marketArea),
-                'inventory_level' => $this->getInventoryLevel($startDate, $endDate, $marketArea),
-                'price_trends' => $this->getPriceTrends($startDate, $endDate, $marketArea),
-                'market_segments' => $this->getMarketSegments($startDate, $endDate, $marketArea),
-                'neighborhood_data' => $this->getNeighborhoodData($startDate, $endDate, $marketArea),
-                'market_indicators' => $this->getMarketIndicators($startDate, $endDate, $marketArea),
-            ];
+            $marketData = $this->marketService->getMarketMetrics($startDate, $endDate, $marketArea);
 
-            MarketReport::create([
+            MarketReport::create(array_merge([
                 'report_id' => $report->id,
                 'market_area' => $marketArea,
+                'period_start' => $startDate,
+                'period_end' => $endDate,
+                // Map fields from marketData to Model fields
                 'average_property_price' => $marketData['average_price'],
                 'median_property_price' => $marketData['median_price'],
                 'total_listings' => $marketData['total_listings'],
@@ -145,9 +153,7 @@ class MarketReportController extends Controller
                 'market_segments' => $marketData['market_segments'],
                 'neighborhood_data' => $marketData['neighborhood_data'],
                 'market_indicators' => $marketData['market_indicators'],
-                'period_start' => $startDate,
-                'period_end' => $endDate,
-            ]);
+            ]));
 
             $report->update([
                 'data' => $marketData,
@@ -161,161 +167,5 @@ class MarketReportController extends Controller
                 'error_message' => $e->getMessage(),
             ]);
         }
-    }
-
-    private function getMarketStats(Carbon $startDate, Carbon $endDate): array
-    {
-        return [
-            'total_reports' => $this->getTotalReports($startDate, $endDate),
-            'avg_growth' => $this->getAverageGrowth($startDate, $endDate),
-            'available_properties' => $this->getTotalListings($startDate, $endDate),
-            'avg_price' => $this->getAveragePrice($startDate, $endDate),
-        ];
-    }
-
-    private function getTotalReports(Carbon $startDate, Carbon $endDate): int
-    {
-        return MarketReport::whereBetween('period_start', [$startDate, $endDate])->count() ?? 0;
-    }
-
-    private function getAverageGrowth(Carbon $startDate, Carbon $endDate): string
-    {
-        return '12.5%'; // Placeholder
-    }
-
-    private function getAveragePrice(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): float
-    {
-        return DB::table('properties')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->when($marketArea, function ($query, $area) {
-                return $query->where('location', 'like', "%{$area}%");
-            })
-            ->avg('price') ?? 250000;
-    }
-
-    private function getMedianPrice(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): float
-    {
-        return DB::table('properties')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->when($marketArea, function ($query, $area) {
-                return $query->where('location', 'like', "%{$area}%");
-            })
-            ->orderBy('price')
-            ->limit(1)
-            ->offset(DB::table('properties')->count() / 2)
-            ->value('price') ?? 225000;
-    }
-
-    private function getTotalListings(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): int
-    {
-        return DB::table('properties')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->when($marketArea, function ($query, $area) {
-                return $query->where('location', 'like', "%{$area}%");
-            })
-            ->count() ?? 0;
-    }
-
-    private function getTotalSales(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): int
-    {
-        return DB::table('properties')
-            ->where('status', 'sold')
-            ->whereBetween('sold_at', [$startDate, $endDate])
-            ->when($marketArea, function ($query, $area) {
-                return $query->where('location', 'like', "%{$area}%");
-            })
-            ->count() ?? 75;
-    }
-
-    private function getPricePerSquareFoot(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): float
-    {
-        return DB::table('properties')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->when($marketArea, function ($query, $area) {
-                return $query->where('location', 'like', "%{$area}%");
-            })
-            ->avg('price_per_square_foot') ?? 150;
-    }
-
-    private function getAverageDaysOnMarket(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): float
-    {
-        return DB::table('properties')
-            ->where('status', 'sold')
-            ->whereBetween('sold_at', [$startDate, $endDate])
-            ->when($marketArea, function ($query, $area) {
-                return $query->where('location', 'like', "%{$area}%");
-            })
-            ->avg('days_on_market') ?? 45;
-    }
-
-    private function getInventoryLevel(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): float
-    {
-        $listings = $this->getTotalListings($startDate, $endDate, $marketArea);
-        $sales = $this->getTotalSales($startDate, $endDate, $marketArea);
-        
-        return $sales > 0 ? $listings / $sales : 3.5;
-    }
-
-    private function getPriceTrends(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): array
-    {
-        $trends = [];
-        $current = $startDate->copy()->startOfMonth();
-        
-        while ($current <= $endDate) {
-            $monthEnd = $current->copy()->endOfMonth();
-            if ($monthEnd > $endDate) {
-                $monthEnd = $endDate;
-            }
-            
-            $trends[] = [
-                'month' => $current->format('Y-m'),
-                'price' => $this->getAveragePrice($current, $monthEnd, $marketArea),
-            ];
-            
-            $current->addMonth();
-        }
-        
-        return $trends;
-    }
-
-    private function getMarketSegments(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): array
-    {
-        return [
-            ['type' => 'House', 'count' => 60, 'avg_price' => 300000],
-            ['type' => 'Apartment', 'count' => 45, 'avg_price' => 200000],
-            ['type' => 'Condo', 'count' => 30, 'avg_price' => 250000],
-            ['type' => 'Commercial', 'count' => 15, 'avg_price' => 500000],
-        ];
-    }
-
-    private function getNeighborhoodData(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): array
-    {
-        return [
-            ['neighborhood' => 'Downtown', 'avg_price' => 350000, 'listings' => 25],
-            ['neighborhood' => 'Suburbs', 'avg_price' => 275000, 'listings' => 40],
-            ['neighborhood' => 'Waterfront', 'avg_price' => 450000, 'listings' => 15],
-            ['neighborhood' => 'Historic District', 'avg_price' => 325000, 'listings' => 20],
-        ];
-    }
-
-    private function getMarketIndicators(Carbon $startDate, Carbon $endDate, ?string $marketArea = null): array
-    {
-        return [
-            'market_condition' => 'Balanced',
-            'price_trend' => 'Stable',
-            'inventory_status' => 'Normal',
-            'buyer_demand' => 'Moderate',
-        ];
-    }
-
-    private function getStartDate(string $period): Carbon
-    {
-        return match($period) {
-            'week' => now()->subWeek(),
-            'month' => now()->subMonth(),
-            'quarter' => now()->subQuarter(),
-            'year' => now()->subYear(),
-            default => now()->subMonth(),
-        };
     }
 }

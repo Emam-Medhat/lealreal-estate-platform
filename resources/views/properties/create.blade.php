@@ -2267,7 +2267,7 @@
                         }
 
                         // Check specific required fields
-                        const requiredFields = ['price', 'currency', 'city', 'country'];
+                        const requiredFields = ['price', 'currency', 'city', 'country', 'address'];
                         let missingFields = [];
 
                         console.log('=== CHECKING REQUIRED FIELDS ===');

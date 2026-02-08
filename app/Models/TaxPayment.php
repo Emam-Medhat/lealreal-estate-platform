@@ -15,7 +15,11 @@ class TaxPayment extends Model
         'property_tax_id',
         'tax_filing_id',
         'user_id',
+        'payment_number',
         'amount',
+        'penalty_amount',
+        'interest_amount',
+        'total_amount',
         'payment_method',
         'payment_date',
         'status',
@@ -30,15 +34,26 @@ class TaxPayment extends Model
         'notes',
         'created_by',
         'updated_by',
+        'completed_by',
+        'cancelled_by',
+        'refunded_by',
+        'refunded_at',
+        'refund_amount',
+        'refund_reference',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'penalty_amount' => 'decimal:2',
+        'interest_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'processing_fee' => 'decimal:2',
         'payment_date' => 'date',
         'processed_at' => 'datetime',
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'refunded_at' => 'datetime',
+        'notes' => 'array',
     ];
 
     public function propertyTax(): BelongsTo
@@ -56,11 +71,6 @@ class TaxPayment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function receipts(): HasMany
-    {
-        return $this->hasMany(TaxPaymentReceipt::class);
-    }
-
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -69,6 +79,21 @@ class TaxPayment extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function completer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function canceller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function refunder(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'refunded_by');
     }
 
     public function scopePending($query)

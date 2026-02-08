@@ -4,39 +4,27 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Services\CompanyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminCompanyController extends Controller
 {
+    protected $companyService;
+
+    public function __construct(CompanyService $companyService)
+    {
+        $this->companyService = $companyService;
+    }
+
     public function index(Request $request)
     {
         try {
-            $companies = Company::latest()->paginate(20);
+            $companies = $this->companyService->getPaginatedCompanies($request->all());
         } catch (\Exception $e) {
-            // Fallback data
-            $companies = collect([
-                (object) [
-                    'id' => 1,
-                    'name' => 'Real Estate Pro',
-                    'email' => 'info@realestatepro.com',
-                    'created_at' => now(),
-                    'status' => 'active'
-                ],
-                (object) [
-                    'id' => 2,
-                    'name' => 'Luxury Homes',
-                    'email' => 'contact@luxuryhomes.com',
-                    'created_at' => now()->subDays(5),
-                    'status' => 'pending'
-                ],
-                (object) [
-                    'id' => 3,
-                    'name' => 'Property Masters',
-                    'email' => 'hello@propertymasters.com',
-                    'created_at' => now()->subWeek(),
-                    'status' => 'active'
-                ],
-            ]);
+            \Log::error('Failed to fetch companies: ' . $e->getMessage());
+            // Return empty result instead of crashing
+            $companies = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         }
 
         return view('admin.companies.index', compact('companies'));
@@ -86,56 +74,26 @@ class AdminCompanyController extends Controller
             // API Settings
             'api_key' => 'nullable|string|max:255',
             'webhook_url' => 'nullable|url|max:500',
+            'logo_url' => 'nullable|image|max:2048',
+            'cover_image_url' => 'nullable|image|max:4096',
         ]);
 
         try {
             // Handle file uploads
-            $logoUrl = null;
-            $coverImageUrl = null;
-            
             if ($request->hasFile('logo_url')) {
-                $logoUrl = $request->file('logo_url')->store('company-logos', 'public');
+                $validated['logo_url'] = $request->file('logo_url')->store('company-logos', 'public');
             }
             
             if ($request->hasFile('cover_image_url')) {
-                $coverImageUrl = $request->file('cover_image_url')->store('company-covers', 'public');
+                $validated['cover_image_url'] = $request->file('cover_image_url')->store('company-covers', 'public');
             }
 
             // Generate API key if not provided
-            $apiKey = $validated['api_key'] ?? \Str::random(32);
+            if (empty($validated['api_key'])) {
+                $validated['api_key'] = Str::random(32);
+            }
 
-            Company::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'website' => $validated['website'],
-                'type' => $validated['type'],
-                'status' => $validated['status'],
-                'description' => $validated['description'],
-                'registration_number' => $validated['registration_number'],
-                'tax_id' => $validated['tax_id'],
-                'founded_date' => $validated['founded_date'],
-                'employee_count' => $validated['employee_count'],
-                'annual_revenue' => $validated['annual_revenue'],
-                'subscription_plan' => $validated['subscription_plan'],
-                'address' => $validated['address'],
-                'city' => $validated['city'],
-                'state' => $validated['state'],
-                'country' => $validated['country'],
-                'postal_code' => $validated['postal_code'],
-                'is_featured' => $validated['is_featured'] ?? false,
-                'is_verified' => $validated['is_verified'] ?? false,
-                'verification_level' => $validated['verification_level'],
-                'rating' => $validated['rating'],
-                'total_reviews' => $validated['total_reviews'],
-                'subscription_expires_at' => $validated['subscription_expires_at'],
-                'logo_url' => $logoUrl,
-                'cover_image_url' => $coverImageUrl,
-                'api_key' => $apiKey,
-                'webhook_url' => $validated['webhook_url'],
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
-            ]);
+            $this->companyService->createCompany($validated);
 
             return redirect()->route('admin.companies.index')
                 ->with('success', 'Company created successfully');
@@ -154,19 +112,10 @@ class AdminCompanyController extends Controller
     public function show($id)
     {
         try {
-            $company = Company::findOrFail($id);
+            $company = $this->companyService->getCompanyById($id);
         } catch (\Exception $e) {
-            // Fallback data
-            $company = (object) [
-                'id' => $id,
-                'name' => 'Sample Company',
-                'email' => 'info@sample.com',
-                'phone' => '+20 123 456 789',
-                'address' => 'Cairo, Egypt',
-                'description' => 'Leading real estate company',
-                'status' => 'active',
-                'created_at' => now()
-            ];
+            return redirect()->route('admin.companies.index')
+                ->with('error', 'Company not found.');
         }
 
         return view('admin.companies.show', compact('company'));
@@ -175,18 +124,10 @@ class AdminCompanyController extends Controller
     public function edit($id)
     {
         try {
-            $company = Company::findOrFail($id);
+            $company = $this->companyService->getCompanyById($id);
         } catch (\Exception $e) {
-            // Fallback data
-            $company = (object) [
-                'id' => $id,
-                'name' => 'Sample Company',
-                'email' => 'info@sample.com',
-                'phone' => '+20 123 456 789',
-                'address' => 'Cairo, Egypt',
-                'description' => 'Leading real estate company',
-                'status' => 'active'
-            ];
+            return redirect()->route('admin.companies.index')
+                ->with('error', 'Company not found.');
         }
 
         return view('admin.companies.edit', compact('company'));
@@ -204,15 +145,7 @@ class AdminCompanyController extends Controller
         ]);
 
         try {
-            $company = Company::findOrFail($id);
-            $company->update([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'description' => $request->description,
-                'status' => $request->status,
-            ]);
+            $this->companyService->updateCompany($id, $request->all());
 
             return redirect()->route('admin.companies.index')
                 ->with('success', 'Company updated successfully');
@@ -224,8 +157,7 @@ class AdminCompanyController extends Controller
     public function destroy($id)
     {
         try {
-            $company = Company::findOrFail($id);
-            $company->delete();
+            $this->companyService->deleteCompany($id);
 
             return redirect()->route('admin.companies.index')
                 ->with('success', 'Company deleted successfully');

@@ -13,32 +13,49 @@ class Subscription extends Model
 
     protected $fillable = [
         'user_id',
+        'enterprise_id',
         'plan_id',
+        'plan',
         'status',
         'starts_at',
         'ends_at',
+        'next_billing_at',
         'amount',
+        'price', // For compatibility with EnterpriseService
         'currency',
         'billing_cycle',
+        'features',
         'auto_renew',
         'payment_method',
         'payment_status',
         'activated_at',
         'cancelled_at',
         'upgraded_at',
-        'last_renewed_at'
+        'last_renewed_at',
+        'proration_amount',
+        'proration_reason',
+        'notes'
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'next_billing_at' => 'datetime',
         'activated_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'upgraded_at' => 'datetime',
         'last_renewed_at' => 'datetime',
         'amount' => 'decimal:2',
-        'auto_renew' => 'boolean'
+        'price' => 'decimal:2',
+        'proration_amount' => 'decimal:2',
+        'auto_renew' => 'boolean',
+        'features' => 'json'
     ];
+
+    public function enterprise()
+    {
+        return $this->belongsTo(EnterpriseAccount::class);
+    }
 
     public function user()
     {

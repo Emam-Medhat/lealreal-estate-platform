@@ -11,27 +11,32 @@ use Illuminate\Support\Facades\Storage;
 
 class TaxPaymentController extends Controller
 {
-    public function __construct()
-    {
-        // Add middleware as needed
-    }
-
     public function index(Request $request)
     {
         $query = TaxPayment::with(['propertyTax.property', 'taxFiling', 'user']);
 
+        // Search functionality
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('payment_number', 'like', '%' . $request->search . '%')
+                  ->orWhere('reference_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('propertyTax', function ($subQuery) use ($request) {
+                      $subQuery->whereHas('property', function ($propertyQuery) use ($request) {
+                          $propertyQuery->where('title', 'like', '%' . $request->search . '%');
+                      });
+                  });
+            });
+        }
+
+        // Filter by status
         if ($request->status) {
             $query->where('status', $request->status);
         }
 
-        if ($request->payment_method) {
-            $query->where('payment_method', $request->payment_method);
-        }
-
+        // Filter by date range
         if ($request->date_from) {
             $query->whereDate('payment_date', '>=', $request->date_from);
         }
-
         if ($request->date_to) {
             $query->whereDate('payment_date', '<=', $request->date_to);
         }
@@ -65,12 +70,14 @@ class TaxPaymentController extends Controller
             'property_tax_id' => $request->property_tax_id,
             'tax_filing_id' => $request->tax_filing_id,
             'user_id' => Auth::id(),
+            'payment_number' => 'PAY-' . date('Y') . '-' . str_pad(TaxPayment::count() + 1, 6, '0', STR_PAD_LEFT),
             'amount' => $request->amount,
+            'total_amount' => $request->amount,
             'payment_method' => $request->payment_method,
             'payment_date' => $request->payment_date,
             'reference_number' => $request->reference_number,
             'status' => 'pending',
-            'notes' => $request->notes,
+            'notes' => $request->notes ? ['text' => $request->notes] : null,
             'created_by' => Auth::id(),
         ]);
 
@@ -81,46 +88,26 @@ class TaxPaymentController extends Controller
 
     public function show(TaxPayment $taxPayment)
     {
-        $taxPayment->load(['propertyTax.property', 'taxFiling', 'user', 'receipts']);
+        $taxPayment->load(['propertyTax.property', 'taxFiling', 'user']);
 
         return view('taxes.payments.show', compact('taxPayment'));
     }
 
-    public function edit(TaxPayment $taxPayment)
+    public function confirm(TaxPayment $taxPayment)
     {
-        if ($taxPayment->status === 'completed') {
-            return back()->with('error', 'لا يمكن تعديل الدفعة المكتملة');
+        if ($taxPayment->status !== 'pending') {
+            return back()->with('error', 'لا يمكن تأكيد الدفعة التي ليست معلقة');
         }
-
-        return view('taxes.payments.edit', compact('taxPayment'));
-    }
-
-    public function update(Request $request, TaxPayment $taxPayment)
-    {
-        if ($taxPayment->status === 'completed') {
-            return back()->with('error', 'لا يمكن تعديل الدفعة المكتملة');
-        }
-
-        $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,bank_transfer,credit_card,online',
-            'payment_date' => 'required|date',
-            'reference_number' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
 
         $taxPayment->update([
-            'amount' => $request->amount,
-            'payment_method' => $request->payment_method,
-            'payment_date' => $request->payment_date,
-            'reference_number' => $request->reference_number,
-            'notes' => $request->notes,
-            'updated_by' => Auth::id(),
+            'status' => 'paid',
+            'completed_at' => now(),
+            'completed_by' => Auth::id(),
         ]);
 
         return redirect()
             ->route('taxes.payments.show', $taxPayment)
-            ->with('success', 'تم تحديث الدفعة الضريبية بنجاح');
+            ->with('success', 'تم تأكيد الدفعة بنجاح');
     }
 
     public function process(Request $request, TaxPayment $taxPayment)
@@ -155,14 +142,16 @@ class TaxPaymentController extends Controller
             'updated_by' => Auth::id(),
         ];
 
+        // Handle receipt file upload
         if ($request->hasFile('receipt_file')) {
-            $path = $request->file('receipt_file')->store('tax-receipts', 'public');
+            $file = $request->file('receipt_file');
+            $path = $file->store('receipts', 'public');
             $data['receipt_path'] = $path;
         }
 
         $taxPayment->update($data);
 
-        // Update related tax status
+        // Update related property tax status if exists
         if ($taxPayment->propertyTax) {
             $taxPayment->propertyTax->update(['status' => 'paid']);
         }
@@ -200,5 +189,82 @@ class TaxPaymentController extends Controller
         $pdf = \PDF::loadView('taxes.payments.receipt', compact('taxPayment'));
         
         return $pdf->download('tax-receipt-' . $taxPayment->id . '.pdf');
+    }
+
+    public function edit(TaxPayment $taxPayment)
+    {
+        if ($taxPayment->status === 'completed') {
+            return back()->with('error', 'لا يمكن تعديل الدفعة المكتملة');
+        }
+
+        return view('taxes.payments.edit', compact('taxPayment'));
+    }
+
+    public function update(Request $request, TaxPayment $taxPayment)
+    {
+        if ($taxPayment->status === 'completed') {
+            return back()->with('error', 'لا يمكن تعديل الدفعة المكتملة');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:cash,bank_transfer,credit_card,online',
+            'payment_date' => 'required|date',
+            'reference_number' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $taxPayment->update([
+            'amount' => $request->amount,
+            'total_amount' => $request->amount,
+            'payment_method' => $request->payment_method,
+            'payment_date' => $request->payment_date,
+            'reference_number' => $request->reference_number,
+            'notes' => $request->notes ? ['text' => $request->notes] : null,
+            'updated_by' => Auth::id(),
+        ]);
+
+        return redirect()
+            ->route('taxes.payments.show', $taxPayment)
+            ->with('success', 'تم تحديث الدفعة الضريبية بنجاح');
+    }
+
+    public function destroy(TaxPayment $taxPayment)
+    {
+        $taxPayment->delete();
+
+        return redirect()
+            ->route('taxes.payments.index')
+            ->with('success', 'تم حذف الدفعة الضريبية');
+    }
+
+    public function pending()
+    {
+        $payments = TaxPayment::where('status', 'pending')
+            ->with(['propertyTax.property', 'taxFiling', 'user'])
+            ->latest()
+            ->paginate(20);
+
+        return view('taxes.payments.index', compact('payments'));
+    }
+
+    public function overdue()
+    {
+        $payments = TaxPayment::where('status', 'overdue')
+            ->with(['propertyTax.property', 'taxFiling', 'user'])
+            ->latest()
+            ->paginate(20);
+
+        return view('taxes.payments.index', compact('payments'));
+    }
+
+    public function paid()
+    {
+        $payments = TaxPayment::where('status', 'paid')
+            ->with(['propertyTax.property', 'taxFiling', 'user'])
+            ->latest()
+            ->paginate(20);
+
+        return view('taxes.payments.index', compact('payments'));
     }
 }

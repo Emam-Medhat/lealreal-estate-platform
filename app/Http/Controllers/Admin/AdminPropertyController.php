@@ -11,7 +11,7 @@ class AdminPropertyController extends Controller
     public function index(Request $request)
     {
         try {
-            $properties = Property::latest()->paginate(20);
+            $properties = Property::with(['media', 'location', 'agent'])->latest()->paginate(20);
         } catch (\Exception $e) {
             // Fallback data
             $properties = collect([
@@ -44,7 +44,45 @@ class AdminPropertyController extends Controller
 
     public function create()
     {
-        return view('admin.properties.create');
+        try {
+            // Get property types for the dropdown
+            $propertyTypes = \App\Models\PropertyType::all();
+            
+            // Get amenities for checkboxes
+            $amenities = \App\Models\PropertyAmenity::all();
+            
+            // Get features for checkboxes
+            $features = \App\Models\PropertyFeature::all();
+        } catch (\Exception $e) {
+            // Fallback property types
+            $propertyTypes = collect([
+                (object) ['id' => 1, 'name' => 'Apartment'],
+                (object) ['id' => 2, 'name' => 'House'],
+                (object) ['id' => 3, 'name' => 'Villa'],
+                (object) ['id' => 4, 'name' => 'Land'],
+                (object) ['id' => 5, 'name' => 'Commercial'],
+            ]);
+            
+            // Fallback amenities
+            $amenities = collect([
+                (object) ['id' => 1, 'name' => 'Swimming Pool', 'icon' => 'fas fa-swimming-pool'],
+                (object) ['id' => 2, 'name' => 'Parking', 'icon' => 'fas fa-parking'],
+                (object) ['id' => 3, 'name' => 'Garden', 'icon' => 'fas fa-tree'],
+                (object) ['id' => 4, 'name' => 'Security', 'icon' => 'fas fa-shield-alt'],
+                (object) ['id' => 5, 'name' => 'Gym', 'icon' => 'fas fa-dumbbell'],
+            ]);
+            
+            // Fallback features
+            $features = collect([
+                (object) ['id' => 1, 'name' => 'Air Conditioning'],
+                (object) ['id' => 2, 'name' => 'Heating'],
+                (object) ['id' => 3, 'name' => 'Balcony'],
+                (object) ['id' => 4, 'name' => 'Storage'],
+                (object) ['id' => 5, 'name' => 'Elevator'],
+            ]);
+        }
+
+        return view('admin.properties.create', compact('propertyTypes', 'amenities', 'features'));
     }
 
     public function store(Request $request)
@@ -54,26 +92,52 @@ class AdminPropertyController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'location' => 'required|string|max:255',
-            'type' => 'required|string|in:house,apartment,villa,commercial',
-            'status' => 'required|string|in:active,pending,inactive',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'country' => 'required|string|max:255',
+            'property_type' => 'required|integer|in:1,2,3,4,5',
+            'listing_type' => 'required|string|in:sale,rent',
+            'status' => 'required|string|in:draft,active,inactive,sold,rented',
+            'currency' => 'required|string|in:SAR,USD,EUR,GBP,AED',
         ]);
 
         try {
+            // Generate unique property code
+            $propertyCode = 'PROP-' . strtoupper(substr(md5(uniqid()), 0, 8));
+            
+            // Generate slug from title
+            $slug = \Illuminate\Support\Str::slug($request->title) . '-' . strtolower(substr(md5(uniqid()), 0, 6));
+
             Property::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'price' => $request->price,
-                'location' => $request->location,
-                'type' => $request->type,
+                'currency' => $request->currency,
+                'address' => $request->address,
+                'city' => $request->city,
+                'state' => $request->state,
+                'country' => $request->country,
+                'postal_code' => $request->postal_code,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'bedrooms' => $request->bedrooms,
+                'bathrooms' => $request->bathrooms,
+                'area' => $request->area,
+                'area_unit' => $request->area_unit ?? 'sq_m',
+                'year_built' => $request->year_built,
+                'property_type' => $request->property_type,
+                'listing_type' => $request->listing_type,
                 'status' => $request->status,
-                'user_id' => auth()->id(),
+                'property_code' => $propertyCode,
+                'virtual_tour_url' => $request->virtual_tour_url,
+                'agent_id' => $request->agent_id ?? auth()->id(),
             ]);
 
             return redirect()->route('admin.properties.index')
                 ->with('success', 'Property created successfully');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to create property');
+            return back()->with('error', 'Failed to create property: ' . $e->getMessage())
+                ->withInput();
         }
     }
 

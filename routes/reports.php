@@ -5,6 +5,7 @@ use App\Http\Controllers\Reports\SalesReportController;
 use App\Http\Controllers\Reports\PerformanceReportController;
 use App\Http\Controllers\Reports\MarketReportController;
 use App\Http\Controllers\Reports\CustomReportController;
+use App\Http\Controllers\Reports\ReportScheduleController;
 use Illuminate\Support\Facades\Route;
 
 // Template Parameters - Must be before the reports group to avoid conflicts
@@ -22,6 +23,32 @@ Route::post('/reports/sales/preview-data', [SalesReportController::class, 'previ
 
 // Reports Dashboard
 Route::get('/reports/dashboard', [ReportController::class, 'dashboard'])->name('reports.dashboard');
+
+// Financial Reports
+Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Reports\FinancialReportController::class, 'index'])->name('index');
+    Route::get('/dashboard', [App\Http\Controllers\Reports\FinancialReportController::class, 'dashboard'])->name('dashboard');
+    Route::get('/create', [App\Http\Controllers\Reports\FinancialReportController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\Reports\FinancialReportController::class, 'store'])->name('store');
+    
+    // Specific Financial Reports
+    Route::get('/income-statement', [App\Http\Controllers\Reports\FinancialReportController::class, 'incomeStatement'])->name('income-statement');
+    Route::get('/balance-sheet', [App\Http\Controllers\Reports\FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+    Route::get('/cash-flow', [App\Http\Controllers\Reports\FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+    Route::get('/{report}/analytics', [App\Http\Controllers\Reports\FinancialReportController::class, 'analytics'])->name('analytics');
+    
+    Route::get('/{report}', [App\Http\Controllers\Reports\FinancialReportController::class, 'show'])->name('show');
+});
+
+// Property Reports
+Route::prefix('reports/property')->name('reports.property.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Reports\PropertyReportController::class, 'index'])->name('index');
+});
+
+// Commission Reports
+Route::prefix('reports/commission')->name('reports.commission.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Reports\CommissionReportController::class, 'index'])->name('index');
+});
 
 // Reports Management
 Route::prefix('reports')->name('reports.')->group(function () {
@@ -81,4 +108,5 @@ Route::prefix('reports/schedules')->name('reports.schedules.')->group(function (
     Route::get('/create', function () {
         return view('reports.schedules.create');
     })->name('create');
+    Route::post('/', [ReportScheduleController::class, 'store'])->name('store');
 });

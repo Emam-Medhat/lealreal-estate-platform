@@ -69,9 +69,11 @@ class MediaLibraryController extends Controller
             $mediaFile = MediaFile::create([
                 'filename' => $filename,
                 'original_name' => $originalName,
+                'file_path' => $path,
                 'path' => $path,
                 'type' => $type,
                 'mime_type' => $file->getMimeType(),
+                'file_size' => $size,
                 'size' => $size,
                 'dimensions' => $dimensions,
                 'alt_text' => $request->alt_text,
@@ -90,6 +92,27 @@ class MediaLibraryController extends Controller
     public function show(MediaFile $mediaFile): View
     {
         return view('admin.media.show', compact('mediaFile'));
+    }
+
+    public function preview($media)
+    {
+        $mediaFile = MediaFile::findOrFail($media);
+        
+        // Try public path first
+        $publicPath = public_path('storage/' . $mediaFile->file_path);
+        
+        if (file_exists($publicPath)) {
+            return response()->file($publicPath);
+        }
+        
+        // Fallback to storage path
+        $storagePath = storage_path('app/public/' . $mediaFile->file_path);
+        
+        if (file_exists($storagePath)) {
+            return response()->file($storagePath);
+        }
+        
+        abort(404, 'File not found. Tried: ' . $publicPath . ' and ' . $storagePath);
     }
 
     public function edit(MediaFile $mediaFile): View

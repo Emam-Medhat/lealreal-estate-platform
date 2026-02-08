@@ -16,6 +16,13 @@ use App\Http\Controllers\AiRentalPriceOptimizationController;
 use App\Http\Controllers\AiVirtualStagingController;
 
 Route::middleware(['auth'])->prefix('ai')->name('ai.')->group(function () {
+    // Main AI Dashboard & Features (from AIController)
+    Route::get('/dashboard', [\App\Http\Controllers\AI\AIController::class, 'dashboard'])->name('dashboard');
+    Route::get('/chat', [\App\Http\Controllers\AI\AIController::class, 'chat'])->name('chat');
+    Route::get('/analytics', [\App\Http\Controllers\AI\AIController::class, 'analytics'])->name('analytics');
+    Route::get('/descriptions', [\App\Http\Controllers\AI\AIController::class, 'descriptions'])->name('descriptions');
+    Route::get('/images', [\App\Http\Controllers\AI\AIController::class, 'images'])->name('images');
+
     // AI Dashboard/Index
     Route::get('/', [AiInsightsController::class, 'index'])->name('index');
     

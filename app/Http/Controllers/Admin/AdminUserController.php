@@ -4,41 +4,29 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserService;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
 {
+    protected $userService;
+    protected $userRepository;
+
+    public function __construct(UserService $userService, UserRepositoryInterface $userRepository)
+    {
+        $this->userService = $userService;
+        $this->userRepository = $userRepository;
+    }
+
     public function index(Request $request)
     {
         try {
-            $users = User::latest()->paginate(20);
+            $users = $this->userRepository->getFilteredUsers($request->all(), 20);
         } catch (\Exception $e) {
-            // Fallback data
-            $users = collect([
-                (object) [
-                    'id' => 1,
-                    'name' => 'Admin User',
-                    'email' => 'admin@example.com',
-                    'created_at' => now(),
-                    'role' => 'admin'
-                ],
-                (object) [
-                    'id' => 2,
-                    'name' => 'John Doe',
-                    'email' => 'john@example.com',
-                    'created_at' => now()->subDays(5),
-                    'role' => 'user'
-                ],
-                (object) [
-                    'id' => 3,
-                    'name' => 'Jane Smith',
-                    'email' => 'jane@example.com',
-                    'created_at' => now()->subDays(10),
-                    'role' => 'agent'
-                ],
-            ]);
+             \Log::error('Failed to fetch users: ' . $e->getMessage());
+             $users = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         }
-
         return view('admin.users.index', compact('users'));
     }
 
@@ -55,7 +43,7 @@ class AdminUserController extends Controller
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'user_type' => 'required|string|in:admin,user,agent',
+            'user_type' => 'required|string|in:admin,user,agent', // Treating user_type as role for consistency
             'phone' => 'nullable|string|max:20|unique:users',
             'birth_date' => 'nullable|date|before:today',
             'city' => 'nullable|string|max:100',
@@ -64,55 +52,32 @@ class AdminUserController extends Controller
         ]);
 
         try {
-            // Generate username from email
-            $username = explode('@', $request->email)[0] . '_' . time();
-            
-            // Combine first and last name for full_name
-            $fullName = $request->first_name . ' ' . $request->last_name;
-            
-            $userData = [
-                'username' => $username,
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'full_name' => $fullName,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'user_type' => $request->user_type,
-                'phone' => $request->phone,
-                'date_of_birth' => $request->birth_date,
-                'city' => $request->city,
-                'state' => $request->region, // Using 'state' field for region
-                'address' => $request->address,
-                'email_verified_at' => now(),
-                'account_status' => 'active',
-            ];
+            $userData = $request->except(['_token', 'password_confirmation', 'region', 'birth_date']);
+            $userData['date_of_birth'] = $request->birth_date;
+            $userData['state'] = $request->region;
+            // Map user_type to role if needed, or assume service handles it.
+            // UserService uses 'role' or 'user_type'.
+            $userData['role'] = $request->user_type; 
 
-            User::create($userData);
+            $this->userService->createUser($userData);
 
             return redirect()->route('admin.users.index')
-                ->with('success', 'تم إنشاء المستخدم بنجاح');
+                ->with('success', 'User created successfully');
         } catch (\Exception $e) {
             \Log::error('User creation failed: ' . $e->getMessage());
             return back()
                 ->withInput()
-                ->with('error', 'فشل في إنشاء المستخدم: ' . $e->getMessage());
+                ->with('error', 'Failed to create user: ' . $e->getMessage());
         }
     }
 
     public function show($id)
     {
         try {
-            $user = User::findOrFail($id);
+            $user = $this->userRepository->findById($id);
         } catch (\Exception $e) {
-            // Fallback data
-            $user = (object) [
-                'id' => $id,
-                'name' => 'Sample User',
-                'email' => 'sample@example.com',
-                'created_at' => now(),
-                'role' => 'user',
-                'last_login' => now()->subHours(2)
-            ];
+            return redirect()->route('admin.users.index')
+                ->with('error', 'User not found.');
         }
 
         return view('admin.users.show', compact('user'));
@@ -121,15 +86,10 @@ class AdminUserController extends Controller
     public function edit($id)
     {
         try {
-            $user = User::findOrFail($id);
+            $user = $this->userRepository->findById($id);
         } catch (\Exception $e) {
-            // Fallback data
-            $user = (object) [
-                'id' => $id,
-                'name' => 'Sample User',
-                'email' => 'sample@example.com',
-                'role' => 'user'
-            ];
+            return redirect()->route('admin.users.index')
+                ->with('error', 'User not found.');
         }
 
         return view('admin.users.edit', compact('user'));
@@ -138,18 +98,14 @@ class AdminUserController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'sometimes|string|max:255',
+            'last_name' => 'sometimes|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'role' => 'required|string|in:admin,user,agent',
         ]);
 
         try {
-            $user = User::findOrFail($id);
-            $user->update([
-                'name' => $request->name,
-                'email' => $request->email,
-                'role' => $request->role,
-            ]);
+            $this->userService->updateProfile($id, $request->all());
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User updated successfully');
@@ -161,8 +117,7 @@ class AdminUserController extends Controller
     public function destroy($id)
     {
         try {
-            $user = User::findOrFail($id);
-            $user->delete();
+            $this->userService->deleteUser($id);
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User deleted successfully');

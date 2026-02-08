@@ -20,6 +20,14 @@ class AiFraudDetectionController extends Controller
     /**
      * Display the fraud detection dashboard.
      */
+    public function index(): View
+    {
+        return $this->dashboard();
+    }
+
+    /**
+     * Display the fraud detection dashboard.
+     */
     public function dashboard(): View
     {
         $user = Auth::user();
@@ -230,10 +238,43 @@ class AiFraudDetectionController extends Controller
      */
     private function performFraudAnalysis(array $data): array
     {
-        // Simulate AI fraud detection
-        $riskScore = rand(0, 100);
-        $confidence = rand(60, 95);
-        $indicators = $this->generateFraudIndicators();
+        // For now, we simulate AI fraud detection based on some real indicators if possible
+        // In a real scenario, this would call a Python service or more complex logic
+        
+        $riskScore = 0;
+        $indicators = [];
+
+        // Check 1: Price Deviation (if property exists)
+        $property = \App\Models\Property::find($data['property_id']);
+        if ($property && $property->price > 0) {
+            $avgPrice = \App\Models\Property::where('city', $property->city)
+                ->where('property_type', $property->property_type)
+                ->avg('price');
+            
+            if ($avgPrice > 0) {
+                $deviation = abs($property->price - $avgPrice) / $avgPrice;
+                if ($deviation > 0.5) { // 50% deviation
+                    $riskScore += 30;
+                    $indicators['price_deviation'] = 'Price deviates significantly from market average';
+                }
+            }
+        }
+
+        // Check 2: User Account Age
+        if (isset($data['user_id'])) {
+            $user = \App\Models\User::find($data['user_id']);
+            if ($user && $user->created_at->diffInDays(now()) < 7) {
+                $riskScore += 20;
+                $indicators['new_account'] = 'Account is less than 7 days old';
+            }
+        }
+
+        // Add some randomness for simulation if no real indicators found
+        if (empty($indicators)) {
+             $riskScore = rand(0, 20); // Low risk by default
+        }
+
+        $confidence = rand(80, 95);
         
         $analysis = [
             'property_id' => $data['property_id'],

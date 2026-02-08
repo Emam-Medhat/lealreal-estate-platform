@@ -310,23 +310,23 @@
                         </div>
                         <div class="space-y-2.5">
                             <a href="<?php echo e(route('admin.users.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-users w-5"></i> All Users
                             </a>
                             <a href="<?php echo e(route('admin.users.create')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-user-plus w-5"></i> Create User
                             </a>
                             <a href="#"
-                                class="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-code w-5"></i> Developers
                             </a>
                             <a href="<?php echo e(route('investor.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-hand-holding-usd w-5"></i> Investors
                             </a>
                             <a href="<?php echo e(route('admin.agents.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-user-tie w-5"></i> Agents
                             </a>
                         </div>
@@ -342,23 +342,23 @@
                         </div>
                         <div class="space-y-2.5">
                             <a href="<?php echo e(route('admin.properties.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-building w-5"></i> All Properties
                             </a>
                             <a href="<?php echo e(route('admin.properties.create')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-plus-circle w-5"></i> Add Property
                             </a>
                             <a href="<?php echo e(route('admin.projects.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-project-diagram w-5"></i> Projects
                             </a>
                             <a href="<?php echo e(route('admin.companies.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-briefcase w-5"></i> Companies
                             </a>
                             <a href="<?php echo e(route('properties.search.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-search-location w-5"></i> Advanced Search
                             </a>
                         </div>
@@ -410,15 +410,15 @@
                         </div>
                         <div class="space-y-2.5">
                             <a href="<?php echo e(route('maintenance.workorders.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-tasks w-5"></i> Work Orders
                             </a>
                             <a href="<?php echo e(route('maintenance.teams.index')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-users w-5"></i> Maintenance Teams
                             </a>
                             <a href="<?php echo e(route('maintenance.reports')); ?>"
-                                class="flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors">
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
                                 <i class="fas fa-chart-bar w-5"></i> Maintenance Reports
                             </a>
                         </div>
@@ -492,26 +492,134 @@
                         </div>
                     </div>
 
-                    <!-- Digital Assets -->
+                    <!-- Smart Living & IoT -->
                     <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
                         <div class="flex items-center mb-4">
-                            <div class="bg-red-100 rounded-lg p-2 mr-3">
-                                <i class="fas fa-wrench text-red-600"></i>
+                            <div class="bg-cyan-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-wifi text-cyan-600"></i>
                             </div>
-                            <h4 class="font-bold text-gray-900">Maintenance Management</h4>
+                            <h4 class="font-bold text-gray-900">Smart Living & IoT</h4>
                         </div>
                         <div class="space-y-2.5">
-                            <a href="#"
-                                class="flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors">
-                                <i class="fas fa-tasks w-5"></i> Work Orders
+                            <a href="<?php echo e(route('iot.dashboard')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-home w-5"></i> Smart Dashboard
                             </a>
-                            <a href="#"
-                                class="flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors">
-                                <i class="fas fa-users w-5"></i> Maintenance Teams
+                            <a href="<?php echo e(route('iot.devices.index')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-microchip w-5"></i> IoT Devices
                             </a>
-                            <a href="#"
-                                class="flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors">
-                                <i class="fas fa-chart-bar w-5"></i> Maintenance Reports
+                            <a href="<?php echo e(route('iot.automations.index')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-cogs w-5"></i> Automations
+                            </a>
+                            <a href="<?php echo e(route('iot.energy.dashboard')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-bolt w-5"></i> Energy Monitor
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Enterprise B2B -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-slate-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-building text-slate-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">Enterprise B2B</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('enterprise.dashboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-chart-pie w-5"></i> Dashboard
+                            </a>
+                            <a href="<?php echo e(route('enterprise.accounts')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-users-cog w-5"></i> Accounts
+                            </a>
+                            <a href="<?php echo e(route('enterprise.subscriptions')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-file-invoice w-5"></i> Subscriptions
+                            </a>
+                            <a href="<?php echo e(route('enterprise.reports')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-file-alt w-5"></i> B2B Reports
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Gamification -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-yellow-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-trophy text-yellow-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">Gamification</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('gamification.dashboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-yellow-600 transition-colors">
+                                <i class="fas fa-gamepad w-5"></i> Dashboard
+                            </a>
+                            <a href="<?php echo e(route('gamification.achievements')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-yellow-600 transition-colors">
+                                <i class="fas fa-medal w-5"></i> Achievements
+                            </a>
+                            <a href="<?php echo e(route('gamification.badges')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-yellow-600 transition-colors">
+                                <i class="fas fa-certificate w-5"></i> Badges
+                            </a>
+                            <a href="<?php echo e(route('gamification.leaderboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-yellow-600 transition-colors">
+                                <i class="fas fa-list-ol w-5"></i> Leaderboard
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- AI & Machine Learning -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-violet-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-brain text-violet-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">AI & Intelligence</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('ai.dashboard')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-robot w-5"></i> AI Dashboard
+                            </a>
+                            <a href="<?php echo e(route('ai.chat')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-comments w-5"></i> AI Assistant
+                            </a>
+                            <a href="<?php echo e(route('ai.analytics')); ?>"
+                                class="flex items-center text-sm text-black no-underline hover:no-underline transition-colors">
+                                <i class="fas fa-chart-network w-5"></i> Predictive Analytics
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Blockchain & DeFi -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-indigo-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-link text-indigo-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">Blockchain & DeFi</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('blockchain.index')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors">
+                                <i class="fas fa-cubes w-5"></i> Blockchain Hub
+                            </a>
+                            <a href="<?php echo e(route('blockchain.transactions.index')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors">
+                                <i class="fas fa-exchange-alt w-5"></i> Transactions
+                            </a>
+                            <a href="<?php echo e(route('blockchain.smartcontracts.index')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors">
+                                <i class="fas fa-file-contract w-5"></i> Smart Contracts
                             </a>
                         </div>
                     </div>
@@ -1238,7 +1346,7 @@
                                 class="flex items-center text-sm text-gray-600 hover:text-teal-600 transition-colors">
                                 <i class="fas fa-crystal-ball w-5"></i> Price Predictor
                             </a>
-                            <a href="<?php echo e(route('ai.fraud.detection')); ?>"
+                            <a href="<?php echo e(route('ai.fraud-detection.index')); ?>"
                                 class="flex items-center text-sm text-gray-600 hover:text-teal-600 transition-colors">
                                 <i class="fas fa-user-secret w-5"></i> Fraud Detection
                             </a>
@@ -1365,6 +1473,82 @@
                             <a href="<?php echo e(route('amenities.search')); ?>"
                                 class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors">
                                 <i class="fas fa-list-ul w-5"></i> Amenities
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Smart Living & IoT -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-cyan-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-wifi text-cyan-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">Smart Living & IoT</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('iot.dashboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+                                <i class="fas fa-home w-5"></i> Smart Dashboard
+                            </a>
+                            <a href="<?php echo e(route('iot.devices.index')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+                                <i class="fas fa-microchip w-5"></i> IoT Devices
+                            </a>
+                            <a href="<?php echo e(route('iot.automations.index')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+                                <i class="fas fa-cogs w-5"></i> Automations
+                            </a>
+                            <a href="<?php echo e(route('iot.energy.dashboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+                                <i class="fas fa-bolt w-5"></i> Energy Monitor
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Enterprise & B2B -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-slate-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-building text-slate-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">Enterprise B2B</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('enterprise.dashboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-chart-network w-5"></i> Enterprise Hub
+                            </a>
+                            <a href="<?php echo e(route('enterprise.accounts')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-users-class w-5"></i> Tenant Mgmt
+                            </a>
+                            <a href="<?php echo e(route('enterprise.subscriptions')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-file-contract w-5"></i> B2B Contracts
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Gamification & Loyalty -->
+                    <div class="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gray-50/30">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-amber-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-trophy text-amber-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900">Gamification</h4>
+                        </div>
+                        <div class="space-y-2.5">
+                            <a href="<?php echo e(route('gamification.dashboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-amber-600 transition-colors">
+                                <i class="fas fa-gamepad w-5"></i> Game Center
+                            </a>
+                            <a href="<?php echo e(route('gamification.leaderboard')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-amber-600 transition-colors">
+                                <i class="fas fa-list-ol w-5"></i> Leaderboards
+                            </a>
+                            <a href="<?php echo e(route('gamification.rewards')); ?>"
+                                class="flex items-center text-sm text-gray-600 hover:text-amber-600 transition-colors">
+                                <i class="fas fa-gift w-5"></i> Rewards
                             </a>
                         </div>
                     </div>

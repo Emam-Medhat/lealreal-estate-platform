@@ -1,4 +1,5 @@
 import './bootstrap';
+import './notifications';
 import 'bootstrap';
 
 

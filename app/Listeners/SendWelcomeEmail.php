@@ -14,7 +14,12 @@ class SendWelcomeEmail implements ShouldQueue
 
     public function handle(UserRegistered $event): void
     {
-        // Send notification which handles the email
-        $event->user->notify(new WelcomeNotification($event->user));
+        try {
+            // Send notification which handles the email
+            $event->user->notify(new WelcomeNotification($event->user));
+        } catch (\Exception $e) {
+            // Log error but don't stop registration process
+            \Log::error('Failed to send welcome email: ' . $e->getMessage());
+        }
     }
 }

@@ -47,6 +47,27 @@
             </div>
 
             <div class="p-8">
+                <!-- Session Error Display -->
+                @if(session('error'))
+                    <div class="rounded-xl bg-red-500/20 border border-red-500/30 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-300">
+                                    {{ __('Registration Error') }}
+                                </h3>
+                                <div class="mt-2 text-sm text-red-200">
+                                    {{ session('error') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($errors->any())
                     <div class="rounded-xl bg-red-500/20 border border-red-500/30 p-4 mb-6">
                         <div class="flex">
@@ -506,6 +527,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
         });
+    }
+});
+
+// Console error logging
+window.addEventListener('error', function(e) {
+    console.error('JavaScript Error:', {
+        message: e.message,
+        filename: e.filename,
+        lineno: e.lineno,
+        colno: e.colno,
+        error: e.error
+    });
+});
+
+// Form submission error handling
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
+    console.log('Form submission started');
+    console.log('Form data:', new FormData(this));
+    
+    // Add loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
     }
 });
 </script>

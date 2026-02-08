@@ -2,59 +2,81 @@
 
 namespace App\Services;
 
+use App\Models\Property;
+use App\Models\PropertyMedia;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use App\Models\PropertyMedia; // Assuming this model matches
-// use Intervention\Image\Facades\Image; // Use if available
+use Illuminate\Support\Str;
 
 class PropertyMediaService
 {
     /**
-     * Upload property images.
-     *
-     * @param mixed $propertyId
-     * @param array $files
-     * @return array
+     * Store a single media file for a property.
      */
-    public function uploadImages($propertyId, array $files): array
+    public function storeMedia(Property $property, UploadedFile $file, string $type, int $sortOrder = 0, bool $isFeatured = false): PropertyMedia
     {
-        $uploaded = [];
-        foreach ($files as $file) {
-            if ($file instanceof UploadedFile) {
-                // $path = $file->store('properties', 'public');
-                // Store file (mocking storage path for now or real storage)
-                $path = $file->store('properties/' . $propertyId, 'public');
-
-                // Create PropertyMedia record
-                // $media = PropertyMedia::create([...]);
-
-                $uploaded[] = $path;
-
-                // dispatch OptimizeImage job
-            }
-        }
-        return $uploaded;
+        $directory = 'properties/' . Str::plural($type);
+        $path = $file->store($directory, 'public');
+        
+        return PropertyMedia::create([
+            'property_id' => $property->id,
+            'type' => $type,
+            'file_path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'sort_order' => $sortOrder,
+            'is_featured' => $isFeatured,
+        ]);
     }
 
     /**
-     * Upload property video.
-     *
-     * @param mixed $propertyId
-     * @param UploadedFile $file
-     * @return string|null
+     * Store multiple media files for a property.
      */
-    public function uploadVideo($propertyId, UploadedFile $file)
+    public function storeMultipleMedia(Property $property, array $files, string $type): array
     {
-        return $file->store('properties/' . $propertyId . '/videos', 'public');
+        $results = [];
+        $currentCount = $property->media()->where('type', $type)->count();
+
+        foreach ($files as $index => $file) {
+            $isFeatured = false;
+            
+            // If it's an image and it's the first one being added to a property with no images, make it featured
+            if ($type === 'image' && $currentCount === 0 && $index === 0) {
+                $isFeatured = true;
+            }
+
+            $results[] = $this->storeMedia($property, $file, $type, $currentCount + $index, $isFeatured);
+        }
+
+        return $results;
     }
 
-    public function generateThumbnails()
+    /**
+     * Delete a media item.
+     */
+    public function deleteMedia(PropertyMedia $media): bool
     {
-        // Logic using intervention/image
+        if (Storage::disk('public')->exists($media->file_path)) {
+            Storage::disk('public')->delete($media->file_path);
+        }
+        
+        return $media->delete();
     }
 
-    public function optimizeImages()
+    /**
+     * Set a media item as featured.
+     */
+    public function setFeatured(PropertyMedia $media): bool
     {
-        // Spatie ImageOptimizer or similar
+        if ($media->type !== 'image') {
+            return false;
+        }
+
+        $media->property->media()
+            ->where('type', 'image')
+            ->update(['is_featured' => false]);
+
+        return $media->update(['is_featured' => true]);
     }
 }

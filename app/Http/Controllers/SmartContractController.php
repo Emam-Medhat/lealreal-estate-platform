@@ -19,7 +19,7 @@ class SmartContractController extends Controller
     {
         $contracts = SmartContract::latest()->paginate(20);
         
-        return view('blockchain.contracts.index', compact('contracts'));
+        return view('blockchain.contracts', compact('contracts'));
     }
 
     public function deployContract(Request $request)

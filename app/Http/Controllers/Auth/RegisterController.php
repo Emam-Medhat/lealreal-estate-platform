@@ -24,10 +24,29 @@ class RegisterController extends Controller
 
     public function register(RegisterRequest $request)
     {
-        $user = $this->authService->register($request->validated());
+        try {
+            $user = $this->authService->register($request->validated());
 
-        event(new Registered($user));
+            event(new Registered($user));
 
-        return redirect()->route('login')->with('success', 'Registration successful. Please login to continue.');
+            return redirect()->route('login')->with('success', 'Registration successful. Please login to continue.');
+        } catch (\Exception $e) {
+            // Log error for debugging
+            \Log::error('Registration controller error: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Show error to user in development
+            if (app()->environment('local')) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Registration failed: ' . $e->getMessage());
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Registration failed. Please try again.');
+        }
     }
 }
