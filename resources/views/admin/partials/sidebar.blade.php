@@ -45,22 +45,59 @@
                         <i class="fas fa-plus w-4 ml-2"></i>
                         إضافة مستخدم
                     </a>
+                    <a href="#" onclick="alert('User details page requires a user ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-eye w-4 ml-2"></i>
+                        عرض المستخدم
+                    </a>
+                    <a href="#" onclick="alert('User edit page requires a user ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-edit w-4 ml-2"></i>
+                        تعديل المستخدم
+                    </a>
                     <a href="{{ route('admin.agents.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-user-tie w-4 ml-2"></i>
                         الوكلاء
                     </a>
-                    <a href="{{ route('developer.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-code w-4 ml-2"></i>
-                        المطورين
+                    <a href="#" onclick="alert('Property details page requires a property ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-eye w-4 ml-2"></i>
+                        عرض العقار
+                    </a>
+                    <a href="#" onclick="alert('Blog post details page requires a post ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-eye w-4 ml-2"></i>
+                        عرض المقال
+                    </a>
+                    <a href="#" onclick="alert('Blog post edit page requires a post ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-edit w-4 ml-2"></i>
+                        تعديل المقال
+                    </a>
+                    <a href="#" onclick="alert('News details page requires a news ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-eye w-4 ml-2"></i>
+                        عرض الخبر
+                    </a>
+                    <a href="#" onclick="alert('Developer details page requires a developer ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-eye w-4 ml-2"></i>
+                        عرض المطور
+                    </a>
+                    <a href="#" onclick="alert('Investor details page requires an investor ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('developer.edit', ['developer' => 'id']) }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-edit w-4 ml-2"></i>
+                        تعديل المطور
                     </a>
                     <a href="{{ route('investor.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         المستثمرين
                     </a>
+                    <a href="{{ route('investor.show', ['investor' => 'id']) }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-eye w-4 ml-2"></i>
+                        عرض المستثمر
+                    </a>
+                    <a href="{{ route('investor.edit', ['investor' => 'id']) }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-edit w-4 ml-2"></i>
+                        تعديل المستثمر
+                    </a>
                     <a href="{{ route('investor.stats.public') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-line w-4 ml-2"></i>
-                        إحصائيات المستثمرين
+                        إحصائيات
                     </a>
                 </div>
             </div>
@@ -118,7 +155,7 @@
                     <a href="{{ route('admin.content.dashboard') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.content.dashboard') ? 'bg-amber-50 text-amber-600' : '' }}">
                         <i class="fas fa-tachometer-alt w-4 ml-2"></i>
-                        لوحة CMS
+                        CMS
                     </a>
                     <a href="{{ route('admin.blog.posts.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
@@ -138,12 +175,12 @@
                     <a href="{{ route('admin.guides.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-map-signs w-4 ml-2"></i>
-                        الأدلة
+                        الدلائل
                     </a>
                     <a href="{{ route('admin.faqs.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-question-circle w-4 ml-2"></i>
-                        الأسئلة الشائعة
+                        الأسئلة
                     </a>
                     <a href="{{ route('admin.menus.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.menus.*') ? 'bg-amber-50 text-amber-600' : '' }}">
@@ -158,7 +195,7 @@
                     <a href="{{ route('admin.widgets.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.widgets.*') ? 'bg-amber-50 text-amber-600' : '' }}">
                         <i class="fas fa-puzzle-piece w-4 ml-2"></i>
-                        الودجات (Widgets)
+ودجات
                     </a>
                 </div>
             </div>
@@ -176,19 +213,19 @@
                 <div id="sales-submenu" class="hidden mt-2 space-y-1 mr-8">
                     <a href="{{ route('leads.dashboard') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-funnel-dollar w-4 ml-2"></i>
-                        لوحة العملاء المحتملين
+                        العملاء
                     </a>
                     <a href="{{ route('leads.pipeline') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-stream w-4 ml-2"></i>
-                        خطوات المبيعات
+                        خطوات
                     </a>
                     <a href="{{ route('lead-scoring.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-sort-amount-up w-4 ml-2"></i>
-                        تقييم العملاء
+                        تقييم
                     </a>
                     <a href="{{ route('lead-conversions.analytics') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-pie w-4 ml-2"></i>
-                        تحليلات التحويل
+                        تحليلات
                     </a>
                 </div>
             </div>
@@ -207,12 +244,12 @@
                     <a href="{{ route('messages.contracts.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-signature w-4 ml-2"></i>
-                        العقود الرقمية
+                        العقود
                     </a>
                     <a href="{{ route('messages.offers.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-handshake w-4 ml-2"></i>
-                        إدارة العروض
+                        العروض
                     </a>
                     <a href="{{ route('messages.negotiations.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
@@ -236,7 +273,7 @@
                     <a href="{{ route('inventory.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-warehouse w-4 ml-2"></i>
-                        لوحة التحكم
+                        التحكم
                     </a>
                     <a href="{{ route('inventory.items.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
@@ -251,7 +288,7 @@
                     <a href="{{ route('inventory.movements.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-history w-4 ml-2"></i>
-                        سجل الحركة
+                        السجل
                     </a>
                 </div>
             </div>
@@ -270,16 +307,16 @@
                     <a href="{{ route('maintenance.workorders.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-tasks w-4 ml-2"></i>
-                        أوامر العمل
+                        أوامر
                     </a>
                     <a href="{{ route('maintenance.teams.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users w-4 ml-2"></i>
-                        فرق الصيانة
+                        الفرق
                     </a>
                     <a href="{{ route('maintenance.reports.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-bar w-4 ml-2"></i>
-                        تقارير الصيانة
+                        تقارير
                     </a>
                 </div>
             </div>
@@ -298,17 +335,17 @@
                     <a href="{{ route('warranties.policies.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-certificate w-4 ml-2"></i>
-                        جميع الضمانات
+                        الضمانات
                     </a>
                     <a href="{{ route('warranties.claims.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-exclamation-triangle w-4 ml-2"></i>
-                        مطالبات الضمان
+                        المطالبات
                     </a>
                     <a href="{{ route('warranties.providers.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-truck-loading w-4 ml-2"></i>
-                        مقدمو الخدمة
+                        مقدمو
                     </a>
                 </div>
             </div>
@@ -327,16 +364,16 @@
                     <a href="{{ route('subscriptions.plans.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-layer-group w-4 ml-2"></i>
-                        الخطط والأسعار
+                        الخطط
                     </a>
                     <a href="{{ route('subscriptions.invoices.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-file-invoice w-4 ml-2"></i>
-                        إدارة الفواتير
+                        الفواتير
                     </a>
                     <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-check-double w-4 ml-2"></i>
-                        ميزات المنتج
+                        الميزات
                     </a>
                 </div>
             </div>
@@ -366,7 +403,7 @@
                     </a>
                     <a href="{{ route('investor.funds.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-coins w-4 ml-2"></i>
-                        صناديق الاستثمار
+                        الصناديق
                     </a>
                     <a href="{{ route('investor.crowdfunding.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users-cog w-4 ml-2"></i>
@@ -374,7 +411,7 @@
                     </a>
                     <a href="{{ route('investor.portfolio.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-briefcase w-4 ml-2"></i>
-                        المحفظة الاستثمارية
+                        المحفظة
                     </a>
                     <a href="{{ route('investor.transactions.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-exchange-alt w-4 ml-2"></i>
@@ -382,7 +419,7 @@
                     </a>
                     <a href="{{ route('investor.roi.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-calculator w-4 ml-2"></i>
-                        حساب العائد ROI
+                        ROI
                     </a>
                     <a href="{{ route('investor.risk.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-shield-alt w-4 ml-2"></i>
@@ -413,12 +450,12 @@
                     <a href="{{ route('messages.inbox') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-inbox w-4 ml-2"></i>
-                        صندوق الوارد
+                        الصندوق
                     </a>
                     <a href="{{ route('messages.chat') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-comment-dots w-4 ml-2"></i>
-                        الدردشة المباشرة
+                        الدردشة
                     </a>
                     <a href="{{ route('messages.appointments') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
@@ -428,7 +465,7 @@
                     <a href="{{ route('messages.notifications') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-bell w-4 ml-2"></i>
-                        الإشعارات متعددة القنوات
+                        الإشعارات
                     </a>
                 </div>
             </div>
@@ -447,12 +484,12 @@
                     <a href="{{ route('messages.auctions.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-balance-scale w-4 ml-2"></i>
-                        المزادات النشطة
+                        المزادات
                     </a>
                     <a href="{{ route('messages.auctions.results') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-trophy w-4 ml-2"></i>
-                        نتائج المزادات
+                        النتائج
                     </a>
                 </div>
             </div>
@@ -470,15 +507,15 @@
                 <div id="analytics-submenu" class="hidden mt-2 space-y-1 mr-8">
                     <a href="{{ route('ai.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-microchip w-4 ml-2"></i>
-                        رؤى الذكاء الاصطناعي
+                        الذكاء الاصطناعي
                     </a>
                     <a href="{{ route('analytics.market.trends') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-globe-americas w-4 ml-2"></i>
-                        اتجاهات السوق
+                        اتجاهات
                     </a>
                     <a href="{{ route('analytics.behavior.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-user-check w-4 ml-2"></i>
-                        سلوك المستخدمين
+                        السلوك
                     </a>
                     <a href="{{ route('analytics.heatmap.index') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-fire w-4 ml-2"></i>
@@ -501,17 +538,17 @@
                     <a href="{{ route('blockchain.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-cubes w-4 ml-2"></i>
-                        دفتر الأستاذ الموزع
+                        دفتر
                     </a>
                     <a href="{{ route('blockchain.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-coins w-4 ml-2"></i>
-                        بروتوكول DeFi
+                        بروتوكول
                     </a>
                     <a href="{{ route('blockchain.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users-cog w-4 ml-2"></i>
-                        حوكمة DAO
+                        DAO
                     </a>
                 </div>
             </div>
@@ -537,7 +574,7 @@
                     </a>
                     <a href="{{ route('blockchain.metaverse.nft') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-certificate w-4 ml-2"></i>
-                        سجل NFT
+                        NFT
                     </a>
                 </div>
             </div>

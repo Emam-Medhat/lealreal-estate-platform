@@ -70,4 +70,26 @@ class CompanyRepository extends BaseRepository implements CompanyRepositoryInter
             }
         ])->find($id);
     }
+
+    /**
+     * Count companies by date.
+     *
+     * @param string $date
+     * @return int
+     */
+    public function countByDate(string $date): int
+    {
+        return $this->model->whereDate('created_at', $date)->count();
+    }
+
+    /**
+     * Get recent companies.
+     *
+     * @param int $limit
+     * @return Collection
+     */
+    public function getRecent(int $limit = 5): Collection
+    {
+        return $this->model->latest()->take($limit)->get();
+    }
 }

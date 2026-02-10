@@ -21,7 +21,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         parent::__construct($model);
         
         $this->defaultRelations = [
-            'profile:id,user_id,first_name,last_name,bio,avatar,avatar_thumbnail',
+            'profile:id,user_id,first_name,last_name,bio,avatar',
             'permissions:id,name,description',
             'company:id,name,logo',
             'subscriptionPlan:id,name,features',
@@ -78,6 +78,39 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     }
 
     /**
+     * Count users by date.
+     *
+     * @param string $date
+     * @return int
+     */
+    public function countByDate(string $date): int
+    {
+        return $this->model->whereDate('created_at', $date)->count();
+    }
+
+    /**
+     * Count users by type.
+     *
+     * @param string $type
+     * @return int
+     */
+    public function countByType(string $type): int
+    {
+        return $this->model->where('user_type', $type)->count();
+    }
+
+    /**
+     * Get recent users.
+     *
+     * @param int $limit
+     * @return Collection
+     */
+    public function getRecent(int $limit = 5)
+    {
+        return $this->getRecentUsers($limit);
+    }
+
+    /**
      * Get recent activity logs for a specific user with caching
      */
     public function getActivityLogs(int $userId, int $limit = 10): Collection
@@ -120,7 +153,6 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 'is_company',
                 'is_developer',
                 'is_investor',
-                'avatar_thumbnail',
                 'last_login_at',
                 'created_at',
                 'updated_at'
@@ -162,7 +194,6 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 'is_company',
                 'is_developer',
                 'is_investor',
-                'avatar_thumbnail',
                 'last_login_at',
                 'created_at',
                 'updated_at'
@@ -200,7 +231,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                            ->take($limit)
                            ->get([
                                'id', 'uuid', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-                               'user_type', 'account_status', 'is_agent', 'is_company', 'avatar_thumbnail'
+                               'user_type', 'account_status', 'is_agent', 'is_company'
                            ]);
         }, ['query' => $query, 'filters' => $filters, 'limit' => $limit], 300);
     }
@@ -286,12 +317,12 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     {
         return $this->remember('getUsersByType', function () use ($userType, $limit) {
             return $this->model->where('user_type', $userType)
-                ->with(['profile:id,user_id,bio,avatar_thumbnail', 'company:id,name,logo'])
+                ->with(['profile:id,user_id,bio,avatar', 'company:id,name,logo'])
                 ->orderBy('created_at', 'desc')
                 ->take($limit)
                 ->get([
                     'id', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-                    'user_type', 'account_status', 'avatar_thumbnail', 'last_login_at', 'created_at'
+                    'user_type', 'account_status', 'last_login_at', 'created_at'
                 ]);
         }, ['userType' => $userType, 'limit' => $limit], 900);
     }
@@ -303,12 +334,12 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     {
         return $this->remember('getUsersByStatus', function () use ($status, $limit) {
             return $this->model->where('account_status', $status)
-                ->with(['profile:id,user_id,bio,avatar_thumbnail', 'company:id,name'])
+                ->with(['profile:id,user_id,bio,avatar', 'company:id,name'])
                 ->orderBy('created_at', 'desc')
                 ->take($limit)
                 ->get([
                     'id', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-                    'user_type', 'account_status', 'avatar_thumbnail', 'last_login_at', 'created_at'
+                    'user_type', 'account_status', 'last_login_at', 'created_at'
                 ]);
         }, ['status' => $status, 'limit' => $limit], 900);
     }
@@ -319,12 +350,12 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function getRecentUsers(int $limit = 10): Collection
     {
         return $this->remember('getRecentUsers', function () use ($limit) {
-            return $this->model->with(['profile:id,user_id,bio,avatar_thumbnail', 'company:id,name'])
+            return $this->model->with(['profile:id,user_id,bio,avatar', 'company:id,name'])
                 ->orderBy('created_at', 'desc')
                 ->take($limit)
                 ->get([
                     'id', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-                    'user_type', 'account_status', 'avatar_thumbnail', 'kyc_status', 'created_at'
+                    'user_type', 'account_status', 'kyc_status', 'created_at'
                 ]);
         }, ['limit' => $limit], 300);
     }
@@ -337,12 +368,12 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         return $this->remember('getActiveUsers', function () use ($limit) {
             return $this->model->where('account_status', 'active')
                 ->where('last_login_at', '>=', now()->subDays(30))
-                ->with(['profile:id,user_id,bio,avatar_thumbnail', 'company:id,name'])
+                ->with(['profile:id,user_id,bio,avatar', 'company:id,name'])
                 ->orderBy('last_login_at', 'desc')
                 ->take($limit)
                 ->get([
                     'id', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-                    'user_type', 'account_status', 'avatar_thumbnail', 'last_login_at', 'created_at'
+                    'user_type', 'account_status', 'last_login_at', 'created_at'
                 ]);
         }, ['limit' => $limit], 900);
     }

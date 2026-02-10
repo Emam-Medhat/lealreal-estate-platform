@@ -11,9 +11,9 @@
             <p class="text-muted mb-0">إدارة ومراقبة العقارات المتصلة</p>
         </div>
         <div>
-            <a href="{{ route('smart-property.create') }}" class="btn btn-primary">
+            <button class="btn btn-primary" disabled>
                 <i class="fas fa-plus"></i> إضافة عقار ذكي
-            </a>
+            </button>
         </div>
     </div>
 
@@ -87,7 +87,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">العقارات الحديثة</h5>
-                    <a href="{{ route('smart-property.index') }}" class="btn btn-sm btn-outline-primary">
+                    <a href="#" class="btn btn-sm btn-outline-primary" disabled>
                         عرض الكل
                     </a>
                 </div>
@@ -108,8 +108,8 @@
                                 @foreach($recentProperties as $property)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('smart-property.show', $property) }}">
-                                            {{ $property->property_name }}
+                                        <a href="#" class="text-decoration-none" disabled>
+                                            {{ $property->property_name ?? 'عقار #' . $property->id }}
                                         </a>
                                     </td>
                                     <td>{{ $property->address }}</td>
@@ -122,12 +122,12 @@
                                     <td>{{ $property->updated_at->diffForHumans() }}</td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{{ route('smart-property.show', $property) }}" class="btn btn-outline-primary">
+                                            <button class="btn btn-outline-primary" disabled>
                                                 <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('smart-property.edit', $property) }}" class="btn btn-outline-secondary">
+                                            </button>
+                                            <button class="btn btn-outline-secondary" disabled>
                                                 <i class="fas fa-edit"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -146,16 +146,16 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('iot-device.create') }}" class="btn btn-outline-primary">
+                        <a href="#" class="btn btn-outline-primary" disabled>
                             <i class="fas fa-plus"></i> إضافة جهاز جديد
                         </a>
-                        <a href="{{ route('smart-automation.create') }}" class="btn btn-outline-success">
+                        <a href="#" class="btn btn-outline-success" disabled>
                             <i class="fas fa-robot"></i> إنشاء أتمتة
                         </a>
-                        <a href="{{ route('energy-monitoring.create') }}" class="btn btn-outline-info">
+                        <a href="#" class="btn btn-outline-info" disabled>
                             <i class="fas fa-bolt"></i> إعداد مراقبة الطاقة
                         </a>
-                        <a href="{{ route('smart-security.create') }}" class="btn btn-outline-warning">
+                        <a href="#" class="btn btn-outline-warning" disabled>
                             <i class="fas fa-shield-alt"></i> إعداد الأمان
                         </a>
                     </div>

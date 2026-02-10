@@ -12,4 +12,6 @@ interface CompanyRepositoryInterface extends BaseRepositoryInterface
     public function getActiveCompanies(array $filters): Collection;
     public function findByUserId(int $userId): ?Company;
     public function findWithDetails(int $id): ?Company;
+    public function countByDate(string $date): int;
+    public function getRecent(int $limit = 5): Collection;
 }

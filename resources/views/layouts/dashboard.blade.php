@@ -560,7 +560,7 @@
                         <!-- Core System Group -->
                         <div class="space-y-1 mt-4">
                             <p class="text-[10px] font-bold text-gray-400 px-4 uppercase tracking-wider">التحكم بالنظام</p>
-                            <a href="{{ route('admin.settings') }}"
+                            <a href="{{ route('admin.settings.index') }}"
                                 class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-cogs w-4"></i>
                                 <span class="mr-3">الإعدادات العامة</span>

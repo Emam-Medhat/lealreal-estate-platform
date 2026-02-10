@@ -446,6 +446,12 @@ class InventoryController extends Controller
         return back()->with('success', 'Stock adjusted successfully!');
     }
 
+    public function reorderItemForm($item)
+    {
+        $item = Inventory::findOrFail($item);
+        return view('inventory.items.reorder', compact('item'));
+    }
+
     public function reorderItem(Request $request, $item)
     {
         $item = Inventory::findOrFail($item);

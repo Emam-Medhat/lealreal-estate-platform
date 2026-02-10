@@ -27,4 +27,7 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function getFilteredUsers(array $filters, int $perPage = 20): LengthAwarePaginator;
     public function findByEmail(string $email): ?User;
     public function countByStatus(string $status): int;
+    public function countByDate(string $date): int;
+    public function countByType(string $type): int;
+    public function getRecent(int $limit = 5);
 }

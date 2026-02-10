@@ -4,64 +4,57 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Property;
-use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Services\Admin\AdminDashboardService;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\PropertyRepositoryInterface;
+use App\Repositories\Contracts\CompanyRepositoryInterface;
 
 class AdminController extends Controller
 {
-    public function __construct()
-    {
+    protected $dashboardService;
+    protected $userRepository;
+    protected $propertyRepository;
+    protected $companyRepository;
+
+    public function __construct(
+        AdminDashboardService $dashboardService,
+        UserRepositoryInterface $userRepository,
+        PropertyRepositoryInterface $propertyRepository,
+        CompanyRepositoryInterface $companyRepository
+    ) {
         $this->middleware('auth');
         $this->middleware('admin');
+        $this->dashboardService = $dashboardService;
+        $this->userRepository = $userRepository;
+        $this->propertyRepository = $propertyRepository;
+        $this->companyRepository = $companyRepository;
     }
 
     public function dashboard()
     {
-        $stats = [
-            'site' => [
-                'total_users' => User::count(),
-                'new_users_today' => User::whereDate('created_at', today())->count(),
-                'total_properties' => Property::count(),
-                'new_properties_today' => Property::whereDate('created_at', today())->count(),
-                'total_agents' => User::where('user_type', 'agent')->count(),
-                'total_companies' => Company::count(),
-                'new_companies_today' => Company::whereDate('created_at', today())->count(),
-                'active_properties' => Property::where('status', 'active')->count(),
-                'sold_properties' => Property::where('status', 'sold')->count(),
-                'total_investors' => \App\Models\Investor::count(),
-                'new_investors_today' => \App\Models\Investor::whereDate('created_at', today())->count(),
-                'total_revenue' => 0,
-                'revenue_today' => 0,
-            ],
-            'recent_users' => User::latest()->take(5)->get(),
-            'recent_properties' => Property::with('agent')->latest()->take(5)->get(),
-            'recent_activity' => [
-                ['icon' => 'users', 'message' => 'System initialized', 'time' => now()->diffForHumans()],
-            ],
-        ];
-
+        $stats = $this->dashboardService->getDashboardStats();
         return view('admin.dashboard', compact('stats'));
     }
 
     public function users()
     {
-        $users = User::latest()->paginate(10);
+        $users = $this->userRepository->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
     public function properties()
     {
-        $properties = Property::with('agent')->latest()->paginate(10);
+        $properties = $this->propertyRepository->paginate(10, ['*'], ['agent']);
         return view('admin.properties.index', compact('properties'));
     }
 
     public function companies()
     {
-        $companies = Company::latest()->paginate(10);
+        $companies = $this->companyRepository->paginate(10);
         return view('admin.companies.index', compact('companies'));
     }
 
@@ -85,7 +78,7 @@ class AdminController extends Controller
             'account_status' => ['required', Rule::in(['active', 'inactive', 'suspended', 'banned', 'pending_verification'])],
         ]);
 
-        $user = User::create([
+        $userData = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'full_name' => $request->first_name . ' ' . $request->last_name,
@@ -98,17 +91,16 @@ class AdminController extends Controller
             'city' => $request->city,
             'account_status' => $request->account_status,
             'email_verified_at' => now(),
-        ]);
+        ];
 
-        // Set agent-specific fields if user type is agent
         if ($request->user_type === 'agent') {
-            $user->update([
-                'is_agent' => true,
-                'agent_license_number' => $request->agent_license_number ?? null,
-                'agent_company' => $request->agent_company ?? null,
-                'agent_bio' => $request->agent_bio ?? null,
-            ]);
+            $userData['is_agent'] = true;
+            $userData['agent_license_number'] = $request->agent_license_number ?? null;
+            $userData['agent_company'] = $request->agent_company ?? null;
+            $userData['agent_bio'] = $request->agent_bio ?? null;
         }
+
+        $this->userRepository->create($userData);
 
         return redirect()->route('admin.users')
             ->with('success', 'User created successfully.');
@@ -133,7 +125,7 @@ class AdminController extends Controller
             'account_status' => ['required', Rule::in(['active', 'inactive', 'suspended', 'banned', 'pending_verification'])],
         ]);
 
-        $user->update([
+        $userData = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'full_name' => $request->first_name . ' ' . $request->last_name,
@@ -144,28 +136,25 @@ class AdminController extends Controller
             'country' => $request->country,
             'city' => $request->city,
             'account_status' => $request->account_status,
-        ]);
+        ];
 
-        // Update agent-specific fields
         if ($request->user_type === 'agent') {
-            $user->update([
-                'is_agent' => true,
-                'agent_license_number' => $request->agent_license_number ?? null,
-                'agent_company' => $request->agent_company ?? null,
-                'agent_bio' => $request->agent_bio ?? null,
-            ]);
+            $userData['is_agent'] = true;
+            $userData['agent_license_number'] = $request->agent_license_number ?? null;
+            $userData['agent_company'] = $request->agent_company ?? null;
+            $userData['agent_bio'] = $request->agent_bio ?? null;
         } else {
-            $user->update([
-                'is_agent' => false,
-                'agent_license_number' => null,
-                'agent_company' => null,
-                'agent_bio' => null,
-            ]);
+            $userData['is_agent'] = false;
+            $userData['agent_license_number'] = null;
+            $userData['agent_company'] = null;
+            $userData['agent_bio'] = null;
         }
 
         if ($request->filled('password')) {
-            $user->update(['password' => Hash::make($request->password)]);
+            $userData['password'] = Hash::make($request->password);
         }
+
+        $this->userRepository->update($user->id, $userData);
 
         return redirect()->route('admin.users')
             ->with('success', 'User updated successfully.');
@@ -179,7 +168,7 @@ class AdminController extends Controller
                 ->with('error', 'You cannot delete your own account.');
         }
 
-        $user->delete();
+        $this->userRepository->deleteById($user->id);
         return redirect()->route('admin.users')
             ->with('success', 'User deleted successfully.');
     }
@@ -187,7 +176,7 @@ class AdminController extends Controller
     public function toggleUserStatus(User $user)
     {
         $newStatus = $user->account_status === 'active' ? 'inactive' : 'active';
-        $user->update(['account_status' => $newStatus]);
+        $this->userRepository->update($user->id, ['account_status' => $newStatus]);
 
         return redirect()->back()
             ->with('success', "User status changed to {$newStatus}.");
@@ -221,7 +210,7 @@ class AdminController extends Controller
             $companyData['logo'] = $logoPath;
         }
 
-        Company::create($companyData);
+        $this->companyRepository->create($companyData);
 
         return redirect()->route('admin.companies')
             ->with('success', 'Company created successfully.');

@@ -32,8 +32,9 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     Route::delete('/items/{item}', [InventoryController::class, 'itemsDestroy'])->name('items.destroy');
     
     // Item Actions
-    Route::post('/items/{item}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('items.adjust-stock');
+    Route::get('/items/{item}/reorder', [InventoryController::class, 'reorderItemForm'])->name('items.reorder.form');
     Route::post('/items/{item}/reorder', [InventoryController::class, 'reorderItem'])->name('items.reorder');
+    Route::post('/items/{item}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('items.adjust-stock');
     Route::post('/items/{item}/toggle-status', [InventoryController::class, 'toggleItemStatus'])->name('items.toggle-status');
     
     // Categories Management
@@ -71,7 +72,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     Route::get('/low-stock', [InventoryController::class, 'lowStock'])->name('low-stock');
     Route::post('/low-stock/send-alerts', [InventoryController::class, 'sendLowStockAlerts'])->name('low-stock.send-alerts');
     
-    // Simple Inventory Routes (for compatibility)
+    // Simple Inventory Routes (for compatibility) - MUST BE AFTER SPECIFIC ROUTES
     Route::get('/create', [InventoryController::class, 'create'])->name('create');
     Route::post('/', [InventoryController::class, 'store'])->name('store');
     Route::get('/{item}', [InventoryController::class, 'show'])->name('show');

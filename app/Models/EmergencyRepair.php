@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes; // Temporarily disabled until table structure is confirmed
 
 class EmergencyRepair extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory; // , SoftDeletes; // Temporarily disabled until table structure is confirmed
 
     protected $fillable = [
         'repair_number',

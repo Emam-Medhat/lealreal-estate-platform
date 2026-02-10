@@ -190,8 +190,19 @@
 <script>
 function reorderItem(itemId) {
     if (confirm('Are you sure you want to create a reorder for this item?')) {
-        // Implementation for reorder functionality
-        window.location.href = `/inventory/${itemId}/reorder`;
+        let form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/inventory/items/${itemId}/reorder`;
+        
+        let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        let csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 

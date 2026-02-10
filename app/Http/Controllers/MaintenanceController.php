@@ -60,7 +60,7 @@ class MaintenanceController extends Controller
         // Get today's schedules
         $todaySchedules = MaintenanceSchedule::with(['property', 'maintenanceTeam'])
             ->whereDate('scheduled_date', today())
-            ->orderBy('scheduled_time')
+            ->orderBy('scheduled_date', 'asc')
             ->get();
 
         return view('maintenance.index', compact('requests', 'recentRequests', 'todaySchedules'));

@@ -5,10 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Inventory extends Model
 {
     use HasFactory;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($inventory) {
+            if (empty($inventory->item_code)) {
+                $inventory->item_code = 'INV-' . strtoupper(Str::random(8));
+            }
+            
+            if (empty($inventory->unit)) {
+                $inventory->unit = 'pcs'; // Default to pieces
+            }
+            
+            if (empty($inventory->unit_cost)) {
+                $inventory->unit_cost = 0.00; // Default to zero
+            }
+        });
+    }
 
     protected $table = 'inventory_items';
 
@@ -19,20 +39,26 @@ class Inventory extends Model
         'description',
         'description_ar',
         'category',
+        'category_id',
         'status',
         'brand',
         'model',
         'sku',
         'unit',
         'unit_ar',
+        'unit_of_measure',
         'unit_cost',
+        'unit_price',
         'selling_price',
         'quantity',
         'min_quantity',
         'max_quantity',
+        'max_stock',
         'reorder_point',
+        'reorder_level',
         'reorder_quantity',
         'supplier',
+        'supplier_id',
         'supplier_contact',
         'last_purchase_date',
         'next_purchase_date',
@@ -64,9 +90,12 @@ class Inventory extends Model
         'quantity' => 'integer',
         'min_quantity' => 'integer',
         'max_quantity' => 'integer',
+        'max_stock' => 'integer',
         'reorder_point' => 'integer',
+        'reorder_level' => 'integer',
         'reorder_quantity' => 'integer',
         'unit_cost' => 'decimal:2',
+        'unit_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'specifications' => 'array',
         'images' => 'array',
@@ -83,6 +112,17 @@ class Inventory extends Model
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
+
+    // Relationships
+    public function category()
+    {
+        return $this->belongsTo(InventoryCategory::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(InventorySupplier::class);
+    }
 
     public function getCategoryName()
     {

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminAgentController;
 use App\Http\Controllers\Admin\AdminPropertyController;
 use App\Http\Controllers\Admin\AdminCompanyController;
+use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Content\BlogController;
 use App\Http\Controllers\Content\PageController;
@@ -192,18 +193,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/scheduled', [ReportController::class, 'scheduled'])->name('scheduled');
     });
     
-    // Settings - Temporarily disabled
-    /*
+    // Settings
     Route::prefix('settings')->name('settings.')->group(function () {
-        Route::get('/general', [SettingController::class, 'general'])->name('general');
-        Route::get('/seo', [SettingController::class, 'seo'])->name('seo');
-        Route::get('/security', [SettingController::class, 'security'])->name('security');
-        Route::get('/email', [SettingController::class, 'email'])->name('email');
-        Route::get('/payment', [SettingController::class, 'payment'])->name('payment');
-        Route::get('/backup', [SettingController::class, 'backup'])->name('backup');
-        Route::get('/maintenance', [SettingController::class, 'maintenance'])->name('maintenance');
+        Route::get('/', [AdminSettingsController::class, 'index'])->name('index');
+        Route::get('/general', [AdminSettingsController::class, 'index'])->defaults('tab', 'general')->name('general');
+        Route::get('/seo', [AdminSettingsController::class, 'index'])->defaults('tab', 'seo')->name('seo');
+        Route::get('/security', [AdminSettingsController::class, 'index'])->defaults('tab', 'security')->name('security');
+        Route::get('/email', [AdminSettingsController::class, 'index'])->defaults('tab', 'email')->name('email');
+        Route::get('/payment', [AdminSettingsController::class, 'index'])->defaults('tab', 'payment')->name('payment');
+        Route::get('/social', [AdminSettingsController::class, 'index'])->defaults('tab', 'social')->name('social');
+        Route::get('/backup', [AdminSettingsController::class, 'index'])->defaults('tab', 'backup')->name('backup');
+        Route::get('/maintenance', [AdminSettingsController::class, 'index'])->defaults('tab', 'maintenance')->name('maintenance');
     });
-    */
     
     // SEO Management
     Route::prefix('seo')->name('seo.')->group(function () {

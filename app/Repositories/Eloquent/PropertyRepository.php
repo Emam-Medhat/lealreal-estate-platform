@@ -536,4 +536,26 @@ class PropertyRepository extends BaseRepository implements PropertyRepositoryInt
                 ->get();
         }, ['properties'], 1800);
     }
+
+    /**
+     * Count properties by date.
+     *
+     * @param string $date
+     * @return int
+     */
+    public function countByDate(string $date): int
+    {
+        return $this->model->whereDate('created_at', $date)->count();
+    }
+
+    /**
+     * Count properties by status.
+     *
+     * @param string $status
+     * @return int
+     */
+    public function countByStatus(string $status): int
+    {
+        return $this->model->where('status', $status)->count();
+    }
 }

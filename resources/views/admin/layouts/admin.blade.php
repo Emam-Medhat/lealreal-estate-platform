@@ -25,15 +25,24 @@
         .nav-section button:hover i {
             color: currentColor !important;
         }
+
+        /* Global Link Styles */
+        a, a:hover, a:focus, a:active,
+        a *, a:hover *, a:focus *, a:active * {
+            color: #000000 !important;
+            text-decoration: none !important;
+            border-bottom: none !important;
+        }
     </style>
+    @stack('styles')
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <div class="flex">
         <!-- Sidebar -->
         @include('admin.partials.sidebar')
         
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
+        <main class="flex-1 overflow-y-auto flex flex-col">
             <!-- Top Bar -->
             <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
                 <div class="px-6 py-4">
@@ -93,9 +102,42 @@
             </header>
             
             <!-- Page Content -->
-            <div class="p-6">
+            <div class="p-6 flex-1">
                 @yield('content')
             </div>
+
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-100 py-6 px-8 mt-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            &copy; {{ date('Y') }} <span class="font-semibold text-gray-800">نظام إدارة العقارات</span>.
+                            <span class="hidden sm:inline text-gray-400 mx-1">|</span>
+                            <span class="text-xs text-gray-400">جميع الحقوق محفوظة</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-6 text-sm">
+                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-all flex items-center gap-2 hover:-translate-y-0.5">
+                            <i class="fas fa-headset text-xs"></i>
+                            <span>الدعم الفني</span>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-all flex items-center gap-2 hover:-translate-y-0.5">
+                            <i class="fas fa-shield-alt text-xs"></i>
+                            <span>الخصوصية</span>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-all flex items-center gap-2 hover:-translate-y-0.5">
+                            <i class="fas fa-file-contract text-xs"></i>
+                            <span>الشروط</span>
+                        </a>
+                        <div class="hidden md:block w-px h-4 bg-gray-200 mx-2"></div>
+                        <span class="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100">v2.0.0</span>
+                    </div>
+                </div>
+            </footer>
         </main>
     </div>
 

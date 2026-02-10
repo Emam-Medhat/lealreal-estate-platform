@@ -23,4 +23,6 @@ interface PropertyRepositoryInterface extends BaseRepositoryInterface
     public function getLatest(int $limit = 6, array $relations = []): Collection;
     public function getPopular(int $limit = 6, array $relations = []): Collection;
     public function getMarketMetrics(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, ?string $marketArea = null): array;
+    public function countByDate(string $date): int;
+    public function countByStatus(string $status): int;
 }

@@ -3,15 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Property;
+use App\Repositories\Contracts\PropertyRepositoryInterface;
 use Illuminate\Http\Request;
 
 class AdminPropertyController extends Controller
 {
+    protected $propertyRepository;
+
+    public function __construct(PropertyRepositoryInterface $propertyRepository)
+    {
+        $this->propertyRepository = $propertyRepository;
+    }
+
     public function index(Request $request)
     {
         try {
-            $properties = Property::with(['media', 'location', 'agent'])->latest()->paginate(20);
+            $properties = $this->propertyRepository->paginate(20, ['*'], ['media', 'location', 'agent']);
         } catch (\Exception $e) {
             // Fallback data
             $properties = collect([
@@ -105,10 +112,10 @@ class AdminPropertyController extends Controller
             // Generate unique property code
             $propertyCode = 'PROP-' . strtoupper(substr(md5(uniqid()), 0, 8));
             
-            // Generate slug from title
+            // Generate slug from title (optional, not stored in create array below but usually good practice)
             $slug = \Illuminate\Support\Str::slug($request->title) . '-' . strtolower(substr(md5(uniqid()), 0, 6));
 
-            Property::create([
+            $this->propertyRepository->create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'price' => $request->price,
@@ -144,7 +151,10 @@ class AdminPropertyController extends Controller
     public function show($id)
     {
         try {
-            $property = Property::findOrFail($id);
+            $property = $this->propertyRepository->find($id);
+            if (!$property) {
+                throw new \Exception('Property not found');
+            }
         } catch (\Exception $e) {
             // Fallback data
             $property = (object) [
@@ -166,7 +176,10 @@ class AdminPropertyController extends Controller
     public function edit($id)
     {
         try {
-            $property = Property::findOrFail($id);
+            $property = $this->propertyRepository->find($id);
+            if (!$property) {
+                throw new \Exception('Property not found');
+            }
         } catch (\Exception $e) {
             // Fallback data
             $property = (object) [
@@ -195,8 +208,7 @@ class AdminPropertyController extends Controller
         ]);
 
         try {
-            $property = Property::findOrFail($id);
-            $property->update([
+            $this->propertyRepository->update($id, [
                 'title' => $request->title,
                 'description' => $request->description,
                 'price' => $request->price,
@@ -215,8 +227,7 @@ class AdminPropertyController extends Controller
     public function destroy($id)
     {
         try {
-            $property = Property::findOrFail($id);
-            $property->delete();
+            $this->propertyRepository->deleteById($id);
 
             return redirect()->route('admin.properties.index')
                 ->with('success', 'Property deleted successfully');

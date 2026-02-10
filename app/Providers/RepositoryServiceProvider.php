@@ -12,6 +12,8 @@ use App\Repositories\Contracts\AdAnalyticsRepositoryInterface;
 use App\Repositories\Eloquent\AdAnalyticsRepository;
 use App\Repositories\Contracts\ServiceProviderRepositoryInterface;
 use App\Repositories\Eloquent\ServiceProviderRepository;
+use App\Repositories\Contracts\InvestorRepositoryInterface;
+use App\Repositories\Eloquent\InvestorRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -38,6 +40,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             CompanyRepositoryInterface::class,
             CompanyRepository::class
+        );
+        
+        $this->app->bind(
+            InvestorRepositoryInterface::class,
+            InvestorRepository::class
         );
 
         $this->app->bind(
