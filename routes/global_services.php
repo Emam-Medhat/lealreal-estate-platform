@@ -7,6 +7,7 @@ use App\Http\Controllers\Gamification\GamificationController;
 use App\Http\Controllers\Blockchain\BlockchainController;
 use App\Http\Controllers\Enterprise\EnterpriseController;
 use App\Http\Controllers\AI\AIController;
+use App\Http\Controllers\AI\ChatbotController;
 
 // Currency Routes
 Route::prefix('api/currency')->name('currency.')->group(function () {
@@ -77,7 +78,7 @@ Route::prefix('api/ai')->name('ai.')->group(function () {
     Route::post('/analyze-behavior', [AIController::class, 'analyzeBehavior'])->name('analyze_behavior');
     Route::post('/optimize-pricing', [AIController::class, 'optimizePricing'])->name('optimize_pricing');
     Route::post('/generate-report', [AIController::class, 'generateMarketReport'])->name('generate_report');
-    Route::post('/chat', [AIController::class, 'chat'])->name('chat');
+    Route::post('/chat', [ChatbotController::class, 'chat'])->name('chat');
 });
 
 // Web Routes for Views
@@ -104,13 +105,17 @@ Route::middleware(['auth'])->group(function () {
         $contracts = \App\Models\SmartContract::with(['deployer'])->get();
         $nfts = \App\Models\NFT::with(['property'])->get();
         $properties = \App\Models\Property::all();
-        
+
         return view('blockchain.dashboard', [
-            'statistics' => $statistics['statistics'] ?? [],
+            'stats' => $statistics['statistics'] ?? [],
             'contracts' => $contracts,
             'nfts' => $nfts,
             'properties' => $properties
         ]);
+    })->name('blockchain.index');
+
+    Route::get('/blockchain/dashboard', function () {
+        return redirect()->route('blockchain.index');
     })->name('blockchain.dashboard');
 
     // Enterprise
@@ -120,6 +125,10 @@ Route::middleware(['auth'])->group(function () {
 
     // AI
     Route::get('/ai', function () {
+        return view('ai.dashboard');
+    })->name('ai.index');
+
+    Route::get('/ai/dashboard', function () {
         return view('ai.dashboard');
     })->name('ai.dashboard');
 });

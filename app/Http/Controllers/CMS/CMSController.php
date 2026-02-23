@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
+use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -16,7 +17,7 @@ class CMSController extends Controller
                 'total_posts' => DB::table('blog_posts')->count(),
                 'published_posts' => DB::table('blog_posts')->where('status', 'published')->count(),
                 'total_menus' => DB::table('menus')->count(),
-                'media_files' => DB::table('media_files')->count(),
+                'media_files' => MediaFile::count(),
                 'total_views' => DB::table('blog_posts')->sum('view_count')
             ];
 
@@ -121,23 +122,20 @@ class CMSController extends Controller
     public function mediaLibrary()
     {
         try {
-            $mediaFiles = DB::table('media_files')
-                ->leftJoin('users', 'media_files.uploaded_by', '=', 'users.id')
-                ->select('media_files.*', DB::raw('CONCAT(users.first_name, " ", users.last_name) as uploader_name'))
-                ->orderBy('media_files.created_at', 'desc')
+            $mediaFiles = MediaFile::with('uploader')
+                ->orderBy('created_at', 'desc')
                 ->paginate(24);
 
             $stats = [
-                'total_files' => DB::table('media_files')->count(),
-                'images' => DB::table('media_files')->where('file_type', 'image')->count(),
-                'videos' => DB::table('media_files')->where('file_type', 'video')->count(),
-                'documents' => DB::table('media_files')->where('file_type', 'document')->count(),
-                'total_size' => DB::table('media_files')->sum('file_size'),
-                'public_files' => DB::table('media_files')->where('is_public', true)->count()
+                'total_files' => MediaFile::count(),
+                'images' => MediaFile::where('type', 'image')->count(),
+                'videos' => MediaFile::where('type', 'video')->count(),
+                'documents' => MediaFile::where('type', 'document')->count(),
+                'total_size' => MediaFile::sum('file_size'),
+                // 'public_files' => MediaFile::where('is_public', true)->count() // Assuming is_public exists or we skip it
             ];
 
-            $categories = DB::table('media_files')
-                ->whereNotNull('category')
+            $categories = MediaFile::whereNotNull('category')
                 ->select('category', DB::raw('count(*) as count'))
                 ->groupBy('category')
                 ->get();
@@ -152,7 +150,7 @@ class CMSController extends Controller
                     'videos' => 0,
                     'documents' => 0,
                     'total_size' => 0,
-                    'public_files' => 0
+                    // 'public_files' => 0
                 ],
                 'categories' => collect()
             ]);

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LeadApiController;
 use App\Http\Controllers\Api\PropertyApiController;
 use App\Http\Controllers\RealTimeDashboardController;
+use App\Http\Controllers\Currency\CurrencyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +51,15 @@ Route::prefix('api/v1')->middleware(['api', 'auth:api'])->group(function () {
     Route::get('/dashboard/realtime/security', [RealTimeDashboardController::class, 'securityFeed']);
     Route::get('/dashboard/realtime/iot', [RealTimeDashboardController::class, 'iotStatus']);
 
+    // Currency API Routes
+    Route::post('/currency/convert', [CurrencyController::class, 'convert']);
+    Route::get('/currency/rates', [CurrencyController::class, 'getRates']);
+    Route::get('/currency/history', [CurrencyController::class, 'getHistory']);
+    Route::get('/currency/statistics', [CurrencyController::class, 'getStatistics']);
+    Route::post('/currency/update-rates', [CurrencyController::class, 'updateRates']);
+    Route::post('/currency/set-preferred', [CurrencyController::class, 'setPreferredCurrency']);
+    Route::get('/currency/supported', [CurrencyController::class, 'getSupported']);
+
     Route::get('/stats', function () {
         return response()->json([
             'message' => 'API is running',
@@ -63,4 +73,44 @@ Route::prefix('api/v1')->middleware(['api', 'auth:api'])->group(function () {
 // IoT Device Routes (Device Authentication)
 Route::prefix('api/v1/iot')->middleware(['api'])->group(function () {
     Route::post('ingest', [\App\Http\Controllers\Api\IotIngestionController::class, 'ingest']);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI System Routes
+// ─────────────────────────────────────────────────────────────────────────────
+
+Route::prefix('api/ai')->middleware(['api'])->group(function () {
+
+    // 1. Smart Search (Natural Language)
+    Route::post('search', [\App\Http\Controllers\AI\SmartSearchController::class, 'search'])
+        ->middleware('throttle:20,1'); // 20 req/min
+
+    // 2. Recommendations
+    Route::get('recommendations', [\App\Http\Controllers\AI\RecommendationController::class, 'forUser'])
+        ->middleware('auth:api');
+
+    Route::get('recommendations/{id}/similar', [\App\Http\Controllers\AI\RecommendationController::class, 'similar']);
+
+    // 3. Price Prediction
+    Route::post('price-prediction', [\App\Http\Controllers\AI\PricePredictionController::class, 'predict'])
+        ->middleware('throttle:200,60'); // 200 req/hour ≈ 3/min
+
+    Route::post('price-prediction/property/{id}', [\App\Http\Controllers\AI\PricePredictionController::class, 'predictForProperty'])
+        ->middleware('throttle:200,60');
+
+    // 4. AI Chatbot
+    Route::post('chat', [\App\Http\Controllers\AI\ChatbotController::class, 'chat'])
+        ->middleware('throttle:10,1'); // 10 req/min
+
+    Route::delete('chat/{sid}', [\App\Http\Controllers\AI\ChatbotController::class, 'clearSession']);
+
+    // 5. Image Analysis
+    Route::post('images/analyze', [\App\Http\Controllers\AI\ImageAnalysisController::class, 'upload'])
+        ->middleware(['auth:api', 'throttle:100,60']); // 100 req/hour
+
+    Route::get('images/{id}/result', [\App\Http\Controllers\AI\ImageAnalysisController::class, 'result']);
+
+    // Admin only
+    Route::post('images/analyze-url', [\App\Http\Controllers\AI\ImageAnalysisController::class, 'analyzeUrl'])
+        ->middleware(['auth:api', 'throttle:100,60', 'admin']);
 });

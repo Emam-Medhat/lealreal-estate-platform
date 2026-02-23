@@ -558,4 +558,9 @@ class PropertyRepository extends BaseRepository implements PropertyRepositoryInt
     {
         return $this->model->where('status', $status)->count();
     }
+
+    public function getAllCompanies(): Collection
+    {
+        return \App\Models\Company::has('properties')->get();
+    }
 }

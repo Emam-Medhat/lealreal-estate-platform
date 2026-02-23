@@ -1,252 +1,421 @@
-@extends('layouts.app')
+@extends('admin.layouts.admin')
 
-@section('title', 'إنشاء تقرير جديد')
+@section('title', 'إنشاء تقرير مبيعات جديد')
+@section('page-title', 'إنشاء تقرير مبيعات جديد')
 
 @section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-3">إنشاء تقرير جديد</h2>
-                    <p class="text-muted">اختر نوع التقرير وحدد المعلمات المطلوبة</p>
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div
+            class="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-3xl shadow-2xl p-8 text-white relative overflow-hidden">
+            <!-- Animated Background Pattern -->
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -mr-48 -mt-48 animate-pulse"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full -ml-32 -mb-32 animate-pulse"
+                    style="animation-delay: 1s;"></div>
+                <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-yellow-300 rounded-full -ml-24 -mt-24 animate-pulse"
+                    style="animation-delay: 2s;"></div>
+            </div>
+
+            <!-- Grid Pattern Overlay -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="h-full w-full"
+                    style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 50px 50px;">
                 </div>
-                <div>
-                    <a href="{{ route('reports.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> العودة
-                    </a>
+            </div>
+
+            <div class="relative z-10">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <div
+                                class="bg-white bg-opacity-25 rounded-2xl p-4 ml-4 backdrop-blur-sm border border-white border-opacity-40 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                                <i class="fas fa-file-alt text-white text-3xl"></i>
+                            </div>
+                            <div>
+                                <h1
+                                    class="text-5xl font-black text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-200">
+                                    إنشاء تقرير مبيعات جديد</h1>
+                                <p class="text-white text-xl font-medium">اختر نوع التقرير وحدد المعلمات المطلوبة</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <a href="{{ route('reports.sales.index') }}"
+                            class="bg-white bg-opacity-25 backdrop-blur-sm border border-white border-opacity-40 text-white px-6 py-3 rounded-xl font-medium hover:bg-white hover:bg-opacity-30 transition-all duration-300 shadow-lg">
+                            <i class="fas fa-arrow-left ml-2"></i>
+                            العودة
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <form method="POST" action="{{ route('reports.store') }}" id="reportForm">
+    <!-- Form Content -->
+    <form method="POST" action="{{ route('reports.sales.store') }}" id="reportForm" class="space-y-8">
         @csrf
-        <div class="row">
-            <!-- Basic Information -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">المعلومات الأساسية</h5>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Basic Information Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <i class="fas fa-info-circle ml-3"></i>
+                            المعلومات الأساسية
+                        </h3>
                     </div>
-                    <div class="card-body">
-                        <div class="form-group mb-3">
-                            <label for="title" class="form-label">عنوان التقرير <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('title') is-invalid @enderror" 
-                                   id="title" name="title" value="{{ old('title') }}" required>
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                                عنوان التقرير <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-300 @error('title') border-red-500 @enderror"
+                                id="title" name="title" value="{{ old('title') }}" placeholder="أدخل عنوان التقرير..."
+                                required>
                             @error('title')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle ml-1"></i>
+                                    {{ $message }}
+                                </div>
                             @enderror
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="description" class="form-label">الوصف</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                        <div>
+                            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                الوصف
+                            </label>
+                            <textarea
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-300 resize-none @error('description') border-red-500 @enderror"
+                                id="description" name="description" rows="4"
+                                placeholder="أدخل وصف التقرير...">{{ old('description') }}</textarea>
                             @error('description')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle ml-1"></i>
+                                    {{ $message }}
+                                </div>
                             @enderror
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="template_id" class="form-label">قالب التقرير <span class="text-danger">*</span></label>
-                            <select class="form-control @error('template_id') is-invalid @enderror" 
-                                    id="template_id" name="template_id" required>
+                        <div>
+                            <label for="template_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                قالب التقرير <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-300 @error('template_id') border-red-500 @enderror"
+                                id="template_id" name="template_id" required>
                                 <option value="">اختر قالب...</option>
-                                @foreach($templates as $template)
-                                    <option value="{{ $template->id }}" 
-                                            {{ old('template_id') == $template->id ? 'selected' : '' }}>
+                                @foreach($templates ?? [] as $template)
+                                    <option value="{{ $template->id }}" {{ old('template_id') == $template->id ? 'selected' : '' }}>
                                         {{ $template->name }} - {{ ucfirst($template->type) }}
                                     </option>
                                 @endforeach
                             </select>
                             @error('template_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle ml-1"></i>
+                                    {{ $message }}
+                                </div>
                             @enderror
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="format" class="form-label">التنسيق <span class="text-danger">*</span></label>
-                            <select class="form-control @error('format') is-invalid @enderror" 
-                                    id="format" name="format" required>
+                        <div>
+                            <label for="format" class="block text-sm font-semibold text-gray-700 mb-2">
+                                التنسيق <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-300 @error('format') border-red-500 @enderror"
+                                id="format" name="format" required>
                                 <option value="pdf" {{ old('format') == 'pdf' ? 'selected' : '' }}>PDF</option>
                                 <option value="excel" {{ old('format') == 'excel' ? 'selected' : '' }}>Excel</option>
                                 <option value="csv" {{ old('format') == 'csv' ? 'selected' : '' }}>CSV</option>
                                 <option value="html" {{ old('format') == 'html' ? 'selected' : '' }}>HTML</option>
                             </select>
                             @error('format')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle ml-1"></i>
+                                    {{ $message }}
+                                </div>
                             @enderror
                         </div>
                     </div>
                 </div>
 
-                <!-- Date Range -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">نطاق التاريخ</h5>
+                <!-- Date Range Section -->
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-4">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <i class="fas fa-calendar-alt ml-3"></i>
+                            نطاق التاريخ
+                        </h3>
                     </div>
-                    <div class="card-body">
-                        <div class="form-group mb-3">
-                            <label for="date_range_start" class="form-label">من تاريخ</label>
-                            <input type="date" class="form-control @error('date_range.start') is-invalid @enderror" 
-                                   id="date_range_start" name="date_range[start]" value="{{ old('date_range.start') }}">
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <label for="date_range_start" class="block text-sm font-semibold text-gray-700 mb-2">
+                                من تاريخ
+                            </label>
+                            <input type="date"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-500 focus:border-transparent text-lg transition-all duration-300 @error('date_range.start') border-red-500 @enderror"
+                                id="date_range_start" name="date_range[start]" value="{{ old('date_range.start') }}">
                             @error('date_range.start')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle ml-1"></i>
+                                    {{ $message }}
+                                </div>
                             @enderror
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="date_range_end" class="form-label">إلى تاريخ</label>
-                            <input type="date" class="form-control @error('date_range.end') is-invalid @enderror" 
-                                   id="date_range_end" name="date_range[end]" value="{{ old('date_range.end') }}">
+                        <div>
+                            <label for="date_range_end" class="block text-sm font-semibold text-gray-700 mb-2">
+                                إلى تاريخ
+                            </label>
+                            <input type="date"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-500 focus:border-transparent text-lg transition-all duration-300 @error('date_range.end') border-red-500 @enderror"
+                                id="date_range_end" name="date_range[end]" value="{{ old('date_range.end') }}">
                             @error('date_range.end')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle ml-1"></i>
+                                    {{ $message }}
+                                </div>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <div class="btn-group w-100" role="group">
-                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">اليوم</button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">هذا الأسبوع</button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">هذا الشهر</button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('quarter')">هذا الربع</button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('year')">هذا العام</button>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">اختيار سريع</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" onclick="setDateRange('today')"
+                                    class="px-3 py-2 bg-gray-100 hover:bg-green-100 hover:text-green-700 rounded-lg text-sm font-medium transition-all duration-300">
+                                    اليوم
+                                </button>
+                                <button type="button" onclick="setDateRange('week')"
+                                    class="px-3 py-2 bg-gray-100 hover:bg-green-100 hover:text-green-700 rounded-lg text-sm font-medium transition-all duration-300">
+                                    هذا الأسبوع
+                                </button>
+                                <button type="button" onclick="setDateRange('month')"
+                                    class="px-3 py-2 bg-gray-100 hover:bg-green-100 hover:text-green-700 rounded-lg text-sm font-medium transition-all duration-300">
+                                    هذا الشهر
+                                </button>
+                                <button type="button" onclick="setDateRange('quarter')"
+                                    class="px-3 py-2 bg-gray-100 hover:bg-green-100 hover:text-green-700 rounded-lg text-sm font-medium transition-all duration-300">
+                                    هذا الربع
+                                </button>
+                                <button type="button" onclick="setDateRange('year')"
+                                    class="px-3 py-2 bg-gray-100 hover:bg-green-100 hover:text-green-700 rounded-lg text-sm font-medium transition-all duration-300 col-span-2">
+                                    هذا العام
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Advanced Options -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">خيارات متقدمة</h5>
+            <!-- Advanced Options Section -->
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <i class="fas fa-sliders-h ml-3"></i>
+                            خيارات متقدمة
+                        </h3>
                     </div>
-                    <div class="card-body">
-                        <!-- Filters -->
-                        <div class="mb-4">
-                            <h6>الفلاتر</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="property_type" class="form-label">نوع العقار</label>
-                                        <select class="form-control" id="property_type" name="filters[property_type]">
-                                            <option value="">الكل</option>
-                                            <option value="apartment">شقة</option>
-                                            <option value="house">منزل</option>
-                                            <option value="villa">فيلا</option>
-                                            <option value="land">أرض</option>
-                                            <option value="commercial">تجاري</option>
-                                        </select>
-                                    </div>
+                    <div class="p-6 space-y-8">
+                        <!-- Filters Section -->
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-filter ml-2 text-purple-500"></i>
+                                الفلاتر
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="property_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        نوع العقار
+                                    </label>
+                                    <select
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent text-lg transition-all duration-300"
+                                        id="property_type" name="filters[property_type]">
+                                        <option value="">الكل</option>
+                                        <option value="apartment">شقة</option>
+                                        <option value="house">منزل</option>
+                                        <option value="villa">فيلا</option>
+                                        <option value="land">أرض</option>
+                                        <option value="commercial">تجاري</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="status" class="form-label">الحالة</label>
-                                        <select class="form-control" id="status" name="filters[status]">
-                                            <option value="">الكل</option>
-                                            <option value="active">نشط</option>
-                                            <option value="sold">مباع</option>
-                                            <option value="pending">في الانتظار</option>
-                                            <option value="inactive">غير نشط</option>
-                                        </select>
-                                    </div>
+                                <div>
+                                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        الحالة
+                                    </label>
+                                    <select
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent text-lg transition-all duration-300"
+                                        id="status" name="filters[status]">
+                                        <option value="">الكل</option>
+                                        <option value="pending">قيد الانتظار</option>
+                                        <option value="approved">مقبول</option>
+                                        <option value="rejected">مرفوض</option>
+                                        <option value="completed">مكتمل</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="min_price" class="form-label">الحد الأدنى للسعر</label>
-                                        <input type="number" class="form-control" id="min_price" name="filters[min_price]" 
-                                               placeholder="0" step="0.01">
-                                    </div>
+                                <div>
+                                    <label for="agent_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        الوكيل
+                                    </label>
+                                    <select
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent text-lg transition-all duration-300"
+                                        id="agent_id" name="filters[agent_id]">
+                                        <option value="">الكل</option>
+                                        @foreach($agents ?? [] as $agent)
+                                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="max_price" class="form-label">الحد الأقصى للسعر</label>
-                                        <input type="number" class="form-control" id="max_price" name="filters[max_price]" 
-                                               placeholder="0" step="0.01">
-                                    </div>
+                                <div>
+                                    <label for="min_price" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        الحد الأدنى للسعر
+                                    </label>
+                                    <input type="number"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent text-lg transition-all duration-300"
+                                        id="min_price" name="filters[min_price]" placeholder="0">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Parameters (Template-specific) -->
                         <div class="mb-4">
-                            <h6>المعلمات</h6>
-                            <div id="templateParameters">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-cog ml-2 text-purple-500"></i>
+                                المعلمات المتغيرة
+                            </h4>
+                            <div id="templateParameters"
+                                class="p-4 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 transition-all duration-300">
                                 <!-- Dynamic parameters will be loaded here based on selected template -->
-                                <div class="text-muted">
-                                    <i class="fas fa-info-circle"></i> اختر قالب لعرض المعلمات المتاحة
+                                <div class="text-center py-4 text-gray-500 italic">
+                                    <i class="fas fa-info-circle ml-2"></i> اختر قالب لعرض المعلمات المتاحة
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Fields Section -->
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-database ml-2 text-purple-500"></i>
+                                حقول البيانات
+                            </h4>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <label
+                                    class="flex items-center space-x-3 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="fields[]" value="property_address"
+                                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" checked>
+                                    <span class="text-sm font-medium">عنوان العقار</span>
+                                </label>
+                                <label
+                                    class="flex items-center space-x-3 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="fields[]" value="client_name"
+                                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" checked>
+                                    <span class="text-sm font-medium">اسم العميل</span>
+                                </label>
+                                <label
+                                    class="flex items-center space-x-3 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="fields[]" value="sale_price"
+                                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" checked>
+                                    <span class="text-sm font-medium">سعر البيع</span>
+                                </label>
+                                <label
+                                    class="flex items-center space-x-3 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="fields[]" value="commission"
+                                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm font-medium">العمولة</span>
+                                </label>
+                                <label
+                                    class="flex items-center space-x-3 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="fields[]" value="sale_date"
+                                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" checked>
+                                    <span class="text-sm font-medium">تاريخ البيع</span>
+                                </label>
+                                <label
+                                    class="flex items-center space-x-3 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="fields[]" value="agent_name"
+                                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm font-medium">اسم الوكيل</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Sorting Section -->
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-sort ml-2 text-purple-500"></i>
+                                الترتيب
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="sort_by" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        ترتيب حسب
+                                    </label>
+                                    <select
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent text-lg transition-all duration-300"
+                                        id="sort_by" name="sort_by">
+                                        <option value="sale_date">تاريخ البيع</option>
+                                        <option value="sale_price">سعر البيع</option>
+                                        <option value="property_address">عنوان العقار</option>
+                                        <option value="client_name">اسم العميل</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="sort_order" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        ترتيب
+                                    </label>
+                                    <select
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent text-lg transition-all duration-300"
+                                        id="sort_order" name="sort_order">
+                                        <option value="desc">تنازلي</option>
+                                        <option value="asc">تصاعدي</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Additional Options -->
-                        <div class="mb-4">
-                            <h6>خيارات إضافية</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="include_charts" 
-                                               name="parameters[include_charts]" value="1" checked>
-                                        <label class="form-check-label" for="include_charts">
-                                            تضمين الرسوم البيانية
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="include_details" 
-                                               name="parameters[include_details]" value="1" checked>
-                                        <label class="form-check-label" for="include_details">
-                                            تضمين التفاصيل الكاملة
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="include_summary" 
-                                               name="parameters[include_summary]" value="1" checked>
-                                        <label class="form-check-label" for="include_summary">
-                                            تضمين الملخص التنفيذي
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="include_recommendations" 
-                                               name="parameters[include_recommendations]" value="1">
-                                        <label class="form-check-label" for="include_recommendations">
-                                            تضمين التوصيات
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="include_forecasts" 
-                                               name="parameters[include_forecasts]" value="1">
-                                        <label class="form-check-label" for="include_forecasts">
-                                            تضمين التنبؤات
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="include_comparisons" 
-                                               name="parameters[include_comparisons]" value="1">
-                                        <label class="form-check-label" for="include_comparisons">
-                                            تضمين المقارنات
-                                        </label>
-                                    </div>
-                                </div>
+                        <div class="space-y-4 pt-4 border-t border-gray-100">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-plus-circle ml-2 text-purple-500"></i>
+                                خيارات إضافية
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label class="flex items-center space-x-3 space-x-reverse cursor-pointer">
+                                    <input type="checkbox" name="parameters[include_charts]" value="1" checked
+                                        class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm font-medium">تضمين الرسوم البيانية</span>
+                                </label>
+                                <label class="flex items-center space-x-3 space-x-reverse cursor-pointer">
+                                    <input type="checkbox" name="parameters[include_details]" value="1" checked
+                                        class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm font-medium">تضمين التفاصيل الكاملة</span>
+                                </label>
+                                <label class="flex items-center space-x-3 space-x-reverse cursor-pointer">
+                                    <input type="checkbox" name="parameters[include_summary]" value="1" checked
+                                        class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm font-medium">تضمين الملخص التنفيذي</span>
+                                </label>
+                                <label class="flex items-center space-x-3 space-x-reverse cursor-pointer">
+                                    <input type="checkbox" name="parameters[include_recommendations]" value="1"
+                                        class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm font-medium">تضمين التوصيات</span>
+                                </label>
                             </div>
                         </div>
 
                         <!-- Preview Section -->
-                        <div class="mb-4">
-                            <h6>معاينة التقرير</h6>
-                            <div class="border rounded p-3 bg-light">
-                                <div class="text-center">
-                                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">سيتم عرض معاينة التقرير في نافذة منبثقة</p>
-                                    <button type="button" class="btn btn-outline-primary" onclick="previewReport()">
-                                        <i class="fas fa-eye"></i> معاينة التقرير
-                                    </button>
-                                </div>
+                        <div class="pt-6 border-t border-gray-100 text-center">
+                            <div class="bg-gray-50 rounded-2xl p-8 border-2 border-dashed border-gray-200">
+                                <i class="fas fa-file-invoice fa-4xl text-gray-300 mb-4 block"></i>
+                                <p class="text-gray-600 mb-6">يمكنك مشاهدة صورة تقديرية للتقرير قبل الحفظ النهائي</p>
+                                <button type="button" onclick="previewReport()"
+                                    class="px-8 py-4 bg-white border-2 border-blue-500 text-blue-600 rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-lg flex items-center mx-auto">
+                                    <i class="fas fa-eye ml-2 text-xl"></i>
+                                    معاينة التقرير التقديرية
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -254,900 +423,405 @@
             </div>
         </div>
 
-        <!-- Submit Buttons -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> إنشاء التقرير
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary ms-2" onclick="saveAsDraft()">
-                                    <i class="fas fa-save"></i> حفظ كمسودة
-                                </button>
-                            </div>
-                            <div>
-                                <button type="button" class="btn btn-outline-info" onclick="scheduleReport()">
-                                    <i class="fas fa-calendar-alt"></i> جدولة التقرير
-                                </button>
-                                <a href="{{ route('reports.index') }}" class="btn btn-secondary ms-2">
-                                    <i class="fas fa-times"></i> إلغاء
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Action Buttons -->
+        <div
+            class="flex flex-wrap justify-end items-center gap-4 bg-white p-6 rounded-3xl shadow-xl border border-gray-100 mt-8">
+            <button type="button" onclick="scheduleReport()"
+                class="px-8 py-4 bg-white border border-blue-200 text-blue-600 rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-sm flex items-center">
+                <i class="fas fa-calendar-alt ml-2"></i>
+                جدولة التقرير
+            </button>
+            <button type="button" onclick="saveAsDraft()"
+                class="px-8 py-4 bg-white border border-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 transition-all duration-300 shadow-sm flex items-center">
+                <i class="fas fa-save ml-2"></i>
+                حفظ كمسودة
+            </button>
+            <div class="w-px h-10 bg-gray-200 mx-2 hidden md:block"></div>
+            <a href="{{ route('reports.sales.index') }}"
+                class="px-8 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-all duration-300">
+                إلغاء
+            </a>
+            <button type="submit"
+                class="px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center">
+                <i class="fas fa-plus ml-2 text-xl"></i>
+                إنشاء التقرير الآن
+            </button>
         </div>
     </form>
-</div>
 @endsection
 
 @push('styles')
-<style>
-    .card {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        border: 1px solid rgba(0, 0, 0, 0.125);
-    }
-    
-    .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-    }
-    
-    .btn-group .btn {
-        margin: 0 1px;
-    }
-    
-    .form-check {
-        margin-bottom: 0.5rem;
-    }
-    
-    .border {
-        border: 1px solid #dee2e6 !important;
-    }
-    
-    .bg-light {
-        background-color: #f8f9fa !important;
-    }
-    
-    /* Custom Modal Styles */
-    .custom-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.85);
-        z-index: 999999; /* Increased z-index */
-        overflow-x: hidden;
-        overflow-y: auto;
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-    }
-    
-    .custom-modal.show {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    @keyframes slideIn {
-        from { 
-            transform: scale(0.8) translateY(-50px);
-            opacity: 0;
+    <style>
+        /* Custom Modal Styles */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 999999;
+            overflow-x: hidden;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
-        to { 
-            transform: scale(1) translateY(0);
-            opacity: 1;
+
+        .custom-modal.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
         }
-    }
-    
-    .custom-modal-dialog {
-        position: relative;
-        width: 90%;
-        max-width: 800px;
-        margin: 0;
-        animation: slideIn 0.3s ease-out;
-        z-index: 100000;
-    }
-    
-    .custom-modal-content {
-        background-color: #fff;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        position: relative;
-        z-index: 100001;
-    }
-    
-    .custom-modal-header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid #dee2e6;
-        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-        color: white;
-        border-radius: 16px 16px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-        z-index: 100002;
-    }
-    
-    .custom-modal-header h5 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-    
-    .custom-modal-body {
-        padding: 2.5rem;
-        max-height: 60vh;
-        overflow-y: auto;
-        background-color: #fff;
-        position: relative;
-        z-index: 100002;
-    }
-    
-    .custom-modal-footer {
-        padding: 1.5rem 2rem;
-        border-top: 1px solid #dee2e6;
-        background-color: #f8f9fa;
-        border-radius: 0 0 16px 16px;
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        position: relative;
-        z-index: 100002;
-    }
-    
-    .spinner-border {
-        display: inline-block;
-        width: 4rem;
-        height: 4rem;
-        border: 0.4em solid rgba(13, 110, 253, 0.25);
-        border-right-color: #0d6efd;
-        border-radius: 50%;
-        animation: spinner-border 1s linear infinite;
-    }
-    
-    @keyframes spinner-border {
-        to { transform: rotate(360deg); }
-    }
-    
-    .text-center { text-align: center; }
-    .mt-3 { margin-top: 1rem; }
-    .mb-2 { margin-bottom: 0.5rem; }
-    .me-2 { margin-right: 0.5rem; }
-    .py-5 { padding-top: 3rem; padding-bottom: 3rem; }
-    .btn-close { 
-        background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='m.235.867 8.832 8.832L8.832 8.068.235.235 8.068 8.068 8.832 8.832 8.832 8.068 8.832-.235-.235-8.832-8.832z'/%3e%3c/svg%3e") center/1.25em auto no-repeat; 
-        border: 0; 
-        border-radius: 0.375rem; 
-        opacity: 0.8; 
-        width: 2em; 
-        height: 2em;
-        cursor: pointer;
-        transition: all 0.2s;
-        padding: 0.5rem;
-    }
-    
-    .btn-close:hover {
-        opacity: 1;
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 0.5rem;
-    }
-    
-    /* Ensure modal is completely on top */
-    .custom-modal.show {
-        backdrop-filter: blur(8px);
-        isolation: isolate;
-    }
-    
-    /* Prevent scrolling on body when modal is open */
-    body.modal-open {
-        overflow: hidden;
-    }
-    
-    /* Responsive design */
-    @media (max-width: 768px) {
+
+        @keyframes slideIn {
+            from {
+                transform: scale(0.8) translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
         .custom-modal-dialog {
-            width: 95%;
-            margin: 1rem;
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            margin: 1.75rem auto;
+            animation: slideIn 0.3s ease-out;
         }
-        
+
+        .custom-modal-content {
+            background-color: #fff;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-modal-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .custom-modal-body {
             padding: 2rem;
+            max-height: 70vh;
+            overflow-y: auto;
         }
-        
-        .custom-modal-header {
-            padding: 1.25rem 1.5rem;
-        }
-        
+
         .custom-modal-footer {
-            padding: 1.25rem 1.5rem;
-            flex-direction: column;
+            padding: 1.5rem 2rem;
+            background-color: #f9fafb;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
         }
-        
-        .custom-modal-footer button {
-            width: 100%;
-            margin-bottom: 0.5rem;
+
+        .spinner-border {
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            border: 0.3em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
         }
-    }
-</style>
+
+        @keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn-close {
+            background: transparent;
+            border: 0;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
+        }
+
+        /* Transitions */
+        .modal-open {
+            overflow: hidden;
+        }
+    </style>
 @endpush
 
-<script>
-// Global error handler
-window.addEventListener('error', function(event) {
-    console.error('Global error:', event.error);
-    showErrorNotification('حدث خطأ غير متوقع: ' + event.error.message);
-});
-
-// Global unhandled promise rejection handler
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('Unhandled promise rejection:', event.reason);
-    showErrorNotification('حدث خطأ في طلب البيانات: ' + event.reason.message);
-});
-
-// Function to show error notifications
-function showErrorNotification(message) {
-    // Remove existing notifications
-    const existingNotifications = document.querySelectorAll('.error-notification');
-    existingNotifications.forEach(notif => notif.remove());
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'error-notification';
-    notification.innerHTML = `
-        <div class="alert alert-danger alert-dismissible fade show position-fixed" 
-             style="top: 20px; right: 20px; z-index: 99999; min-width: 300px; max-width: 500px;">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>خطأ:</strong> ${message}
-            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
+@push('scripts')
+    <script>
+        // Notification UI helpers
+        function showErrorNotification(message) {
+            createToast(message, 'bg-red-600');
         }
-    }, 5000);
-}
 
-// Function to show success notifications
-function showSuccessNotification(message) {
-    // Remove existing notifications
-    const existingNotifications = document.querySelectorAll('.success-notification');
-    existingNotifications.forEach(notif => notif.remove());
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'success-notification';
-    notification.innerHTML = `
-        <div class="alert alert-success alert-dismissible fade show position-fixed" 
-             style="top: 20px; right: 20px; z-index: 99999; min-width: 300px; max-width: 500px;">
-            <i class="fas fa-check-circle me-2"></i>
-            <strong>نجاح:</strong> ${message}
-            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
+        function showSuccessNotification(message) {
+            createToast(message, 'bg-green-600');
         }
-    }, 3000);
-}
 
-// Function to show info notifications
-function showInfoNotification(message) {
-    // Remove existing notifications
-    const existingNotifications = document.querySelectorAll('.info-notification');
-    existingNotifications.forEach(notif => notif.remove());
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'info-notification';
-    notification.innerHTML = `
-        <div class="alert alert-info alert-dismissible fade show position-fixed" 
-             style="top: 20px; right: 20px; z-index: 99999; min-width: 300px; max-width: 500px;">
-            <i class="fas fa-info-circle me-2"></i>
-            <strong>معلومات:</strong> ${message}
-            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 4 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
+        function showInfoNotification(message) {
+            createToast(message, 'bg-blue-600');
         }
-    }, 4000);
-}
 
-// Enhanced fetch wrapper with error handling
-function safeFetch(url, options = {}) {
-    return fetch(url, options)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            return response.text().then(text => {
+        function createToast(message, bgColor) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-5 right-5 z-[1000000] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 space-x-reverse transition-all duration-500 transform translate-x-full ${bgColor}`;
+            toast.innerHTML = `
+            <i class="fas fa-bell"></i>
+            <span class="font-bold">${message}</span>
+            <button onclick="this.parentElement.remove()" class="mr-4 hover:opacity-75"><i class="fas fa-times"></i></button>
+        `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.style.transform = 'translateX(0)', 100);
+            setTimeout(() => {
+                toast.style.transform = 'translateX(full)';
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // Enhanced Fetch Manager
+        const FetchManager = {
+            async safeFetch(url, options = {}) {
                 try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    throw new Error('Invalid JSON response from server');
-                }
-            });
-        })
-        .catch(error => {
-            showErrorNotification('فشل الاتصال بالخادم: ' + error.message);
-            throw error;
-        });
-}
-
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Load template parameters
-    const templateSelect = document.getElementById('template_id');
-    if (templateSelect) {
-        templateSelect.addEventListener('change', function() {
-            const templateId = this.value;
-            const parametersDiv = document.getElementById('templateParameters');
-            
-            if (templateId) {
-                showInfoNotification('جاري تحميل معلمات القالب...');
-                
-                safeFetch(`/reports/sales/templates/${templateId}/parameters`)
-                    .then(data => {
-                        if (data.success) {
-                            parametersDiv.innerHTML = data.html;
-                            showSuccessNotification('تم تحميل معلمات القالب بنجاح');
-                        } else {
-                            parametersDiv.innerHTML = '<div class="text-danger">فشل تحميل المعلمات</div>';
-                            showErrorNotification('فشل تحميل المعلمات: ' + (data.message || 'خطأ غير معروف'));
+                    const response = await fetch(url, {
+                        ...options,
+                        headers: {
+                            ...options.headers,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
                         }
-                    })
-                    .catch(error => {
-                        parametersDiv.innerHTML = '<div class="text-warning">تعذر تحميل المعلمات. يرجى المحاولة مرة أخرى.</div>';
                     });
-            } else {
-                parametersDiv.innerHTML = '<div class="text-muted"><i class="fas fa-info-circle"></i> اختر قالب لعرض المعلمات المتاحة</div>';
+
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                    return data;
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    showErrorNotification('خطأ في الاتصال: ' + error.message);
+                    throw error;
+                }
             }
-        });
-    }
-});
+        };
 
-// Set date range
-function setDateRange(range) {
-    const startDate = document.getElementById('date_range_start');
-    const endDate = document.getElementById('date_range_end');
-    
-    if (!startDate || !endDate) {
-        console.error('Date range elements not found');
-        return;
-    }
-    
-    const today = new Date();
-    
-    switch(range) {
-        case 'today':
-            startDate.value = today.toISOString().split('T')[0];
-            endDate.value = today.toISOString().split('T')[0];
-            break;
-        case 'week':
-            const weekStart = new Date(today);
-            weekStart.setDate(today.getDate() - today.getDay());
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-            startDate.value = weekStart.toISOString().split('T')[0];
-            endDate.value = weekEnd.toISOString().split('T')[0];
-            break;
-        case 'month':
-            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-            const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            startDate.value = monthStart.toISOString().split('T')[0];
-            endDate.value = monthEnd.toISOString().split('T')[0];
-            break;
-        case 'quarter':
-            const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
-            const quarterEnd = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3 + 3, 0);
-            startDate.value = quarterStart.toISOString().split('T')[0];
-            endDate.value = quarterEnd.toISOString().split('T')[0];
-            break;
-        case 'year':
-            const yearStart = new Date(today.getFullYear(), 0, 1);
-            const yearEnd = new Date(today.getFullYear(), 11, 31);
-            startDate.value = yearStart.toISOString().split('T')[0];
-            endDate.value = yearEnd.toISOString().split('T')[0];
-            break;
-    }
-}
+        // Template Manager
+        const TemplateManager = {
+            init() {
+                const select = document.getElementById('template_id');
+                if (!select) return;
 
-// Preview report
-function previewReport() {
-    const form = document.getElementById('reportForm');
-    
-    if (!form) {
-        console.error('Form element not found');
-        showErrorNotification('نموذج التقرير غير موجود');
-        return;
-    }
+                select.addEventListener('change', async (e) => {
+                    const templateId = e.target.value;
+                    const container = document.getElementById('templateParameters');
 
-    // Check if template is selected
-    const templateSelect = document.getElementById('template_id');
-    if (!templateSelect || !templateSelect.value) {
-        showErrorNotification('يرجى اختيار قالب التقرير أولاً من قسم "المعلومات الأساسية"');
-        if (templateSelect) {
-            templateSelect.focus();
-            templateSelect.classList.add('is-invalid');
-            setTimeout(() => templateSelect.classList.remove('is-invalid'), 3000);
-        }
-        return;
-    }
-    
-    const templateId = templateSelect.value;
-    console.log('Starting report preview for template:', templateId);
-    
-    // Create FormData from form
-            const formData = new FormData(form);
-            
-            // Explicitly ensure template_id is in formData
-            if (!formData.has('template_id')) {
-                formData.append('template_id', templateId);
+                    if (!templateId) {
+                        container.innerHTML = '<div class="text-center py-4 text-gray-500 italic"><i class="fas fa-info-circle ml-2"></i> اختر قالب لعرض المعلمات المتاحة</div>';
+                        return;
+                    }
+
+                    container.innerHTML = '<div class="flex items-center justify-center py-8"><i class="fas fa-circle-notch fa-spin text-blue-500 text-3xl"></i></div>';
+
+                    try {
+                        // Using route if defined, or fallback
+                        const url = `/reports/sales/templates/${templateId}/parameters`;
+                        const data = await FetchManager.safeFetch(url);
+
+                        if (data.html) {
+                            container.innerHTML = data.html;
+                            showSuccessNotification('تم تحميل المعلمات المتاحة');
+                        } else {
+                            container.innerHTML = '<div class="text-center py-4 text-gray-400">لا يوجد معلمات متغيرة لهذا القالب</div>';
+                        }
+                    } catch (err) {
+                        container.innerHTML = '<div class="text-center py-4 text-red-500 font-bold">فشل في تحميل المعلمات. حاول مرة أخرى.</div>';
+                    }
+                });
             }
-    
-    // Show loading modal
-    showLoadingModal();
-    
-    safeFetch('{{ route('reports.sales.preview_data') }}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(data => {
-        console.log('Preview data received:', data);
-        hideLoadingModal();
-        
-        if (data.success) {
-            showPreviewModal(data.data);
-            showSuccessNotification('تم تحميل المعاينة بنجاح');
-        } else {
-            console.error('Server reported error:', data.message);
-            if (data.debug) {
-                console.log('Server debug info:', data.debug);
-            }
-            showErrorModal(data.message || 'فشل تحميل المعاينة');
-        }
-    })
-    .catch(error => {
-        console.error('Preview error:', error);
-        hideLoadingModal();
-        showErrorNotification('حدث خطأ أثناء تحميل المعاينة: ' + error.message);
-    });
-}
+        };
 
-// Show loading modal
-function showLoadingModal() {
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('modal-open');
-    
-    const modalHtml = `
-        <div class="custom-modal show" id="previewModal" onclick="handleModalClick(event)">
-            <div class="custom-modal-dialog" onclick="event.stopPropagation()">
+        // Date Range Manager
+        function setDateRange(range) {
+            const startInput = document.getElementById('date_range_start');
+            const endInput = document.getElementById('date_range_end');
+            if (!startInput || !endInput) return;
+
+            const today = new Date();
+            let start, end;
+
+            switch (range) {
+                case 'today':
+                    start = end = today;
+                    break;
+                case 'week':
+                    start = new Date(today);
+                    start.setDate(today.getDate() - today.getDay());
+                    end = new Date(start);
+                    end.setDate(start.getDate() + 6);
+                    break;
+                case 'month':
+                    start = new Date(today.getFullYear(), today.getMonth(), 1);
+                    end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    break;
+                case 'quarter':
+                    const qStart = Math.floor(today.getMonth() / 3) * 3;
+                    start = new Date(today.getFullYear(), qStart, 1);
+                    end = new Date(today.getFullYear(), qStart + 3, 0);
+                    break;
+                case 'year':
+                    start = new Date(today.getFullYear(), 0, 1);
+                    end = new Date(today.getFullYear(), 11, 31);
+                    break;
+            }
+
+            startInput.value = start.toISOString().split('T')[0];
+            endInput.value = end.toISOString().split('T')[0];
+        }
+
+        // Modal System
+        function hideModal() {
+            const modal = document.getElementById('previewModal');
+            if (modal) modal.remove();
+            document.body.classList.remove('modal-open');
+        }
+
+        function previewReport() {
+            const form = document.getElementById('reportForm');
+            if (!form || !document.getElementById('template_id').value) {
+                showErrorNotification('يرجى تعبئة الحقول الأساسية أولاً');
+                return;
+            }
+
+            // Modal Background
+            const backdrop = document.createElement('div');
+            backdrop.id = 'previewModal';
+            backdrop.className = 'custom-modal show';
+            backdrop.innerHTML = `
+            <div class="custom-modal-dialog">
                 <div class="custom-modal-content">
-                    <div class="custom-modal-body text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">جاري التحميل...</span>
-                        </div>
-                        <h5 class="mt-3">جاري تحميل المعاينة...</h5>
-                        <p class="text-muted">يرجى الانتظار لحظات</p>
+                    <div class="custom-modal-header">
+                        <h5 class="font-black text-xl flex items-center"><i class="fas fa-eye ml-3"></i> معاينة التقرير التقديرية</h5>
+                        <button onclick="hideModal()" class="btn-close">&times;</button>
                     </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('previewModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-// Hide loading modal
-function hideLoadingModal() {
-    const existingModal = document.getElementById('previewModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-}
-
-// Show preview modal with data
-function showPreviewModal(data) {
-    console.log('showPreviewModal called with data:', data);
-    
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('modal-open');
-    
-    // Handle empty data
-    if (!data) {
-        console.error('showPreviewModal: No data provided');
-        showErrorModal('لا توجد بيانات للمعاينة');
-        return;
-    }
-    
-    try {
-        const modalHtml = `
-            <div class="custom-modal show" id="previewModal" onclick="handleModalClick(event)">
-                <div class="custom-modal-dialog" onclick="event.stopPropagation()">
-                    <div class="custom-modal-content">
-                        <div class="custom-modal-header">
-                            <h5 class="modal-title">
-                                <i class="fas fa-eye me-2"></i>
-                                معاينة التقرير
-                            </h5>
-                            <button type="button" class="btn-close" onclick="hideModal()"></button>
-                        </div>
-                        <div class="custom-modal-body">
-                            <div class="row">
-                                <!-- Report Information -->
-                                <div class="col-md-6">
-                                    <div class="card mb-3">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-info-circle text-primary me-2"></i>
-                                                معلومات التقرير
-                                            </h6>
-                                            <div class="mb-2">
-                                                <strong>العنوان:</strong> ${data.title || 'تقرير غير مسمى'}
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>القالب:</strong> ${data.template_name || 'غير محدد'}
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>النوع:</strong> 
-                                                <span class="badge bg-info">${data.template_type || 'غير محدد'}</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>التنسيق:</strong> 
-                                                <span class="badge bg-primary">${(data.format || 'PDF').toUpperCase()}</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>الحالة:</strong> 
-                                                <span class="badge bg-success">جاهز للمعاينة</span>
-                                            </div>
-                                            ${data.date_range && data.date_range.start ? `
-                                            <div class="mb-2">
-                                                <strong>الفترة:</strong> ${formatDate(data.date_range.start)} - ${formatDate(data.date_range.end)}
-                                            </div>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Statistics -->
-                                <div class="col-md-6">
-                                    <div class="card mb-3">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-chart-bar text-success me-2"></i>
-                                                الإحصائيات المتوقعة
-                                            </h6>
-                                            <div class="mb-2">
-                                                <strong>السجلات المتوقعة:</strong> 
-                                                <span class="badge bg-info">${data.estimated_records || 'غير متاح'}</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>وقت التنفيذ:</strong> 
-                                                <span class="badge bg-warning">${data.estimated_time || 'غير متاح'}</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>الحجم المتوقع:</strong> 
-                                                <span class="badge bg-secondary">${data.estimated_size || 'غير متاح'}</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>تاريخ الإنشاء:</strong> 
-                                                <span class="text-muted">${data.generated_at ? new Date(data.generated_at).toLocaleString('ar-SA') : 'غير محدد'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Filters Section -->
-                            ${data.filters && Object.keys(data.filters).length > 0 ? `
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-filter text-warning me-2"></i>
-                                                الفلاتر المطبقة
-                                            </h6>
-                                            <div class="row">
-                                                ${data.filters.property_type ? `
-                                                <div class="col-md-3 col-sm-6 mb-2">
-                                                    <strong>نوع العقار:</strong> ${getFilterLabel('property_type', data.filters.property_type)}
-                                                </div>
-                                                ` : ''}
-                                                ${data.filters.status ? `
-                                                <div class="col-md-3 col-sm-6 mb-2">
-                                                    <strong>الحالة:</strong> ${getFilterLabel('status', data.filters.status)}
-                                                </div>
-                                                ` : ''}
-                                                ${data.filters.min_price ? `
-                                                <div class="col-md-3 col-sm-6 mb-2">
-                                                    <strong>الحد الأدنى للسعر:</strong> ${data.filters.min_price}
-                                                </div>
-                                                ` : ''}
-                                                ${data.filters.max_price ? `
-                                                <div class="col-md-3 col-sm-6 mb-2">
-                                                    <strong>الحد الأقصى للسعر:</strong> ${data.filters.max_price}
-                                                </div>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            ` : ''}
-                            
-                            <!-- Notice -->
-                            <div class="alert alert-info mt-3">
-                                <i class="fas fa-lightbulb me-2"></i>
-                                <strong>ملاحظة:</strong> هذه معاينة تقديرية. قد تختلف البيانات الفعلية عند إنشاء التقرير النهائي.
-                            </div>
-                        </div>
-                        <div class="custom-modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="hideModal()">
-                                <i class="fas fa-times me-2"></i>
-                                إغلاق
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="previewReport()">
-                                <i class="fas fa-sync me-2"></i>
-                                تحديث المعاينة
-                            </button>
-                            <button type="button" class="btn btn-success" onclick="proceedWithReport()">
-                                <i class="fas fa-check me-2"></i>
-                                متابعة إنشاء التقرير
-                            </button>
-                        </div>
+                    <div class="custom-modal-body bg-gray-50 flex flex-col items-center justify-center min-h-[300px]" id="modalBody">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+                        <p class="mt-4 text-gray-600 font-bold">جاري تحليل البيانات وتحضير المعاينة...</p>
+                    </div>
+                    <div class="custom-modal-footer bg-white border-t border-gray-100">
+                        <button onclick="hideModal()" class="px-6 py-2 bg-gray-100 text-gray-600 rounded-xl">إغلاق</button>
+                        <button onclick="document.getElementById('reportForm').submit()" class="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold">تأكيد وإنشاء التقرير</button>
                     </div>
                 </div>
             </div>
         `;
-        
-        console.log('Generated modal HTML, length:', modalHtml.length);
-        
-        // Remove existing modal if any
-        const existingModal = document.getElementById('previewModal');
-        if (existingModal) {
-            console.log('Removing existing modal');
-            existingModal.remove();
-        }
-        
-        console.log('Inserting modal into body');
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        console.log('Modal inserted successfully');
-    } catch (e) {
-        console.error('Error in showPreviewModal:', e);
-        showErrorModal('حدث خطأ أثناء عرض المعاينة: ' + e.message);
-    }
-}
+            document.body.appendChild(backdrop);
+            document.body.classList.add('modal-open');
 
-// Show error modal
-function showErrorModal(message) {
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('modal-open');
-    
-    const modalHtml = `
-        <div class="custom-modal show" id="errorModal" onclick="handleModalClick(event)">
-            <div class="custom-modal-dialog" onclick="event.stopPropagation()">
-                <div class="custom-modal-content">
-                    <div class="custom-modal-header bg-danger text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            خطأ
-                        </h5>
-                        <button type="button" class="btn-close" onclick="hideErrorModal()"></button>
+            // Simulate/Fetch actual preview data
+            setTimeout(async () => {
+                try {
+                    const formData = new FormData(form);
+                    const data = await FetchManager.safeFetch('{{ route('reports.sales.preview_data') }}', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (data.success) {
+                        renderPreviewContent(data.data);
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (err) {
+                    document.getElementById('modalBody').innerHTML = `
+                    <div class="text-center p-8">
+                        <i class="fas fa-exclamation-triangle text-amber-500 text-5xl mb-4"></i>
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">تعذر إنشاء المعاينة حالاً</h4>
+                        <p class="text-gray-500">${err.message || 'حدث خطأ في معالجة التقرير'}</p>
                     </div>
-                    <div class="custom-modal-body text-center py-4">
-                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                        <h5>حدث خطأ</h5>
-                        <p class="text-muted">${message}</p>
-                    </div>
-                    <div class="custom-modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="hideErrorModal()">
-                            إغلاق
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="previewReport()">
-                            <i class="fas fa-sync me-2"></i>
-                            إعادة المحاولة
-                        </button>
-                    </div>
+                `;
+                }
+            }, 1000);
+        }
+
+        function renderPreviewContent(data) {
+            const container = document.getElementById('modalBody');
+            container.className = "custom-modal-body p-8";
+            container.innerHTML = `
+            <div class="grid grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-blue-50 transition-all hover:shadow-md">
+                    <p class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-1">عدد السجلات المتوقعة</p>
+                    <h2 class="text-4xl font-black text-blue-600">${data.estimated_records || 0}</h2>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-purple-50 transition-all hover:shadow-md">
+                    <p class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-1">وقت التنفيذ المقدر</p>
+                    <h2 class="text-4xl font-black text-purple-600">${data.estimated_time || '0.5s'}</h2>
                 </div>
             </div>
-        </div>
-    `;
-    
-    // Remove existing error modal if any
-    const existingModal = document.getElementById('errorModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-// Hide error modal
-function hideErrorModal() {
-    // Restore body scrolling
-    document.body.style.overflow = '';
-    document.body.classList.remove('modal-open');
-    
-    const existingModal = document.getElementById('errorModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-}
-
-// Helper function to format date
-function formatDate(dateString) {
-    try {
-        return new Date(dateString).toLocaleDateString('ar-SA');
-    } catch (e) {
-        return dateString;
-    }
-}
-
-// Helper function to get filter labels
-function getFilterLabel(filterType, value) {
-    const labels = {
-        property_type: {
-            'apartment': 'شقة',
-            'house': 'منزل',
-            'villa': 'فيلا',
-            'land': 'أرض',
-            'commercial': 'تجاري'
-        },
-        status: {
-            'active': 'نشط',
-            'sold': 'مباع',
-            'pending': 'في الانتظار',
-            'inactive': 'غير نشط'
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100">
+                    <span class="text-gray-600 font-bold">عنوان التقرير:</span>
+                    <span class="text-gray-800 font-black">${data.title}</span>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100">
+                    <span class="text-gray-600 font-bold">تنسيق المخرجات:</span>
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-black uppercase">${data.format}</span>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100">
+                    <span class="text-gray-600 font-bold">النطاق الزمني:</span>
+                    <span class="text-gray-800">${data.date_range?.start || 'N/A'} - ${data.date_range?.end || 'N/A'}</span>
+                </div>
+            </div>
+        `;
         }
-    };
-    
-    return labels[filterType]?.[value] || value;
-}
 
-// Hide modal
-function hideModal() {
-    // Restore body scrolling
-    document.body.style.overflow = '';
-    document.body.classList.remove('modal-open');
-    
-    const existingModal = document.getElementById('previewModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-}
+        // Action Handlers
+        async function saveAsDraft() {
+            const form = document.getElementById('reportForm');
+            const formData = new FormData(form);
+            formData.append('save_as_draft', '1');
 
-// Handle modal click (close when clicking outside)
-function handleModalClick(event) {
-    if (event.target.id === 'previewModal') {
-        hideModal();
-    } else if (event.target.id === 'errorModal') {
-        hideErrorModal();
-    }
-}
-
-// Proceed with report creation
-function proceedWithReport() {
-    hideModal();
-    
-    const form = document.querySelector('form');
-    if (!form) {
-        console.error('Form element not found');
-        return;
-    }
-    
-    // Scroll to form and highlight submit button
-    form.scrollIntoView({ behavior: 'smooth' });
-    const submitBtn = document.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.style.backgroundColor = '#198754';
-        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> جاهز للإنشاء';
-        setTimeout(() => {
-            submitBtn.style.backgroundColor = '';
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> إنشاء التقرير';
-        }, 3000);
-    }
-}
-
-// Save as draft
-function saveAsDraft() {
-    const form = document.querySelector('form');
-    const formData = new FormData(form);
-    formData.append('save_as_draft', '1');
-    
-    fetch('/reports/save-draft', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            showInfoNotification('جاري حفظ المسودة...');
+            try {
+                const data = await FetchManager.safeFetch('/reports/save-draft', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (data.success) {
+                    showSuccessNotification('تم حفظ المسودة بنجاح');
+                    window.location.href = '/reports/drafts';
+                }
+            } catch (e) { }
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('تم حفظ المسودة بنجاح');
-            window.location.href = '/reports/drafts';
-        } else {
-            alert('فشل حفظ المسودة');
+
+        function scheduleReport() {
+            showInfoNotification('خاصية الجدولة ستتوفر قريباً في التحديث القادم');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('حدث خطأ أثناء حفظ المسودة');
-    });
-}
 
-// Schedule report
-function scheduleReport() {
-    alert('وظيفة الجدولة قيد التطوير');
-}
+        // Lifecycle Init
+        document.addEventListener('DOMContentLoaded', () => {
+            TemplateManager.init();
 
-// Auto-save draft
-setInterval(() => {
-    const title = document.getElementById('title').value;
-    if (title) {
-        localStorage.setItem('report_draft', JSON.stringify({
-            title: title,
-            description: document.getElementById('description').value,
-            template_id: document.getElementById('template_id').value,
-            timestamp: new Date().toISOString()
-        }));
-    }
-}, 30000);
-
-// Load draft on page load
-window.addEventListener('load', () => {
-    const draft = localStorage.getItem('report_draft');
-    if (draft) {
-        const draftData = JSON.parse(draft);
-        if (confirm(`هل تريد استعادة المسودة المحفوظة (${new Date(draftData.timestamp).toLocaleString()})؟`)) {
-            document.getElementById('title').value = draftData.title;
-            document.getElementById('description').value = draftData.description;
-            document.getElementById('template_id').value = draftData.template_id;
-        }
-    }
-});
-</script>
+            // Auto-save logic
+            setInterval(() => {
+                const title = document.getElementById('title').value;
+                if (title) {
+                    localStorage.setItem('sales_report_autosave', JSON.stringify({
+                        title,
+                        time: new Date()
+                    }));
+                }
+            }, 60000);
+        });
+    </script>
+@endpush

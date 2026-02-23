@@ -20,8 +20,8 @@ class TaxReportController extends Controller
     public function index()
     {
         $taxes = Tax::with(['creator'])
-            ->when(request()->type, function($query, $type) {
-                $query->where('type', $type);
+            ->when(request()->tax_type, function($query, $taxType) {
+                $query->where('tax_type', $taxType);
             })
             ->when(request()->is_active, function($query, $isActive) {
                 $query->where('is_active', $isActive);
@@ -38,7 +38,7 @@ class TaxReportController extends Controller
         $totalTaxes = Tax::count();
         $activeTaxes = Tax::where('is_active', true)->count();
         $inactiveTaxes = Tax::where('is_active', false)->count();
-        $propertyTaxes = Tax::where('type', 'property')->count();
+        $propertyTaxes = Tax::where('tax_type', 'property')->count();
 
         return view('taxes.reports', compact(
             'taxes',

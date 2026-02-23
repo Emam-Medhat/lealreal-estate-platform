@@ -19,7 +19,7 @@ class OfferController extends Controller
         if ($request->type === 'sent') {
             $query->where('buyer_id', $user->id);
         } elseif ($request->type === 'received') {
-            $query->where('seller_id', $user->id);
+            $query->where('agent_id', $user->id);
         }
 
         // Filters
@@ -39,7 +39,7 @@ class OfferController extends Controller
 
         $stats = [
             'total_sent' => Offer::where('buyer_id', $user->id)->count(),
-            'total_received' => Offer::where('seller_id', $user->id)->count(),
+            'total_received' => Offer::where('agent_id', $user->id)->count(),
             'pending' => Offer::where('status', 'pending')->count(),
             'accepted' => Offer::where('status', 'accepted')->count(),
             'rejected' => Offer::where('status', 'rejected')->count()

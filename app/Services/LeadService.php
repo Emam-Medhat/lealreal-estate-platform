@@ -118,11 +118,35 @@ class LeadService
     public function getPipelineData()
     {
         return CacheService::rememberDashboard('leads_pipeline', function () {
-            return Lead::with(['source:id,name', 'status:id,name,color', 'assignedTo:id,full_name'])
-                ->select(['id', 'uuid', 'first_name', 'last_name', 'email', 'lead_status', 'priority', 'lead_source', 'assigned_to', 'created_at'])
+            // Get all active statuses
+            $statuses = LeadStatus::where('is_active', 1)
+                ->orderBy('order')
+                ->get(['id', 'name', 'color']);
+
+            // Get all leads with their relationships
+            $leads = Lead::with(['source:id,name', 'status:id,name,color', 'assignedTo:id,full_name'])
+                ->select(['id', 'uuid', 'first_name', 'last_name', 'email', 'lead_status', 'priority', 'lead_source', 'assigned_to', 'status_id', 'created_at'])
                 ->orderBy('priority', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            // Group leads by status and create proper objects
+            $pipelineData = collect();
+            foreach ($statuses as $status) {
+                $statusLeads = $leads->where('status_id', $status->id);
+                
+                // Create anonymous object with required properties
+                $statusObject = (object) [
+                    'id' => $status->id,
+                    'name' => $status->name,
+                    'color' => $status->color,
+                    'leads' => $statusLeads
+                ];
+                
+                $pipelineData->push($statusObject);
+            }
+
+            return $pipelineData;
         }, 'short');
     }
 
@@ -144,7 +168,9 @@ class LeadService
             LeadActivity::create([
                 'lead_id' => $lead->id,
                 'type' => 'created',
+                'title' => 'عميل جديد',
                 'description' => 'تم إنشاء العميل المحتمل',
+                'activity_date' => now(),
                 'user_id' => Auth::id() ?? $data['created_by'] ?? null,
             ]);
 
@@ -181,7 +207,9 @@ class LeadService
                 LeadActivity::create([
                     'lead_id' => $lead->id,
                     'type' => 'status_changed',
+                    'title' => 'تغيير الحالة',
                     'description' => 'تم تغيير الحالة إلى ' . ($lead->status->name ?? $lead->status_id),
+                    'activity_date' => now(),
                     'user_id' => Auth::id(),
                 ]);
             }
@@ -243,7 +271,9 @@ class LeadService
             LeadActivity::create([
                 'lead_id' => $lead->id,
                 'type' => 'converted',
+                'title' => 'تحويل العميل',
                 'description' => 'تم تحويل العميل المحتمل إلى ' . $data['converted_to_type'],
+                'activity_date' => now(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -273,7 +303,9 @@ class LeadService
         LeadActivity::create([
             'lead_id' => $lead->id,
             'type' => 'scored',
+            'title' => 'تقييم العميل',
             'description' => 'تم تقييم العميل المحتمل بدرجة ' . $data['score'],
+            'activity_date' => now(),
             'user_id' => Auth::id(),
         ]);
 

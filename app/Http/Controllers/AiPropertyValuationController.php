@@ -138,10 +138,9 @@ class AiPropertyValuationController extends Controller
             return back()->with('error', 'لا يمكن تعديل التقييم المكتمل');
         }
 
-        $property = Property::all();
         $valuationModels = $this->getAvailableValuationModels();
 
-        return view('ai.property-valuation.edit', compact('valuation', 'property', 'valuationModels'));
+        return view('ai.property-valuation.edit', compact('valuation', 'valuationModels'));
     }
 
     public function update(Request $request, AiPropertyValuation $valuation)
@@ -390,6 +389,37 @@ class AiPropertyValuationController extends Controller
         ];
     }
 
+    private function getValuationDetails(AiPropertyValuation $valuation): array
+    {
+        return [
+            'id' => $valuation->id,
+            'valuation_date' => $valuation->valuation_date,
+            'model_used' => $valuation->valuation_model,
+            'confidence_score' => $valuation->confidence_score,
+            'estimated_value' => $valuation->estimated_value,
+            'status' => $valuation->status,
+            'features_score' => $this->calculateFeatureAdjustment($valuation->property_features ?? []),
+            'market_score' => $this->calculateMarketAdjustment($valuation->market_conditions ?? []),
+        ];
+    }
+
+    private function performAiAnalysis(AiPropertyValuation $valuation): array
+    {
+        // Simulate AI analysis
+        return [
+            'accuracy' => rand(80, 95) / 100,
+            'confidence' => rand(75, 98),
+            'market_trend' => ['increasing', 'stable', 'decreasing'][rand(0, 2)],
+            'price_prediction' => $valuation->estimated_value * (1 + (rand(-5, 10) / 100)),
+        ];
+    }
+
+    private function sendAiRequest($valuation, $action, $data): void
+    {
+        // Simulate API request logging
+        // In a real app, this would make an HTTP request to an AI service
+    }
+
     private function getMarketDemand(string $location): float
     {
         $demandScores = [
@@ -431,8 +461,8 @@ class AiPropertyValuationController extends Controller
     {
         return [
             'total_valuations' => AiPropertyValuation::count(),
-            'accurate_valuations' => AiPropertyValuation::where('accuracy', '>=', 0.8)->count(),
-            'average_accuracy' => AiPropertyValuation::avg('accuracy') ?? 0,
+            'accurate_valuations' => AiPropertyValuation::where('confidence_score', '>=', 80)->count(),
+            'average_accuracy' => AiPropertyValuation::avg('confidence_score') ?? 0,
             'model_performance' => $this->getModelPerformance(),
             'data_quality_score' => $this->getDataQualityScore(),
         ];
@@ -457,6 +487,18 @@ class AiPropertyValuationController extends Controller
     {
         return AiPropertyValuation::where('status', 'completed')
             ->sum('estimated_value');
+    }
+
+    private function getAverageValuation(): float
+    {
+        return AiPropertyValuation::where('status', 'completed')
+            ->avg('estimated_value') ?? 0;
+    }
+
+    private function getAccuracyScore(): float
+    {
+        return AiPropertyValuation::where('status', 'completed')
+            ->avg('confidence_score') ?? 0;
     }
 
     private function processValuation(AiPropertyValuation $valuation): void

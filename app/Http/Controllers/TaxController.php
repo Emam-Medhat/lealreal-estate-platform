@@ -17,6 +17,49 @@ class TaxController extends Controller
     }
 
     /**
+     * Show the form for creating a new tax.
+     */
+    public function create()
+    {
+        return view('taxes.create');
+    }
+
+    /**
+     * Store a newly created tax in storage.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'tax_type' => 'required|string|in:property,income,capital_gains,vat,stamp_duty,municipality,other',
+            'rate' => 'required|numeric|min:0|max:100',
+            'description' => 'nullable|string|max:1000',
+            'effective_date' => 'required|date',
+            'is_active' => 'required|boolean',
+        ]);
+
+        try {
+            $tax = Tax::create([
+                'name' => $request->name,
+                'tax_type' => $request->tax_type,
+                'rate' => $request->rate,
+                'description' => $request->description,
+                'effective_date' => $request->effective_date,
+                'is_active' => $request->is_active,
+                'created_by' => Auth::id(),
+            ]);
+
+            return redirect()->route('taxes.index')
+                ->with('success', 'تم إضافة الضريبة بنجاح');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'حدث خطأ أثناء إضافة الضريبة: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Display tax dashboard with overview.
      */
     public function index(Request $request)
@@ -26,7 +69,7 @@ class TaxController extends Controller
         $totalPayments = TaxPayment::sum('amount');
         $pendingPayments = TaxPayment::where('status', 'pending')->sum('amount');
         
-        $recentTaxes = Tax::with(['property', 'owner'])
+        $recentTaxes = Tax::with(['creator'])
             ->latest()
             ->limit(10)
             ->get();
@@ -38,13 +81,31 @@ class TaxController extends Controller
             ->limit(10)
             ->get();
 
+        // Calculate tax counts for dashboard
+        $paidTaxes = PropertyTax::where('status', 'paid')->count();
+        $pendingTaxes = PropertyTax::where('status', 'pending')->count();
+        $overdueTaxes = PropertyTax::where('status', 'overdue')->count();
+
+        // Create recent activities from recent taxes for display
+        $recentActivities = $recentTaxes->map(function($tax) {
+            return (object) [
+                'title' => $tax->name,
+                'description' => 'ضريبة جديدة: ' . $tax->tax_type,
+                'created_at' => $tax->created_at
+            ];
+        });
+
         return view('taxes.index', compact(
             'totalTaxes',
             'totalPropertyTaxes', 
             'totalPayments',
             'pendingPayments',
             'recentTaxes',
-            'upcomingDeadlines'
+            'upcomingDeadlines',
+            'paidTaxes',
+            'pendingTaxes',
+            'overdueTaxes',
+            'recentActivities'
         ));
     }
 
@@ -91,17 +152,14 @@ class TaxController extends Controller
      */
     public function list(Request $request)
     {
-        $query = Tax::with(['property', 'owner', 'taxRate']);
+        $query = Tax::with(['creator']);
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
-                $q->where('tax_number', 'like', "%{$request->search}%")
-                  ->orWhereHas('property', function ($subQ) use ($request) {
-                      $subQ->where('title', 'like', "%{$request->search}%");
-                  })
-                  ->orWhereHas('owner', function ($subQ) use ($request) {
-                      $subQ->where('name', 'like', "%{$request->search}%");
-                  });
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('name_ar', 'like', "%{$request->search}%")
+                  ->orWhere('description', 'like', "%{$request->search}%")
+                  ->orWhere('description_ar', 'like', "%{$request->search}%");
             });
         }
 
@@ -110,9 +168,7 @@ class TaxController extends Controller
         }
 
         if ($request->tax_type) {
-            $query->whereHas('taxRate', function ($q) use ($request) {
-                $q->where('name', $request->tax_type);
-            });
+            $query->where('tax_type', $request->tax_type);
         }
 
         if ($request->date_from) {
@@ -177,12 +233,12 @@ class TaxController extends Controller
                     ->first();
                 
             case 'detailed':
-                return Tax::with(['property', 'owner', 'taxRate'])
+                return Tax::with(['creator'])
                     ->whereBetween('created_at', [$dateFrom, $dateTo])
                     ->get();
                 
             case 'payments':
-                return TaxPayment::with(['tax.property', 'tax.owner'])
+                return TaxPayment::with(['propertyTax.property', 'propertyTax.creator'])
                     ->whereBetween('payment_date', [$dateFrom, $dateTo])
                     ->get();
                 
@@ -232,7 +288,7 @@ class TaxController extends Controller
      */
     public function reports(Request $request)
     {
-        $taxes = Tax::with(['property', 'owner'])
+        $taxes = Tax::with(['creator'])
             ->when($request->type, function($query, $type) {
                 $query->where('type', $type);
             })

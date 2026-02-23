@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Models\News;
 use App\Models\Guide;
 use App\Models\Faq;
+use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -56,9 +57,23 @@ class ContentController extends Controller
         return view('content.search', compact('query', 'blog_posts', 'pages', 'news'));
     }
 
-    public function mediaLibrary(): View
+    public function mediaLibrary(Request $request): View
     {
-        return view('content.media-library');
+        $query = MediaFile::query();
+
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->search) {
+            $query->where('filename', 'like', "%{$request->search}%")
+                  ->orWhere('alt_text', 'like', "%{$request->search}%");
+        }
+
+        $mediaFiles = $query->latest()->paginate(24);
+        $types = MediaFile::distinct()->pluck('type');
+
+        return view('admin.media.index', compact('mediaFiles', 'types'));
     }
 
     public function seoTools(): View

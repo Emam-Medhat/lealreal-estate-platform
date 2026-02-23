@@ -79,6 +79,27 @@
             </div>
         </div>
 
+        <!-- AI Recommendations Section -->
+        <div class="mb-8" id="ai-recommendations-section">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-magic text-purple-600 mr-2"></i>
+                    توصيات عقارية ذكية لك
+                </h2>
+                <a href="{{ route('ai.chat') }}" class="text-sm text-purple-600 hover:text-purple-800 font-medium">
+                    اسأل المساعد الذكي للمزيد <i class="fas fa-arrow-left ml-1"></i>
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="recommendations-container">
+                <!-- Loading State -->
+                <div class="col-span-3 bg-white rounded-lg shadow-sm p-8 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
+                    <p class="text-gray-500">جاري تحليل تفضيلاتك وجلب التوصيات...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Quick Actions Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <!-- Admin Dashboard Card -->
@@ -281,7 +302,7 @@
                         <i class="fas fa-user-tie text-green-600 mr-2"></i>الوكلاء
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <a href="{{ route('agents.directory.full') }}" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <a href="{{ route('agents.directory') }}" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <i class="fas fa-address-book text-gray-400 ml-3"></i>
                             <span class="text-sm">دليل الوكلاء</span>
                         </a>
@@ -532,6 +553,87 @@
 
             // Auto-refresh every 5 minutes
             setInterval(refreshDashboard, 300000);
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                fetchRecommendations();
+            });
+
+            async function fetchRecommendations() {
+                const container = document.getElementById('recommendations-container');
+                
+                try {
+                    const response = await fetch("{{ route('ai.recommendations.json') }}", {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to fetch');
+                    
+                    const result = await response.json();
+                    const data = result.data;
+                    
+                    if (data && data.length > 0) {
+                        container.innerHTML = data.map(prop => `
+                            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative group">
+                                <div class="relative h-48">
+                                    <img src="${prop.image ? '/storage/' + prop.image : 'https://via.placeholder.com/400x300?text=No+Image'}" 
+                                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                                         alt="${prop.title}"
+                                         onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                                    <div class="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
+                                        ${prop.score ? Math.round(prop.score) + '% تطابق' : 'موصى به'}
+                                    </div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                                        <h3 class="font-bold text-white mb-1 truncate text-shadow">${prop.title}</h3>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <p class="text-purple-600 font-bold mb-3 text-lg">
+                                        ${new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(prop.price)}
+                                    </p>
+                                    <div class="flex items-center justify-between text-gray-500 text-sm mb-4 bg-gray-50 p-2 rounded">
+                                        <span class="flex items-center" title="غرف النوم"><i class="fas fa-bed ml-1 text-gray-400"></i> ${prop.bedrooms || 0}</span>
+                                        <span class="flex items-center" title="الحمامات"><i class="fas fa-bath ml-1 text-gray-400"></i> ${prop.bathrooms || 0}</span>
+                                        <span class="flex items-center" title="المساحة"><i class="fas fa-ruler-combined ml-1 text-gray-400"></i> ${prop.area || 0} م²</span>
+                                    </div>
+                                    <div class="flex items-center text-xs text-gray-400 mb-3">
+                                        <i class="fas fa-map-marker-alt ml-1"></i> ${prop.location || 'غير محدد'}
+                                    </div>
+                                    <a href="/properties/${prop.slug || prop.property_id}" class="block w-full text-center bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-2 rounded transition-colors text-sm border border-purple-200">
+                                        عرض التفاصيل
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = `
+                            <div class="col-span-3 bg-white rounded-lg shadow-sm p-8 text-center">
+                                <div class="bg-gray-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-search text-gray-400 text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">لا توجد توصيات متاحة حالياً</h3>
+                                <p class="text-gray-500 mb-6">تصفح العقارات وأضفها للمفضلة ليتمكن الذكاء الاصطناعي من فهم تفضيلاتك.</p>
+                                <a href="{{ route('properties.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                    تصفح العقارات
+                                </a>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error fetching recommendations:', error);
+                    container.innerHTML = `
+                        <div class="col-span-3 bg-white rounded-lg shadow-sm p-8 text-center border-l-4 border-red-500">
+                            <p class="text-red-500 font-medium">عذراً، حدث خطأ أثناء تحميل التوصيات.</p>
+                            <button onclick="fetchRecommendations()" class="mt-4 text-sm text-gray-600 underline hover:text-gray-800">حاول مرة أخرى</button>
+                        </div>
+                    `;
+                }
+            }
         </script>
     </div>
 </div>

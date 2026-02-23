@@ -180,12 +180,28 @@ class Agent extends Model
 
     public function getFullNameAttribute(): string
     {
-        return $this->user ? $this->user->full_name : $this->name;
+        if ($this->user && $this->user->full_name) {
+            return $this->user->full_name;
+        }
+        
+        if ($this->name) {
+            return $this->name;
+        }
+        
+        return 'Unknown Agent';
     }
 
     public function getProfileImageAttribute(): string
     {
-        return $this->user ? ($this->user->avatar ?? $this->avatar) : 'default-avatar.png';
+        if ($this->user && $this->user->avatar) {
+            return $this->user->avatar;
+        }
+        
+        if ($this->avatar) {
+            return $this->avatar;
+        }
+        
+        return 'default-avatar.png';
     }
 
     public function getEmailAttribute(): ?string

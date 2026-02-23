@@ -76,7 +76,7 @@ class LiveAuctionService
                 'max_extensions' => $validatedData['max_extensions'] ?? 3,
                 'current_extensions' => 0,
                 'status' => 'draft',
-                'created_by' => $validatedData['created_by'],
+                'seller_id' => $validatedData['seller_id'],
                 'settings' => $validatedData['settings'] ?? [],
                 'metadata' => $validatedData['metadata'] ?? [],
                 'created_at' => now()
@@ -961,7 +961,7 @@ class LiveAuctionService
     // Additional helper methods would be implemented here...
     private function canManageAuction(Auction $auction, int $userId): bool
     {
-        return $auction->created_by === $userId || User::find($userId)?->isAdmin();
+        return $auction->seller_id === $userId || User::find($userId)?->isAdmin();
     }
 
     private function startAuctionMonitoring(Auction $auction): void

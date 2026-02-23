@@ -1,3178 +1,1787 @@
-@extends('admin.layouts.admin')
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 
-@section('title', 'لوحة التحكم')
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مركز التحكم — Real Estate Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;600;700;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-@section('page-title', 'نظرة عامة')
-
-@push('styles')
-<style>
-    /* ============================================
-       ENHANCED MODERN DASHBOARD STYLES (LIGHT & ATTRACTIVE)
-       ============================================ */
-    
-    /* Root Variables for Light & Airy Theme */
     :root {
-        --primary-blue: #6366f1; /* Indigo */
-        --primary-blue-light: #818cf8;
-        --secondary-purple: #a855f7;
-        --success-green: #10b981;
-        --warning-orange: #f59e0b;
-        --danger-red: #ef4444;
-        
-        /* Neutral Scale */
-        --bg-body: #f8fafc; /* Slate 50 */
-        --bg-card: #ffffff;
-        --text-main: #334155; /* Slate 700 - Softer "Light Black" */
-        --text-muted: #64748b; /* Slate 500 */
-        --border-color: #e2e8f0; /* Slate 200 */
-        
-        /* Shadows */
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
-        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
-        --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.03);
-        
-        /* Radius */
-        --radius-md: 12px;
-        --radius-lg: 16px;
-        --radius-xl: 24px;
-        
-        /* Transitions */
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --blue: #0D6EFD;
+      --blue2: #0B5ED7;
+      --blue-g: linear-gradient(135deg, #0D6EFD, #0a58ca);
+      --purple: #6F42C1;
+      --purple-g: linear-gradient(135deg, #6F42C1, #59359a);
+      --green: #198754;
+      --green-g: linear-gradient(135deg, #198754, #146c43);
+      --orange: #FD7E14;
+      --orange-g: linear-gradient(135deg, #FD7E14, #dc6a0c);
+      --teal: #0DCAF0;
+      --red: #DC3545;
+      --yellow: #FFC107;
+      --sc-blue: linear-gradient(135deg, #0D6EFD 0%, #0a58ca 100%);
+      --sc-purple: linear-gradient(135deg, #6F42C1 0%, #59359a 100%);
+      --sc-green: linear-gradient(135deg, #198754 0%, #146c43 100%);
+      --sc-orange: linear-gradient(135deg, #FD7E14 0%, #dc6a0c 100%);
+      --bg: #F1F3F8;
+      --bg2: #EAECF3;
+      --card: #FFFFFF;
+      --card2: #F8F9FC;
+      --t1: #1A1F36;
+      --t2: #374151;
+      --t3: #6B7280;
+      --t4: #9CA3AF;
+      --bd: #E5E7EB;
+      --bd2: #D1D5DB;
+      --bd-blue: rgba(13, 110, 253, .25);
+      --sh-sm: 0 1px 4px rgba(0, 0, 0, .06), 0 2px 8px rgba(0, 0, 0, .04);
+      --sh-md: 0 4px 16px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .05);
+      --sh-lg: 0 8px 32px rgba(0, 0, 0, .1);
+      --sh-blue: 0 6px 24px rgba(13, 110, 253, .3);
+      --sh-purple: 0 6px 24px rgba(111, 66, 193, .25);
+      --sh-green: 0 6px 24px rgba(25, 135, 84, .25);
+      --sh-orange: 0 6px 24px rgba(253, 126, 20, .25);
+      --r1: 10px;
+      --r2: 14px;
+      --r3: 18px;
+      --r4: 24px;
+      --tr: all .25s cubic-bezier(.4, 0, .2, 1);
+      --tr-sp: all .35s cubic-bezier(.34, 1.3, .64, 1);
+      --ff: 'Cairo', 'Plus Jakarta Sans', system-ui, sans-serif;
     }
-    
-    /* Global Resets */
-    * {
-        box-sizing: border-box;
+
+    html {
+      scroll-behavior: smooth;
     }
-    
+
     body {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        background-color: var(--bg-body);
-        color: var(--text-main);
+      font-family: var(--ff);
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh;
+      direction: rtl;
+      overflow-x: hidden;
     }
 
-    .text-modern {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-    
-    /* Page Background - Clean & Light */
-    .page-background {
-        background-color: var(--bg-body);
-        background-image: 
-            radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.03) 0px, transparent 50%);
-        min-height: 100vh;
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 80% 5%, rgba(13, 110, 253, .04) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 50% at 5% 90%, rgba(111, 66, 193, .03) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
     }
 
-    /* Cards - Soft & Floating */
-    .modern-card {
-        background: var(--bg-card);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-color);
-        transition: var(--transition);
-        overflow: hidden;
-    }
-    
-    .modern-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary-blue-light);
+    .shell {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Stat Cards - Vibrant but Soft */
-    .stat-card {
-        border-radius: var(--radius-xl);
-        padding: 24px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        border: none;
-        box-shadow: var(--shadow-md);
-        transition: var(--transition);
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-hover);
-    }
-    
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        right: -20px;
-        width: 120px;
-        height: 120px;
-        background: rgba(255,255,255,0.15);
-        border-radius: 50%;
-        filter: blur(20px);
+    /* SIDEBAR */
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-left: 1px solid var(--bd);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 2px 0 12px rgba(0, 0, 0, .04);
     }
 
-    .stat-card-blue { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
-    .stat-card-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-    .stat-card-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-    .stat-card-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .sidebar::-webkit-scrollbar {
+      width: 3px;
+    }
 
-    /* Management Sections - Clean Grid */
-    .management-grid-item {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--bd2);
+      border-radius: 10px;
     }
-    
-    .management-grid-item:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary-blue-light);
+
+    .sb-logo {
+      padding: 22px 18px 20px;
+      border-bottom: 1px solid var(--bd);
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    
-    /* subtle top accent */
-    .management-grid-item::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
+
+    .sb-logo-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--r1);
+      background: var(--blue-g);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: white;
+      flex-shrink: 0;
+      box-shadow: var(--sh-blue);
+    }
+
+    .sb-brand {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .sb-brand span {
+      color: var(--blue);
+    }
+
+    .sb-tagline {
+      font-size: 10px;
+      color: var(--t4);
+      font-weight: 500;
+    }
+
+    .sb-nav {
+      padding: 14px 10px;
+      flex: 1;
+    }
+
+    .sb-sec {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--t4);
+      padding: 0 10px;
+      margin: 16px 0 5px;
+    }
+
+    .sb-sec:first-child {
+      margin-top: 0;
+    }
+
+    .sb-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--r1);
+      text-decoration: none;
+      color: var(--t3);
+      font-size: 13px;
+      font-weight: 600;
+      transition: var(--tr);
+      margin-bottom: 2px;
+    }
+
+    .sb-link:hover {
+      background: var(--bg);
+      color: var(--t2);
+    }
+
+    .sb-link.active {
+      background: rgba(13, 110, 253, .08);
+      color: var(--blue);
+    }
+
+    .sb-link i {
+      font-size: 13px;
+      width: 17px;
+      text-align: center;
+      color: var(--t4);
+      transition: color .2s;
+      flex-shrink: 0;
+    }
+
+    .sb-link:hover i,
+    .sb-link.active i {
+      color: var(--blue);
+    }
+
+    .sb-badge {
+      margin-right: auto;
+      background: var(--blue);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+
+    .sb-foot {
+      padding: 12px 14px 18px;
+      border-top: 1px solid var(--bd);
+    }
+
+    .sb-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sb-av {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--blue-g);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: white;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .sb-uname {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--t1);
+    }
+
+    .sb-urole {
+      font-size: 10.5px;
+      color: var(--t4);
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 30px;
+      background: var(--card);
+      border-bottom: 1px solid var(--bd);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 16px;
+      box-shadow: var(--sh-sm);
+    }
+
+    .topbar-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .topbar-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 2px;
+      background: var(--blue);
+      border-radius: 2px;
+    }
+
+    .topbar-title {
+      font-size: clamp(18px, 2vw, 26px);
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .topbar-title em {
+      font-style: italic;
+      color: var(--blue);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .live-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 13px;
+      background: rgba(25, 135, 84, .08);
+      border: 1px solid rgba(25, 135, 84, .2);
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: liveping 2s ease-in-out infinite;
+    }
+
+    @keyframes liveping {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(25, 135, 84, .4);
+      }
+
+      60% {
+        box-shadow: 0 0 0 6px rgba(25, 135, 84, 0);
+      }
+    }
+
+    .tbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 17px;
+      border-radius: var(--r1);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      font-family: var(--ff);
+      text-decoration: none;
+      transition: var(--tr);
+    }
+
+    .tbtn-ghost {
+      background: var(--bg);
+      color: var(--t3);
+      border: 1px solid var(--bd);
+    }
+
+    .tbtn-ghost:hover {
+      background: var(--bg2);
+      color: var(--t2);
+    }
+
+    .tbtn-primary {
+      background: var(--blue-g);
+      color: white;
+      box-shadow: var(--sh-blue);
+    }
+
+    .tbtn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(13, 110, 253, .35);
+    }
+
+    .content {
+      padding: 26px 30px 60px;
+      flex: 1;
+    }
+
+    /* STAT CARDS */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .sc {
+      border-radius: var(--r3);
+      padding: 22px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--tr-sp);
+      color: white;
+    }
+
+    .sc:hover {
+      transform: translateY(-6px) scale(1.015);
+    }
+
+    .sc-blue {
+      background: var(--sc-blue);
+      box-shadow: var(--sh-blue);
+    }
+
+    .sc-purple {
+      background: var(--sc-purple);
+      box-shadow: var(--sh-purple);
+    }
+
+    .sc-green {
+      background: var(--sc-green);
+      box-shadow: var(--sh-green);
+    }
+
+    .sc-orange {
+      background: var(--sc-orange);
+      box-shadow: var(--sh-orange);
+    }
+
+    .sc:hover.sc-blue {
+      box-shadow: 0 16px 40px rgba(13, 110, 253, .4);
+    }
+
+    .sc:hover.sc-purple {
+      box-shadow: 0 16px 40px rgba(111, 66, 193, .35);
+    }
+
+    .sc:hover.sc-green {
+      box-shadow: 0 16px 40px rgba(25, 135, 84, .35);
+    }
+
+    .sc:hover.sc-orange {
+      box-shadow: 0 16px 40px rgba(253, 126, 20, .35);
+    }
+
+    .sc::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      left: -30px;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .08);
+      pointer-events: none;
+    }
+
+    .sc::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      right: -20px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .06);
+      pointer-events: none;
+    }
+
+    .sc-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sc-label {
+      font-size: 12px;
+      font-weight: 700;
+      opacity: .88;
+    }
+
+    .sc-ic {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--r1);
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      transition: var(--tr-sp);
+      flex-shrink: 0;
+    }
+
+    .sc:hover .sc-ic {
+      transform: scale(1.12) rotate(8deg);
+    }
+
+    .sc-val {
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sc-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sc-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .22);
+    }
+
+    .sc-ftext {
+      font-size: 11.5px;
+      opacity: .8;
+    }
+
+    /* PANELS */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: var(--r3);
+      overflow: hidden;
+      box-shadow: var(--sh-sm);
+      transition: var(--tr);
+    }
+
+    .panel:hover {
+      box-shadow: var(--sh-md);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--bd);
+    }
+
+    .panel-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .panel-sub {
+      font-size: 11px;
+      color: var(--t4);
+      margin-top: 2px;
+    }
+
+    .panel-body {
+      padding: 16px 20px;
+    }
+
+    .p-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 4px 11px;
+      border-radius: 20px;
+      border: 1px solid;
+    }
+
+    .pb-blue {
+      background: rgba(13, 110, 253, .08);
+      color: var(--blue);
+      border-color: rgba(13, 110, 253, .2);
+    }
+
+    .pb-purple {
+      background: rgba(111, 66, 193, .08);
+      color: var(--purple);
+      border-color: rgba(111, 66, 193, .2);
+    }
+
+    .pb-green {
+      background: rgba(25, 135, 84, .08);
+      color: var(--green);
+      border-color: rgba(25, 135, 84, .2);
+    }
+
+    .pb-orange {
+      background: rgba(253, 126, 20, .08);
+      color: var(--orange);
+      border-color: rgba(253, 126, 20, .2);
+    }
+
+    /* CHARTS */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 195px;
+    }
+
+    /* MIDDLE ROW */
+    .mid-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .ri-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 6px;
+      border-radius: var(--r1);
+      transition: background .18s;
+    }
+
+    .ri-item:hover {
+      background: var(--bg);
+    }
+
+    .ri-av {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .ra-blue {
+      background: rgba(13, 110, 253, .1);
+      color: var(--blue);
+    }
+
+    .ra-purple {
+      background: rgba(111, 66, 193, .1);
+      color: var(--purple);
+    }
+
+    .ra-green {
+      background: rgba(25, 135, 84, .1);
+      color: var(--green);
+    }
+
+    .ra-orange {
+      background: rgba(253, 126, 20, .1);
+      color: var(--orange);
+    }
+
+    .ri-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--t1);
+    }
+
+    .ri-sub {
+      font-size: 11px;
+      color: var(--t4);
+      margin-top: 1px;
+    }
+
+    .ri-time {
+      font-size: 10.5px;
+      color: var(--t4);
+      white-space: nowrap;
+      margin-right: auto;
+      flex-shrink: 0;
+    }
+
+    .sys-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 11px;
+      border-radius: var(--r1);
+      border: 1px solid var(--bd);
+      margin-bottom: 6px;
+      transition: var(--tr);
+    }
+
+    .sys-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .sys-row:hover {
+      border-color: var(--bd-blue);
+      background: rgba(13, 110, 253, .02);
+    }
+
+    .sys-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sys-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .sd-ok {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(25, 135, 84, .15);
+    }
+
+    .sd-warn {
+      background: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(255, 193, 7, .15);
+    }
+
+    .sys-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--t2);
+    }
+
+    .sys-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .st-ok {
+      background: rgba(25, 135, 84, .1);
+      color: var(--green);
+    }
+
+    .st-warn {
+      background: rgba(255, 193, 7, .12);
+      color: #92740A;
+    }
+
+    /* QUICK ACTIONS */
+    .qa-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .qa-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 10px;
+      background: var(--card2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r2);
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--tr-sp);
+      font-family: var(--ff);
+    }
+
+    .qa-card:hover {
+      transform: translateY(-4px);
+      background: var(--card);
+      border-color: var(--bd-blue);
+      box-shadow: var(--sh-md);
+    }
+
+    .qa-ic {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--r1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: var(--tr-sp);
+    }
+
+    .qa-card:hover .qa-ic {
+      transform: scale(1.12) rotate(5deg);
+    }
+
+    .qic-blue {
+      background: rgba(13, 110, 253, .1);
+      color: var(--blue);
+    }
+
+    .qic-purple {
+      background: rgba(111, 66, 193, .1);
+      color: var(--purple);
+    }
+
+    .qic-green {
+      background: rgba(25, 135, 84, .1);
+      color: var(--green);
+    }
+
+    .qic-orange {
+      background: rgba(253, 126, 20, .1);
+      color: var(--orange);
+    }
+
+    .qic-teal {
+      background: rgba(13, 202, 240, .12);
+      color: #0891b2;
+    }
+
+    .qic-red {
+      background: rgba(220, 53, 69, .1);
+      color: var(--red);
+    }
+
+    .qa-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--t3);
+      text-align: center;
+      line-height: 1.4;
+      transition: color .18s;
+    }
+
+    .qa-card:hover .qa-label {
+      color: var(--t1);
+    }
+
+    /* SECTION */
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .sec-accent {
+      width: 3px;
+      height: 24px;
+      background: var(--blue-g);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .sec-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .sec-pill {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--t4);
+      background: var(--bg2);
+      padding: 3px 11px;
+      border-radius: 20px;
+      border: 1px solid var(--bd);
+    }
+
+    .sec-div {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--bd2) 30%, var(--bd2) 70%, transparent);
+      margin: 24px 0;
+    }
+
+    /* HUB GRID */
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .hc {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: var(--r3);
+      overflow: hidden;
+      transition: var(--tr);
+      position: relative;
+      box-shadow: var(--sh-sm);
+    }
+
+    .hc::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .hc:hover {
+      transform: translateY(-4px);
+    }
+
+    .hc:hover::before {
+      opacity: 1;
+    }
+
+    .hc-blue::before {
+      background: var(--blue-g);
+    }
+
+    .hc-blue:hover {
+      border-color: rgba(13, 110, 253, .2);
+      box-shadow: 0 10px 28px rgba(13, 110, 253, .1);
+    }
+
+    .hc-purple::before {
+      background: var(--purple-g);
+    }
+
+    .hc-purple:hover {
+      border-color: rgba(111, 66, 193, .2);
+      box-shadow: 0 10px 28px rgba(111, 66, 193, .1);
+    }
+
+    .hc-green::before {
+      background: var(--green-g);
+    }
+
+    .hc-green:hover {
+      border-color: rgba(25, 135, 84, .2);
+      box-shadow: 0 10px 28px rgba(25, 135, 84, .1);
+    }
+
+    .hc-orange::before {
+      background: var(--orange-g);
+    }
+
+    .hc-orange:hover {
+      border-color: rgba(253, 126, 20, .2);
+      box-shadow: 0 10px 28px rgba(253, 126, 20, .1);
+    }
+
+    .hc-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 16px 13px;
+      border-bottom: 1px solid var(--bd);
+    }
+
+    .hc-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--r1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: var(--tr-sp);
+    }
+
+    .hc:hover .hc-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .hi-blue {
+      background: rgba(13, 110, 253, .1);
+      color: var(--blue);
+      border: 1px solid rgba(13, 110, 253, .18);
+    }
+
+    .hi-purple {
+      background: rgba(111, 66, 193, .1);
+      color: var(--purple);
+      border: 1px solid rgba(111, 66, 193, .18);
+    }
+
+    .hi-green {
+      background: rgba(25, 135, 84, .1);
+      color: var(--green);
+      border: 1px solid rgba(25, 135, 84, .18);
+    }
+
+    .hi-orange {
+      background: rgba(253, 126, 20, .1);
+      color: var(--orange);
+      border: 1px solid rgba(253, 126, 20, .18);
+    }
+
+    .hi-teal {
+      background: rgba(13, 202, 240, .1);
+      color: #0891b2;
+      border: 1px solid rgba(13, 202, 240, .18);
+    }
+
+    .hi-red {
+      background: rgba(220, 53, 69, .1);
+      color: var(--red);
+      border: 1px solid rgba(220, 53, 69, .18);
+    }
+
+    .hi-gray {
+      background: var(--bg2);
+      color: var(--t3);
+      border: 1px solid var(--bd);
+    }
+
+    .hc-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .hc-sub {
+      font-size: 10px;
+      color: var(--t4);
+      margin-top: 2px;
+      font-weight: 600;
+      letter-spacing: .04em;
+    }
+
+    .hc-links {
+      padding: 6px 8px 10px;
+    }
+
+    .hc-link {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--t3);
+      transition: var(--tr);
+    }
+
+    .hc-link:hover {
+      background: rgba(13, 110, 253, .05);
+      color: var(--blue);
+      padding-right: 14px;
+    }
+
+    .hc-link i {
+      font-size: 11px;
+      width: 14px;
+      text-align: center;
+      color: var(--t4);
+      transition: color .18s;
+      flex-shrink: 0;
+    }
+
+    .hc-link:hover i {
+      color: var(--blue);
+    }
+
+    .hc-arr {
+      margin-right: auto;
+      font-size: 9px;
+      color: var(--blue);
+      opacity: 0;
+      transition: opacity .18s, transform .18s;
+    }
+
+    .hc-link:hover .hc-arr {
+      opacity: 1;
+      transform: translateX(-3px);
+    }
+
+    /* ACTIVITY */
+    .act-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 8px;
+      border-bottom: 1px solid var(--bd);
+      transition: background .18s;
+    }
+
+    .act-item:last-child {
+      border-bottom: none;
+    }
+
+    .act-item:hover {
+      background: var(--bg);
+      border-radius: var(--r1);
+    }
+
+    .act-ic {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: rgba(13, 110, 253, .1);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .act-msg {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--t1);
+      line-height: 1.4;
+    }
+
+    .act-time {
+      font-size: 11px;
+      color: var(--t4);
+      margin-top: 3px;
+    }
+
+    .act-new {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue);
+      flex-shrink: 0;
+      margin-top: 5px;
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      backdrop-filter: blur(8px);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .28s, visibility .28s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-box {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: var(--r4);
+      width: 100%;
+      max-width: 660px;
+      overflow: hidden;
+      transform: translateY(20px) scale(.97);
+      transition: transform .3s cubic-bezier(.34, 1.2, .64, 1);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, .18);
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-top {
+      height: 4px;
+      background: var(--blue-g);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--bd);
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r1);
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      color: var(--t3);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--tr);
+    }
+
+    .modal-close:hover {
+      background: rgba(220, 53, 69, .08);
+      color: var(--red);
+      border-color: rgba(220, 53, 69, .2);
+    }
+
+    .modal-body {
+      padding: 22px 24px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+    }
+
+    .rep-card {
+      background: var(--card2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r2);
+      padding: 18px;
+      cursor: pointer;
+      transition: var(--tr);
+    }
+
+    .rep-card:hover {
+      border-color: var(--bd-blue);
+      transform: translateY(-2px);
+      box-shadow: var(--sh-md);
+    }
+
+    .rep-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .rep-ic {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: rgba(13, 110, 253, .1);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .rep-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .rep-desc {
+      font-size: 12px;
+      color: var(--t4);
+      line-height: 1.7;
+      margin-bottom: 13px;
+    }
+
+    .rep-action {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      padding: 14px 24px;
+      border-top: 1px solid var(--bd);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from {
         opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 10;
-    }
-    
-    .management-grid-item:hover::after {
+        transform: translateY(16px);
+      }
+
+      to {
         opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .management-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        align-items: center;
-        background: rgba(248, 250, 252, 0.5);
+    .anim {
+      opacity: 0;
+      animation: fadeUp .5s ease forwards;
     }
 
-    .management-header h4 {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin: 0;
-    }
-    
-    .management-body {
-        padding: 16px 20px;
-        flex: 1;
+    .a1 {
+      animation-delay: .04s
     }
 
-    /* Icon Containers - Light & Airy */
-    .icon-container {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        margin-right: 12px;
-        transition: var(--transition);
-    }
-    
-    .icon-container.blue { background: #e0e7ff; color: #4f46e5; }
-    .icon-container.green { background: #dcfce7; color: #16a34a; }
-    .icon-container.orange { background: #ffedd5; color: #ea580c; }
-    .icon-container.red { background: #fee2e2; color: #dc2626; }
-    .icon-container.purple { background: #f3e8ff; color: #9333ea; }
-    .icon-container.cyan { background: #cffafe; color: #0891b2; }
-    .icon-container.pink { background: #fce7f3; color: #db2777; }
-    .icon-container.indigo { background: #e0e7ff; color: #4338ca; }
-    .icon-container.gray { background: #f1f5f9; color: #64748b; }
-    .icon-container.yellow { background: #fef9c3; color: #ca8a04; }
-
-    .management-grid-item:hover .icon-container {
-        transform: scale(1.1);
+    .a2 {
+      animation-delay: .08s
     }
 
-    /* Links - Clean List */
-    .link-modern {
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        color: #334155 !important; /* Slate 700 - "Light Black" */
-        text-decoration: none !important;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 2px;
-        border: 1px solid transparent;
-    }
-    
-    .link-modern:hover {
-        background-color: #f8fafc;
-        border-color: #e2e8f0;
-        color: var(--primary-blue) !important;
-        transform: translateX(4px);
-    }
-    
-    .link-modern i {
-        width: 20px;
-        text-align: center;
-        margin-right: 10px;
-        font-size: 13px;
-        color: #6366f1; /* Primary Blue - "Beautiful Color" */
-        transition: color 0.2s;
-    }
-    
-    .link-modern:hover i {
-        color: var(--primary-blue);
+    .a3 {
+      animation-delay: .12s
     }
 
-    /* Quick Action Buttons - Minimal Tiles */
-    .quick-action-btn {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 20px;
-        display: flex;
+    .a4 {
+      animation-delay: .16s
+    }
+
+    .a5 {
+      animation-delay: .2s
+    }
+
+    .a6 {
+      animation-delay: .26s
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bd2);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--blue);
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:1400px) {
+      .hub-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media(max-width:1200px) {
+      .stat-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hub-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .mid-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+
+      .qa-row {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media(max-width:900px) {
+      .shell {
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        text-decoration: none !important;
-        transition: var(--transition);
-        height: 100%;
-    }
-    
-    .quick-action-btn i {
-        font-size: 24px;
-        margin-bottom: 12px;
-        color: var(--primary-blue);
-        transition: var(--transition);
-    }
-    
-    .quick-action-btn p {
-        color: var(--text-main);
-        font-weight: 600;
-        font-size: 13px;
-        margin: 0;
-    }
-    
-    .quick-action-btn:hover {
-        border-color: var(--primary-blue);
-        box-shadow: var(--shadow-md);
-        transform: translateY(-3px);
-    }
-    
-    .quick-action-btn:hover i {
-        transform: scale(1.1);
-    }
+      }
 
-    /* Section Headers */
-    .section-header {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 20px;
-        position: relative;
-        padding-bottom: 10px;
-    }
-    
-    .section-header::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 40px;
-        height: 3px;
-        background: var(--primary-blue);
-        border-radius: 2px;
-    }
-
-    /* Chart Containers */
-    .chart-container {
-        position: relative;
-        height: 300px;
+      .sidebar {
         width: 100%;
-    }
-
-    /* Status Indicators */
-    .status-indicator {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .status-indicator.healthy {
-        background: #dcfce7;
-        color: #15803d;
-    }
-    
-    .status-indicator.warning {
-        background: #fef9c3;
-        color: #a16207;
-    }
-
-    /* Buttons */
-    .btn-info, .btn-success, .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px 20px;
-        border-radius: 10px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: var(--transition);
-        border: none;
-        cursor: pointer;
-        gap: 8px;
-    }
-    
-    .btn-info { background: #e0f2fe; color: #0284c7; }
-    .btn-info:hover { background: #bae6fd; }
-    
-    .btn-success { background: #dcfce7; color: #16a34a; }
-    .btn-success:hover { background: #bbf7d0; }
-
-    /* Premium Dashboard Cards - Enhanced to Match First Section */
-    .premium-card {
-        background: aliceblue;
-        border: 1px solid rgba(226, 232, 240, 0.6);
-        border-radius: 18px;
-        padding: 28px;
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        height: auto;
         position: relative;
-        overflow: hidden;
-        box-shadow: 
-            0 1px 3px rgba(0, 0, 0, 0.04),
-            0 1px 2px rgba(0, 0, 0, 0.02),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .premium-card:hover {
-        transform: translateY(-6px) scale(1.02);
-        box-shadow: 
-            0 20px 40px -10px rgba(0, 0, 0, 0.12),
-            0 8px 16px -4px rgba(0, 0, 0, 0.06),
-            inset 0 1px 0 rgba(255, 255, 255, 0.9);
-        border-color: rgba(99, 102, 241, 0.15);
-        background: linear-gradient(135deg, #ffffff 0%, #fafbfc 40%, #f1f5f9 100%);
-    }
-    
-    .premium-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, 
-            var(--primary-blue) 0%, 
-            var(--secondary-purple) 50%, 
-            var(--primary-blue-light) 100%);
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        border-radius: 18px 18px 0 0;
-    }
-    
-    .premium-card:hover::before {
-        opacity: 1;
-    }
-    
-    .premium-card::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        pointer-events: none;
-    }
-    
-    .premium-card:hover::after {
-        opacity: 1;
-    }
-    
-    .card-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .icon-wrapper {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 18px;
-        font-size: 22px;
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        position: relative;
-        box-shadow: 
-            0 2px 8px rgba(0, 0, 0, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    
-    .icon-wrapper::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 14px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
-        pointer-events: none;
-    }
-    
-    .icon-wrapper.blue { 
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%); 
-        color: #4f46e5;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.green { 
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%); 
-        color: #16a34a;
-        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.emerald { 
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%); 
-        color: #059669;
-        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.purple { 
-        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 50%, #d8b4fe 100%); 
-        color: #9333ea;
-        box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.orange { 
-        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 50%, #fdba74 100%); 
-        color: #ea580c;
-        box-shadow: 0 4px 12px rgba(234, 88, 12, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.pink { 
-        background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%); 
-        color: #db2777;
-        box-shadow: 0 4px 12px rgba(219, 39, 119, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.indigo { 
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%); 
-        color: #4338ca;
-        box-shadow: 0 4px 12px rgba(67, 56, 202, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.cyan { 
-        background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 50%, #67e8f9 100%); 
-        color: #0891b2;
-        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.gray { 
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%); 
-        color: #64748b;
-        box-shadow: 0 4px 12px rgba(100, 116, 139, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.slate { 
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%); 
-        color: #475569;
-        box-shadow: 0 4px 12px rgba(71, 85, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.sky { 
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%); 
-        color: #0284c7;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.violet { 
-        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%); 
-        color: #7c3aed;
-        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.red { 
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fca5a5 100%); 
-        color: #dc2626;
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    .icon-wrapper.yellow { 
-        background: linear-gradient(135deg, #fef9c3 0%, #fde047 50%, #facc15 100%); 
-        color: #ca8a04;
-        box-shadow: 0 4px 12px rgba(202, 138, 4, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-    
-    .premium-card:hover .icon-wrapper {
-        transform: scale(1.1) rotate(5deg);
-    }
-    
-    .card-header h5 {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin: 0;
-    }
-    
-    .card-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.5), transparent);
-        margin: 20px 0;
-    }
-    
-    .card-content {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .card-link {
-        display: flex;
-        align-items: center;
-        padding: 14px 18px;
-        border-radius: 12px;
-        color: #334155; /* Slate 700 - "Light Black" */
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 14px;
-        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        border: 1px solid transparent;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .card-link::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.05), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .card-link:hover {
-        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-        color: var(--primary-blue);
-        transform: translateX(6px) scale(1.02);
-        border-color: rgba(99, 102, 241, 0.15);
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
-    }
-    
-    .card-link:hover::before {
-        left: 100%;
-    }
-    
-    .card-link i {
-        width: 20px;
-        margin-right: 12px;
-        font-size: 14px;
-        transition: color 0.2s ease;
-        color: #6366f1; /* Primary Blue - "Beautiful Color" */
-    }
-    
-    .card-link:hover i {
-        color: var(--primary-blue);
+      }
+
+      .mid-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hub-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .qa-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-        .stat-card { padding: 20px; }
-        .management-grid-item { padding: 20px; }
-        .icon-container { width: 36px; height: 36px; font-size: 16px; }
-        .premium-card { padding: 20px; }
-        .icon-wrapper { width: 40px; height: 40px; font-size: 18px; }
+    @media(max-width:640px) {
+      .stat-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hub-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .qa-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .content,
+      .topbar {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
     }
-</style>
-@endpush
-
-@section('content')
-    <div class="min-h-screen page-background text-modern">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-            <!-- Enhanced Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="stat-card stat-card-blue">
-                    <div class="flex items-center justify-between relative z-10">
-                        <div>
-                            <p class="text-white/90 text-sm font-medium mb-1">إجمالي المستخدمين</p>
-                            <p class="text-3xl font-bold mb-2">{{ $stats['site']['total_users'] }}</p>
-                            <p class="text-white/80 text-sm flex items-center">
-                                <i class="fas fa-arrow-up ml-1"></i>
-                                +{{ $stats['site']['new_users_today'] }} اليوم
-                            </p>
-                        </div>
-                        <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                            <i class="fas fa-users text-2xl text-white"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-card-green">
-                    <div class="flex items-center justify-between relative z-10">
-                        <div>
-                            <p class="text-white/90 text-sm font-medium mb-1">العقارات</p>
-                            <p class="text-3xl font-bold mb-2">{{ $stats['site']['total_properties'] }}</p>
-                            <p class="text-white/80 text-sm flex items-center">
-                                <i class="fas fa-arrow-up ml-1"></i>
-                                +{{ $stats['site']['new_properties_today'] }} اليوم
-                            </p>
-                        </div>
-                        <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                            <i class="fas fa-home text-2xl text-white"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-card-orange">
-                    <div class="flex items-center justify-between relative z-10">
-                        <div>
-                            <p class="text-white/90 text-sm font-medium mb-1">المستثمرون</p>
-                            <p class="text-3xl font-bold mb-2">{{ $stats['site']['total_investors'] }}</p>
-                            <p class="text-white/80 text-sm flex items-center">
-                                <i class="fas fa-arrow-up ml-1"></i>
-                                +{{ $stats['site']['new_investors_today'] }} اليوم
-                            </p>
-                        </div>
-                        <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                            <i class="fas fa-chart-line text-2xl text-white"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-card-red">
-                    <div class="flex items-center justify-between relative z-10">
-                        <div>
-                            <p class="text-white/90 text-sm font-medium mb-1">الإيرادات</p>
-                            <p class="text-3xl font-bold mb-2">${{ number_format($stats['site']['total_revenue'], 0) }}</p>
-                            <p class="text-white/80 text-sm flex items-center">
-                                <i class="fas fa-arrow-up ml-1"></i>
-                                +${{ number_format($stats['site']['revenue_today'], 0) }} اليوم
-                            </p>
-                        </div>
-                        <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                            <i class="fas fa-dollar-sign text-2xl text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Charts Row -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- User Growth Chart -->
-                <div class="modern-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800">نمو المستخدمين</h3>
-                            <p class="text-sm text-gray-600">User Growth</p>
-                        </div>
-                        <div class="icon-container blue">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                    </div>
-                    <div class="relative" style="height: 250px;">
-                        <canvas id="userGrowthChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Revenue Chart -->
-                <div class="modern-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800">اتجاه الإيرادات</h3>
-                            <p class="text-sm text-gray-600">Revenue Trend</p>
-                        </div>
-                        <div class="icon-container green">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                    </div>
-                    <div class="relative" style="height: 250px;">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Recent Activity & Quick Actions -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <!-- Recent Users -->
-                <div class="modern-card p-6">
-                    <h3 class="section-header">Recent Users</h3>
-                    <div class="space-y-3">
-                        @forelse ($stats['recent_users'] as $user)
-                            <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                <div class="icon-container blue mr-3">
-                                    <i class="fas fa-user text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-800">{{ $user->name }}</p>
-                                    <p class="text-xs text-gray-500">{{ $user->email }}</p>
-                                </div>
-                                <span class="text-xs text-gray-500">{{ $user->created_at->diffForHumans() }}</span>
-                            </div>
-                        @empty
-                            <p class="text-gray-500 text-sm">No recent users</p>
-                        @endforelse
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <a href="{{ route('admin.users.index') }}" class="btn-info w-full justify-center">
-                            <i class="fas fa-arrow-left"></i>
-                            View All Users
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Recent Properties -->
-                <div class="modern-card p-6">
-                    <h3 class="section-header">Recent Properties</h3>
-                    <div class="space-y-3">
-                        @forelse ($stats['recent_properties'] as $property)
-                            <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                <div class="icon-container green mr-3">
-                                    <i class="fas fa-home text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-800">{{ $property->title }}</p>
-                                    <p class="text-xs text-gray-500">${{ number_format($property->price, 0) }}</p>
-                                </div>
-                                <span class="text-xs text-gray-500">{{ $property->created_at->diffForHumans() }}</span>
-                            </div>
-                        @empty
-                            <p class="text-gray-500 text-sm">No recent properties</p>
-                        @endforelse
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <a href="{{ route('admin.properties.index') }}" class="btn-success w-full justify-center">
-                            <i class="fas fa-arrow-left"></i>
-                            View All Properties
-                        </a>
-                    </div>
-                </div>
-
-                <!-- System Status -->
-                <div class="modern-card p-6">
-                    <h3 class="section-header">System Status</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Database</span>
-                            <span class="status-indicator healthy">
-                                <i class="fas fa-check-circle text-green-500"></i>
-                                Healthy
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Storage</span>
-                            <span class="status-indicator healthy">
-                                <i class="fas fa-database text-green-500"></i>
-                                65% Used
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">API</span>
-                            <span class="status-indicator healthy">
-                                <i class="fas fa-wifi text-green-500"></i>
-                                Online
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Queue</span>
-                            <span class="status-indicator warning">
-                                <i class="fas fa-clock text-amber-500"></i>
-                                12 Jobs
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Quick Actions -->
-            <div class="modern-card p-6 mb-6">
-                <h3 class="section-header">Priority Quick Actions</h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <a href="{{ route('admin.users.create') }}" class="quick-action-btn">
-                        <i class="fas fa-user-plus"></i>
-                        <p>New User</p>
-                    </a>
-
-                    <a href="{{ route('admin.properties.create') }}" class="quick-action-btn">
-                        <i class="fas fa-plus-circle"></i>
-                        <p>New Property</p>
-                    </a>
-
-                    <a href="{{ route('admin.blog.posts.create') }}" class="quick-action-btn">
-                        <i class="fas fa-edit"></i>
-                        <p>New Post</p>
-                    </a>
-
-                    <a href="{{ route('investor.stats.public') }}" class="quick-action-btn">
-                        <i class="fas fa-chart-line"></i>
-                        <p>Investor Stats</p>
-                    </a>
-
-                    <a href="{{ route('admin.settings.index') }}" class="quick-action-btn">
-                        <i class="fas fa-cog"></i>
-                        <p>Settings</p>
-                    </a>
-
-                    <a href="{{ route('admin.system.dashboard') }}" class="quick-action-btn">
-                        <i class="fas fa-tools"></i>
-                        <p>Maintenance</p>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Premium Management Hub -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900">Management Hub</h3>
-                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                        <i class="fas fa-th-large"></i>
-                        <span>Premium Dashboard</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-
-                    <!-- Core Operations -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-cogs"></i>
-                            </div>
-                            <h5>Core Operations</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.users.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>All Users</span>
-                            </a>
-                            <a href="{{ route('admin.users.create') }}" class="card-link">
-                                <i class="fas fa-user-plus"></i>
-                                <span>Create User</span>
-                            </a>
-                            <a href="{{ route('admin.agents.index') }}" class="card-link">
-                                <i class="fas fa-user-tie"></i>
-                                <span>Agents</span>
-                            </a>
-                            <a href="{{ route('investor.index') }}" class="card-link">
-                                <i class="fas fa-hand-holding-usd"></i>
-                                <span>Investors</span>
-                            </a>
-                            <a href="{{ route('admin.system.logs') }}" class="card-link">
-                                <i class="fas fa-history"></i>
-                                <span>Activity Logs</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Property Management -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper green">
-                                <i class="fas fa-city"></i>
-                            </div>
-                            <h5>Properties</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.properties.index') }}" class="card-link">
-                                <i class="fas fa-building"></i>
-                                <span>All Properties</span>
-                            </a>
-                            <a href="{{ route('admin.properties.create') }}" class="card-link">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>Add Property</span>
-                            </a>
-                            <a href="{{ route('admin.projects.index') }}" class="card-link">
-                                <i class="fas fa-project-diagram"></i>
-                                <span>Projects</span>
-                            </a>
-                            <a href="{{ route('admin.companies.index') }}" class="card-link">
-                                <i class="fas fa-briefcase"></i>
-                                <span>Companies</span>
-                            </a>
-                            <a href="{{ route('properties.search.index') }}" class="card-link">
-                                <i class="fas fa-search-location"></i>
-                                <span>Advanced Search</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Financial Hub -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper emerald">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <h5>Financial Hub</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.financial.expenses') }}" class="card-link">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>Expenses</span>
-                            </a>
-                            <a href="{{ route('payments.invoices.index') }}" class="card-link">
-                                <i class="fas fa-file-invoice"></i>
-                                <span>Invoices</span>
-                            </a>
-                            <a href="{{ route('wallet.index') }}" class="card-link">
-                                <i class="fas fa-wallet"></i>
-                                <span>My Wallet</span>
-                            </a>
-                            <a href="{{ route('payments.wallets.index') }}" class="card-link">
-                                <i class="fas fa-coins"></i>
-                                <span>System Wallets</span>
-                            </a>
-                            <a href="{{ route('payments.escrow.index') }}" class="card-link">
-                                <i class="fas fa-hand-holding-usd"></i>
-                                <span>Escrow</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Revenue Streams -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <h5>Revenue Streams</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('subscriptions.plans.index') }}" class="card-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Subscription Plans</span>
-                            </a>
-                            <a href="{{ route('subscriptions.plans.stats') }}" class="card-link">
-                                <i class="fas fa-chart-area"></i>
-                                <span>Plan Statistics</span>
-                            </a>
-                            <a href="{{ route('subscriptions.plans.admin-compare') }}" class="card-link">
-                                <i class="fas fa-balance-scale"></i>
-                                <span>Compare Plans</span>
-                            </a>
-                            <a href="{{ route('taxes.index') }}" class="card-link">
-                                <i class="fas fa-calculator"></i>
-                                <span>Tax Management</span>
-                            </a>
-                            <a href="{{ route('financial.roi.main') }}" class="card-link">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>ROI Calculator</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- CRM & Sales -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-funnel-dollar"></i>
-                            </div>
-                            <h5>CRM & Sales</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('leads.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Leads Dashboard</span>
-                            </a>
-                            <a href="{{ route('leads.pipeline') }}" class="card-link">
-                                <i class="fas fa-filter"></i>
-                                <span>Pipeline</span>
-                            </a>
-                            <a href="{{ route('leads.index') }}" class="card-link">
-                                <i class="fas fa-list"></i>
-                                <span>All Leads</span>
-                            </a>
-                            <a href="{{ route('lead-scoring.index') }}" class="card-link">
-                                <i class="fas fa-star-half-alt"></i>
-                                <span>Lead Scoring</span>
-                            </a>
-                            <a href="{{ route('lead-analytics.dashboard') }}" class="card-link">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>Analytics</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Marketing Suite -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper pink">
-                                <i class="fas fa-bullhorn"></i>
-                            </div>
-                            <h5>Marketing Suite</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('marketing.campaigns') }}" class="card-link">
-                                <i class="fas fa-ad"></i>
-                                <span>Campaigns</span>
-                            </a>
-                            <a href="{{ route('admin.seo.index') }}" class="card-link">
-                                <i class="fas fa-search"></i>
-                                <span>SEO Management</span>
-                            </a>
-                            <a href="{{ route('admin.seo.keywords') }}" class="card-link">
-                                <i class="fas fa-key"></i>
-                                <span>Keywords</span>
-                            </a>
-                            <a href="{{ route('admin.seo.analyze') }}" class="card-link">
-                                <i class="fas fa-microscope"></i>
-                                <span>SEO Analysis</span>
-                            </a>
-                            <a href="{{ route('admin.seo.sitemap') }}" class="card-link">
-                                <i class="fas fa-sitemap"></i>
-                                <span>Sitemap</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Content Hub -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper indigo">
-                                <i class="fas fa-pen-nib"></i>
-                            </div>
-                            <h5>Content Hub</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.content.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>CMS Dashboard</span>
-                            </a>
-                            <a href="{{ route('admin.blog.posts.index') }}" class="card-link">
-                                <i class="fas fa-newspaper"></i>
-                                <span>Blog Posts</span>
-                            </a>
-                            <a href="{{ route('admin.pages.index') }}" class="card-link">
-                                <i class="fas fa-file-code"></i>
-                                <span>Static Pages</span>
-                            </a>
-                            <a href="{{ route('admin.media.index') }}" class="card-link">
-                                <i class="fas fa-images"></i>
-                                <span>Media Library</span>
-                            </a>
-                            <a href="{{ route('admin.faqs.index') }}" class="card-link">
-                                <i class="fas fa-question-circle"></i>
-                                <span>FAQs</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Analytics Center -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper cyan">
-                                <i class="fas fa-chart-network"></i>
-                            </div>
-                            <h5>Analytics Center</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('analytics.overview') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Overview</span>
-                            </a>
-                            <a href="{{ route('analytics.real-time') }}" class="card-link">
-                                <i class="fas fa-clock"></i>
-                                <span>Real-Time</span>
-                            </a>
-                            <a href="{{ route('analytics.heatmap.index') }}" class="card-link">
-                                <i class="fas fa-fire"></i>
-                                <span>Heatmaps</span>
-                            </a>
-                            <a href="{{ route('reports.sales.index') }}" class="card-link">
-                                <i class="fas fa-piggy-bank"></i>
-                                <span>Sales Reports</span>
-                            </a>
-                            <a href="{{ route('admin.reports.custom') }}" class="card-link">
-                                <i class="fas fa-filter"></i>
-                                <span>Custom Reports</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- System Tools -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-tools"></i>
-                            </div>
-                            <h5>System Tools</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.system.dashboard') }}" class="card-link">
-                                <i class="fas fa-server"></i>
-                                <span>System Dashboard</span>
-                            </a>
-                            <a href="{{ route('admin.backups') }}" class="card-link">
-                                <i class="fas fa-save"></i>
-                                <span>Backups</span>
-                            </a>
-                            <a href="{{ route('admin.system.queue') }}" class="card-link">
-                                <i class="fas fa-tasks"></i>
-                                <span>Queue Manager</span>
-                            </a>
-                            <a href="{{ route('admin.system.storage') }}" class="card-link">
-                                <i class="fas fa-hdd"></i>
-                                <span>Storage</span>
-                            </a>
-                            <a href="{{ route('routes.index') }}" class="card-link">
-                                <i class="fas fa-route"></i>
-                                <span>Route Manager</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Platform Settings -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper slate">
-                                <i class="fas fa-cogs"></i>
-                            </div>
-                            <h5>Platform Settings</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.settings.general') }}" class="card-link">
-                                <i class="fas fa-sliders-h"></i>
-                                <span>General</span>
-                            </a>
-                            <a href="{{ route('admin.settings.email') }}" class="card-link">
-                                <i class="fas fa-envelope"></i>
-                                <span>Email</span>
-                            </a>
-                            <a href="{{ route('admin.settings.payment') }}" class="card-link">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Payment</span>
-                            </a>
-                            <a href="{{ route('admin.settings.security') }}" class="card-link">
-                                <i class="fas fa-lock"></i>
-                                <span>Security</span>
-                            </a>
-                            <a href="{{ route('settings.index') }}" class="card-link">
-                                <i class="fas fa-user-cog"></i>
-                                <span>My Preferences</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Communication Hub -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper sky">
-                                <i class="fas fa-comments"></i>
-                            </div>
-                            <h5>Communication</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('messages.inbox') }}" class="card-link">
-                                <i class="fas fa-inbox"></i>
-                                <span>Inbox</span>
-                            </a>
-                            <a href="{{ route('messages.chat') }}" class="card-link">
-                                <i class="fas fa-comment-dots"></i>
-                                <span>Live Chat</span>
-                            </a>
-                            <a href="{{ route('messages.appointments') }}" class="card-link">
-                                <i class="fas fa-calendar-check"></i>
-                                <span>Appointments</span>
-                            </a>
-                            <a href="{{ route('messages.notifications') }}" class="card-link">
-                                <i class="fas fa-bell"></i>
-                                <span>Notifications</span>
-                            </a>
-                            <a href="#" onclick="alert('Please select a conversation to start a video call')" class="card-link">
-                                <i class="fas fa-video"></i>
-                                <span>Video Calls</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Advanced Features -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper violet">
-                                <i class="fas fa-rocket"></i>
-                            </div>
-                            <h5>Advanced</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('metaverse.index') }}" class="card-link">
-                                <i class="fas fa-vr-cardboard"></i>
-                                <span>Metaverse</span>
-                            </a>
-                            <a href="{{ route('defi.dashboard.index') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>DeFi Platform</span>
-                            </a>
-                            <a href="{{ route('bigdata.predictive-ai') }}" class="card-link">
-                                <i class="fas fa-database"></i>
-                                <span>Big Data</span>
-                            </a>
-                            <a href="{{ route('ai.dashboard') }}" class="card-link">
-                                <i class="fas fa-robot"></i>
-                                <span>AI Dashboard</span>
-                            </a>
-                            <a href="{{ route('blockchain.index') }}" class="card-link">
-                                <i class="fas fa-cubes"></i>
-                                <span>Blockchain Hub</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Maintenance Ops -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper red">
-                                <i class="fas fa-wrench"></i>
-                            </div>
-                            <h5>Maintenance Ops</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('maintenance.index') }}" class="card-link">
-                                <i class="fas fa-hammer"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('maintenance.workorders.index') }}" class="card-link">
-                                <i class="fas fa-clipboard-list"></i>
-                                <span>Work Orders</span>
-                            </a>
-                            <a href="{{ route('maintenance.schedule.index') }}" class="card-link">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>Schedule</span>
-                            </a>
-                            <a href="{{ route('maintenance.teams.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>Teams</span>
-                            </a>
-                            <a href="{{ route('warranties.index') }}" class="card-link">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Warranties</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Project Management -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-project-diagram"></i>
-                            </div>
-                            <h5>Project Mgmt</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('projects.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('projects.index') }}" class="card-link">
-                                <i class="fas fa-list"></i>
-                                <span>All Projects</span>
-                            </a>
-                            <a href="{{ route('projects.gantt.dashboard') }}" class="card-link">
-                                <i class="fas fa-stream"></i>
-                                <span>Gantt Charts</span>
-                            </a>
-                            <a href="{{ route('projects.milestones.dashboard') }}" class="card-link">
-                                <i class="fas fa-flag"></i>
-                                <span>Milestones</span>
-                            </a>
-                            <a href="{{ route('projects.budgets.index', ['project' => 1]) }}" class="card-link">
-                                <i class="fas fa-calculator"></i>
-                                <span>Budgets</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- IoT & Smart Living -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper cyan">
-                                <i class="fas fa-wifi"></i>
-                            </div>
-                            <h5>IoT & Smart Living</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('iot.dashboard') }}" class="card-link">
-                                <i class="fas fa-home"></i>
-                                <span>IoT Dashboard</span>
-                            </a>
-                            <a href="{{ route('iot.devices.index') }}" class="card-link">
-                                <i class="fas fa-microchip"></i>
-                                <span>Devices</span>
-                            </a>
-                            <a href="{{ route('iot.automations.index') }}" class="card-link">
-                                <i class="fas fa-cogs"></i>
-                                <span>Automations</span>
-                            </a>
-                            <a href="{{ route('iot.energy.dashboard') }}" class="card-link">
-                                <i class="fas fa-bolt"></i>
-                                <span>Energy Monitor</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Developer Hub -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-code-branch"></i>
-                            </div>
-                            <h5>Developer Hub</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('developer.stats') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('developer.projects.index') }}" class="card-link">
-                                <i class="fas fa-project-diagram"></i>
-                                <span>Projects</span>
-                            </a>
-                            <a href="{{ route('developer.portfolios.index') }}" class="card-link">
-                                <i class="fas fa-folder-open"></i>
-                                <span>Portfolios</span>
-                            </a>
-                            <a href="{{ route('developer.permits.index') }}" class="card-link">
-                                <i class="fas fa-file-signature"></i>
-                                <span>Permits</span>
-                            </a>
-                            <a href="{{ route('developer.profile.show') }}" class="card-link">
-                                <i class="fas fa-id-card"></i>
-                                <span>Dev Profile</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Inventory System -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-boxes"></i>
-                            </div>
-                            <h5>Inventory System</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('inventory.index') }}" class="card-link">
-                                <i class="fas fa-warehouse"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('inventory.items.index') }}" class="card-link">
-                                <i class="fas fa-box-open"></i>
-                                <span>Items</span>
-                            </a>
-                            <a href="{{ route('inventory.categories.index') }}" class="card-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Categories</span>
-                            </a>
-                            <a href="{{ route('inventory.movements.index') }}" class="card-link">
-                                <i class="fas fa-dolly"></i>
-                                <span>Movements</span>
-                            </a>
-                            <a href="{{ route('inventory.suppliers.index') }}" class="card-link">
-                                <i class="fas fa-truck"></i>
-                                <span>Suppliers</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Agent Success -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper green">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-                            <h5>Agent Success</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('agents.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Agent Dash</span>
-                            </a>
-                            <a href="{{ route('agents.performance') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Performance</span>
-                            </a>
-                            <a href="{{ route('agents.ranking') }}" class="card-link">
-                                <i class="fas fa-trophy"></i>
-                                <span>Ranking</span>
-                            </a>
-                            <a href="{{ route('agents.goals') }}" class="card-link">
-                                <i class="fas fa-bullseye"></i>
-                                <span>Goals</span>
-                            </a>
-                            <a href="{{ route('agents.directory.full') }}" class="card-link">
-                                <i class="fas fa-address-book"></i>
-                                <span>Directory</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Gamification -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper yellow">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <h5>Gamification</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('gamification.dashboard') }}" class="card-link">
-                                <i class="fas fa-gamepad"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('gamification.achievements') }}" class="card-link">
-                                <i class="fas fa-medal"></i>
-                                <span>Achievements</span>
-                            </a>
-                            <a href="{{ route('gamification.badges') }}" class="card-link">
-                                <i class="fas fa-certificate"></i>
-                                <span>Badges</span>
-                            </a>
-                            <a href="{{ route('gamification.leaderboard') }}" class="card-link">
-                                <i class="fas fa-crown"></i>
-                                <span>Leaderboard</span>
-                            </a>
-                            <a href="{{ route('gamification.rewards') }}" class="card-link">
-                                <i class="fas fa-gift"></i>
-                                <span>Rewards</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Documents & Legal -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper slate">
-                                <i class="fas fa-file-contract"></i>
-                            </div>
-                            <h5>Documents & Legal</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('documents.index') }}" class="card-link">
-                                <i class="fas fa-folder-open"></i>
-                                <span>All Documents</span>
-                            </a>
-                            <a href="{{ route('documents.templates.index') }}" class="card-link">
-                                <i class="fas fa-file-alt"></i>
-                                <span>Templates</span>
-                            </a>
-                            <a href="{{ route('documents.compliance.index') }}" class="card-link">
-                                <i class="fas fa-gavel"></i>
-                                <span>Compliance</span>
-                            </a>
-                            <a href="{{ route('messages.contracts.index') }}" class="card-link">
-                                <i class="fas fa-signature"></i>
-                                <span>Contracts</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Property Settings -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper indigo">
-                                <i class="fas fa-sliders-h"></i>
-                            </div>
-                            <h5>Property Settings</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('property-types.index') }}" class="card-link">
-                                <i class="fas fa-home"></i>
-                                <span>Property Types</span>
-                            </a>
-                            <a href="{{ route('property-types.create') }}" class="card-link">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>Add Type</span>
-                            </a>
-                            <a href="{{ route('properties.features.index', ['property' => 1]) }}" class="card-link">
-                                <i class="fas fa-list-ul"></i>
-                                <span>Features</span>
-                            </a>
-                            <a href="{{ route('properties.prices.index', ['property' => 1]) }}" class="card-link">
-                                <i class="fas fa-dollar-sign"></i>
-                                <span>Pricing Config</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Enterprise B2B -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-building"></i>
-                            </div>
-                            <h5>Enterprise B2B</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('enterprise.dashboard') }}" class="card-link">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('enterprise.accounts') }}" class="card-link">
-                                <i class="fas fa-users-cog"></i>
-                                <span>Accounts</span>
-                            </a>
-                            <a href="{{ route('enterprise.subscriptions') }}" class="card-link">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                                <span>Subscriptions</span>
-                            </a>
-                            <a href="{{ route('enterprise.reports') }}" class="card-link">
-                                <i class="fas fa-file-alt"></i>
-                                <span>Reports</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Ad Management -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper pink">
-                                <i class="fas fa-ad"></i>
-                            </div>
-                            <h5>Ad Management</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.banner-ads.index') }}" class="card-link">
-                                <i class="fas fa-list"></i>
-                                <span>All Banner Ads</span>
-                            </a>
-                            <a href="{{ route('admin.banner-ads.create') }}" class="card-link">
-                                <i class="fas fa-plus-square"></i>
-                                <span>Create Banner</span>
-                            </a>
-                            <a href="#" onclick="alert('Analytics')" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Performance</span>
-                            </a>
-                            <a href="#" onclick="alert('Tracking')" class="card-link">
-                                <i class="fas fa-mouse-pointer"></i>
-                                <span>Click Tracking</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Blockchain Pro -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper violet">
-                                <i class="fas fa-cube"></i>
-                            </div>
-                            <h5>Blockchain Pro</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('blockchain.wallets.index') }}" class="card-link">
-                                <i class="fas fa-wallet"></i>
-                                <span>Crypto Wallets</span>
-                            </a>
-                            <a href="{{ route('blockchain.transactions.index') }}" class="card-link">
-                                <i class="fas fa-exchange-alt"></i>
-                                <span>Transactions</span>
-                            </a>
-                            <a href="{{ route('blockchain.smartcontracts.index') }}" class="card-link">
-                                <i class="fas fa-file-contract w-5"></i>
-                                <span>Smart Contracts</span>
-                            </a>
-                            <a href="{{ route('blockchain.nfts.index') }}" class="card-link">
-                                <i class="fas fa-image"></i>
-                                <span>NFTs</span>
-                            </a>
-                            <a href="{{ route('blockchain.dao.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>DAO</span>
-                            </a>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Extended Modules -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mt-8">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900">Extended Modules</h3>
-                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                        <i class="fas fa-cubes"></i>
-                        <span>All Features</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- Content CMS -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-pen-nib"></i>
-                            </div>
-                            <h5>Content CMS</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.content.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>CMS Dash</span>
-                            </a>
-                            <a href="{{ route('admin.blog.posts.index') }}" class="card-link">
-                                <i class="fas fa-newspaper"></i>
-                                <span>Blog Posts</span>
-                            </a>
-                            <a href="{{ route('admin.pages.index') }}" class="card-link">
-                                <i class="fas fa-file-code"></i>
-                                <span>Static Pages</span>
-                            </a>
-                            <a href="{{ route('admin.news.index') }}" class="card-link">
-                                <i class="fas fa-bullhorn"></i>
-                                <span>News Central</span>
-                            </a>
-                            <a href="{{ route('admin.guides.index') }}" class="card-link">
-                                <i class="fas fa-map-signs"></i>
-                                <span>User Guides</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Content Tools -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-tools"></i>
-                            </div>
-                            <h5>Content Tools</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.faqs.index') }}" class="card-link">
-                                <i class="fas fa-question-circle"></i>
-                                <span>FAQs</span>
-                            </a>
-                            <a href="{{ route('admin.media.index') }}" class="card-link">
-                                <i class="fas fa-images"></i>
-                                <span>Media Lib</span>
-                            </a>
-                            <a href="{{ route('admin.menus.index') }}" class="card-link">
-                                <i class="fas fa-bars"></i>
-                                <span>Menus</span>
-                            </a>
-                            <a href="{{ route('admin.widgets.index') }}" class="card-link">
-                                <i class="fas fa-th-large"></i>
-                                <span>Widgets</span>
-                            </a>
-                            <a href="{{ route('testimonials.index') }}" class="card-link">
-                                <i class="fas fa-quote-right"></i>
-                                <span>Testimonials</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Maintenance Ops -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper red">
-                                <i class="fas fa-wrench"></i>
-                            </div>
-                            <h5>Maintenance Ops</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('maintenance.index') }}" class="card-link">
-                                <i class="fas fa-hammer"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('maintenance.workorders.index') }}" class="card-link">
-                                <i class="fas fa-tasks"></i>
-                                <span>Work Orders</span>
-                            </a>
-                            <a href="{{ route('maintenance.schedule.index') }}" class="card-link">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>Schedule</span>
-                            </a>
-                            <a href="{{ route('maintenance.teams.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>Teams</span>
-                            </a>
-                            <a href="{{ route('maintenance.reports') }}" class="card-link">
-                                <i class="fas fa-chart-bar"></i>
-                                <span>Reports</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Warranty Mgmt -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper red">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <h5>Warranty Mgmt</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('warranties.index') }}" class="card-link">
-                                <i class="fas fa-certificate"></i>
-                                <span>Warranties</span>
-                            </a>
-                            <a href="{{ route('warranties.policies.index') }}" class="card-link">
-                                <i class="fas fa-file-contract"></i>
-                                <span>Policies</span>
-                            </a>
-                            <a href="{{ route('warranties.claims.index') }}" class="card-link">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <span>Claims</span>
-                            </a>
-                            <a href="{{ route('warranties.providers.index') }}" class="card-link">
-                                <i class="fas fa-handshake"></i>
-                                <span>Providers</span>
-                            </a>
-                            <a href="{{ route('warranties.reports') }}" class="card-link">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>Reports</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- System Maint -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper red">
-                                <i class="fas fa-cogs"></i>
-                            </div>
-                            <h5>System Maint</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.maintenance') }}" class="card-link">
-                                <i class="fas fa-tools"></i>
-                                <span>System Maint.</span>
-                            </a>
-                             <a href="{{ route('admin.system.updates') }}" class="card-link">
-                                <i class="fas fa-sync"></i>
-                                <span>Updates</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Smart Living -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper cyan">
-                                <i class="fas fa-wifi"></i>
-                            </div>
-                            <h5>Smart Living</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('iot.dashboard') }}" class="card-link">
-                                <i class="fas fa-home"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('iot.devices.index') }}" class="card-link">
-                                <i class="fas fa-microchip"></i>
-                                <span>Devices</span>
-                            </a>
-                            <a href="{{ route('iot.automations.index') }}" class="card-link">
-                                <i class="fas fa-cogs"></i>
-                                <span>Automations</span>
-                            </a>
-                            <a href="{{ route('iot.energy.dashboard') }}" class="card-link">
-                                <i class="fas fa-bolt"></i>
-                                <span>Energy</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Developer Hub -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-code-branch"></i>
-                            </div>
-                            <h5>Developer Hub</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('developer.stats') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('developer.projects.index') }}" class="card-link">
-                                <i class="fas fa-project-diagram"></i>
-                                <span>Projects</span>
-                            </a>
-                            <a href="{{ route('developer.metaverses.index') }}" class="card-link">
-                                <i class="fas fa-vr-cardboard"></i>
-                                <span>Metaverses</span>
-                            </a>
-                            <a href="{{ route('developer.portfolios.index') }}" class="card-link">
-                                <i class="fas fa-folder-open"></i>
-                                <span>Portfolios</span>
-                            </a>
-                            <a href="{{ route('developer.milestones.index') }}" class="card-link">
-                                <i class="fas fa-flag-checkered"></i>
-                                <span>Milestones</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Dev Projects -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-laptop-code"></i>
-                            </div>
-                            <h5>Dev Projects</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('developer.permits.index') }}" class="card-link">
-                                <i class="fas fa-file-signature"></i>
-                                <span>Permits</span>
-                            </a>
-                            <a href="{{ route('developer.phases.index') }}" class="card-link">
-                                <i class="fas fa-layer-group"></i>
-                                <span>Phases</span>
-                            </a>
-                            <a href="{{ route('developer.units.index', ['project' => 1]) }}" class="card-link">
-                                <i class="fas fa-th"></i>
-                                <span>Units</span>
-                            </a>
-                            <a href="{{ route('developer.profile.show') }}" class="card-link">
-                                <i class="fas fa-id-card"></i>
-                                <span>Dev Profile</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Inventory Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-boxes"></i>
-                            </div>
-                            <h5>Inventory Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('inventory.index') }}" class="card-link">
-                                <i class="fas fa-warehouse"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('inventory.items.index') }}" class="card-link">
-                                <i class="fas fa-box-open"></i>
-                                <span>Items</span>
-                            </a>
-                            <a href="{{ route('inventory.categories.index') }}" class="card-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Categories</span>
-                            </a>
-                            <a href="{{ route('inventory.movements.index') }}" class="card-link">
-                                <i class="fas fa-dolly"></i>
-                                <span>Movements</span>
-                            </a>
-                            <a href="{{ route('inventory.suppliers.index') }}" class="card-link">
-                                <i class="fas fa-truck"></i>
-                                <span>Suppliers</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Inventory Ops -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-clipboard-check"></i>
-                            </div>
-                            <h5>Inventory Ops</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('inventory.low-stock') }}" class="card-link">
-                                <i class="fas fa-exclamation-circle"></i>
-                                <span>Low Stock</span>
-                            </a>
-                            <a href="{{ route('inventory.reports') }}" class="card-link">
-                                <i class="fas fa-clipboard-list"></i>
-                                <span>Reports</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Gamification -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <h5>Gamification</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('gamification.dashboard') }}" class="card-link">
-                                <i class="fas fa-gamepad"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('gamification.achievements') }}" class="card-link">
-                                <i class="fas fa-medal"></i>
-                                <span>Achievements</span>
-                            </a>
-                            <a href="{{ route('gamification.badges') }}" class="card-link">
-                                <i class="fas fa-certificate"></i>
-                                <span>Badges</span>
-                            </a>
-                            <a href="{{ route('gamification.leaderboard') }}" class="card-link">
-                                <i class="fas fa-list-ol"></i>
-                                <span>Leaderboard</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Finance Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper red">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <h5>Finance Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.financial.expenses') }}" class="card-link">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>Expenses</span>
-                            </a>
-                            <a href="{{ route('payments.invoices.index') }}" class="card-link">
-                                <i class="fas fa-file-invoice"></i>
-                                <span>Invoices</span>
-                            </a>
-                            <a href="{{ route('wallet.index') }}" class="card-link">
-                                <i class="fas fa-wallet"></i>
-                                <span>My Wallet</span>
-                            </a>
-                             <a href="{{ route('payments.wallets.index') }}" class="card-link">
-                                <i class="fas fa-wallet"></i>
-                                <span>Sys Wallets</span>
-                            </a>
-                            <a href="{{ route('payments.escrow.index') }}" class="card-link">
-                                <i class="fas fa-hand-holding-usd"></i>
-                                <span>Escrow</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Planning & Subs -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper green">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <h5>Planning & Subs</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('subscriptions.plans.index') }}" class="card-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Sub Plans</span>
-                            </a>
-                             <a href="{{ route('subscriptions.plans.stats') }}" class="card-link">
-                                <i class="fas fa-chart-area"></i>
-                                <span>Plan Stats</span>
-                            </a>
-                            <a href="{{ route('subscriptions.plans.admin-compare') }}" class="card-link">
-                                <i class="fas fa-balance-scale"></i>
-                                <span>Compare</span>
-                            </a>
-                            <a href="{{ route('financial.roi.main') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>ROI Calc</span>
-                            </a>
-                            <a href="{{ route('financial.scenarios.index') }}" class="card-link">
-                                <i class="fas fa-random"></i>
-                                <span>Scenarios</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Fin Analysis -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-chart-pie"></i>
-                            </div>
-                            <h5>Fin Analysis</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('financial.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('financial.cash_flow.index') }}" class="card-link">
-                                <i class="fas fa-stream"></i>
-                                <span>Cash Flow</span>
-                            </a>
-                            <a href="{{ route('financial.valuation.index') }}" class="card-link">
-                                <i class="fas fa-tag"></i>
-                                <span>Valuation</span>
-                            </a>
-                            <a href="{{ route('financial.portfolio.index') }}" class="card-link">
-                                <i class="fas fa-briefcase"></i>
-                                <span>Portfolio</span>
-                            </a>
-                            <a href="{{ route('financial.tax_benefits.index') }}" class="card-link">
-                                <i class="fas fa-hand-holding-usd"></i>
-                                <span>Tax Benefits</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Tax Compliance -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                            </div>
-                            <h5>Tax Compliance</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('taxes.dashboard') }}" class="card-link">
-                                <i class="fas fa-columns"></i>
-                                <span>Tax Dash</span>
-                            </a>
-                            <a href="{{ route('taxes.property.index') }}" class="card-link">
-                                <i class="fas fa-home"></i>
-                                <span>Prop Taxes</span>
-                            </a>
-                            <a href="{{ route('taxes.filings.index') }}" class="card-link">
-                                <i class="fas fa-file-signature"></i>
-                                <span>Tax Filings</span>
-                            </a>
-                            <a href="{{ route('taxes.payments.index') }}" class="card-link">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Payments</span>
-                            </a>
-                            <a href="{{ route('taxes.reports.index') }}" class="card-link">
-                                <i class="fas fa-file-alt"></i>
-                                <span>Tax Reports</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Tax Tools -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-calculator"></i>
-                            </div>
-                            <h5>Tax Tools</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('taxes.index') }}" class="card-link">
-                                <i class="fas fa-calculator"></i>
-                                <span>Tax Mgmt</span>
-                            </a>
-                             <a href="{{ route('taxes.reports.audit') }}" class="card-link">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                                <span>Tax Audits</span>
-                            </a>
-                            <a href="{{ route('taxes.vat.index') }}" class="card-link">
-                                <i class="fas fa-receipt"></i>
-                                <span>VAT Records</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Marketing Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper pink">
-                                <i class="fas fa-bullhorn"></i>
-                            </div>
-                            <h5>Marketing Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('marketing.index') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="{{ route('subscriptions.plans.admin-compare') }}" class="card-link">
-                                <i class="fas fa-balance-scale"></i>
-                                <span>Compare</span>
-                            </a>
-                            <a href="{{ route('taxes.index') }}" class="card-link">
-                                <i class="fas fa-calculator"></i>
-                                <span>Tax Mgmt</span>
-                            </a>
-                             <a href="{{ route('taxes.reports.audit') }}" class="card-link">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                                <span>Tax Audits</span>
-                            </a>
-                            <a href="{{ route('financial.roi.main') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>ROI Calc</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- SEO Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper pink">
-                                <i class="fas fa-search-dollar"></i>
-                            </div>
-                            <h5>SEO Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('marketing.campaigns') }}" class="card-link">
-                                <i class="fas fa-ad"></i>
-                                <span>Campaigns</span>
-                            </a>
-                            <a href="{{ route('admin.settings.seo') }}" class="card-link">
-                                <i class="fas fa-cogs"></i>
-                                <span>Global SEO</span>
-                            </a>
-                            <a href="{{ route('admin.seo.index') }}" class="card-link">
-                                <i class="fas fa-search"></i>
-                                <span>SEO Mgmt</span>
-                            </a>
-                            <a href="{{ route('admin.seo.keywords') }}" class="card-link">
-                                <i class="fas fa-key"></i>
-                                <span>Keywords</span>
-                            </a>
-                            <a href="{{ route('admin.seo.meta.tags') }}" class="card-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Meta Tags</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- SEO Tools -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper pink">
-                                <i class="fas fa-microscope"></i>
-                            </div>
-                            <h5>SEO Tools</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.seo.robots') }}" class="card-link">
-                                <i class="fas fa-robot"></i>
-                                <span>Robots.txt</span>
-                            </a>
-                            <a href="{{ route('admin.seo.analyze') }}" class="card-link">
-                                <i class="fas fa-microscope"></i>
-                                <span>Analysis</span>
-                            </a>
-                             <a href="{{ route('admin.seo.test') }}" class="card-link">
-                                <i class="fas fa-vial"></i>
-                                <span>SEO Test</span>
-                            </a>
-                            <a href="{{ route('admin.seo.sitemap') }}" class="card-link">
-                                <i class="fas fa-sitemap"></i>
-                                <span>Sitemap</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Banner Ads -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-ad"></i>
-                            </div>
-                            <h5>Banner Ads</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.banner-ads.index') }}" class="card-link">
-                                <i class="fas fa-list"></i>
-                                <span>All Ads</span>
-                            </a>
-                            <a href="{{ route('admin.banner-ads.create') }}" class="card-link">
-                                <i class="fas fa-plus-square"></i>
-                                <span>Create Ad</span>
-                            </a>
-                            <a href="#" onclick="alert('Analytics')" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Analytics</span>
-                            </a>
-                            <a href="#" onclick="alert('Tracking')" class="card-link">
-                                <i class="fas fa-mouse-pointer"></i>
-                                <span>Tracking</span>
-                            </a>
-                            <a href="#" onclick="alert('Impressions')" class="card-link">
-                                <i class="fas fa-eye"></i>
-                                <span>Impressions</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Analytics Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-chart-network"></i>
-                            </div>
-                            <h5>Analytics Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('analytics.overview') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Overview</span>
-                            </a>
-                            <a href="{{ route('analytics.real-time') }}" class="card-link">
-                                <i class="fas fa-clock"></i>
-                                <span>Real-Time</span>
-                            </a>
-                            <a href="{{ route('analytics.behavior.index') }}" class="card-link">
-                                <i class="fas fa-user-tag"></i>
-                                <span>Behavior</span>
-                            </a>
-                            <a href="{{ route('analytics.heatmap.index') }}" class="card-link">
-                                <i class="fas fa-fire"></i>
-                                <span>Heatmaps</span>
-                            </a>
-                             <a href="{{ route('geospatial.analytics.index') }}" class="card-link">
-                                <i class="fas fa-globe-asia"></i>
-                                <span>Geo Analytics</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Market Data -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-chart-bar"></i>
-                            </div>
-                            <h5>Market Data</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('geospatial.demographics.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>Demographics</span>
-                            </a>
-                            <a href="{{ route('analytics.market.trends') }}" class="card-link">
-                                <i class="fas fa-trending-up"></i>
-                                <span>Trends</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Reports Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper indigo">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <h5>Reports Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('reports.index') }}" class="card-link">
-                                <i class="fas fa-copy"></i>
-                                <span>Center</span>
-                            </a>
-                            <a href="{{ route('reports.sales.index') }}" class="card-link">
-                                <i class="fas fa-piggy-bank"></i>
-                                <span>Sales</span>
-                            </a>
-                            <a href="{{ route('admin.reports.agent.performance') }}" class="card-link">
-                                <i class="fas fa-user-tie"></i>
-                                <span>Agent Perf</span>
-                            </a>
-                            <a href="{{ route('admin.reports.client.analytics') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>Client Analytics</span>
-                            </a>
-                            <a href="{{ route('admin.reports.property.performance') }}" class="card-link">
-                                <i class="fas fa-home"></i>
-                                <span>Prop Perf</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Perf Reports -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper indigo">
-                                <i class="fas fa-rocket"></i>
-                            </div>
-                            <h5>Perf Reports</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.performance.system') }}" class="card-link">
-                                <i class="fas fa-rocket"></i>
-                                <span>Sys Perf</span>
-                            </a>
-                            <a href="{{ route('admin.reports.custom') }}" class="card-link">
-                                <i class="fas fa-filter"></i>
-                                <span>Custom Rpts</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Surveys -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper pink">
-                                <i class="fas fa-poll"></i>
-                            </div>
-                            <h5>Surveys</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('surveys.index') }}" class="card-link">
-                                <i class="fas fa-poll-h"></i>
-                                <span>All Surveys</span>
-                            </a>
-                            <a href="{{ route('surveys.create') }}" class="card-link">
-                                <i class="fas fa-plus-square"></i>
-                                <span>Create</span>
-                            </a>
-                            <a href="{{ route('reviews.index') }}" class="card-link">
-                                <i class="fas fa-star"></i>
-                                <span>Reviews</span>
-                            </a>
-                            <a href="{{ route('requests.index') }}" class="card-link">
-                                <i class="fas fa-envelope-open-text"></i>
-                                <span>Requests</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Communication -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-comments"></i>
-                            </div>
-                            <h5>Communication</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('messages.inbox') }}" class="card-link">
-                                <i class="fas fa-inbox"></i>
-                                <span>Inbox</span>
-                            </a>
-                            <a href="{{ route('messages.chat') }}" class="card-link">
-                                <i class="fas fa-comment-dots"></i>
-                                <span>Live Chat</span>
-                            </a>
-                            <a href="{{ route('messages.appointments') }}" class="card-link">
-                                <i class="fas fa-calendar-check"></i>
-                                <span>Appointments</span>
-                            </a>
-                            <a href="{{ route('messages.notifications') }}" class="card-link">
-                                <i class="fas fa-bell"></i>
-                                <span>Notifications</span>
-                            </a>
-                            <a href="#" onclick="alert('Video Calls')" class="card-link">
-                                <i class="fas fa-video"></i>
-                                <span>Video Calls</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Deals & Offers -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper green">
-                                <i class="fas fa-handshake"></i>
-                            </div>
-                            <h5>Deals & Offers</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('messages.offers.index') }}" class="card-link">
-                                <i class="fas fa-tag"></i>
-                                <span>Offers</span>
-                            </a>
-                            <a href="{{ route('messages.negotiations.index') }}" class="card-link">
-                                <i class="fas fa-hand-holding-usd"></i>
-                                <span>Negotiations</span>
-                            </a>
-                            <a href="{{ route('messages.contracts.index') }}" class="card-link">
-                                <i class="fas fa-file-signature"></i>
-                                <span>Contracts</span>
-                            </a>
-                            <a href="{{ route('messages.auctions.index') }}" class="card-link">
-                                <i class="fas fa-gavel"></i>
-                                <span>Auctions</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- System Infra -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-server"></i>
-                            </div>
-                            <h5>System Infra</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.system.dashboard') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>System Dash</span>
-                            </a>
-                            <a href="{{ route('admin.system.monitoring') }}" class="card-link">
-                                <i class="fas fa-heartbeat"></i>
-                                <span>Monitoring</span>
-                            </a>
-                            <a href="{{ route('admin.system.database') }}" class="card-link">
-                                <i class="fas fa-database"></i>
-                                <span>Database</span>
-                            </a>
-                            <a href="{{ route('admin.backups') }}" class="card-link">
-                                <i class="fas fa-save"></i>
-                                <span>Backups</span>
-                            </a>
-                            <a href="{{ route('admin.system.logs') }}" class="card-link">
-                                <i class="fas fa-list-alt"></i>
-                                <span>System Logs</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- System Ops -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-cogs"></i>
-                            </div>
-                            <h5>System Ops</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.system.queue') }}" class="card-link">
-                                <i class="fas fa-tasks"></i>
-                                <span>Queues</span>
-                            </a>
-                            <a href="{{ route('admin.system.storage') }}" class="card-link">
-                                <i class="fas fa-hdd"></i>
-                                <span>Storage</span>
-                            </a>
-                            <a href="{{ route('routes.index') }}" class="card-link">
-                                <i class="fas fa-route"></i>
-                                <span>Route Mgr</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Platform Set. -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-sliders-h"></i>
-                            </div>
-                            <h5>Platform Set.</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.settings.general') }}" class="card-link">
-                                <i class="fas fa-sliders-h"></i>
-                                <span>General</span>
-                            </a>
-                            <a href="{{ route('modules.dashboard') }}" class="card-link">
-                                <i class="fas fa-puzzle-piece"></i>
-                                <span>Modules</span>
-                            </a>
-                            <a href="{{ route('admin.settings.email') }}" class="card-link">
-                                <i class="fas fa-envelope"></i>
-                                <span>Email</span>
-                            </a>
-                            <a href="{{ route('admin.settings.payment') }}" class="card-link">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Payment</span>
-                            </a>
-                            <a href="{{ route('admin.settings.social') }}" class="card-link">
-                                <i class="fas fa-share-alt"></i>
-                                <span>Social</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Acct Settings -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-user-cog"></i>
-                            </div>
-                            <h5>Acct Settings</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('admin.settings.security') }}" class="card-link">
-                                <i class="fas fa-lock"></i>
-                                <span>Security</span>
-                            </a>
-                            <a href="{{ route('settings.index') }}" class="card-link">
-                                <i class="fas fa-user-cog"></i>
-                                <span>My Prefs</span>
-                            </a>
-                            <a href="{{ route('social.accounts') }}" class="card-link">
-                                <i class="fas fa-share-alt-square"></i>
-                                <span>Linked Accts</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Tools & Utils -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper gray">
-                                <i class="fas fa-tools"></i>
-                            </div>
-                            <h5>Tools & Utils</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('currency.index') }}" class="card-link">
-                                <i class="fas fa-coins"></i>
-                                <span>Currency</span>
-                            </a>
-                            <a href="{{ route('currency.converter') }}" class="card-link">
-                                <i class="fas fa-exchange-alt"></i>
-                                <span>Converter</span>
-                            </a>
-                            <a href="{{ route('language.index') }}" class="card-link">
-                                <i class="fas fa-language"></i>
-                                <span>Languages</span>
-                            </a>
-                            <a href="{{ route('admin.performance.system') }}" class="card-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Performance</span>
-                            </a>
-                            <a href="{{ route('admin.system.dashboard') }}" class="card-link">
-                                <i class="fas fa-tools"></i>
-                                <span>Maint.</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Advanced -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-rocket"></i>
-                            </div>
-                            <h5>Advanced</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('metaverse.index') }}" class="card-link">
-                                <i class="fas fa-vr-cardboard"></i>
-                                <span>Metaverse</span>
-                            </a>
-                            <a href="{{ route('defi.dashboard.index') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>DeFi Plat.</span>
-                            </a>
-                            <a href="{{ route('bigdata.predictive-ai') }}" class="card-link">
-                                <i class="fas fa-database"></i>
-                                <span>Big Data</span>
-                            </a>
-                            <a href="{{ route('geospatial.analytics.index') }}" class="card-link">
-                                <i class="fas fa-map-marked-alt"></i>
-                                <span>Geospatial</span>
-                            </a>
-                            <a href="#" onclick="alert('API Notifications')" class="card-link">
-                                <i class="fas fa-bell"></i>
-                                <span>API Notif</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Documents -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper orange">
-                                <i class="fas fa-file-contract"></i>
-                            </div>
-                            <h5>Documents</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('documents.index') }}" class="card-link">
-                                <i class="fas fa-folder-open"></i>
-                                <span>All Docs</span>
-                            </a>
-                            <a href="{{ route('documents.templates.index') }}" class="card-link">
-                                <i class="fas fa-file-alt"></i>
-                                <span>Templates</span>
-                            </a>
-                            <a href="{{ route('documents.compliance.index') }}" class="card-link">
-                                <i class="fas fa-gavel"></i>
-                                <span>Legal Docs</span>
-                            </a>
-                            <a href="{{ route('messages.contracts.index') }}" class="card-link">
-                                <i class="fas fa-signature"></i>
-                                <span>Contracts</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Blockchain Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-cube"></i>
-                            </div>
-                            <h5>Blockchain Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('blockchain.wallets.index') }}" class="card-link">
-                                <i class="fas fa-link"></i>
-                                <span>Block. Hub</span>
-                            </a>
-                            <a href="{{ route('blockchain.wallets.index') }}" class="card-link">
-                                <i class="fas fa-wallet"></i>
-                                <span>Crypto Wallets</span>
-                            </a>
-                            <a href="{{ route('blockchain.transactions.index') }}" class="card-link">
-                                <i class="fas fa-exchange-alt"></i>
-                                <span>Transactions</span>
-                            </a>
-                            <a href="{{ route('blockchain.smartcontracts.index') }}" class="card-link">
-                                <i class="fas fa-file-contract"></i>
-                                <span>Smart Contr.</span>
-                            </a>
-                            <a href="{{ route('blockchain.nfts.index') }}" class="card-link">
-                                <i class="fas fa-image"></i>
-                                <span>NFTs</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- DeFi & DAO -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-users-cog"></i>
-                            </div>
-                            <h5>DeFi & DAO</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('blockchain.dao.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>DAO</span>
-                            </a>
-                            <a href="{{ route('blockchain.defi.index') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>DeFi</span>
-                            </a>
-                            <a href="{{ route('blockchain.liquidity-pools.index') }}" class="card-link">
-                                <i class="fas fa-water"></i>
-                                <span>Liquidity</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- AI Core -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-brain"></i>
-                            </div>
-                            <h5>AI Core</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('ai.dashboard') }}" class="card-link">
-                                <i class="fas fa-robot"></i>
-                                <span>AI Dash</span>
-                            </a>
-                            <a href="{{ route('ai.chat') }}" class="card-link">
-                                <i class="fas fa-comments"></i>
-                                <span>AI Chat</span>
-                            </a>
-                            <a href="{{ route('ai.valuation.dashboard') }}" class="card-link">
-                                <i class="fas fa-home"></i>
-                                <span>Prop Valuation</span>
-                            </a>
-                            <a href="{{ route('ai.price-predictor.dashboard') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Price Pred.</span>
-                            </a>
-                            <a href="{{ route('ai.description-generator.dashboard') }}" class="card-link">
-                                <i class="fas fa-pen"></i>
-                                <span>AI Desc.</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- AI Advanced -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-microchip"></i>
-                            </div>
-                            <h5>AI Advanced</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('ai.chatbot.dashboard') }}" class="card-link">
-                                <i class="fas fa-comment-dots"></i>
-                                <span>Chatbot</span>
-                            </a>
-                            <a href="{{ route('ai.fraud-detection.index') }}" class="card-link">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Fraud Detect</span>
-                            </a>
-                            <a href="{{ route('ai.investment-advisor.index') }}" class="card-link">
-                                <i class="fas fa-lightbulb"></i>
-                                <span>Invest Advisor</span>
-                            </a>
-                            <a href="{{ route('ai.market-analysis.index') }}" class="card-link">
-                                <i class="fas fa-chart-bar"></i>
-                                <span>Market Anal.</span>
-                            </a>
-                            <a href="{{ route('ai.virtual-staging.index') }}" class="card-link">
-                                <i class="fas fa-cube"></i>
-                                <span>Virt. Staging</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Lead Mgmt -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper cyan">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <h5>Lead Mgmt</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('leads.index') }}" class="card-link">
-                                <i class="fas fa-users"></i>
-                                <span>All Leads</span>
-                            </a>
-                            <a href="{{ route('leads.create') }}" class="card-link">
-                                <i class="fas fa-user-plus"></i>
-                                <span>Add Lead</span>
-                            </a>
-                            <a href="{{ route('leads.pipeline') }}" class="card-link">
-                                <i class="fas fa-filter"></i>
-                                <span>Pipeline</span>
-                            </a>
-                            <a href="{{ route('leads.dashboard') }}" class="card-link">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Analytics</span>
-                            </a>
-                            <a href="{{ route('lead-import.index') }}" class="card-link">
-                                <i class="fas fa-file-import"></i>
-                                <span>Import</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Project Mgmt -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper blue">
-                                <i class="fas fa-project-diagram"></i>
-                            </div>
-                            <h5>Project Mgmt</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('projects.index') }}" class="card-link">
-                                <i class="fas fa-list"></i>
-                                <span>All Projects</span>
-                            </a>
-                            <a href="{{ route('projects.create') }}" class="card-link">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>New Project</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Blog Mgmt -->
-                    <div class="premium-card">
-                        <div class="card-header">
-                            <div class="icon-wrapper purple">
-                                <i class="fas fa-newspaper"></i>
-                            </div>
-                            <h5>Blog Mgmt</h5>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-content">
-                            <a href="{{ route('blog.index') }}" class="card-link">
-                                <i class="fas fa-globe"></i>
-                                <span>View Blog</span>
-                            </a>
-                            <a href="{{ route('admin.blog.posts.index') }}" class="card-link">
-                                <i class="fas fa-file-alt"></i>
-                                <span>All Posts</span>
-                            </a>
-                            <a href="{{ route('admin.blog.posts.create') }}" class="card-link">
-                                <i class="fas fa-pen-nib"></i>
-                                <span>Write Post</span>
-                            </a>
-                            <a href="{{ route('admin.blog.categories.index') }}" class="card-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Categories</span>
-                            </a>
-                            <a href="{{ route('cms.blog.network') }}" class="card-link">
-                                <i class="fas fa-network-wired"></i>
-                                <span>Network</span>
-                            </a>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Activity Log -->
-            <div class="modern-card p-6 mt-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="section-header mb-0">Recent Activity</h3>
-                    <button onclick="refreshActivity()" class="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-all hover:rotate-180">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    @forelse ($stats['recent_activity'] as $activity)
-                        <div class="flex items-center p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all group cursor-default">
-                            <div class="icon-container blue mr-4 group-hover:scale-110 transition-transform">
-                                <i class="fas fa-{{ $activity['icon'] }} text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-semibold text-gray-800">{{ $activity['message'] }}</p>
-                                <p class="text-xs text-gray-500 mt-1">{{ $activity['time'] }}</p>
-                            </div>
-                            <div class="w-2 h-2 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        </div>
-                    @empty
-                        <div class="text-center py-8">
-                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-50 mb-3">
-                                <i class="fas fa-history text-gray-400"></i>
-                            </div>
-                            <p class="text-gray-500 text-sm">No recent activity</p>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+
+    <aside class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-logo-mark"><i class="fas fa-building"></i></div>
+        <div>
+          <div class="sb-brand">Real<span>Estate</span></div>
+          <div class="sb-tagline">Admin Portal</div>
         </div>
+      </div>
+      <nav class="sb-nav">
+        <div class="sb-sec">الرئيسية</div>
+        <a href="{{ route('admin.dashboard') }}" class="sb-link active"><i class="fas fa-th-large"></i>لوحة التحكم</a>
+        <a href="{{ route('admin.performance.dashboard') }}" class="sb-link"><i
+            class="fas fa-chart-line"></i>التحليلات</a>
+        <a href="{{ route('admin.system.logs') }}" class="sb-link"><i class="fas fa-bell"></i>الإشعارات<span
+            class="sb-badge">12</span></a>
+        <div class="sb-sec">الإدارة</div>
+        <a href="{{ route('admin.users.index') }}" class="sb-link"><i class="fas fa-users"></i>المستخدمون</a>
+        <a href="{{ route('admin.properties.index') }}" class="sb-link"><i class="fas fa-city"></i>العقارات</a>
+        <a href="{{ route('admin.companies.index') }}" class="sb-link"><i class="fas fa-briefcase"></i>الشركات</a>
+        <div class="sb-sec">الذكاء الاصطناعي</div>
+    <a href="{{ route('ai.dashboard') }}" class="sb-link"><i class="fas fa-robot"></i>لوحة التحكم الذكية</a>
+    <a href="{{ route('ai.smart-search') }}" class="sb-link"><i class="fas fa-search-plus"></i>البحث الذكي</a>
+    <a href="{{ route('ai.chat') }}" class="sb-link"><i class="fas fa-brain"></i>المستشار العقاري</a>
+    <a href="{{ route('ai.analytics') }}" class="sb-link"><i class="fas fa-chart-pie"></i>تحليلات الأداء</a>
+    <div class="sb-sec">المالية</div>
+    <a href="{{ route('admin.financial.wallets') }}" class="sb-link"><i class="fas fa-wallet"></i>المحافظ</a>
+    <a href="{{ route('admin.financial.invoices') }}" class="sb-link"><i class="fas fa-file-invoice"></i>الفواتير</a>
+    <a href="{{ route('subscriptions.index') }}" class="sb-link"><i class="fas fa-tags"></i>الاشتراكات</a>
+    <div class="sb-sec">النظام</div>
+    <a href="{{ route('admin.settings.index') }}" class="sb-link"><i class="fas fa-cog"></i>الإعدادات</a>
+    <a href="{{ route('admin.settings.maintenance') }}" class="sb-link"><i class="fas fa-tools"></i>الصيانة</a>
+    <a href="{{ route('admin.system.logs') }}" class="sb-link"><i class="fas fa-history"></i>السجلات</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="sb-av">م</div>
+      <div><div class="sb-uname">محمد الأدمن</div><div class="sb-urole">Super Administrator</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-eyebrow">نظرة عامة على النظام</div>
+      <h1 class="topbar-title">مركز التحكم <em>الرئيسي</em></h1>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><span class="live-dot"></span>مباشر الآن</div>
+      <button class="tbtn tbtn-ghost" onclick="location.reload()"><i class="fas fa-sync-alt"></i> تحديث</button>
+      <button class="tbtn tbtn-primary" onclick="openModal()"><i class="fas fa-file-alt"></i> التقارير</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <div class="sc sc-blue anim a1">
+        <div class="sc-head"><div class="sc-label">إجمالي المستخدمين</div><div class="sc-ic"><i class="fas fa-users"></i></div></div>
+        <div class="sc-val">{{ number_format(\App\Models\User::count()) }}</div>
+        <div class="sc-footer"><span class="sc-delta"><i class="fas fa-arrow-up"></i> +{{ \App\Models\User::whereDate('created_at', today())->count() }} اليوم</span><span class="sc-ftext">مسجل نشط</span></div>
+      </div>
+      <div class="sc sc-purple anim a2">
+        <div class="sc-head"><div class="sc-label">العقارات المنشورة</div><div class="sc-ic"><i class="fas fa-city"></i></div></div>
+        <div class="sc-val">{{ number_format(\App\Models\Property::count()) }}</div>
+        <div class="sc-footer"><span class="sc-delta"><i class="fas fa-arrow-up"></i> +{{ \App\Models\Property::whereDate('created_at', today())->count() }} اليوم</span><span class="sc-ftext">عقار متاح</span></div>
+      </div>
+      <div class="sc sc-green anim a3">
+        <div class="sc-head"><div class="sc-label">المستثمرون</div><div class="sc-ic"><i class="fas fa-chart-line"></i></div></div>
+        <div class="sc-val">{{ number_format(\App\Models\Investor::count()) }}</div>
+        <div class="sc-footer"><span class="sc-delta"><i class="fas fa-arrow-up"></i> +{{ \App\Models\Investor::whereDate('created_at', today())->count() }} اليوم</span><span class="sc-ftext">مستثمر فعّال</span></div>
+      </div>
+      <div class="sc sc-orange anim a4">
+        <div class="sc-head"><div class="sc-label">الإيرادات الإجمالية</div><div class="sc-ic"><i class="fas fa-dollar-sign"></i></div></div>
+        <div class="sc-val">${{ number_format(\App\Models\SubscriptionInvoice::where('status', 'paid')->sum('amount') / 1000000, 1) }}M</div>
+        <div class="sc-footer"><span class="sc-delta"><i class="fas fa-arrow-up"></i> +${{ number_format(\App\Models\SubscriptionInvoice::where('status', 'paid')->whereDate('created_at', today())->sum('amount') / 1000, 1) }}k</span><span class="sc-ftext">اليوم</span></div>
+      </div>
+      <div class="sc sc-blue anim a5">
+        <div class="sc-head"><div class="sc-label">استعلامات AI</div><div class="sc-ic"><i class="fas fa-brain"></i></div></div>
+        <div class="sc-val">{{ number_format(\App\Models\AiUsageLog::whereMonth('created_at', now()->month)->count()) }}</div>
+        <div class="sc-footer"><span class="sc-delta"><i class="fas fa-bolt"></i> +{{ \App\Models\AiUsageLog::whereDate('created_at', today())->count() }} اليوم</span><span class="sc-ftext">عملية معالجة</span></div>
+      </div>
     </div>
 
-    <!-- Reports Modal -->
-    <div id="reportsModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden backdrop-blur-sm bg-gray-900/50 transition-opacity">
-        <div class="modal-content bg-white rounded-2xl shadow-2xl p-8 max-w-3xl mx-4 w-full transform transition-all scale-100">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">System Reports</h3>
-                    <p class="text-sm text-gray-500 mt-1">Generate and download system analytics</p>
-                </div>
-                <button onclick="closeReportsModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- User Report -->
-                <div class="group p-4 rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer bg-white">
-                    <div class="flex items-start gap-4">
-                        <div class="icon-container blue shrink-0 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">User Report</h4>
-                            <p class="text-xs text-gray-500 mb-3 leading-relaxed">Detailed user statistics, registration trends, and activity analytics.</p>
-                            <button class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                                Generate PDF <i class="fas fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Financial Report -->
-                <div class="group p-4 rounded-xl border border-gray-200 hover:border-green-500 hover:shadow-lg transition-all cursor-pointer bg-white">
-                    <div class="flex items-start gap-4">
-                        <div class="icon-container green shrink-0 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">Financial Report</h4>
-                            <p class="text-xs text-gray-500 mb-3 leading-relaxed">Revenue analysis, payment history, and transaction records.</p>
-                            <button class="text-xs font-bold text-green-600 hover:text-green-700 flex items-center gap-1">
-                                Generate PDF <i class="fas fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Property Report -->
-                <div class="group p-4 rounded-xl border border-gray-200 hover:border-orange-500 hover:shadow-lg transition-all cursor-pointer bg-white">
-                    <div class="flex items-start gap-4">
-                        <div class="icon-container orange shrink-0 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-home"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">Property Report</h4>
-                            <p class="text-xs text-gray-500 mb-3 leading-relaxed">Property listings status, occupancy rates, and performance metrics.</p>
-                            <button class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
-                                Generate PDF <i class="fas fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- System Report -->
-                <div class="group p-4 rounded-xl border border-gray-200 hover:border-purple-500 hover:shadow-lg transition-all cursor-pointer bg-white">
-                    <div class="flex items-start gap-4">
-                        <div class="icon-container purple shrink-0 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-server"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">System Report</h4>
-                            <p class="text-xs text-gray-500 mb-3 leading-relaxed">Server health, error logs, and performance benchmarks.</p>
-                            <button class="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1">
-                                Generate PDF <i class="fas fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end mt-8 pt-4 border-t border-gray-100">
-                <button onclick="closeReportsModal()" class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors">
-                    Close
-                </button>
-            </div>
-        </div>
+    <!-- CHARTS -->
+    <div class="charts-row anim a3">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">نمو المستخدمين</div><div class="panel-sub">آخر 6 أشهر</div></div><span class="p-badge pb-blue">User Growth</span></div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="userChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">اتجاه الإيرادات</div><div class="panel-sub">آخر 6 أشهر</div></div><span class="p-badge pb-orange">Revenue</span></div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="revChart"></canvas></div></div>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // User Growth Chart
-            const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
-            new Chart(userGrowthCtx, {
-                type: 'line',
-                data: {
-                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
-                    datasets: [{
-                        label: 'المستخدمون الجدد',
-                        data: [12, 19, 3, 5, 2, 3],
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: 'rgb(59, 130, 246)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                font: {
-                                    size: 12,
-                                    family: 'system-ui'
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            cornerRadius: 8,
-                            titleFont: {
-                                size: 14
-                            },
-                            bodyFont: {
-                                size: 13
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+    <!-- MIDDLE ROW -->
+    <div class="mid-row anim a4">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">أحدث المستخدمين</div><div class="panel-sub">مسجلون مؤخراً</div></div><a href="{{ route('admin.users.index') }}" class="p-badge pb-blue" style="text-decoration:none">عرض الكل</a></div>
+        <div class="panel-body" style="padding-top:10px">
+          @php
+            $recentUsers = \App\Models\User::latest()->take(5)->get();
+          @endphp
+          @forelse($recentUsers as $user)
+            <div class="ri-item">
+              <div class="ri-av ra-blue"><i class="fas fa-user"></i></div>
+              <div>
+                <div class="ri-name">{{ $user->name ?? 'مستخدم غير معروف' }}</div>
+                <div class="ri-sub">{{ $user->email ?? 'لا يوجد بريد' }}</div>
+              </div>
+              <div class="ri-time">{{ $user->created_at->diffForHumans() }}</div>
+            </div>
+          @empty
+            <div class="ri-item">
+              <div class="ri-av ra-gray"><i class="fas fa-info-circle"></i></div>
+              <div>
+                <div class="ri-name">لا يوجد مستخدمين</div>
+                <div class="ri-sub">لم يتم تسجيل أي مستخدمين بعد</div>
+              </div>
+              <div class="ri-time">--</div>
+            </div>
+          @endforelse
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">أحدث العقارات</div><div class="panel-sub">أُضيفت مؤخراً</div></div><a href="{{ route('admin.properties.index') }}" class="p-badge pb-green" style="text-decoration:none">عرض الكل</a></div>
+        <div class="panel-body" style="padding-top:10px">
+          @php
+            $recentProperties = \App\Models\Property::latest()->take(5)->get();
+          @endphp
+          @forelse($recentProperties as $property)
+            <div class="ri-item">
+              <div class="ri-av ra-blue"><i class="fas fa-home"></i></div>
+              <div>
+                <div class="ri-name">{{ $property->title ?? 'عقار غير معروف' }} — {{ $property->city ?? 'غير محدد' }}</div>
+                <div class="ri-sub">${{ number_format($property->price ?? 0) }}</div>
+              </div>
+              <div class="ri-time">{{ $property->created_at->diffForHumans() }}</div>
+            </div>
+          @empty
+            <div class="ri-item">
+              <div class="ri-av ra-gray"><i class="fas fa-info-circle"></i></div>
+              <div>
+                <div class="ri-name">لا توجد عقارات</div>
+                <div class="ri-sub">لم يتم إضافة أي عقارات بعد</div>
+              </div>
+              <div class="ri-time">--</div>
+            </div>
+          @endforelse
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">حالة النظام</div><div class="panel-sub">System Health</div></div><span class="p-badge pb-green">Normal</span></div>
+        <div class="panel-body" style="padding-top:11px">
+          <div class="sys-row"><div class="sys-left"><span class="sys-dot sd-ok"></span><span class="sys-name">قاعدة البيانات</span></div><span class="sys-tag st-ok"><i class="fas fa-check-circle"></i> سليم</span></div>
+          <div class="sys-row"><div class="sys-left"><span class="sys-dot sd-ok"></span><span class="sys-name">مساحة التخزين</span></div><span class="sys-tag st-ok">65% مستخدم</span></div>
+          <div class="sys-row"><div class="sys-left"><span class="sys-dot sd-ok"></span><span class="sys-name">واجهة API</span></div><span class="sys-tag st-ok"><i class="fas fa-wifi"></i> متصل</span></div>
+          <div class="sys-row"><div class="sys-left"><span class="sys-dot sd-warn"></span><span class="sys-name">قائمة الانتظار</span></div><span class="sys-tag st-warn"><i class="fas fa-clock"></i> 12 مهمة</span></div>
+          <div class="sys-row"><div class="sys-left"><span class="sys-dot sd-ok"></span><span class="sys-name">الخادم</span></div><span class="sys-tag st-ok">99.9% وقت التشغيل</span></div>
+        </div>
+      </div>
+    </div>
 
-            // Revenue Chart
-            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(revenueCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
-                    datasets: [{
-                        label: 'الإيرادات ($)',
-                        data: [12000, 19000, 30000, 50000, 42000, 38000],
-                        backgroundColor: [
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)'
-                        ],
-                        borderColor: 'rgb(34, 197, 94)',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                font: {
-                                    size: 12,
-                                    family: 'system-ui'
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            cornerRadius: 8,
-                            titleFont: {
-                                size: 14
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    return 'الإيرادات: $' + context.parsed.y.toLocaleString();
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11
-                                },
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
+    <!-- QUICK ACTIONS -->
+    <div class="panel anim a5" style="margin-bottom:18px">
+      <div class="panel-head"><div><div class="panel-title">الإجراءات السريعة</div><div class="panel-sub">Quick Actions</div></div></div>
+      <div class="panel-body">
+        <div class="qa-row">
+          <a href="{{ route('admin.users.create') }}" class="qa-card"><div class="qa-ic qic-blue"><i class="fas fa-user-plus"></i></div><span class="qa-label">مستخدم جديد</span></a>
+          <a href="{{ route('admin.properties.create') }}" class="qa-card"><div class="qa-ic qic-purple"><i class="fas fa-plus-circle"></i></div><span class="qa-label">عقار جديد</span></a>
+          <a href="{{ route('admin.blog.posts.create') }}" class="qa-card"><div class="qa-ic qic-green"><i class="fas fa-pen-nib"></i></div><span class="qa-label">مقال جديد</span></a>
+          <a href="{{ route('investor.stats.public') }}" class="qa-card"><div class="qa-ic qic-orange"><i class="fas fa-chart-line"></i></div><span class="qa-label">إحصاء المستثمرين</span></a>
+          <a href="{{ route('admin.settings.index') }}" class="qa-card"><div class="qa-ic qic-teal"><i class="fas fa-cog"></i></div><span class="qa-label">الإعدادات</span></a>
+          <a href="{{ route('admin.system.dashboard') }}" class="qa-card"><div class="qa-ic qic-red"><i class="fas fa-tools"></i></div><span class="qa-label">الصيانة</span></a>
+        </div>
+      </div>
+    </div>
 
-        function refreshData() {
-            location.reload();
-        }
+    <div class="sec-div"></div>
+    <div class="sec-head anim a5"><div class="sec-accent"></div><div class="sec-title">مركز الإدارة</div><div class="sec-pill">Management Hub</div></div>
 
-        function refreshActivity() {
-            fetch('/admin/activity')
-                .then(response => response.json())
-                .then(data => {
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
+    <!-- HUB GRID -->
+    <div class="hub-grid">
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-blue"><i class="fas fa-cogs"></i></div><div><div class="hc-title">العمليات الأساسية</div><div class="hc-sub">Core Operations</div></div></div><div class="hc-links"><a href="{{ route('admin.users.index') }}" class="hc-link"><i class="fas fa-users"></i><span>كل المستخدمين</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('admin.users.create') }}" class="hc-link"><i class="fas fa-user-plus"></i><span>إضافة مستخدم</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('admin.agents.index') }}" class="hc-link"><i class="fas fa-user-tie"></i><span>الوكلاء</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('investor.index') }}" class="hc-link"><i class="fas fa-hand-holding-usd"></i><span>المستثمرون</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('admin.system.logs') }}" class="hc-link"><i class="fas fa-history"></i><span>سجل النشاط</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-city"></i></div><div><div class="hc-title">إدارة العقارات</div><div class="hc-sub">Properties</div></div></div><div class="hc-links"><a href="{{ route('admin.properties.index') }}" class="hc-link"><i class="fas fa-building"></i><span>كل العقارات</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('admin.properties.create') }}" class="hc-link"><i class="fas fa-plus-circle"></i><span>إضافة عقار</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('admin.projects.index') }}" class="hc-link"><i class="fas fa-project-diagram"></i><span>المشاريع</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('admin.companies.index') }}" class="hc-link"><i class="fas fa-briefcase"></i><span>الشركات</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('properties.search.index') }}" class="hc-link"><i class="fas fa-search-location"></i><span>بحث متقدم</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-green"><i class="fas fa-chart-line"></i></div><div><div class="hc-title">المركز المالي</div><div class="hc-sub">Financial Hub</div></div></div><div class="hc-links"><a href="{{ route('admin.financial.expenses') }}" class="hc-link"><i class="fas fa-money-bill-wave"></i><span>المصروفات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.invoices') }}" class="hc-link"><i class="fas fa-file-invoice"></i><span>الفواتير</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.wallets') }}" class="hc-link"><i class="fas fa-wallet"></i><span>المحافظ</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.wallets') }}" class="hc-link"><i class="fas fa-coins"></i><span>محافظ النظام</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.dashboard') }}" class="hc-link"><i class="fas fa-hand-holding-usd"></i><span>الضمان</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-orange"><div class="hc-head"><div class="hc-icon hi-orange"><i class="fas fa-dollar-sign"></i></div><div><div class="hc-title">مصادر الإيرادات</div><div class="hc-sub">Revenue Streams</div></div></div><div class="hc-links"><a href="{{ route('subscriptions.plans.index') }}" class="hc-link"><i class="fas fa-tags"></i><span>خطط الاشتراك</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.reports') }}" class="hc-link"><i class="fas fa-chart-area"></i><span>إحصاء الخطط</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.payment') }}" class="hc-link"><i class="fas fa-calculator"></i><span>إدارة الضرائب</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.reports.custom') }}" class="hc-link"><i class="fas fa-chart-pie"></i><span>حاسبة ROI</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('subscriptions.plans.compare') }}" class="hc-link"><i class="fas fa-balance-scale"></i><span>مقارنة الخطط</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-teal"><i class="fas fa-funnel-dollar"></i></div><div><div class="hc-title">إدارة CRM</div><div class="hc-sub">CRM & Sales</div></div></div><div class="hc-links"><a href="{{ route('admin.reports.client.analytics') }}" class="hc-link"><i class="fas fa-tachometer-alt"></i><span>لوحة العملاء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('leads.index') }}" class="hc-link"><i class="fas fa-filter"></i><span>خط الأنابيب</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.users.index') }}" class="hc-link"><i class="fas fa-list"></i><span>كل العملاء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('lead-scoring.index') }}" class="hc-link"><i class="fas fa-star-half-alt"></i><span>تسجيل النقاط</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.reports.client.analytics') }}" class="hc-link"><i class="fas fa-chart-pie"></i><span>التحليلات</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-red"><i class="fas fa-bullhorn"></i></div><div><div class="hc-title">التسويق</div><div class="hc-sub">Marketing Suite</div></div></div><div class="hc-links"><a href="{{ route('admin.banner-ads.index') }}" class="hc-link"><i class="fas fa-ad"></i><span>الحملات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.seo.index') }}" class="hc-link"><i class="fas fa-search"></i><span>إدارة SEO</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.seo.keywords') }}" class="hc-link"><i class="fas fa-key"></i><span>الكلمات المفتاحية</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.seo.analyze') }}" class="hc-link"><i class="fas fa-microscope"></i><span>تحليل SEO</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.seo.sitemap') }}" class="hc-link"><i class="fas fa-sitemap"></i><span>خريطة الموقع</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-blue"><i class="fas fa-pen-nib"></i></div><div><div class="hc-title">مركز المحتوى</div><div class="hc-sub">Content Hub</div></div></div><div class="hc-links"><a href="{{ route('admin.content.dashboard') }}" class="hc-link"><i class="fas fa-tachometer-alt"></i><span>لوحة CMS</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.blog.posts.index') }}" class="hc-link"><i class="fas fa-newspaper"></i><span>المدونة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.pages.index') }}" class="hc-link"><i class="fas fa-file-code"></i><span>الصفحات الثابتة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('cms.media.library') }}" class="hc-link"><i class="fas fa-images"></i><span>مكتبة الوسائط</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.faqs.index') }}" class="hc-link"><i class="fas fa-question-circle"></i><span>الأسئلة الشائعة</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-orange"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-chart-bar"></i></div><div><div class="hc-title">مركز التحليلات</div><div class="hc-sub">Analytics Center</div></div></div><div class="hc-links"><a href="{{ route('analytics.overview') }}" class="hc-link"><i class="fas fa-tachometer-alt"></i><span>نظرة عامة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('analytics.real-time') }}" class="hc-link"><i class="fas fa-clock"></i><span>الوقت الحقيقي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('analytics.heatmap.index') }}" class="hc-link"><i class="fas fa-fire"></i><span>خرائط الحرارة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('reports.sales.index') }}" class="hc-link"><i class="fas fa-piggy-bank"></i><span>تقارير المبيعات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.reports.custom') }}" class="hc-link"><i class="fas fa-filter"></i><span>تقارير مخصصة</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-gray"><i class="fas fa-tools"></i></div><div><div class="hc-title">أدوات النظام</div><div class="hc-sub">System Tools</div></div></div><div class="hc-links"><a href="{{ route('admin.system.dashboard') }}" class="hc-link"><i class="fas fa-server"></i><span>لوحة النظام</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.backups') }}" class="hc-link"><i class="fas fa-save"></i><span>النسخ الاحتياطي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.system.queue') }}" class="hc-link"><i class="fas fa-tasks"></i><span>إدارة الطوابير</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.system.storage') }}" class="hc-link"><i class="fas fa-hdd"></i><span>التخزين</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('routes.index') }}" class="hc-link"><i class="fas fa-route"></i><span>إدارة المسارات</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-gray"><i class="fas fa-sliders-h"></i></div><div><div class="hc-title">إعدادات المنصة</div><div class="hc-sub">Platform Settings</div></div></div><div class="hc-links"><a href="{{ route('admin.settings.general') }}" class="hc-link"><i class="fas fa-sliders-h"></i><span>الإعدادات العامة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.email') }}" class="hc-link"><i class="fas fa-envelope"></i><span>إعدادات البريد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.payment') }}" class="hc-link"><i class="fas fa-credit-card"></i><span>المدفوعات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.security') }}" class="hc-link"><i class="fas fa-lock"></i><span>الأمان</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('settings.index') }}" class="hc-link"><i class="fas fa-user-cog"></i><span>تفضيلاتي</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-teal"><i class="fas fa-comments"></i></div><div><div class="hc-title">التواصل</div><div class="hc-sub">Communication Hub</div></div></div><div class="hc-links"><a href="{{ route('messages.inbox') }}" class="hc-link"><i class="fas fa-inbox"></i><span>البريد الوارد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('messages.chat') }}" class="hc-link"><i class="fas fa-comment-dots"></i><span>الدردشة المباشرة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('messages.appointments') }}" class="hc-link"><i class="fas fa-calendar-check"></i><span>المواعيد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('messages.notifications') }}" class="hc-link"><i class="fas fa-bell"></i><span>الإشعارات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('messages.chat') }}" class="hc-link"><i class="fas fa-video"></i><span>مكالمات الفيديو</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-orange"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-rocket"></i></div><div><div class="hc-title">الميزات المتقدمة</div><div class="hc-sub">Advanced Features</div></div></div><div class="hc-links"><a href="{{ route('metaverse.index') }}" class="hc-link"><i class="fas fa-vr-cardboard"></i><span>الميتافيرس</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('defi.dashboard.index') }}" class="hc-link"><i class="fas fa-chart-line"></i><span>منصة DeFi</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('bigdata.predictive-ai') }}" class="hc-link"><i class="fas fa-database"></i><span>البيانات الضخمة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('ai.dashboard') }}" class="hc-link"><i class="fas fa-robot"></i><span>لوحة AI</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('geospatial.analytics.index') }}" class="hc-link"><i class="fas fa-map-marked-alt"></i><span>التحليلات الجغرافية</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.general') }}" class="hc-link"><i class="fas fa-bell"></i><span>إشعارات API</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-green"><i class="fas fa-brain"></i></div><div><div class="hc-title">مركز الذكاء الاصطناعي</div><div class="hc-sub">AI Core & IQ</div></div></div><div class="hc-links">
+          <a href="{{ route('ai.dashboard') }}" class="hc-link"><i class="fas fa-robot"></i><span>لوحة التحكم الذكية</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('ai.smart-search') }}" class="hc-link"><i class="fas fa-search"></i><span>البحث باللغة الطبيعية</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('ai.chat') }}" class="hc-link"><i class="fas fa-comments"></i><span>المستشار العقاري AI</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('ai.price-prediction') }}" class="hc-link"><i class="fas fa-chart-line"></i><span>توقع أسعار السوق</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('ai.images') }}" class="hc-link"><i class="fas fa-magic"></i><span>تحليل صور العقارات</span><i class="fas fa-chevron-left hc-arr"></i></a>
+          <a href="{{ route('ai.analytics') }}" class="hc-link"><i class="fas fa-microscope"></i><span>تحليل صحة النماذج</span><i class="fas fa-chevron-left hc-arr"></i></a>
+      </div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-orange"><i class="fas fa-cube"></i></div><div><div class="hc-title">Blockchain Pro</div><div class="hc-sub">Blockchain Hub</div></div></div><div class="hc-links"><a href="/blockchain/wallets" class="hc-link"><i class="fas fa-wallet"></i><span>محافظ Crypto</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/blockchain/transactions" class="hc-link"><i class="fas fa-exchange-alt"></i><span>المعاملات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/blockchain/smartcontracts" class="hc-link"><i class="fas fa-file-contract"></i><span>العقود الذكية</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/blockchain/nfts" class="hc-link"><i class="fas fa-image"></i><span>NFTs</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/blockchain/dao" class="hc-link"><i class="fas fa-users"></i><span>DAO</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-blue"><i class="fas fa-hard-hat"></i></div><div><div class="hc-title">المطورين والمشاريع</div><div class="hc-sub">Developer Solutions</div></div></div><div class="hc-links"><a href="{{ route('developer.index') }}" class="hc-link"><i class="fas fa-tachometer-alt"></i><span>لوحة المطور</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('developer.projects.index') }}" class="hc-link"><i class="fas fa-building"></i><span>إدارة المشاريع</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('developer.bim.models') }}" class="hc-link"><i class="fas fa-cube"></i><span>نماذج BIM</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/permits" class="hc-link"><i class="fas fa-file-contract"></i><span>التصاريح</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('developer.contractors.index') }}" class="hc-link"><i class="fas fa-tools"></i><span>المقاولون</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-green"><i class="fas fa-wifi"></i></div><div><div class="hc-title">إنترنت الأشياء</div><div class="hc-sub">IoT & Smart City</div></div></div><div class="hc-links"><a href="{{ route('iot.dashboard') }}" class="hc-link"><i class="fas fa-chart-network"></i><span>لوحة IoT</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('iot.dashboard') }}" class="hc-link"><i class="fas fa-microchip"></i><span>الأجهزة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('iot.dashboard') }}" class="hc-link"><i class="fas fa-exclamation-triangle"></i><span>التنبيهات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('iot.dashboard') }}" class="hc-link"><i class="fas fa-chart-bar"></i><span>تحليلات الطاقة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('iot.dashboard') }}" class="hc-link"><i class="fas fa-sliders-h"></i><span>الإعدادات</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-orange"><div class="hc-head"><div class="hc-icon hi-orange"><i class="fas fa-trophy"></i></div><div><div class="hc-title">الولاء والمكافآت</div><div class="hc-sub">Gamification</div></div></div><div class="hc-links"><a href="{{ route('gamification.dashboard') }}" class="hc-link"><i class="fas fa-tachometer-alt"></i><span>لوحة اللعب</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('gamification.achievements') }}" class="hc-link"><i class="fas fa-medal"></i><span>الإنجازات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('gamification.badges') }}" class="hc-link"><i class="fas fa-certificate"></i><span>الشارات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('gamification.rewards') }}" class="hc-link"><i class="fas fa-gift"></i><span>المكافآت</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('gamification.leaderboard') }}" class="hc-link"><i class="fas fa-list-ol"></i><span>لوحة الصدارة</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-user-tie"></i></div><div><div class="hc-title">بوابة الوكلاء</div><div class="hc-sub">Agent Portal</div></div></div><div class="hc-links"><a href="{{ route('agents.dashboard') }}" class="hc-link"><i class="fas fa-tachometer-alt"></i><span>لوحة الوكيل</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('agent.crm.index') }}" class="hc-link"><i class="fas fa-users"></i><span>العملاء (CRM)</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('agent.appointments.index') }}" class="hc-link"><i class="fas fa-calendar-alt"></i><span>المواعيد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('agent.offers.index') }}" class="hc-link"><i class="fas fa-file-signature"></i><span>العروض</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('agent.profile.show') }}" class="hc-link"><i class="fas fa-id-card"></i><span>الملف الشخصي</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-teal"><i class="fas fa-brain"></i></div><div><div class="hc-title">أدوات ذكية</div><div class="hc-sub">Smart AI Tools</div></div></div><div class="hc-links"><a href="{{ route('ai.fraud-detection') }}" class="hc-link"><i class="fas fa-shield-alt"></i><span>كشف الاحتيال</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('ai.virtual-reality') }}" class="hc-link"><i class="fas fa-couch"></i><span>التأثيث الافتراضي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('lead-scoring.index') }}" class="hc-link"><i class="fas fa-star-half-alt"></i><span>تصنيف العملاء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('ai.analytics') }}" class="hc-link"><i class="fas fa-chart-line"></i><span>تحليل السوق</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('ai.images') }}" class="hc-link"><i class="fas fa-image"></i><span>تحليل الصور</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-green"><i class="fas fa-wallet"></i></div><div><div class="hc-title">الإدارة المالية</div><div class="hc-sub">Financial Management</div></div></div><div class="hc-links"><a href="{{ route('admin.financial.dashboard') }}" class="hc-link"><i class="fas fa-chart-pie"></i><span>لوحة المالية</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.invoices') }}" class="hc-link"><i class="fas fa-file-invoice-dollar"></i><span>الفواتير</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.transactions') }}" class="hc-link"><i class="fas fa-exchange-alt"></i><span>المعاملات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.wallets') }}" class="hc-link"><i class="fas fa-wallet"></i><span>المحافظ</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.financial.expenses') }}" class="hc-link"><i class="fas fa-receipt"></i><span>المصروفات</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-orange"><div class="hc-head"><div class="hc-icon hi-orange"><i class="fas fa-chart-line"></i></div><div><div class="hc-title">التقارير والتحليلات</div><div class="hc-sub">Reports & Analytics</div></div></div><div class="hc-links"><a href="{{ route('admin.reports.financial.index') }}" class="hc-link"><i class="fas fa-file-invoice"></i><span>التقارير المالية</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.reports.property.performance') }}" class="hc-link"><i class="fas fa-building"></i><span>أداء العقارات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.reports.agent.performance') }}" class="hc-link"><i class="fas fa-user-tie"></i><span>أداء الوكلاء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.reports.client.analytics') }}" class="hc-link"><i class="fas fa-users"></i><span>تحليلات العملاء</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-newspaper"></i></div><div><div class="hc-title">إدارة المحتوى</div><div class="hc-sub">Content Management</div></div></div><div class="hc-links"><a href="{{ route('admin.content.dashboard') }}" class="hc-link"><i class="fas fa-columns"></i><span>لوحة المحتوى</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.blog.posts.index') }}" class="hc-link"><i class="fas fa-rss"></i><span>المقالات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.news.index') }}" class="hc-link"><i class="fas fa-bullhorn"></i><span>الأخبار</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('cms.media.library') }}" class="hc-link"><i class="fas fa-images"></i><span>مكتبة الوسائط</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.guides.index') }}" class="hc-link"><i class="fas fa-book"></i><span>الأدلة والشروحات</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-cogs"></i></div><div><div class="hc-title">إعدادات النظام</div><div class="hc-sub">System Settings</div></div></div><div class="hc-links"><a href="{{ route('admin.settings.index') }}" class="hc-link"><i class="fas fa-cog"></i><span>الإعدادات العامة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.system.logs') }}" class="hc-link"><i class="fas fa-history"></i><span>سجلات النظام</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.performance.dashboard') }}" class="hc-link"><i class="fas fa-tachometer-fast"></i><span>الأداء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.security') }}" class="hc-link"><i class="fas fa-shield-alt"></i><span>الأمان</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-green"><i class="fas fa-boxes"></i></div><div><div class="hc-title">المخزون والتوريد</div><div class="hc-sub">Inventory System</div></div></div><div class="hc-links"><a href="{{ route('inventory.index') }}" class="hc-link"><i class="fas fa-box-open"></i><span>لوحة المخزون</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('inventory.items.index') }}" class="hc-link"><i class="fas fa-barcode"></i><span>إدارة الأصناف</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('inventory.movements.index') }}" class="hc-link"><i class="fas fa-dolly"></i><span>حركة المخزون</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('inventory.reports') }}" class="hc-link"><i class="fas fa-clipboard-list"></i><span>تقارير الجرد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('inventory.index') }}" class="hc-link"><i class="fas fa-truck-loading"></i><span>الموردين</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-red"><div class="hc-head"><div class="hc-icon hi-red"><i class="fas fa-tools"></i></div><div><div class="hc-title">الصيانة والتشغيل</div><div class="hc-sub">Maintenance Ops</div></div></div><div class="hc-links"><a href="{{ route('maintenance.workorders.index') }}" class="hc-link"><i class="fas fa-clipboard-check"></i><span>أوامر العمل</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('maintenance.teams.index') }}" class="hc-link"><i class="fas fa-users-cog"></i><span>فرق الصيانة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.system.dashboard') }}" class="hc-link"><i class="fas fa-cogs"></i><span>حالة النظام</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('maintenance.workorders.index') }}" class="hc-link"><i class="fas fa-calendar-alt"></i><span>الجدولة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('maintenance.workorders.index') }}" class="hc-link"><i class="fas fa-file-contract"></i><span>العقود</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-balance-scale"></i></div><div><div class="hc-title">الضرائب والقانونية</div><div class="hc-sub">Tax & Legal</div></div></div><div class="hc-links"><a href="{{ route('taxes.index') }}" class="hc-link"><i class="fas fa-file-invoice-dollar"></i><span>لوحة الضرائب</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('taxes.property.index') }}" class="hc-link"><i class="fas fa-home"></i><span>ضريبة الأملاك</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('taxes.filings.index') }}" class="hc-link"><i class="fas fa-chart-pie"></i><span>الإقرارات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.companies.index') }}" class="hc-link"><i class="fas fa-briefcase"></i><span>الشركات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('taxes.analytics') }}" class="hc-link"><i class="fas fa-calculator"></i><span>الحاسبة</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-blue"><div class="hc-head"><div class="hc-icon hi-blue"><i class="fas fa-building"></i></div><div><div class="hc-title">إدارة المؤسسة</div><div class="hc-sub">Enterprise Suite</div></div></div><div class="hc-links"><a href="{{ route('enterprise.dashboard') }}" class="hc-link"><i class="fas fa-city"></i><span>لوحة المؤسسة</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('enterprise.accounts') }}" class="hc-link"><i class="fas fa-user-shield"></i><span>الحسابات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('enterprise.tenants') }}" class="hc-link"><i class="fas fa-users"></i><span>المستأجرين</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('enterprise.reports') }}" class="hc-link"><i class="fas fa-chart-area"></i><span>تقارير الأداء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.projects.index') }}" class="hc-link"><i class="fas fa-project-diagram"></i><span>المشاريع</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-red"><div class="hc-head"><div class="hc-icon hi-red"><i class="fas fa-balance-scale"></i></div><div><div class="hc-title">القانونية والعقود</div><div class="hc-sub">Legal & Contracts</div></div></div><div class="hc-links"><a href="{{ route('documents.index') }}" class="hc-link"><i class="fas fa-file-alt"></i><span>المستندات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('contracts.index') }}" class="hc-link"><i class="fas fa-file-contract"></i><span>العقود</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('esignatures.index') }}" class="hc-link"><i class="fas fa-signature"></i><span>التوقيع الإلكتروني</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('notary.index') }}" class="hc-link"><i class="fas fa-stamp"></i><span>كاتب العدل</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('warranties.index') }}" class="hc-link"><i class="fas fa-shield-alt"></i><span>الضمانات</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-orange"><div class="hc-head"><div class="hc-icon hi-orange"><i class="fas fa-gavel"></i></div><div><div class="hc-title">المزادات والسوق</div><div class="hc-sub">Auctions & Market</div></div></div><div class="hc-links"><a href="{{ route('auctions.index') }}" class="hc-link"><i class="fas fa-gavel"></i><span>المزادات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('auctions.create') }}" class="hc-link"><i class="fas fa-plus-circle"></i><span>إضافة مزاد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('auctions.results') }}" class="hc-link"><i class="fas fa-chart-bar"></i><span>نتائج المزادات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('auctions.my') }}" class="hc-link"><i class="fas fa-user-clock"></i><span>مزاداتي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('reports.market.index') }}" class="hc-link"><i class="fas fa-chart-line"></i><span>تقرير السوق</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-green"><div class="hc-head"><div class="hc-icon hi-teal"><i class="fas fa-globe"></i></div><div><div class="hc-title">الخدمات العالمية</div><div class="hc-sub">Global Services</div></div></div><div class="hc-links"><a href="{{ route('currency.index') }}" class="hc-link"><i class="fas fa-money-bill-wave"></i><span>العملات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('language.index') }}" class="hc-link"><i class="fas fa-language"></i><span>اللوحات واللغات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('modules.dashboard') }}" class="hc-link"><i class="fas fa-cubes"></i><span>إدارة الموديولز</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('currency.converter') }}" class="hc-link"><i class="fas fa-exchange-alt"></i><span>محول العملات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('admin.settings.general') }}" class="hc-link"><i class="fas fa-cog"></i><span>إعدادات المنطقة</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-cyan"><div class="hc-head"><div class="hc-icon hi-cyan"><i class="fas fa-city"></i></div><div><div class="hc-title">العمليات العقارية</div><div class="hc-sub">Real Estate Ops</div></div></div><div class="hc-links"><a href="{{ route('properties.index') }}" class="hc-link"><i class="fas fa-building"></i><span>إدارة العقارات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('property-types.index') }}" class="hc-link"><i class="fas fa-tags"></i><span>أنواع العقارات</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('leads.index') }}" class="hc-link"><i class="fas fa-user-tag"></i><span>إدارة العملاء</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('companies.index') }}" class="hc-link"><i class="fas fa-briefcase"></i><span>الشركات والمكاتب</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('agents.index') }}" class="hc-link"><i class="fas fa-id-badge"></i><span>سجل الوكلاء</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-purple"><div class="hc-head"><div class="hc-icon hi-purple"><i class="fas fa-chart-line"></i></div><div><div class="hc-title">المالية المتقدمة</div><div class="hc-sub">Adv. Finance & DeFi</div></div></div><div class="hc-links"><a href="{{ route('financial.index') }}" class="hc-link"><i class="fas fa-chart-pie"></i><span>التحليل المالي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/roi" class="hc-link"><i class="fas fa-calculator"></i><span>حاسبة العائد</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="/cash-flow" class="hc-link"><i class="fas fa-money-bill-wave"></i><span>التدفق النقدي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('defi.dashboard.index') }}" class="hc-link"><i class="fas fa-coins"></i><span>التمويل اللامركزي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('defi.crowdfunding.index') }}" class="hc-link"><i class="fas fa-users-cog"></i><span>التمويل الجماعي</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+      <div class="hc hc-pink"><div class="hc-head"><div class="hc-icon hi-pink"><i class="fas fa-brain"></i></div><div><div class="hc-title">البيانات الضخمة</div><div class="hc-sub">Big Data & AI</div></div></div><div class="hc-links"><a href="{{ route('bigdata.predictive-ai.dashboard') }}" class="hc-link"><i class="fas fa-crystal-ball"></i><span>التحليل التنبؤي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('bigdata.sentiment-analysis.dashboard') }}" class="hc-link"><i class="fas fa-smile"></i><span>تحليل المشاعر</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('bigdata.heatmaps.dashboard') }}" class="hc-link"><i class="fas fa-map-marked-alt"></i><span>الخرائط الحرارية</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('ai.valuation.dashboard') }}" class="hc-link"><i class="fas fa-search-dollar"></i><span>التقييم الذكي</span><i class="fas fa-chevron-left hc-arr"></i></a><a href="{{ route('ai.price-prediction') }}" class="hc-link"><i class="fas fa-chart-bar"></i><span>توقعات الأسعار</span><i class="fas fa-chevron-left hc-arr"></i></a></div></div>
+    </div>
 
-        function showReportsModal() {
-            document.getElementById('reportsModal').classList.remove('hidden');
-        }
+    <div class="sec-div" style="margin-top:24px"></div>
+    <div class="sec-head anim a6"><div class="sec-accent"></div><div class="sec-title">سجل الأنشطة الأخيرة</div><div class="sec-pill">Recent Activity</div></div>
 
-        function closeReportsModal() {
-            document.getElementById('reportsModal').classList.add('hidden');
-        }
+    <div class="panel anim a6">
+      <div class="panel-head"><div><div class="panel-title">آخر الأنشطة على النظام</div></div><button onclick="location.reload()" class="tbtn tbtn-ghost" style="padding:6px 13px;font-size:11.5px"><i class="fas fa-sync-alt"></i> تحديث</button></div>
+      <div class="panel-body" style="padding-top:6px">
+        @forelse($stats['recent_activity'] as $activity)
+          @php
+            $icon = 'fa-bell';
+            $color = '';
+            if (is_array($activity)) {
+              // Handle legacy array format (if any)
+              $message = $activity['message'];
+              $time = $activity['time'];
+              $icon = 'fa-' . ($activity['icon'] ?? 'bell');
+            } else {
+              // Handle Eloquent Model
+              $message = $activity->description ?: ($activity->action ?? 'نشاط غير معروف');
+              $time = $activity->created_at->diffForHumans();
 
-    </script>
+              if (str_contains($activity->subject_type ?? '', 'User')) {
+                $icon = 'fa-user-plus';
+              } elseif (str_contains($activity->subject_type ?? '', 'Property')) {
+                $icon = 'fa-home';
+              } elseif (str_contains($activity->subject_type ?? '', 'Subscription') || str_contains($activity->subject_type ?? '', 'Payment') || str_contains($activity->subject_type ?? '', 'Invoice')) {
+                $icon = 'fa-file-invoice-dollar';
+              } elseif (str_contains($activity->action ?? '', 'login') || str_contains($activity->description ?? '', 'security')) {
+                $icon = 'fa-shield-alt';
+              }
+            }
+          @endphp
+          <div class="act-item">
+            <div class="act-ic"><i class="fas {{ $icon }}"></i></div>
+            <div>
+              <div class="act-msg">{{ $message }}</div>
+              <div class="act-time">{{ $time }}</div>
+            </div>
+            <div class="act-new"></div>
+          </div>
+        @empty
+          <div class="act-item">
+            <div class="act-ic"><i class="fas fa-info-circle"></i></div>
+            <div>
+              <div class="act-msg">لا توجد أنشطة حديثة</div>
+              <div class="act-time">الآن</div>
+            </div>
+          </div>
+        @endforelse
+      </div>
+    </div>
 
-@endsection
+  </div>
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-top"></div>
+    <div class="modal-head">
+      <div><div class="modal-title">تقارير النظام</div><div style="font-size:11.5px;color:var(--t4);margin-top:2px">إنشاء وتنزيل تحليلات النظام</div></div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="rep-card"><div class="rep-card-top"><div class="rep-ic"><i class="fas fa-users"></i></div><div class="rep-title">تقرير المستخدمين</div></div><div class="rep-desc">إحصاءات تفصيلية عن المستخدمين واتجاهات التسجيل وتحليلات النشاط.</div><div class="rep-action"><i class="fas fa-file-download"></i> إنشاء PDF</div></div>
+        <div class="rep-card"><div class="rep-card-top"><div class="rep-ic"><i class="fas fa-chart-line"></i></div><div class="rep-title">التقرير المالي</div></div><div class="rep-desc">تحليل الإيرادات وسجل المدفوعات وسجلات المعاملات التفصيلية.</div><div class="rep-action"><i class="fas fa-file-download"></i> إنشاء PDF</div></div>
+        <div class="rep-card"><div class="rep-card-top"><div class="rep-ic"><i class="fas fa-city"></i></div><div class="rep-title">تقرير العقارات</div></div><div class="rep-desc">حالة العقارات المعروضة ومعدلات الإشغال ومقاييس الأداء.</div><div class="rep-action"><i class="fas fa-file-download"></i> إنشاء PDF</div></div>
+        <div class="rep-card"><div class="rep-card-top"><div class="rep-ic"><i class="fas fa-server"></i></div><div class="rep-title">تقرير النظام</div></div><div class="rep-desc">صحة الخادم وسجلات الأخطاء ومعايير الأداء التقنية.</div><div class="rep-action"><i class="fas fa-file-download"></i> إنشاء PDF</div></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="tbtn tbtn-ghost" onclick="closeModal()">إغلاق</button></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  Chart.defaults.color = '#9CA3AF';
+  Chart.defaults.borderColor = '#E5E7EB';
+  Chart.defaults.font.family = "'Cairo','Plus Jakarta Sans',system-ui,sans-serif";
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو'];
+
+  new Chart(document.getElementById('userChart'), {
+    type: 'line',
+    data: { labels: months, datasets: [{ label:'مستخدمون جدد', data:[82,145,230,178,312,267], borderColor:'#0D6EFD', backgroundColor:ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,195);g.addColorStop(0,'rgba(13,110,253,.14)');g.addColorStop(1,'rgba(13,110,253,0)');return g;}, borderWidth:2.5, fill:true, tension:.4, pointBackgroundColor:'#0D6EFD', pointBorderColor:'#fff', pointBorderWidth:2.5, pointRadius:5, pointHoverRadius:7 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1A1F36',borderColor:'rgba(13,110,253,.3)',borderWidth:1,padding:12,cornerRadius:10} }, scales:{ y:{beginAtZero:true,grid:{color:'#F3F4F6'},ticks:{font:{size:11}}}, x:{grid:{display:false},ticks:{font:{size:11}}} } }
+  });
+
+  new Chart(document.getElementById('revChart'), {
+    type: 'bar',
+    data: { labels: months, datasets: [{ label:'الإيرادات', data:[28000,42000,38000,55000,67000,72000], backgroundColor:ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,195);g.addColorStop(0,'rgba(253,126,20,.85)');g.addColorStop(1,'rgba(253,126,20,.3)');return g;}, borderColor:'rgba(253,126,20,.8)', borderWidth:1.5, borderRadius:7, borderSkipped:false }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1A1F36',borderColor:'rgba(253,126,20,.3)',borderWidth:1,padding:12,cornerRadius:10,callbacks:{label:ctx=>'$'+ctx.parsed.y.toLocaleString()}} }, scales:{ y:{beginAtZero:true,grid:{color:'#F3F4F6'},ticks:{font:{size:11},callback:v=>'$'+(v/1000)+'k'}}, x:{grid:{display:false},ticks:{font:{size:11}}} } }
+  });
+
+  const cards = document.querySelectorAll('.hc');
+  const io = new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';io.unobserve(e.target);}});},{threshold:0.05});
+  cards.forEach((c,i)=>{c.style.opacity='0';c.style.transform='translateY(18px)';c.style.transition=`opacity .4s ease ${i*30}ms,transform .4s ease ${i*30}ms`;io.observe(c);});
+});
+
+function openModal(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+</script>
+</body>
+</html>

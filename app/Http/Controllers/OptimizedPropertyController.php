@@ -258,8 +258,9 @@ class OptimizedPropertyController extends Controller
         $propertyTypes = $this->propertyService->getPropertyTypes();
         $amenities = PropertyAmenity::where('is_active', true)->orderBy('name')->get();
         $features = PropertyFeature::where('is_active', true)->orderBy('name')->get();
+        $clients = Client::select('id', 'name')->orderBy('name')->get();
 
-        return view('properties.create', compact('propertyTypes', 'amenities', 'features'));
+        return view('properties.create', compact('propertyTypes', 'amenities', 'features', 'clients'));
     }
 
     /**
@@ -270,6 +271,7 @@ class OptimizedPropertyController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'owner_id' => 'nullable|exists:clients,id',
             'listing_type' => 'required|in:sale,rent,lease',
             'property_type_id' => 'required|exists:property_types,id',
             'status' => 'required|in:draft,active,inactive',
@@ -298,6 +300,54 @@ class OptimizedPropertyController extends Controller
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'featured' => 'boolean',
             'premium' => 'boolean',
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:property_amenities,id',
+            'features' => 'nullable|array',
+            'features.*' => 'exists:property_features,id',
+            'specifications' => 'nullable|array',
+            'specifications.finishing_type' => 'nullable|string',
+            'specifications.interface' => 'nullable|string',
+            'specifications.furnished' => 'nullable|string',
+            'specifications.notes' => 'nullable|string',
+            'schools' => 'nullable|string|max:255',
+            'hospitals' => 'nullable|string|max:255',
+            'shopping_centers' => 'nullable|string|max:255',
+            'restaurants' => 'nullable|string|max:255',
+            'transportation' => 'nullable|string|max:255',
+            'parks' => 'nullable|string|max:255',
+            'universities' => 'nullable|string|max:255',
+            'metro_stations' => 'nullable|string|max:255',
+            'cinemas' => 'nullable|string|max:255',
+            'gyms' => 'nullable|string|max:255',
+            'maintenance_fees' => 'nullable|numeric|min:0',
+            'service_charges' => 'nullable|numeric|min:0',
+            'property_tax' => 'nullable|numeric|min:0',
+            'tax_year' => 'nullable|integer|min:2000',
+            'insurance_cost' => 'nullable|numeric|min:0',
+            'rental_start_date' => 'nullable|date|required_if:listing_type,rent,lease',
+            'rental_end_date' => 'nullable|date|after_or_equal:rental_start_date',
+            'expiry_date' => 'nullable|date',
+            'materials' => 'nullable|string',
+            'interior_features' => 'nullable|string',
+            'exterior_features' => 'nullable|string',
+            'payment_frequency' => 'nullable|string|in:monthly,quarterly,annually',
+            'rent_period' => 'nullable|string',
+            'original_price' => 'nullable|numeric|min:0',
+            'virtual_tour_url' => 'nullable|url',
+            'video_url' => 'nullable|url',
+            
+            // Legal & Energy fields
+            'ownership_type' => 'nullable|string|max:255',
+            'deed_number' => 'nullable|string|max:255',
+            'registration_number' => 'nullable|string|max:255',
+            'zoning' => 'nullable|string|max:255',
+            'energy_rating' => 'nullable|string|max:10',
+            'solar_panels' => 'boolean',
+            'water_heating' => 'boolean',
+            'insulation' => 'boolean',
+            'double_glazing' => 'boolean',
+            'air_conditioning' => 'boolean',
+            
             'images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
             'room_images.living_room.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
             'room_images.kitchen.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
@@ -314,6 +364,7 @@ class OptimizedPropertyController extends Controller
             $data = [
                 'title' => $validated['title'],
                 'description' => $validated['description'],
+                'owner_id' => $validated['owner_id'] ?? null,
                 'listing_type' => $validated['listing_type'],
                 'property_type_id' => $validated['property_type_id'],
                 'status' => $validated['status'] ?? 'draft',
@@ -321,72 +372,88 @@ class OptimizedPropertyController extends Controller
                 'currency' => $validated['currency'] ?? 'SAR',
                 'featured' => $request->has('featured'),
                 'premium' => $request->has('premium'),
-                'location' => [
-                    'address' => $validated['address'],
-                    'city' => $validated['city'],
-                    'state' => $validated['state'],
-                    'country' => $validated['country'],
-                    'postal_code' => $validated['postal_code'],
-                    'latitude' => $validated['latitude'],
-                    'longitude' => $validated['longitude'],
-                    'neighborhood' => $validated['neighborhood'],
-                    'district' => $validated['district'],
-                ],
-                'details' => [
-                    'bedrooms' => $validated['bedrooms'],
-                    'bathrooms' => $validated['bathrooms'],
-                    'floors' => $validated['floors'],
-                    'parking_spaces' => $validated['parking_spaces'],
-                    'year_built' => $validated['year_built'],
-                    'area' => $validated['area'],
-                    'area_unit' => $validated['area_unit'],
-                    'land_area' => $validated['land_area'],
-                    'land_area_unit' => $validated['land_area_unit'],
-                ]
+                'virtual_tour_url' => $validated['virtual_tour_url'] ?? null,
+                'video_url' => $validated['video_url'] ?? null,
+                
+                // Location
+                'address' => $validated['address'],
+                'city' => $validated['city'],
+                'state' => $validated['state'],
+                'country' => $validated['country'],
+                'postal_code' => $validated['postal_code'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'neighborhood' => $validated['neighborhood'],
+                'district' => $validated['district'],
+                'schools' => $validated['schools'] ?? null,
+                'hospitals' => $validated['hospitals'] ?? null,
+                'shopping_centers' => $validated['shopping_centers'] ?? null,
+                'restaurants' => $validated['restaurants'] ?? null,
+                'transportation' => $validated['transportation'] ?? null,
+                'parks' => $validated['parks'] ?? null,
+                'universities' => $validated['universities'] ?? null,
+                'metro_stations' => $validated['metro_stations'] ?? null,
+                'cinemas' => $validated['cinemas'] ?? null,
+                'gyms' => $validated['gyms'] ?? null,
+
+                // Details
+                'bedrooms' => $validated['bedrooms'],
+                'bathrooms' => $validated['bathrooms'],
+                'floors' => $validated['floors'],
+                'parking_spaces' => $validated['parking_spaces'],
+                'year_built' => $validated['year_built'],
+                'area' => $validated['area'],
+                'area_unit' => $validated['area_unit'],
+                'land_area' => $validated['land_area'],
+                'land_area_unit' => $validated['land_area_unit'],
+                'materials' => $validated['materials'] ?? null,
+                'interior_features' => $validated['interior_features'] ?? null,
+                'exterior_features' => $validated['exterior_features'] ?? null,
+                'specifications' => isset($validated['specifications']) ? (is_array($validated['specifications']) ? json_encode($validated['specifications']) : $validated['specifications']) : null,
+
+                // Legal & Energy
+                'ownership_type' => $validated['ownership_type'] ?? null,
+                'deed_number' => $validated['deed_number'] ?? null,
+                'registration_number' => $validated['registration_number'] ?? null,
+                'zoning' => $validated['zoning'] ?? null,
+                'energy_rating' => $validated['energy_rating'] ?? null,
+                'solar_panels' => $request->has('solar_panels'),
+                'water_heating' => $request->has('water_heating'),
+                'insulation' => $request->has('insulation'),
+                'double_glazing' => $request->has('double_glazing'),
+                'air_conditioning' => $request->has('air_conditioning'),
+
+                // Financial
+                'maintenance_fees' => $validated['maintenance_fees'] ?? null,
+                'service_charges' => $validated['service_charges'] ?? null,
+                'property_tax' => $validated['property_tax'] ?? null,
+                'tax_year' => $validated['tax_year'] ?? null,
+                'insurance_cost' => $validated['insurance_cost'] ?? null,
+                'rental_start_date' => $validated['rental_start_date'] ?? null,
+                'rental_end_date' => $validated['rental_end_date'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'payment_frequency' => $validated['payment_frequency'] ?? null,
+                'rent_period' => $validated['rent_period'] ?? null,
+                'original_price' => $validated['original_price'] ?? null,
+                'is_negotiable' => $request->has('is_negotiable'),
+                'includes_vat' => $request->has('includes_vat'),
+                'vat_rate' => $validated['vat_rate'] ?? null,
+
+                // Relations
+                'amenities' => $validated['amenities'] ?? [],
+                'features' => $validated['features'] ?? [],
             ];
 
             $property = $this->propertyService->createProperty($data, Auth::user());
 
             // Handle main images
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
-                    $path = $image->store('properties/images', 'public');
-
-                    PropertyMedia::create([
-                        'property_id' => $property->id,
-                        'media_type' => 'image',
-                        'file_path' => $path,
-                        'file_name' => $image->getClientOriginalName(),
-                        'file_size' => $image->getSize(),
-                        'file_type' => $image->getMimeType(),
-                        'sort_order' => $index,
-                        'is_featured' => $index === 0,
-                        'uploaded_by' => Auth::user()->id,
-                    ]);
-                }
+                $this->propertyService->handleImageUpload($request->file('images'), $property->id);
             }
 
             // Handle room-specific images
-            $roomTypes = ['living_room', 'kitchen', 'bedrooms', 'bathrooms', 'entrance', 'outdoor', 'garage', 'amenities'];
-            foreach ($roomTypes as $roomType) {
-                if ($request->hasFile("room_images.{$roomType}")) {
-                    foreach ($request->file("room_images.{$roomType}") as $index => $image) {
-                        $path = $image->store("properties/images/{$roomType}", 'public');
-
-                        PropertyMedia::create([
-                            'property_id' => $property->id,
-                            'media_type' => 'image',
-                            'file_path' => $path,
-                            'file_name' => $image->getClientOriginalName(),
-                            'file_size' => $image->getSize(),
-                            'file_type' => $image->getMimeType(),
-                            'room_type' => $roomType,
-                            'sort_order' => $index,
-                            'is_featured' => false,
-                            'uploaded_by' => Auth::user()->id,
-                        ]);
-                    }
-                }
+            if ($request->hasFile('room_images')) {
+                $this->propertyService->handleRoomImageUpload($request->file('room_images'), $property->id);
             }
 
             return redirect()
@@ -411,8 +478,9 @@ class OptimizedPropertyController extends Controller
         $propertyTypes = $this->propertyService->getPropertyTypes();
         $amenities = PropertyAmenity::where('is_active', true)->orderBy('name')->get();
         $features = PropertyFeature::where('is_active', true)->orderBy('name')->get();
+        $clients = Client::select('id', 'name')->orderBy('name')->get();
 
-        return view('properties.edit', compact('property', 'propertyTypes', 'amenities', 'features'));
+        return view('properties.edit', compact('property', 'propertyTypes', 'amenities', 'features', 'clients'));
     }
 
     /**
@@ -425,6 +493,7 @@ class OptimizedPropertyController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'owner_id' => 'nullable|exists:clients,id',
             'listing_type' => 'required|in:sale,rent,lease',
             'property_type_id' => 'required|exists:property_types,id',
             'price' => 'required|numeric|min:0',
@@ -436,15 +505,76 @@ class OptimizedPropertyController extends Controller
             'postal_code' => 'nullable|string|max:20',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'neighborhood' => 'nullable|string|max:255',
+            'district' => 'nullable|string|max:255',
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
             'floors' => 'nullable|integer|min:0',
             'parking_spaces' => 'nullable|integer|min:0',
             'year_built' => 'nullable|integer|min:1800|max:' . date('Y'),
             'area' => 'nullable|numeric|min:0',
-            'area_unit' => 'nullable|string|in:sq_m,sq_ft',
+            'area_unit' => 'nullable|string|in:sq_m,sq_ft,acre,hectare',
+            'land_area' => 'nullable|numeric|min:0',
+            'land_area_unit' => 'nullable|string|in:sq_m,sq_ft,acre,hectare',
+            'is_negotiable' => 'boolean',
+            'includes_vat' => 'boolean',
+            'vat_rate' => 'nullable|numeric|min:0|max:100',
             'featured' => 'boolean',
             'premium' => 'boolean',
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:property_amenities,id',
+            'features' => 'nullable|array',
+            'features.*' => 'exists:property_features,id',
+            'specifications' => 'nullable|array',
+            'specifications.finishing_type' => 'nullable|string',
+            'specifications.interface' => 'nullable|string',
+            'specifications.furnished' => 'nullable|string',
+            'specifications.notes' => 'nullable|string',
+            'schools' => 'nullable|string|max:255',
+            'hospitals' => 'nullable|string|max:255',
+            'shopping_centers' => 'nullable|string|max:255',
+            'restaurants' => 'nullable|string|max:255',
+            'transportation' => 'nullable|string|max:255',
+            'parks' => 'nullable|string|max:255',
+            'universities' => 'nullable|string|max:255',
+            'metro_stations' => 'nullable|string|max:255',
+            'cinemas' => 'nullable|string|max:255',
+            'gyms' => 'nullable|string|max:255',
+            'maintenance_fees' => 'nullable|numeric|min:0',
+            'service_charges' => 'nullable|numeric|min:0',
+            'property_tax' => 'nullable|numeric|min:0',
+            'tax_year' => 'nullable|integer|min:2000',
+            'insurance_cost' => 'nullable|numeric|min:0',
+            'rental_start_date' => 'nullable|date|required_if:listing_type,rent,lease',
+            'rental_end_date' => 'nullable|date|after_or_equal:rental_start_date',
+            'expiry_date' => 'nullable|date',
+            'payment_frequency' => 'nullable|string|in:monthly,quarterly,annually',
+            'rent_period' => 'nullable|string',
+            'original_price' => 'nullable|numeric|min:0',
+            'virtual_tour_url' => 'nullable|url',
+            'video_url' => 'nullable|url',
+            
+            // Legal & Energy fields
+            'ownership_type' => 'nullable|string|max:255',
+            'deed_number' => 'nullable|string|max:255',
+            'registration_number' => 'nullable|string|max:255',
+            'zoning' => 'nullable|string|max:255',
+            'energy_rating' => 'nullable|string|max:10',
+            'solar_panels' => 'boolean',
+            'water_heating' => 'boolean',
+            'insulation' => 'boolean',
+            'double_glazing' => 'boolean',
+            'air_conditioning' => 'boolean',
+            
+            'images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.living_room.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.kitchen.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.bedrooms.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.bathrooms.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.entrance.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.outdoor.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.garage.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+            'room_images.amenities.*' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
         ]);
 
         try {
@@ -452,8 +582,9 @@ class OptimizedPropertyController extends Controller
             $updateData = [
                 'title' => $validated['title'],
                 'description' => $validated['description'],
+                'owner_id' => $validated['owner_id'] ?? null,
                 'listing_type' => $validated['listing_type'],
-                'property_type' => $validated['property_type_id'],
+                'property_type_id' => $validated['property_type_id'],
                 'price' => $validated['price'],
                 'currency' => $validated['currency'],
                 'address' => $validated['address'],
@@ -463,6 +594,8 @@ class OptimizedPropertyController extends Controller
                 'postal_code' => $validated['postal_code'],
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
+                'neighborhood' => $validated['neighborhood'],
+                'district' => $validated['district'],
                 'bedrooms' => $validated['bedrooms'],
                 'bathrooms' => $validated['bathrooms'],
                 'floors' => $validated['floors'],
@@ -470,11 +603,73 @@ class OptimizedPropertyController extends Controller
                 'year_built' => $validated['year_built'],
                 'area' => $validated['area'],
                 'area_unit' => $validated['area_unit'],
+                'land_area' => $validated['land_area'],
+                'land_area_unit' => $validated['land_area_unit'],
                 'featured' => $request->has('featured'),
                 'premium' => $request->has('premium'),
+                'video_url' => $validated['video_url'] ?? null,
+                'virtual_tour_url' => $validated['virtual_tour_url'] ?? null,
+                'specifications' => isset($validated['specifications']) ? (is_array($validated['specifications']) ? json_encode($validated['specifications']) : $validated['specifications']) : null,
+                
+                // Legal & Energy
+                'ownership_type' => $validated['ownership_type'] ?? null,
+                'deed_number' => $validated['deed_number'] ?? null,
+                'registration_number' => $validated['registration_number'] ?? null,
+                'zoning' => $validated['zoning'] ?? null,
+                'energy_rating' => $validated['energy_rating'] ?? null,
+                'solar_panels' => $request->has('solar_panels'),
+                'water_heating' => $request->has('water_heating'),
+                'insulation' => $request->has('insulation'),
+                'double_glazing' => $request->has('double_glazing'),
+                'air_conditioning' => $request->has('air_conditioning'),
+                
+                // Nearby Places
+                'schools' => $validated['schools'] ?? null,
+                'hospitals' => $validated['hospitals'] ?? null,
+                'shopping_centers' => $validated['shopping_centers'] ?? null,
+                'restaurants' => $validated['restaurants'] ?? null,
+                'transportation' => $validated['transportation'] ?? null,
+                'parks' => $validated['parks'] ?? null,
+                'universities' => $validated['universities'] ?? null,
+                'metro_stations' => $validated['metro_stations'] ?? null,
+                'cinemas' => $validated['cinemas'] ?? null,
+                'gyms' => $validated['gyms'] ?? null,
+                
+                // Financial
+                'maintenance_fees' => $validated['maintenance_fees'] ?? null,
+                'service_charges' => $validated['service_charges'] ?? null,
+                'property_tax' => $validated['property_tax'] ?? null,
+                'tax_year' => $validated['tax_year'] ?? null,
+                'insurance_cost' => $validated['insurance_cost'] ?? null,
+                'rental_start_date' => $validated['rental_start_date'] ?? null,
+                'rental_end_date' => $validated['rental_end_date'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'materials' => $validated['materials'] ?? null,
+                'interior_features' => $validated['interior_features'] ?? null,
+                'exterior_features' => $validated['exterior_features'] ?? null,
+                'payment_frequency' => $validated['payment_frequency'] ?? null,
+                'rent_period' => $validated['rent_period'] ?? null,
+                'original_price' => $validated['original_price'] ?? null,
+                'is_negotiable' => $request->has('is_negotiable'),
+                'includes_vat' => $request->has('includes_vat'),
+                'vat_rate' => $validated['vat_rate'] ?? null,
+                
+                // Relations for updateService
+                'amenities' => $validated['amenities'] ?? [],
+                'features' => $validated['features'] ?? [],
             ];
 
             $property = $this->propertyService->updateProperty($property, $updateData);
+
+            // Handle main images
+            if ($request->hasFile('images')) {
+                $this->propertyService->handleImageUpload($request->file('images'), $property->id);
+            }
+
+            // Handle room-specific images
+            if ($request->hasFile('room_images')) {
+                $this->propertyService->handleRoomImageUpload($request->file('room_images'), $property->id);
+            }
 
             return redirect()
                 ->route('optimized.properties.show', $property)

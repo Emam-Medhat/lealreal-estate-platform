@@ -27,7 +27,11 @@ class LeadAnalyticsController extends Controller
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
             ->take(12)
-            ->get();
+            ->get()
+            ->sortBy(function($item) {
+                return sprintf('%d-%02d', $item->year, $item->month);
+            })
+            ->values();
             
         $conversionBySource = LeadConversion::join('leads', 'lead_conversions.lead_id', '=', 'leads.id')
             ->join('lead_sources', 'leads.source_id', '=', 'lead_sources.id')
@@ -36,9 +40,9 @@ class LeadAnalyticsController extends Controller
             ->orderBy('value', 'desc')
             ->get();
             
-        $leadByStatus = Lead::join('lead_statuses', 'leads.status_id', '=', 'lead_statuses.id')
-            ->selectRaw('lead_statuses.name as status, COUNT(*) as count')
-            ->groupBy('lead_statuses.name')
+        $leadByStatus = Lead::leftJoin('lead_statuses', 'leads.status_id', '=', 'lead_statuses.id')
+            ->selectRaw('COALESCE(lead_statuses.name, "غير محدد") as status, COUNT(*) as count')
+            ->groupBy('status')
             ->orderBy('count', 'desc')
             ->get();
         
@@ -316,8 +320,8 @@ class LeadAnalyticsController extends Controller
     
     private function exportExcel($data, $type)
     {
-        // Implement Excel export
-        return response()->download('export.xlsx');
+        $fileName = 'leads_report_' . now()->format('Y-m-d_H-i') . '.xlsx';
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\LeadsExport($data), $fileName);
     }
     
     private function exportPDF($data, $type)

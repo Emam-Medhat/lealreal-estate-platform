@@ -79,15 +79,17 @@ class SurveyController extends Controller
             ]);
 
             // Create questions
-            foreach ($request->questions as $index => $questionData) {
-                SurveyQuestion::create([
-                    'survey_id' => $survey->id,
-                    'question_text' => $questionData['question_text'],
-                    'question_type' => $questionData['question_type'],
-                    'options' => $questionData['options'] ?? [],
-                    'is_required' => $request->has("questions.{$index}.is_required"),
-                    'order' => $index + 1
-                ]);
+            if ($request->has('questions')) {
+                foreach ($request->questions as $index => $questionData) {
+                    SurveyQuestion::create([
+                        'survey_id' => $survey->id,
+                        'question_text' => $questionData['question_text'],
+                        'question_type' => $questionData['question_type'],
+                        'options' => $questionData['options'] ?? [],
+                        'is_required' => isset($questionData['is_required']),
+                        'order' => $index + 1
+                    ]);
+                }
             }
 
             DB::commit();
@@ -179,15 +181,17 @@ class SurveyController extends Controller
 
             // Update questions
             $survey->questions()->delete();
-            foreach ($request->questions as $index => $questionData) {
-                SurveyQuestion::create([
-                    'survey_id' => $survey->id,
-                    'question_text' => $questionData['question_text'],
-                    'question_type' => $questionData['question_type'],
-                    'options' => $questionData['options'] ?? [],
-                    'is_required' => $request->has("questions.{$index}.is_required"),
-                    'order' => $index + 1
-                ]);
+            if ($request->has('questions')) {
+                foreach ($request->questions as $index => $questionData) {
+                    SurveyQuestion::create([
+                        'survey_id' => $survey->id,
+                        'question_text' => $questionData['question_text'],
+                        'question_type' => $questionData['question_type'],
+                        'options' => $questionData['options'] ?? [],
+                        'is_required' => isset($questionData['is_required']),
+                        'order' => $index + 1
+                    ]);
+                }
             }
 
             DB::commit();

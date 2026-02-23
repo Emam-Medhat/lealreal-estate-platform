@@ -19,10 +19,10 @@ class LeadScoringController extends Controller
     
     public function create()
     {
-        $leads = Lead::whereDoesntHave('scores')
-            ->orWhereHas('scores', function($query) {
-                $query->where('created_at', '<', now()->subDays(7));
-            })
+        $leads = Lead::where('lead_status', '!=', 'converted')
+            ->where('lead_status', '!=', 'lost')
+            ->where('lead_status', '!=', 'archived')
+            ->orderBy('created_at', 'desc')
             ->get();
             
         return view('lead-scoring.create', compact('leads'));
@@ -133,7 +133,8 @@ class LeadScoringController extends Controller
     
     public function scoringRules()
     {
-        return view('lead-scoring.rules');
+        $rules = cache()->get('lead_scoring_rules', []);
+        return view('lead-scoring.rules', compact('rules'));
     }
     
     public function updateScoringRules(Request $request)

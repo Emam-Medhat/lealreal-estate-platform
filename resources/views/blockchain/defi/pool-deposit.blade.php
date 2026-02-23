@@ -31,11 +31,15 @@
                 <!-- Token Selection -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">اختر العملة</label>
-                    <select name="token" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                        <option value="ETH" {{ $pool->token_pair === 'ETH' ? 'selected' : '' }}>ETH</option>
-                        <option value="USDC" {{ str_contains($pool->token_pair, 'USDC') ? 'selected' : '' }}>USDC</option>
-                        <option value="USDT" {{ str_contains($pool->token_pair, 'USDT') ? 'selected' : '' }}>USDT</option>
-                        <option value="DAI" {{ str_contains($pool->token_pair, 'DAI') ? 'selected' : '' }}>DAI</option>
+                    <select name="token" id="tokenSelect" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        @foreach($balances as $currency => $balance)
+                            <option value="{{ $currency }}" {{ str_contains($pool->token_pair, $currency) ? 'selected' : '' }}>
+                                {{ $currency }} (الرصيد: {{ number_format($balance, 4) }})
+                            </option>
+                        @endforeach
+                        @if(empty($balances))
+                             <option value="{{ explode('/', $pool->token_pair)[0] }}">{{ explode('/', $pool->token_pair)[0] }} (الرصيد: 0.0000)</option>
+                        @endif
                     </select>
                 </div>
 
@@ -44,11 +48,14 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">المبلغ</label>
                     <div class="relative">
                         <input type="number" name="amount" step="0.001" min="{{ $pool->min_deposit }}" placeholder="0.000" class="w-full px-4 py-3 pr-16 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent" id="depositAmount">
-                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">{{ explode('/', $pool->token_pair)[0] }}</span>
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" id="tokenSymbol">{{ explode('/', $pool->token_pair)[0] }}</span>
                     </div>
                     <div class="flex justify-between mt-2">
-                        <span class="text-sm text-gray-600">الحد الأدنى: {{ number_format($pool->min_deposit, 4) }} {{ explode('/', $pool->token_pair)[0] }}</span>
-                        <button type="button" onclick="document.getElementById('depositAmount').value = '10'" class="text-green-600 hover:text-green-700 text-sm font-medium">الحد الأقصى</button>
+                        <span class="text-sm text-gray-600">الحد الأدنى: {{ number_format($pool->min_deposit, 4) }} <span class="token-symbol">{{ explode('/', $pool->token_pair)[0] }}</span></span>
+                        <div class="flex gap-2">
+                             <span class="text-sm text-gray-500" id="availableBalance"></span>
+                             <button type="button" id="maxButton" class="text-green-600 hover:text-green-700 text-sm font-medium">الحد الأقصى</button>
+                        </div>
                     </div>
                 </div>
 
@@ -129,10 +136,11 @@
 @section('scripts')
 <script>
 const apy = {{ $pool->apy }};
-const token = '{{ explode('/', $pool->token_pair)[0] }}';
+const balances = @json($balances);
 
 function updateReturns() {
     const amount = parseFloat(document.getElementById('depositAmount').value) || 0;
+    const token = document.getElementById('tokenSelect').value;
     
     if (amount > 0) {
         const dailyReturn = amount * (apy / 100) / 365;
@@ -149,7 +157,31 @@ function updateReturns() {
     }
 }
 
+function updateTokenInfo() {
+    const selectedToken = document.getElementById('tokenSelect').value;
+    const balance = balances[selectedToken] || 0;
+    
+    // Update symbols
+    document.getElementById('tokenSymbol').textContent = selectedToken;
+    document.querySelectorAll('.token-symbol').forEach(el => el.textContent = selectedToken);
+    
+    // Update balance display
+    document.getElementById('availableBalance').textContent = 'المتاح: ' + parseFloat(balance).toFixed(4);
+    
+    // Update max button
+    document.getElementById('maxButton').onclick = function() {
+        document.getElementById('depositAmount').value = balance;
+        updateReturns();
+    };
+    
+    updateReturns();
+}
+
+document.getElementById('tokenSelect').addEventListener('change', updateTokenInfo);
 document.getElementById('depositAmount').addEventListener('input', updateReturns);
-document.addEventListener('DOMContentLoaded', updateReturns);
+document.addEventListener('DOMContentLoaded', () => {
+    updateTokenInfo();
+    updateReturns();
+});
 </script>
 @endsection

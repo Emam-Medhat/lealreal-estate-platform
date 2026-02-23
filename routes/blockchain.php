@@ -14,9 +14,7 @@ use App\Http\Controllers\LiquidityPoolController;
 
 Route::middleware(['auth'])->prefix('blockchain')->name('blockchain.')->group(function () {
     Route::get('/', [BlockchainController::class, 'index'])->name('index');
-    Route::get('/transactions', function() {
-        return view('blockchain.transactions.index', ['transactions' => collect([])]);
-    })->name('transactions');
+    Route::get('/transactions', [CryptoTransactionController::class, 'index'])->name('transactions');
     Route::get('/blocks', [BlockchainController::class, 'getRecords'])->name('blocks');
     Route::post('/records', [BlockchainController::class, 'createRecord'])->name('records.create');
     Route::get('/records', [BlockchainController::class, 'getRecords'])->name('records.index');
@@ -24,16 +22,22 @@ Route::middleware(['auth'])->prefix('blockchain')->name('blockchain.')->group(fu
     Route::get('/latest-block', [BlockchainController::class, 'getLatestBlock'])->name('block.latest');
 
     // Verification
-    Route::resource('/verification', BlockchainVerificationController::class);
+    Route::resource('/verifications', BlockchainVerificationController::class);
     
     // Crypto Wallet & Transactions
     Route::get('/wallets', [CryptoWalletController::class, 'index'])->name('wallets.index');
+    Route::get('/wallets/create', [CryptoWalletController::class, 'create'])->name('wallets.create');
+    Route::post('/wallets', [CryptoWalletController::class, 'createWallet'])->name('wallets.store');
     Route::resource('/wallets', CryptoWalletController::class);
     Route::resource('/transactions', CryptoTransactionController::class);
     
     // Smart Contracts & NFTs
     Route::resource('/smartcontracts', SmartContractController::class);
     Route::get('/nfts/{nft}/buy', [NftController::class, 'showBuy'])->name('nfts.buy');
+    Route::post('/nfts/{nft}/buy', [NftController::class, 'processBuy'])->name('nfts.buy.process');
+    Route::match(['get', 'post'], '/metaverse/nfts/{nft}/buy', function() {
+        return redirect()->route('blockchain.nfts.buy', request()->route('nft'));
+    });
     Route::get('/nfts/{nft}/auction', [NftController::class, 'showAuction'])->name('nfts.auction');
     Route::resource('/nfts', NftController::class);
     
@@ -68,9 +72,15 @@ Route::middleware(['auth'])->prefix('blockchain')->name('blockchain.')->group(fu
     Route::get('/metaverse/marketplace/create', [MetaverseController::class, 'create'])->name('blockchain.metaverse.marketplace.create');
     Route::post('/metaverse/marketplace', [MetaverseController::class, 'store'])->name('blockchain.metaverse.marketplace.store');
     Route::get('/metaverse/nft', [MetaverseController::class, 'nft'])->name('blockchain.metaverse.nft');
+    Route::post('/metaverse/nft', [MetaverseController::class, 'storeNft'])->name('blockchain.metaverse.nft.store');
     
     // Geospatial Routes
     Route::get('/geospatial/analysis', [MetaverseController::class, 'geospatialAnalysis'])->name('geospatial.analysis');
+    Route::get('/geospatial/analysis/export', [MetaverseController::class, 'exportGeospatialReport'])->name('geospatial.analysis.export');
+    Route::post('/geospatial/analysis/heatmap', [MetaverseController::class, 'startHeatmapAnalysis'])->name('geospatial.heatmap.analyze');
+    Route::get('/geospatial/analysis/details', [MetaverseController::class, 'viewSpatialDetails'])->name('geospatial.statistics.details');
+    Route::post('/geospatial/analysis/patterns', [MetaverseController::class, 'startPatternAnalysis'])->name('geospatial.patterns.analyze');
+
     Route::get('/geospatial/security', [MetaverseController::class, 'geospatialSecurity'])->name('geospatial.security');
     Route::get('/geospatial/intelligence', [MetaverseController::class, 'geospatialIntelligence'])->name('geospatial.intelligence');
     Route::get('/geospatial/intelligence/refresh', [MetaverseController::class, 'refreshIntelligenceData'])->name('geospatial.intelligence.refresh');

@@ -21,7 +21,9 @@
                     </a>
                 </div>
             </div>
-        </div>
+
+
+
 
         <form method="POST" action="{{ route('optimized.properties.update', $property) }}" enctype="multipart/form-data" id="propertyForm">
         @csrf
@@ -55,7 +57,8 @@
                     </div>
                 </div>
             </div>
-        </div>
+
+
 
         <!-- Step 1: Basic Information -->
         <div class="step-content" data-step="1">
@@ -65,6 +68,22 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="owner_id" class="form-label">Property Owner</label>
+                                <select class="form-select @error('owner_id') is-invalid @enderror" id="owner_id" name="owner_id">
+                                    <option value="">Select Owner (Optional)</option>
+                                    @foreach($clients as $client)
+                                        <option value="{{ $client->id }}" {{ old('owner_id', $property->owner_id) == $client->id ? 'selected' : '' }}>
+                                            {{ $client->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('owner_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <label for="title" class="form-label">Property Title *</label>
                             <input type="text" class="form-control @error('title') is-invalid @enderror" 
@@ -377,6 +396,183 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Nearby Places -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Nearby Places</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="schools" class="form-label">Schools</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-school"></i></span>
+                                <input type="text" class="form-control" id="schools" name="schools" 
+                                       value="{{ old('schools', is_array($property->schools) ? implode(', ', $property->schools) : $property->schools) }}" 
+                                       placeholder="e.g., King Saud University (2km)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="hospitals" class="form-label">Hospitals</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-hospital"></i></span>
+                                <input type="text" class="form-control" id="hospitals" name="hospitals" 
+                                       value="{{ old('hospitals', is_array($property->hospitals) ? implode(', ', $property->hospitals) : $property->hospitals) }}" 
+                                       placeholder="e.g., King Faisal Hospital (5km)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="shopping_centers" class="form-label">Shopping Centers</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-shopping-bag"></i></span>
+                                <input type="text" class="form-control" id="shopping_centers" name="shopping_centers" 
+                                       value="{{ old('shopping_centers', is_array($property->shopping_centers) ? implode(', ', $property->shopping_centers) : $property->shopping_centers) }}" 
+                                       placeholder="e.g., Riyadh Park (3km)">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="restaurants" class="form-label">Restaurants</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-utensils"></i></span>
+                                <input type="text" class="form-control" id="restaurants" name="restaurants" 
+                                       value="{{ old('restaurants', is_array($property->restaurants) ? implode(', ', $property->restaurants) : $property->restaurants) }}" 
+                                       placeholder="e.g., Al Baik, The Globe">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="transportation" class="form-label">Transportation</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-bus"></i></span>
+                                <input type="text" class="form-control" id="transportation" name="transportation" 
+                                       value="{{ old('transportation', is_array($property->transportation) ? implode(', ', $property->transportation) : $property->transportation) }}" 
+                                       placeholder="e.g., Metro Station (500m), Bus Stop">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="universities" class="form-label">Universities</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-university"></i></span>
+                                <input type="text" class="form-control" id="universities" name="universities" 
+                                       value="{{ old('universities', is_array($property->universities) ? implode(', ', $property->universities) : $property->universities) }}" 
+                                       placeholder="e.g., King Saud University (2km)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="metro_stations" class="form-label">Metro Stations</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-subway"></i></span>
+                                <input type="text" class="form-control" id="metro_stations" name="metro_stations" 
+                                       value="{{ old('metro_stations', is_array($property->metro_stations) ? implode(', ', $property->metro_stations) : $property->metro_stations) }}" 
+                                       placeholder="e.g., Olaya Station (500m)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cinemas" class="form-label">Cinemas</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-film"></i></span>
+                                <input type="text" class="form-control" id="cinemas" name="cinemas" 
+                                       value="{{ old('cinemas', is_array($property->cinemas) ? implode(', ', $property->cinemas) : $property->cinemas) }}" 
+                                       placeholder="e.g., VOX Cinemas (2km)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="parks" class="form-label">Parks</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tree"></i></span>
+                                <input type="text" class="form-control" id="parks" name="parks" 
+                                       value="{{ old('parks', is_array($property->parks) ? implode(', ', $property->parks) : $property->parks) }}" 
+                                       placeholder="e.g., King Abdullah Park (1km)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="gyms" class="form-label">Gyms</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dumbbell"></i></span>
+                                <input type="text" class="form-control" id="gyms" name="gyms" 
+                                       value="{{ old('gyms', is_array($property->gyms) ? implode(', ', $property->gyms) : $property->gyms) }}" 
+                                       placeholder="e.g., Fitness Time (300m)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal & Energy Details -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Legal & Energy Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="ownership_type" class="form-label">Ownership Type</label>
+                            <select class="form-select" id="ownership_type" name="ownership_type">
+                                <option value="">Select Type</option>
+                                <option value="freehold" {{ old('ownership_type', $property->ownership_type) == 'freehold' ? 'selected' : '' }}>Freehold</option>
+                                <option value="leasehold" {{ old('ownership_type', $property->ownership_type) == 'leasehold' ? 'selected' : '' }}>Leasehold</option>
+                                <option value="shared_ownership" {{ old('ownership_type', $property->ownership_type) == 'shared_ownership' ? 'selected' : '' }}>Shared Ownership</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="deed_number" class="form-label">Deed Number</label>
+                            <input type="text" class="form-control" id="deed_number" name="deed_number" 
+                                   value="{{ old('deed_number', $property->deed_number) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="energy_rating" class="form-label">Energy Rating</label>
+                            <input type="text" class="form-control" id="energy_rating" name="energy_rating" 
+                                   value="{{ old('energy_rating', $property->energy_rating) }}" placeholder="e.g., A+, B">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="water_heating" class="form-label">Water Heating</label>
+                            <select class="form-select" id="water_heating" name="water_heating">
+                                <option value="">Select Type</option>
+                                <option value="solar" {{ old('water_heating', $property->water_heating) == 'solar' ? 'selected' : '' }}>Solar</option>
+                                <option value="electric" {{ old('water_heating', $property->water_heating) == 'electric' ? 'selected' : '' }}>Electric</option>
+                                <option value="gas" {{ old('water_heating', $property->water_heating) == 'gas' ? 'selected' : '' }}>Gas</option>
+                                <option value="heat_pump" {{ old('water_heating', $property->water_heating) == 'heat_pump' ? 'selected' : '' }}>Heat Pump</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="insulation" class="form-label">Insulation</label>
+                            <select class="form-select" id="insulation" name="insulation">
+                                <option value="">Select Type</option>
+                                <option value="poor" {{ old('insulation', $property->insulation) == 'poor' ? 'selected' : '' }}>Poor</option>
+                                <option value="fair" {{ old('insulation', $property->insulation) == 'fair' ? 'selected' : '' }}>Fair</option>
+                                <option value="good" {{ old('insulation', $property->insulation) == 'good' ? 'selected' : '' }}>Good</option>
+                                <option value="excellent" {{ old('insulation', $property->insulation) == 'excellent' ? 'selected' : '' }}>Excellent</option>
+                            </select>
+                        </div>
+                         <div class="col-md-4">
+                            <label for="air_conditioning" class="form-label">Air Conditioning</label>
+                            <select class="form-select" id="air_conditioning" name="air_conditioning">
+                                <option value="">Select Type</option>
+                                <option value="none" {{ old('air_conditioning', $property->air_conditioning) == 'none' ? 'selected' : '' }}>None</option>
+                                <option value="window" {{ old('air_conditioning', $property->air_conditioning) == 'window' ? 'selected' : '' }}>Window Unit</option>
+                                <option value="central" {{ old('air_conditioning', $property->air_conditioning) == 'central' ? 'selected' : '' }}>Central AC</option>
+                                <option value="split" {{ old('air_conditioning', $property->air_conditioning) == 'split' ? 'selected' : '' }}>Split Unit</option>
+                                <option value="heat_pump" {{ old('air_conditioning', $property->air_conditioning) == 'heat_pump' ? 'selected' : '' }}>Heat Pump</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Features</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="solar_panels" name="solar_panels" value="1" 
+                                           {{ old('solar_panels', $property->solar_panels) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="solar_panels">Solar Panels</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="double_glazing" name="double_glazing" value="1" 
+                                           {{ old('double_glazing', $property->double_glazing) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="double_glazing">Double Glazing</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Step 4: Media Upload -->
@@ -450,6 +646,152 @@
                 </div>
             </div>
 
+            <!-- Property Video -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Property Video</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Video URL (YouTube/Vimeo)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fab fa-youtube"></i></span>
+                            <input type="url" class="form-control" name="video_url" placeholder="https://youtube.com/..." value="{{ old('video_url', $property->video_url) }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room-Specific Photos -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Room-Specific Photos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Living Room -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('living_room')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-couch"></i>
+                                    <span>Living Room</span>
+                                </div>
+                                <input type="file" name="room_images[living_room][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Living Room Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kitchen -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('kitchen')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-utensils"></i>
+                                    <span>Kitchen</span>
+                                </div>
+                                <input type="file" name="room_images[kitchen][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Kitchen Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bedrooms -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('bedrooms')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-bed"></i>
+                                    <span>Bedrooms</span>
+                                </div>
+                                <input type="file" name="room_images[bedrooms][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Bedroom Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bathrooms -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('bathrooms')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-bath"></i>
+                                    <span>Bathrooms</span>
+                                </div>
+                                <input type="file" name="room_images[bathrooms][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Bathroom Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Entrance -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('entrance')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-door-open"></i>
+                                    <span>Main Entrance</span>
+                                </div>
+                                <input type="file" name="room_images[entrance][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Entrance Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Garden/Outdoor -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('outdoor')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-tree"></i>
+                                    <span>Garden/Outdoor</span>
+                                </div>
+                                <input type="file" name="room_images[outdoor][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Outdoor Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Garage/Parking -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('garage')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-car"></i>
+                                    <span>Garage/Parking</span>
+                                </div>
+                                <input type="file" name="room_images[garage][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Garage Photos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pool/Amenities -->
+                        <div class="col-md-6 mb-3">
+                            <div class="room-upload-card" onclick="openRoomFileInput('amenities')">
+                                <div class="room-upload-header">
+                                    <i class="fas fa-swimming-pool"></i>
+                                    <span>Pool/Amenities</span>
+                                </div>
+                                <input type="file" name="room_images[amenities][]" multiple accept="image/*" class="room-file-input">
+                                <div class="room-upload-area">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Add Amenities Photos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Documents</h5>
@@ -506,9 +848,9 @@
                 </div>
             </div>
 
-            <div class="card mt<|code_suffix|>                <ustin>
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Virtual Tour</h5>
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Virtual Tour</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -617,6 +959,8 @@
                             @enderror
                         </div>
                         
+
+
                         <!-- Price Change Reason -->
                         @if($property->price?->price != old('price', $property->price?->price ?? $property->price))
                             <div class="col-12">
@@ -629,6 +973,53 @@
                                 @enderror
                             </div>
                         @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Availability & Dates -->
+            <div class="card mt-3 rental-dates">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Availability & Dates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="rental_start_date" class="form-label">Available From</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-plus"></i></span>
+                                <input type="date" class="form-control @error('rental_start_date') is-invalid @enderror"
+                                       id="rental_start_date" name="rental_start_date" 
+                                       value="{{ old('rental_start_date', optional($property->rental_start_date)->format('Y-m-d')) }}">
+                                @error('rental_start_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="rental_end_date" class="form-label">Available Until (Optional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-minus"></i></span>
+                                <input type="date" class="form-control @error('rental_end_date') is-invalid @enderror"
+                                       id="rental_end_date" name="rental_end_date" 
+                                       value="{{ old('rental_end_date', optional($property->rental_end_date)->format('Y-m-d')) }}">
+                                @error('rental_end_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="expiry_date" class="form-label">Listing Expiry Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-hourglass-end"></i></span>
+                                <input type="date" class="form-control @error('expiry_date') is-invalid @enderror"
+                                       id="expiry_date" name="expiry_date" 
+                                       value="{{ old('expiry_date', optional($property->expiry_date)->format('Y-m-d')) }}">
+                                @error('expiry_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -770,6 +1161,60 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+}
+
+/* ========== Room Upload Cards ========== */
+.room-upload-card {
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #f9fafb;
+}
+
+.room-upload-card:hover {
+    border-color: #4f46e5;
+    background: #f0f9ff;
+}
+
+.room-upload-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.room-upload-header i {
+    color: #4f46e5;
+    font-size: 18px;
+}
+
+.room-file-input {
+    display: none;
+}
+
+.room-upload-area {
+    padding: 20px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e5e7eb;
+}
+
+.room-upload-area i {
+    font-size: 24px;
+    color: #9ca3af;
+    margin-bottom: 8px;
+}
+
+.room-upload-area p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
 }
 </style>
 @endpush
@@ -966,9 +1411,95 @@ function removeImage(button) {
     button.closest('.col-md-3').remove();
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    updateNavigationButtons();
+// Room upload functions
+    window.openRoomFileInput = function (roomType) {
+        const input = document.querySelector(`input[name="room_images[${roomType}][]"]`);
+        if (input) {
+            input.click();
+        }
+    };
+
+    window.handleRoomFileSelect = function (roomType, input) {
+        const files = input.files;
+        const card = input.closest('.room-upload-card');
+        if (card && files.length > 0) {
+            card.style.borderColor = '#10b981';
+            card.style.background = '#f0fdf4';
+            // Assuming showToast is defined elsewhere or we can use a simple alert/log if not
+            if (typeof showToast === 'function') {
+                showToast(`${files.length} ${roomType} image(s) selected`, 'success');
+            }
+        }
+    };
+
+    window.setupRoomUploads = function () {
+        const roomInputs = document.querySelectorAll('.room-file-input');
+        
+        roomInputs.forEach(input => {
+            const roomType = input.name.match(/room_images\[(.*?)\]/)?.[1];
+            if (roomType) {
+                input.addEventListener('change', function () {
+                    handleRoomFileSelect(roomType, this);
+                });
+            }
+        });
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        setupRoomUploads();
+        updateNavigationButtons();
+
+    // Listing Type Change Handler
+    const listingTypeSelect = document.getElementById('listing_type');
+    const rentalDates = document.querySelectorAll('.rental-dates');
+
+    function toggleRentalDates() {
+        if (!listingTypeSelect) return;
+        
+        const type = listingTypeSelect.value;
+        const isRental = ['rent', 'lease'].includes(type);
+        
+        rentalDates.forEach(el => {
+            const inputs = el.querySelectorAll('input');
+            if (isRental) {
+                el.style.display = 'block';
+                inputs.forEach(input => input.setAttribute('required', 'required'));
+            } else {
+                el.style.display = 'none';
+                inputs.forEach(input => {
+                    input.removeAttribute('required');
+                });
+            }
+        });
+    }
+
+    if (listingTypeSelect) {
+        listingTypeSelect.addEventListener('change', toggleRentalDates);
+        toggleRentalDates(); // Initial check
+    }
+
+    // Date Validation
+    const startDateInput = document.getElementById('rental_start_date');
+    const endDateInput = document.getElementById('rental_end_date');
+
+    function validateDates() {
+        if (startDateInput && endDateInput && startDateInput.value && endDateInput.value) {
+            if (new Date(endDateInput.value) <= new Date(startDateInput.value)) {
+                endDateInput.setCustomValidity('End date must be after start date');
+                // Optional: Show visual feedback immediately
+                endDateInput.classList.add('is-invalid');
+            } else {
+                endDateInput.setCustomValidity('');
+                endDateInput.classList.remove('is-invalid');
+            }
+        }
+    }
+
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', validateDates);
+        endDateInput.addEventListener('change', validateDates);
+    }
 });
 </script>
 @endpush

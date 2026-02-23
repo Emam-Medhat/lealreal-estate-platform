@@ -1,74 +1,323 @@
 @extends('layouts.app')
 
+@section('title', 'إدارة خطط الاشتراكات')
+
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">خطط الاشتراك</h1>
-        <p class="text-gray-600">اختر الخطة المناسبة لك من بين خطط الاشتراك المتاحة</p>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">خطط الاشتراكات</h1>
+            <p class="text-muted mb-0">إدارة خطط الاشتراكات المتاحة للمنصة</p>
+        </div>
+        <div>
+            <a href="{{ route('subscriptions.plans.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus ms-2"></i>
+                إضافة خطة جديدة
+            </a>
+        </div>
     </div>
 
-    @if($plans->count() > 0)
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($plans as $plan)
-                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ $plan->name }}</h3>
-                        <p class="text-gray-600 mb-4">{{ $plan->description }}</p>
-                        
-                        <div class="mb-4">
-                            <span class="text-3xl font-bold text-blue-600">${{ number_format($plan->price, 2) }}</span>
-                            <span class="text-gray-500">/{{ $plan->billing_cycle }}</span>
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ $plans->total() }}</h4>
+                            <p class="mb-0">إجمالي الخطط</p>
                         </div>
-                        
-                        @if($plan->features)
-                            <div class="mb-6">
-                                <h4 class="font-semibold text-gray-900 mb-2">المميزات:</h4>
-                                <ul class="space-y-2">
-                                    @foreach(json_decode($plan->features) as $feature)
-                                        <li class="flex items-center text-gray-600">
-                                            <svg class="w-4 h-4 text-green-500 ml-2" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                            </svg>
-                                            {{ $feature }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-                        
-                        <div class="flex space-x-2 space-x-reverse">
-                            @if($plan->is_active)
-                                <button class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
-                                    اشترك الآن
-                                </button>
-                            @else
-                                <button disabled class="flex-1 bg-gray-300 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
-                                    غير متاح
-                                </button>
-                            @endif
-                            
-                            <a href="#" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200">
-                                التفاصيل
-                            </a>
+                        <div class="align-self-center">
+                            <i class="fas fa-layer-group fa-2x"></i>
                         </div>
                     </div>
                 </div>
-            @endforeach
-        </div>
-        
-        <div class="mt-8">
-            {{ $plans->links() }}
-        </div>
-    @else
-        <div class="text-center py-12">
-            <div class="text-gray-400 mb-4">
-                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                </svg>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">لا توجد خطط اشتراك متاحة</h3>
-            <p class="text-gray-600">لم يتم إضافة أي خطط اشتراك بعد. يرجى العودة لاحقاً.</p>
         </div>
-    @endif
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ $plans->where('is_active', true)->count() }}</h4>
+                            <p class="mb-0">خطط نشطة</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ $plans->where('is_popular', true)->count() }}</h4>
+                            <p class="mb-0">خطط مميزة</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-star fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ $plans->sum(function($plan) { return $plan->subscriptions->count(); }) }}</h4>
+                            <p class="mb-0">إجمالي المشتركين</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('subscriptions.plans.index') }}" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="بحث عن خطة..." value="{{ request('search') }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">كل الحالات</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>نشط</option>
+                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>غير نشط</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="tier" class="form-select">
+                        <option value="">كل المستويات</option>
+                        <option value="basic" {{ request('tier') == 'basic' ? 'selected' : '' }}>أساسي</option>
+                        <option value="premium" {{ request('tier') == 'premium' ? 'selected' : '' }}>مميز</option>
+                        <option value="enterprise" {{ request('tier') == 'enterprise' ? 'selected' : '' }}>مؤسسي</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-search ms-2"></i>
+                        بحث
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Plans Table -->
+    <div class="card">
+        <div class="card-body">
+            @if($plans->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>الخطة</th>
+                                <th>المستوى</th>
+                                <th>السعر</th>
+                                <th>دورة الفوترة</th>
+                                <th>الحد الأقصى للمستخدمين</th>
+                                <th>المشتركين</th>
+                                <th>الحالة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($plans as $plan)
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">{{ $plan->name }}</h6>
+                                                <small class="text-muted">{{ \Illuminate\Support\Str::limit($plan->description, 50) }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if($plan->tier)
+                                            <span class="badge bg-info">{{ $plan->tier->name }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <strong>{{ number_format($plan->price, 2) }} {{ $plan->currency ?? 'USD' }}</strong>
+                                        @if($plan->setup_fee > 0)
+                                            <br><small class="text-muted">رسوم الإعداد: {{ number_format($plan->setup_fee, 2) }} {{ $plan->currency ?? 'USD' }}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        {{ $plan->billing_cycle ?? 1 }} {{ __('month') }}
+                                        @if($plan->trial_days > 0)
+                                            <br><small class="text-success">فترة تجريبية: {{ $plan->trial_days }} يوم</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($plan->max_users)
+                                            {{ $plan->max_users }}
+                                        @else
+                                            <span class="text-muted">غير محدود</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ $plan->subscriptions->count() }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   {{ $plan->is_active ? 'checked' : '' }}
+                                                   onchange="toggleStatus({{ $plan->id }})"
+                                                   id="status-{{ $plan->id }}">
+                                            <label class="form-check-label" for="status-{{ $plan->id }}">
+                                                {{ $plan->is_active ? 'نشط' : 'غير نشط' }}
+                                            </label>
+                                        </div>
+                                        @if($plan->is_popular)
+                                            <span class="badge bg-warning mt-1">
+                                                <i class="fas fa-star ms-1"></i>
+                                                مميز
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ route('subscriptions.plans.show', $plan) }}" class="btn btn-outline-info" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('subscriptions.plans.edit', $plan) }}" class="btn btn-outline-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-success" onclick="duplicatePlan({{ $plan->id }})" title="نسخ">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" onclick="deletePlan({{ $plan->id }}, '{{ $plan->name }}')" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <small class="text-muted">
+                            عرض {{ $plans->firstItem() }} إلى {{ $plans->lastItem() }} من {{ $plans->total() }} خطة
+                        </small>
+                    </div>
+                    <div>
+                        {{ $plans->links() }}
+                    </div>
+                </div>
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">لا توجد خطط اشتراك</h5>
+                    <p class="text-muted">ابدأ بإضافة أول خطة اشتراك للمنصة</p>
+                    <a href="{{ route('subscriptions.plans.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus ms-2"></i>
+                        إضافة خطة جديدة
+                    </a>
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function toggleStatus(planId) {
+    const checkbox = document.getElementById(`status-${planId}`);
+    const status = checkbox.checked;
+    
+    if (confirm('هل أنت متأكد من تغيير حالة هذه الخطة؟')) {
+        fetch(`/subscriptions/admin-plans/${planId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم تحديث الحالة بنجاح!');
+                location.reload();
+            } else {
+                checkbox.checked = !status;
+                alert('حدث خطأ: ' + (data.message || 'حدث خطأ ما'));
+            }
+        })
+        .catch(error => {
+            checkbox.checked = !status;
+            alert('حدث خطأ في الاتصال');
+        });
+    } else {
+        checkbox.checked = !status;
+    }
+}
+
+function duplicatePlan(planId) {
+    if (confirm('هل أنت متأكد من نسخ هذه الخطة؟')) {
+        fetch(`/subscriptions/admin-plans/${planId}/duplicate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم نسخ الخطة بنجاح!');
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + (data.message || 'حدث خطأ ما'));
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+function deletePlan(planId, planName) {
+    if (confirm(`هل أنت متأكد من حذف خطة "${planName}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+        fetch(`/subscriptions/admin-plans/${planId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حذف الخطة بنجاح!');
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + (data.message || 'حدث خطأ ما'));
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+</script>
+@endpush

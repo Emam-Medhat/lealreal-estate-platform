@@ -1,145 +1,128 @@
-@extends('layouts.app')
+@extends('admin.layouts.admin')
 
 @section('title', 'التقارير المخصصة')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-3">التقارير المخصصة</h2>
-                    <p class="text-muted">إنشاء تقارير مخصصة بناءً على احتياجاتك</p>
-                </div>
-                <div>
-                    <a href="{{ route('reports.custom.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> تقرير مخصص جديد
-                    </a>
-                    <a href="{{ route('reports.custom.builder') }}" class="btn btn-info ms-2">
-                        <i class="fas fa-tools"></i> منشئ التقارير
-                    </a>
-                </div>
-            </div>
+<div class="container-fluid py-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+                <i class="fas fa-chart-line text-blue-600 ml-3"></i>
+                التقارير المخصصة
+            </h1>
+            <p class="text-gray-600 text-lg">إنشاء تقارير مخصصة بناءً على احتياجاتك</p>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+            <a href="{{ route('reports.custom.create') }}" 
+               class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center">
+                <i class="fas fa-plus ml-2"></i>
+                تقرير مخصص جديد
+            </a>
+            <a href="{{ route('reports.custom.builder') }}" 
+               class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center">
+                <i class="fas fa-tools ml-2"></i>
+                منشئ التقارير
+            </a>
         </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $totalReports }}</h4>
-                            <p class="mb-0">إجمالي التقارير</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-file-alt fa-2x"></i>
-                        </div>
-                    </div>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">إجمالي التقارير</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ $totalReports ?? 0 }}</p>
+                </div>
+                <div class="bg-blue-100 rounded-full p-4">
+                    <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $publicReports }}</h4>
-                            <p class="mb-0">التقارير العامة</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-globe fa-2x"></i>
-                        </div>
-                    </div>
+        
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">التقارير العامة</p>
+                    <p class="text-3xl font-bold text-green-600">{{ $publicReports ?? 0 }}</p>
+                </div>
+                <div class="bg-green-100 rounded-full p-4">
+                    <i class="fas fa-globe text-green-600 text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $templates }}</h4>
-                            <p class="mb-0">القوالب المحفوظة</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-layer-group fa-2x"></i>
-                        </div>
-                    </div>
+        
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">القوالب المحفوظة</p>
+                    <p class="text-3xl font-bold text-purple-600">{{ $templates->count() ?? 0 }}</p>
+                </div>
+                <div class="bg-purple-100 rounded-full p-4">
+                    <i class="fas fa-layer-group text-purple-600 text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $totalUsage }}</h4>
-                            <p class="mb-0">إجمالي الاستخدام</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-chart-line fa-2x"></i>
-                        </div>
-                    </div>
+        
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">إجمالي الاستخدام</p>
+                    <p class="text-3xl font-bold text-orange-600">{{ $totalUsage ?? 0 }}</p>
+                </div>
+                <div class="bg-orange-100 rounded-full p-4">
+                    <i class="fas fa-chart-line text-orange-600 text-2xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Filters and Search -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">البحث والتصفية</h5>
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-filter text-purple-600 ml-3"></i>
+                البحث والتصفية
+            </h3>
+        </div>
+        <form method="GET" action="{{ route('reports.custom.index') }}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">البحث</label>
+                    <input type="text" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-500 focus:ring-purple-500 text-lg" 
+                           id="search" name="search" value="{{ request('search') }}" placeholder="ابحث عن تقرير...">
                 </div>
-                <div class="card-body">
-                    <form method="GET" action="{{ route('reports.custom.index') }}">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="search">البحث</label>
-                                    <input type="text" class="form-control" id="search" name="search" 
-                                           value="{{ request('search') }}" placeholder="ابحث عن تقرير...">
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="category">الفئة</label>
-                                    <select class="form-control" id="category" name="category">
-                                        <option value="">جميع الفئات</option>
-                                        <option value="sales" {{ request('category') == 'sales' ? 'selected' : '' }}>مبيعات</option>
-                                        <option value="marketing" {{ request('category') == 'marketing' ? 'selected' : '' }}>تسويق</option>
-                                        <option value="finance" {{ request('category') == 'finance' ? 'selected' : '' }}>مالية</option>
-                                        <option value="operations" {{ request('category') == 'operations' ? 'selected' : '' }}>عمليات</option>
-                                        <option value="analytics" {{ request('category') == 'analytics' ? 'selected' : '' }}>تحليلات</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="sort">الترتيب</label>
-                                    <select class="form-control" id="sort" name="sort">
-                                        <option value="recent" {{ request('sort') == 'recent' ? 'selected' : '' }}>الأحدث</option>
-                                        <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>الأكثر استخداماً</option>
-                                        <option value="name" {{ request('sort') == 'name' ? 'selected' : '' }}>بالاسم</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label>&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fas fa-search"></i> بحث
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">الفئة</label>
+                    <select class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-500 focus:ring-purple-500 text-lg" 
+                            id="category" name="category">
+                        <option value="">جميع الفئات</option>
+                        <option value="sales" {{ request('category') == 'sales' ? 'selected' : '' }}>مبيعات</option>
+                        <option value="marketing" {{ request('category') == 'marketing' ? 'selected' : '' }}>تسويق</option>
+                        <option value="finance" {{ request('category') == 'finance' ? 'selected' : '' }}>مالية</option>
+                        <option value="operations" {{ request('category') == 'operations' ? 'selected' : '' }}>عمليات</option>
+                        <option value="analytics" {{ request('category') == 'analytics' ? 'selected' : '' }}>تحليلات</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sort" class="block text-sm font-medium text-gray-700 mb-2">الترتيب</label>
+                    <select class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-500 focus:ring-purple-500 text-lg" 
+                            id="sort" name="sort">
+                        <option value="recent" {{ request('sort') == 'recent' ? 'selected' : '' }}>الأحدث</option>
+                        <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>الأكثر استخداماً</option>
+                        <option value="name" {{ request('sort') == 'name' ? 'selected' : '' }}>بالاسم</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-search ml-2"></i>
+                        بحث
+                    </button>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Reports List -->

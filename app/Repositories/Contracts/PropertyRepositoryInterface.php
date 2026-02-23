@@ -25,4 +25,5 @@ interface PropertyRepositoryInterface extends BaseRepositoryInterface
     public function getMarketMetrics(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, ?string $marketArea = null): array;
     public function countByDate(string $date): int;
     public function countByStatus(string $status): int;
+    public function getAllCompanies(): Collection;
 }

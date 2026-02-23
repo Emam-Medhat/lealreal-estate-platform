@@ -287,6 +287,19 @@
                     </a>
                 </div>
 
+                <!-- AI Tools Section -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="section-title">أدوات الذكاء الاصطناعي</h3>
+                    <a href="{{ route('ai.smart-search') }}" class="nav-item flex items-center px-4 py-3 rounded-lg">
+                        <i class="fas fa-robot w-5 text-lg"></i>
+                        <span class="mr-3">البحث الذكي</span>
+                    </a>
+                    <a href="{{ route('ai.chat') }}" class="nav-item flex items-center px-4 py-3 rounded-lg">
+                        <i class="fas fa-comments w-5 text-lg"></i>
+                        <span class="mr-3">المساعد الذكي</span>
+                    </a>
+                </div>
+
                 <!-- Admin Section -->
                 @if(auth()->user()->is_admin ?? false)
                     <div class="mt-6 pt-4 border-t border-gray-200">
@@ -391,20 +404,20 @@
                                 <i class="fas fa-brain w-4"></i>
                                 <span class="mr-3">رؤى الذكاء الاصطناعي</span>
                             </a>
-                            <a href="{{ route('ai.price.prediction') }}" 
-                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50"> 
-                                <i class="fas fa-crystal-ball w-4"></i> 
-                                <span class="mr-3">توقع الأسعار</span> 
-                            </a> 
-                            <a href="{{ route('ai.fraud-detection.index') }}" 
-                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50"> 
-                                <i class="fas fa-user-secret w-4"></i> 
-                                <span class="mr-3">كشف الاحتيال</span> 
+                            <a href="{{ route('ai.price-prediction') }}"
+                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
+                                <i class="fas fa-crystal-ball w-4"></i>
+                                <span class="mr-3">توقع الأسعار</span>
                             </a>
-                            <a href="{{ route('ai.virtual-staging.index') }}"
+                            <a href="{{ route('ai.fraud-detection') }}"
+                                class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
+                                <i class="fas fa-user-secret w-4"></i>
+                                <span class="mr-3">كشف الاحتيال</span>
+                            </a>
+                            <a href="{{ route('ai.virtual-reality') }}"
                                 class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-vr-cardboard w-4"></i>
-                                <span class="mr-3">الستيجنج الافتراضي</span>
+                                <span class="mr-3">الواقع الافتراضي</span>
                             </a>
                             <a href="{{ route('analytics-alt.bigdata.index') }}"
                                 class="nav-item flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-50">

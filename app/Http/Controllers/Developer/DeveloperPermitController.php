@@ -20,6 +20,12 @@ class DeveloperPermitController extends Controller
     {
         $developer = Auth::user()->developer;
         
+        // Check if developer exists
+        if (!$developer) {
+            // Redirect or handle the case where developer is null
+            return redirect()->route('dashboard')->with('error', 'Developer profile not found. Please complete your profile first.');
+        }
+        
         $permits = $developer->permits()
             ->with(['project'])
             ->when($request->search, function ($query, $search) {
@@ -44,6 +50,12 @@ class DeveloperPermitController extends Controller
     public function create()
     {
         $developer = Auth::user()->developer;
+        
+        // Check if developer exists
+        if (!$developer) {
+            return redirect()->route('dashboard')->with('error', 'Developer profile not found. Please complete your profile first.');
+        }
+        
         $projects = $developer->projects()->pluck('name', 'id');
         
         return view('developer.permits.create', compact('developer', 'projects'));
@@ -52,6 +64,11 @@ class DeveloperPermitController extends Controller
     public function store(StorePermitRequest $request)
     {
         $developer = Auth::user()->developer;
+        
+        // Check if developer exists
+        if (!$developer) {
+            return redirect()->route('dashboard')->with('error', 'Developer profile not found. Please complete your profile first.');
+        }
         
         $permit = DeveloperPermit::create([
             'developer_id' => $developer->id,
@@ -127,6 +144,12 @@ class DeveloperPermitController extends Controller
         $this->authorize('update', $permit);
         
         $developer = Auth::user()->developer;
+        
+        // Check if developer exists
+        if (!$developer) {
+            return redirect()->route('dashboard')->with('error', 'Developer profile not found. Please complete your profile first.');
+        }
+        
         $projects = $developer->projects()->pluck('name', 'id');
         
         return view('developer.permits.edit', compact('permit', 'projects'));
@@ -256,6 +279,14 @@ class DeveloperPermitController extends Controller
     {
         $developer = Auth::user()->developer;
         
+        // Check if developer exists
+        if (!$developer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Developer profile not found. Please complete your profile first.'
+            ], 404);
+        }
+        
         $expiringSoon = $developer->permits()
             ->where('status', 'issued')
             ->where('expiry_date', '<=', now()->addDays(90))
@@ -272,6 +303,14 @@ class DeveloperPermitController extends Controller
     public function getExpired(): JsonResponse
     {
         $developer = Auth::user()->developer;
+        
+        // Check if developer exists
+        if (!$developer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Developer profile not found. Please complete your profile first.'
+            ], 404);
+        }
         
         $expired = $developer->permits()
             ->where('status', 'expired')
@@ -302,6 +341,14 @@ class DeveloperPermitController extends Controller
     public function getPermitStats(): JsonResponse
     {
         $developer = Auth::user()->developer;
+        
+        // Check if developer exists
+        if (!$developer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Developer profile not found. Please complete your profile first.'
+            ], 404);
+        }
         
         $stats = [
             'total_permits' => $developer->permits()->count(),

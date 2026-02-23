@@ -105,6 +105,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{property}', [App\Http\Controllers\PropertyFavoriteController::class, 'add'])->name('user.favorites.add');
         Route::delete('/{property}', [App\Http\Controllers\PropertyFavoriteController::class, 'remove'])->name('user.favorites.remove');
         Route::get('/export', [App\Http\Controllers\PropertyFavoriteController::class, 'export'])->name('user.favorites.export');
+        Route::get('/share', [App\Http\Controllers\PropertyFavoriteController::class, 'shareFavorites'])->name('user.favorites.share');
     });
     
     // User Comparisons

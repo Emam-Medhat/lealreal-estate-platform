@@ -71,6 +71,30 @@ Route::middleware(['auth'])->group(function () {
     
     // Maintenance Management
     Route::prefix('maintenance')->name('maintenance.')->group(function () {
+        
+        // Maintenance Calendar
+        Route::get('/calendar', [MaintenanceController::class, 'calendar'])->name('calendar');
+        Route::get('/calendar/events', [MaintenanceController::class, 'calendarEvents'])->name('calendar.events');
+
+        // Maintenance Schedule Management
+        Route::prefix('schedule')->name('schedule.')->group(function () {
+            Route::get('/', [MaintenanceController::class, 'scheduleIndex'])->name('index');
+            Route::get('/create', [MaintenanceController::class, 'scheduleCreate'])->name('create');
+            Route::post('/', [MaintenanceController::class, 'scheduleStore'])->name('store');
+            Route::get('/{schedule}', [MaintenanceController::class, 'scheduleShow'])->name('show');
+            Route::get('/{schedule}/edit', [MaintenanceController::class, 'scheduleEdit'])->name('edit');
+            Route::put('/{schedule}', [MaintenanceController::class, 'scheduleUpdate'])->name('update');
+            Route::delete('/{schedule}', [MaintenanceController::class, 'scheduleDestroy'])->name('destroy');
+            
+            // Schedule details endpoint for modal
+            Route::get('/{schedule}/details', [MaintenanceController::class, 'scheduleDetails'])->name('details');
+
+            // Schedule Actions
+            Route::post('/{schedule}/start', [MaintenanceController::class, 'scheduleStart'])->name('start');
+            Route::post('/{schedule}/complete', [MaintenanceController::class, 'scheduleComplete'])->name('complete');
+            Route::post('/{schedule}/cancel', [MaintenanceController::class, 'scheduleCancel'])->name('cancel');
+        });
+
         // Create Maintenance
         Route::get('/create', [MaintenanceController::class, 'create'])->name('create');
         Route::post('/', [MaintenanceController::class, 'store'])->name('store');
@@ -88,19 +112,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{maintenance}/schedule', [MaintenanceController::class, 'schedule'])->name('schedule');
         Route::post('/{maintenance}/assign', [MaintenanceController::class, 'assign'])->name('assign');
 
-        // Maintenance Schedule Management
-        Route::prefix('schedule')->name('schedule.')->group(function () {
-            Route::get('/', [MaintenanceController::class, 'scheduleIndex'])->name('index');
-            Route::get('/create', [MaintenanceController::class, 'scheduleCreate'])->name('create');
-            Route::post('/', [MaintenanceController::class, 'scheduleStore'])->name('store');
-            Route::get('/{schedule}', [MaintenanceController::class, 'scheduleShow'])->name('show');
-            Route::get('/{schedule}/edit', [MaintenanceController::class, 'scheduleEdit'])->name('edit');
-            Route::put('/{schedule}', [MaintenanceController::class, 'scheduleUpdate'])->name('update');
-            Route::delete('/{schedule}', [MaintenanceController::class, 'scheduleDestroy'])->name('destroy');
-        });
 
-        // Maintenance Calendar (Available to all auth users)
-        Route::get('/calendar', [MaintenanceController::class, 'calendar'])->name('calendar');
+
+
         Route::get('/calendar/events', [MaintenanceController::class, 'calendarEvents'])->name('calendar.events');
     });
 });

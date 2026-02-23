@@ -25,7 +25,6 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
             'status:id,name,color',
             'assignedTo:id,full_name,email,profile_image',
             'createdBy:id,full_name,email',
-            'tags:id,name,color',
             'activities' => function ($query) {
                 return $query->latest()->take(5);
             }
@@ -55,8 +54,8 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
 
             return $query->paginate($perPage, [
                 'id', 'uuid', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-                'company', 'lead_status', 'priority', 'source_id', 'assigned_to', 'budget',
-                'property_type', 'location', 'created_at', 'updated_at'
+                'company', 'lead_status', 'priority', 'source_id', 'assigned_to', 'budget_min', 'budget_max',
+                'preferred_property_types', 'location', 'created_at', 'updated_at'
             ]);
         }, ['leads'], 600);
     }
@@ -82,7 +81,9 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
                       ->orWhere('full_name', 'LIKE', "%{$query}%")
                       ->orWhere('email', 'LIKE', "%{$query}%")
                       ->orWhere('company', 'LIKE', "%{$query}%")
-                      ->orWhere('phone', 'LIKE', "%{$query}%");
+                      ->orWhere('phone', 'LIKE', "%{$query}%")
+                      ->orWhere('location', 'LIKE', "%{$query}%")
+                      ->orWhereJsonContains('preferred_property_types', $query);
                 });
             }
 
@@ -94,6 +95,7 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
                            ->get([
                                'id', 'uuid', 'first_name', 'last_name', 'full_name', 'email', 'phone',
                                'company', 'lead_status', 'priority', 'source_id', 'assigned_to',
+                               'budget_min', 'budget_max', 'preferred_property_types', 'location',
                                'created_at', 'updated_at'
                            ]);
         }, ['leads'], 300);
@@ -108,7 +110,7 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
             'source:id,name',
             'status:id,name',
             'assignedTo:id,full_name,email',
-            'tags:id,name,color'
+            'createdBy:id,full_name,email'
         ]);
 
         // Apply filters
@@ -138,7 +140,7 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
                 COUNT(CASE WHEN priority = "low" THEN 1 END) as low_priority_leads,
                 COUNT(CASE WHEN assigned_to IS NOT NULL THEN 1 END) as assigned_leads,
                 COUNT(CASE WHEN assigned_to IS NULL THEN 1 END) as unassigned_leads,
-                AVG(CASE WHEN budget > 0 THEN budget END) as average_budget,
+                AVG(CASE WHEN budget_min > 0 AND budget_max > 0 THEN (budget_min + budget_max) / 2 END) as average_budget,
                 COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as leads_this_week,
                 COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as leads_this_month,
                 COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY) THEN 1 END) as leads_this_quarter,
@@ -423,12 +425,17 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
 
         // Budget range filter
         if (!empty($filters['budget'])) {
-            $this->applyRangeFilter($query, $filters['budget'], 'budget');
+            if (isset($filters['budget']['min'])) {
+                $query->where('budget_min', '>=', $filters['budget']['min']);
+            }
+            if (isset($filters['budget']['max'])) {
+                $query->where('budget_max', '<=', $filters['budget']['max']);
+            }
         }
 
         // Property type filter
         if (!empty($filters['property_type'])) {
-            $query->where('property_type', $filters['property_type']);
+            $query->whereJsonContains('preferred_property_types', $filters['property_type']);
         }
 
         // Location filter
@@ -469,7 +476,7 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
 
         $allowedSorts = [
             'created_at', 'updated_at', 'first_name', 'last_name', 'full_name',
-            'email', 'lead_status', 'priority', 'budget', 'company'
+            'email', 'lead_status', 'priority', 'budget_min', 'budget_max', 'preferred_property_types', 'company'
         ];
 
         if (in_array($sortBy, $allowedSorts) && in_array(strtolower($sortDirection), ['asc', 'desc'])) {
@@ -628,8 +635,10 @@ class LeadRepository extends BaseRepository implements LeadRepositoryInterface
             ->map(function ($statusLeads) {
                 return [
                     'count' => $statusLeads->count(),
-                    'average_budget' => $statusLeads->avg('budget'),
-                    'conversion_rate' => $statusLeads->where('lead_status', 'converted')->count() / $statusLeads->count() * 100
+                    'average_budget' => $statusLeads->avg(function ($lead) {
+                        return ($lead->budget_min && $lead->budget_max) ? ($lead->budget_min + $lead->budget_max) / 2 : null;
+                    }),
+                    'conversion_rate' => $statusLeads->where('lead_status', 'converted')->count() / max($statusLeads->count(), 1) * 100
                 ];
             })
             ->toArray();

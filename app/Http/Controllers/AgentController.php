@@ -95,8 +95,14 @@ class AgentController extends Controller
     public function ranking(Request $request)
     {
         $period = $request->input('period', 'monthly');
-        $agentId = $request->input('agent', auth()->id() ?? 1);
+        $agentId = $request->input('agent');
 
+        if (!$agentId && auth()->check()) {
+            $userAgent = Agent::where('user_id', auth()->id())->first();
+            $agentId = $userAgent ? $userAgent->id : 1;
+        }
+
+        $agentId = $agentId ?? 1;
         $agent = Agent::findOrFail($agentId);
         $rankings = $this->agentService->getAgentRankings($period);
         $agentRanking = $this->agentService->getAgentRanking($agent);
@@ -111,7 +117,14 @@ class AgentController extends Controller
 
     public function goals(Request $request)
     {
-        $agentId = $request->input('agent', auth()->id());
+        $agentId = $request->input('agent');
+
+        if (!$agentId && auth()->check()) {
+            $userAgent = Agent::where('user_id', auth()->id())->first();
+            $agentId = $userAgent ? $userAgent->id : 1;
+        }
+
+        $agentId = $agentId ?? 1;
         $agent = Agent::findOrFail($agentId);
         $goals = $this->agentService->getAgentGoals($agent);
 

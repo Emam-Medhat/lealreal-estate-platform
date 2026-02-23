@@ -36,57 +36,149 @@ class CustomReportController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:2000',
-            'data_sources' => 'required|array|min:1',
-            'query_config' => 'required|array',
-            'visualization_config' => 'nullable|array',
-            'custom_fields' => 'nullable|array',
-            'is_public' => 'boolean',
-            'is_template' => 'boolean',
-            'category' => 'nullable|string|max:100',
-            'tags' => 'nullable|array',
-        ]);
+        try {
+            // Simple test to see what we're getting
+            \Log::info('=== CUSTOM REPORT STORE START ===');
+            \Log::info('Request Method: ' . $request->method(), []);
+            \Log::info('Request All Data: ', [$request->all()]);
+            \Log::info('Request has is_template: ', [$request->has('is_template')]);
+            \Log::info('Request is_template value: ', [$request->input('is_template')]);
+            \Log::info('Request is_template boolean: ', [$request->boolean('is_template')]);
 
-        $report = Report::create([
-            'title' => $validated['title'],
-            'type' => 'custom',
-            'description' => $validated['description'],
-            'parameters' => $validated['query_config'],
-            'filters' => $validated['data_sources'],
-            'status' => 'generating',
-            'format' => 'json',
-            'generated_by' => Auth::id(),
-        ]);
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string|max:2000',
+                'data_sources' => 'required|array|min:1',
+                'query_config' => 'required|array',
+                'visualization_config' => 'nullable|array',
+                'custom_fields' => 'nullable|array',
+                'is_public' => 'boolean',
+                'is_template' => 'boolean',
+                'category' => 'nullable|string|max:100',
+                'tags' => 'nullable|array',
+            ]);
 
-        $customReport = CustomReport::create([
-            'report_id' => $report->id,
-            'name' => $validated['title'],
-            'description' => $validated['description'],
-            'data_sources' => $validated['data_sources'],
-            'query_config' => $validated['query_config'],
-            'visualization_config' => $validated['visualization_config'] ?? [],
-            'custom_fields' => $validated['custom_fields'] ?? [],
-            'is_template' => $validated['is_template'] ?? false,
-            'created_by' => Auth::id(),
-        ]);
+            // Debug: Log the validated data
+            \Log::info('Custom Report Validated Data:', $validated);
 
-        dispatch(function () use ($report, $customReport) {
-            $this->generateCustomReport($report, $customReport);
-        });
+            // Create the main report record
+            $report = Report::create([
+                'title' => $validated['title'],
+                'type' => 'custom',
+                'description' => $validated['description'],
+                'parameters' => $validated['query_config'],
+                'filters' => $validated['data_sources'],
+                'status' => 'generating',
+                'format' => 'json',
+                'generated_by' => Auth::id(),
+            ]);
 
-        return redirect()->route('reports.custom.show', $report)
-            ->with('success', 'Custom report generation started.');
+            // Create the custom report record
+            $customReport = CustomReport::create([
+                'report_id' => $report->id,
+                'name' => $validated['title'],
+                'description' => $validated['description'],
+                'data_sources' => $validated['data_sources'],
+                'query_config' => $validated['query_config'],
+                'visualization_config' => $validated['visualization_config'] ?? [],
+                'custom_fields' => $validated['custom_fields'] ?? [],
+                'is_template' => $validated['is_template'] ?? false,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Generate the report data asynchronously
+            dispatch(function () use ($report, $customReport) {
+                $this->generateCustomReport($report, $customReport);
+            });
+
+            return redirect()->route('reports.custom.show', $report)
+                ->with('success', 'تم إنشاء التقرير المخصص بنجاح! جاري معالجة البيانات...');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Check if validation exception has any messages
+            $errorMessages = $e->errors();
+            
+            // Check if error messages object exists and is not empty
+            $hasErrors = $errorMessages && count($errorMessages) > 0;
+            
+            \Log::error('Custom Report Validation Error:', [
+                'message' => $e->getMessage(),
+                'errors' => $hasErrors ? $errorMessages : [],
+                'has_errors' => $hasErrors,
+                'error_count' => $hasErrors ? count($errorMessages) : 0,
+                'request_data' => $request->all(),
+            ]);
+            
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'حدث خطأ في التحقق من البيانات: ' . $e->getMessage());
+                
+        } catch (\Exception $e) {
+            \Log::error('Custom Report Creation Error: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'حدث خطأ أثناء إنشاء التقرير: ' . $e->getMessage());
+        }
     }
 
-    public function show(Report $report)
+    public function show($id)
     {
-        $customReport = $report->customReport;
+        // Try to find as Report first
+        $report = Report::find($id);
+        $customReport = null;
+
+        if ($report) {
+            // Found a Report, try to find associated CustomReport
+            if ($report->relationLoaded('customReport') || $report->customReport) {
+                $customReport = $report->customReport;
+            } else {
+                $customReport = CustomReport::where('report_id', $report->id)->first();
+            }
+        } else {
+            // Not a Report ID, try finding as CustomReport ID
+            $customReport = CustomReport::find($id);
+            if ($customReport) {
+                // Found CustomReport, now get the associated Report
+                $report = Report::find($customReport->report_id);
+            }
+        }
         
-        if (!$customReport) {
+        if ($report && !$customReport && $report->type === 'custom') {
+            // Self-healing: Create missing CustomReport from Report data
+            try {
+                $customReport = CustomReport::create([
+                    'report_id' => $report->id,
+                    'name' => $report->title,
+                    'description' => $report->description,
+                    'data_sources' => $report->filters ?? [], // Map filters to data_sources
+                    'query_config' => $report->parameters ?? [], // Map parameters to query_config
+                    'visualization_config' => [],
+                    'custom_fields' => [],
+                    'is_template' => false,
+                    'created_by' => $report->generated_by,
+                    'active' => true,
+                    'usage_count' => 0,
+                    'is_public' => false
+                ]);
+                
+                \Log::info("Self-healed missing CustomReport for Report ID: {$report->id}");
+            } catch (\Exception $e) {
+                \Log::error("Failed to self-heal CustomReport for Report ID: {$report->id}. Error: " . $e->getMessage());
+            }
+        }
+        
+        if (!$customReport || !$report) {
             abort(404, 'Custom report data not found');
         }
+
+        // Check authorization
+        $this->authorize('view', $customReport);
 
         $report->load(['visualizations', 'exports']);
 
@@ -221,7 +313,8 @@ class CustomReportController extends Controller
                 default => [],
             };
 
-            $results[$source] = $sourceData;
+            // Convert collection/array to array
+            $results[$source] = json_decode(json_encode($sourceData), true);
         }
 
         return $results;
@@ -244,18 +337,6 @@ class CustomReportController extends Controller
             $query->whereBetween('created_at', $config['filters']['date_range']);
         }
 
-        // Apply aggregations
-        if (isset($config['aggregations'])) {
-            foreach ($config['aggregations'] as $agg) {
-                match($agg) {
-                    'count' => $query->count(),
-                    'avg_price' => $query->avg('price'),
-                    'sum_price' => $query->sum('price'),
-                    default => $query,
-                };
-            }
-        }
-
         // Apply sorting
         if (isset($config['sort_by'])) {
             $query->orderBy($config['sort_by'], $config['sort_direction'] ?? 'asc');
@@ -263,7 +344,9 @@ class CustomReportController extends Controller
 
         // Apply limit
         if (isset($config['limit'])) {
-            $query->limit($config['limit']);
+            $query->limit((int)$config['limit']);
+        } else {
+            $query->limit(100); // Default limit
         }
 
         return $query->get()->toArray();
@@ -281,6 +364,12 @@ class CustomReportController extends Controller
             $query->whereBetween('created_at', $config['filters']['created_at']);
         }
 
+        if (isset($config['limit'])) {
+            $query->limit((int)$config['limit']);
+        } else {
+            $query->limit(100);
+        }
+
         return $query->get()->toArray();
     }
 
@@ -293,6 +382,12 @@ class CustomReportController extends Controller
             $query->where('agents.status', $config['filters']['status']);
         }
 
+        if (isset($config['limit'])) {
+            $query->limit((int)$config['limit']);
+        } else {
+            $query->limit(100);
+        }
+
         return $query->select('agents.*', 'users.name', 'users.email')->get()->toArray();
     }
 
@@ -303,6 +398,12 @@ class CustomReportController extends Controller
 
         if (isset($config['filters']['date_range'])) {
             $query->whereBetween('sold_at', $config['filters']['date_range']);
+        }
+
+        if (isset($config['limit'])) {
+            $query->limit((int)$config['limit']);
+        } else {
+            $query->limit(100);
         }
 
         return $query->get()->toArray();
@@ -318,6 +419,12 @@ class CustomReportController extends Controller
 
         if (isset($config['filters']['date_range'])) {
             $query->whereBetween('created_at', $config['filters']['date_range']);
+        }
+
+        if (isset($config['limit'])) {
+            $query->limit((int)$config['limit']);
+        } else {
+            $query->limit(100);
         }
 
         return $query->get()->toArray();

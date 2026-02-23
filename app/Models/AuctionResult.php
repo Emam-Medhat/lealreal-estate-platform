@@ -114,6 +114,6 @@ class AuctionResult extends Model
 
     public function scopeCompletedBetween($query, $startDate, $endDate)
     {
-        return $query->whereBetween('completed_at', [$startDate, $endDate]);
+        return $query->whereBetween('result_time', [$startDate, $endDate]);
     }
 }

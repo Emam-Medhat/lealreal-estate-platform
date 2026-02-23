@@ -13,6 +13,7 @@ class Message extends Model
 
     protected $fillable = [
         'conversation_id',
+        'chat_room_id',
         'sender_id',
         'receiver_id',
         'content',
@@ -62,6 +63,11 @@ class Message extends Model
         return $this->belongsTo(User::class, 'sender_id');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sender_id');
+    }
+
     public function receiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'receiver_id');
@@ -90,6 +96,11 @@ class Message extends Model
     public function forwardedMessages(): HasMany
     {
         return $this->hasMany(Message::class, 'forwarded_from_id');
+    }
+
+    public function chatRoom(): BelongsTo
+    {
+        return $this->belongsTo(ChatRoom::class, 'chat_room_id');
     }
 
     public function getTypeLabelAttribute(): string
@@ -355,16 +366,19 @@ class Message extends Model
 
         static::created(function ($message) {
             // Update conversation's last message info
-            $message->conversation->updateLastMessage($message);
+            if ($message->conversation) {
+                $message->conversation->updateLastMessage($message);
+            }
 
             // Create notification for receiver
-            if ($message->sender_id !== $message->receiver_id) {
+            if ($message->sender_id !== $message->receiver_id && $message->receiver_id) {
+                $senderName = $message->sender->full_name ?? $message->sender->name ?? 'User';
                 UserNotification::create([
                     'user_id' => $message->receiver_id,
                     'title' => 'New Message',
-                    'message' => "You have a new message from {$message->sender->full_name}",
+                    'message' => "You have a new message from " . $senderName,
                     'type' => 'message',
-                    'action_url' => route('messages.conversation', $message->conversation),
+                    'action_url' => $message->conversation_id ? route('messages.conversation', $message->conversation_id) : '#',
                     'action_text' => 'View Message',
                     'is_read' => false,
                 ]);
@@ -373,7 +387,7 @@ class Message extends Model
 
         static::updated(function ($message) {
             // Update conversation timestamp if message was edited
-            if ($message->isDirty('is_edited') && $message->is_edited) {
+            if ($message->isDirty('is_edited') && $message->is_edited && $message->conversation) {
                 $message->conversation->touch();
             }
         });

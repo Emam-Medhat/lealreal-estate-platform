@@ -8,11 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
+use App\Models\Property;
+
 class Nft extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'property_id',
         'token_id',
         'name',
         'description',
@@ -26,25 +29,21 @@ class Nft extends Model
         'image_url',
         'image_hash',
         'animation_url',
+        'external_url',
         'attributes',
-        'metadata',
-        'collection_name',
-        'collection_id',
-        'rarity',
+        'properties',
+        'category',
+        'token_standard',
+        'supply',
         'price',
         'currency',
-        'sale_type',
-        'sale_start_time',
-        'sale_end_time',
-        'highest_bid',
-        'highest_bidder',
-        'bid_end_time',
-        'transfer_count',
-        'last_transfer_timestamp',
         'status',
+        'royalty',
+        'metadata',
         'is_verified',
-        'verification_status',
-        'tags',
+        'verified_at',
+        'created_by',
+        'updated_by',
         'created_at',
         'updated_at'
     ];
@@ -64,6 +63,16 @@ class Nft extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(CryptoWallet::class, 'owner_address', 'address');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(CryptoWallet::class, 'creator_address', 'address');
+    }
 
     // Scopes
     public function scopeByContract($query, $address)
@@ -164,9 +173,9 @@ class Nft extends Model
     }
 
     // Relationships
-    public function owner(): BelongsTo
+    public function property(): BelongsTo
     {
-        return $this->belongsTo(CryptoWallet::class, 'owner_address', 'address');
+        return $this->belongsTo(Property::class);
     }
 
     public function smartContract(): BelongsTo

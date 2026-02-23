@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -14,43 +15,28 @@ use App\Http\Controllers\Analytics\AnalyticsController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\SystemErrorLogController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CartController;
 // use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Investor\InvestorController;
 use App\Http\Controllers\Reports\PerformanceReportController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Currency Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth'])->prefix('currency')->name('currency.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Currency\CurrencyController::class, 'index'])->name('index');
-    Route::get('/converter', [App\Http\Controllers\Currency\CurrencyController::class, 'converter'])->name('converter');
-    Route::get('/create', [App\Http\Controllers\Currency\CurrencyController::class, 'create'])->name('create');
-    Route::post('/', [App\Http\Controllers\Currency\CurrencyController::class, 'store'])->name('store');
-    Route::get('/{currency}', [App\Http\Controllers\Currency\CurrencyController::class, 'show'])->name('show');
-    Route::get('/{currency}/edit', [App\Http\Controllers\Currency\CurrencyController::class, 'edit'])->name('edit');
-    Route::put('/{currency}', [App\Http\Controllers\Currency\CurrencyController::class, 'update'])->name('update');
-    Route::delete('/{currency}', [App\Http\Controllers\Currency\CurrencyController::class, 'destroy'])->name('destroy');
-});
+// Currency and Language routes migrated to web_services.php
 
 /*
 |--------------------------------------------------------------------------
-| Language Routes
+| Cart Routes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->prefix('language')->name('language.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Language\LanguageController::class, 'index'])->name('index');
-    Route::get('/create', [App\Http\Controllers\Language\LanguageController::class, 'create'])->name('create');
-    Route::post('/', [App\Http\Controllers\Language\LanguageController::class, 'store'])->name('store');
-    Route::get('/{language}', [App\Http\Controllers\Language\LanguageController::class, 'show'])->name('show');
-    Route::get('/{language}/edit', [App\Http\Controllers\Language\LanguageController::class, 'edit'])->name('edit');
-    Route::put('/{language}', [App\Http\Controllers\Language\LanguageController::class, 'update'])->name('update');
-    Route::delete('/{language}', [App\Http\Controllers\Language\LanguageController::class, 'destroy'])->name('destroy');
+Route::middleware(['auth'])->prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add', [CartController::class, 'add'])->name('add');
+    Route::post('/remove/{id}', [CartController::class, 'remove'])->name('remove');
+    Route::post('/clear', [CartController::class, 'clear'])->name('clear');
+    Route::get('/count', [CartController::class, 'count'])->name('count');
 });
 
 /*
@@ -75,17 +61,25 @@ Route::middleware(['auth'])->prefix('gamification')->name('gamification.')->grou
 
 /*
 |--------------------------------------------------------------------------
+| IoT Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->prefix('iot')->name('iot.')->group(function () {
+    Route::get('/', [App\Http\Controllers\IotDeviceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/devices', [App\Http\Controllers\IotDeviceController::class, 'index'])->name('devices');
+    Route::get('/alerts', [App\Http\Controllers\IotAlertController::class, 'index'])->name('alerts');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Blockchain Routes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->prefix('blockchain')->name('blockchain.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Blockchain\BlockchainController::class, 'index'])->name('index');
-    Route::get('/transactions', [App\Http\Controllers\Blockchain\BlockchainController::class, 'transactions'])->name('transactions');
-    Route::get('/contracts', [App\Http\Controllers\Blockchain\BlockchainController::class, 'contracts'])->name('contracts');
-    Route::get('/nft', [App\Http\Controllers\Blockchain\BlockchainController::class, 'nft'])->name('nft');
-    Route::get('/wallet', [App\Http\Controllers\Blockchain\BlockchainController::class, 'wallet'])->name('wallet');
-});
+// Blockchain routes are loaded via routes/blockchain.php and bootstrap/app.php
+// Duplicates removed to prevent conflicts
+
 
 /*
 |--------------------------------------------------------------------------
@@ -97,8 +91,45 @@ Route::middleware(['auth'])->prefix('ai')->name('ai.')->group(function () {
     Route::get('/', [App\Http\Controllers\AI\AIController::class, 'dashboard'])->name('dashboard');
     Route::get('/descriptions', [App\Http\Controllers\AI\AIController::class, 'descriptions'])->name('descriptions');
     Route::get('/images', [App\Http\Controllers\AI\AIController::class, 'images'])->name('images');
+    Route::get('/smart-search', [App\Http\Controllers\AI\AIController::class, 'smartSearch'])->name('smart-search');
     Route::get('/chat', [App\Http\Controllers\AI\AIController::class, 'chat'])->name('chat');
     Route::get('/analytics', [App\Http\Controllers\AI\AIController::class, 'analytics'])->name('analytics');
+    
+    // JSON Endpoint for Dashboard
+    Route::get('/recommendations-json', [App\Http\Controllers\AI\RecommendationController::class, 'forUser'])->name('recommendations.json');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Enterprise Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'admin'])->prefix('enterprise')->name('enterprise.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'dashboard'])->name('index');
+    Route::get('/dashboard', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'dashboard'])->name('dashboard');
+    Route::get('/accounts', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'accounts'])->name('accounts');
+    Route::get('/tenants', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'accounts'])->name('tenants');
+    Route::get('/reports', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'reports'])->name('reports');
+    Route::get('/billing', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'billing'])->name('billing');
+
+    // Subscriptions
+    Route::get('/subscriptions', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'subscriptions'])->name('subscriptions');
+    Route::get('/subscriptions/create', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'createSubscription'])->name('subscriptions.create');
+    Route::post('/subscriptions', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'storeSubscription'])->name('subscriptions.store');
+    Route::get('/subscriptions/{id}', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'viewSubscription'])->name('subscriptions.show');
+    Route::get('/subscriptions/{id}/view', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'viewSubscription'])->name('subscriptions.view');
+    Route::get('/subscriptions/{id}/edit', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'editSubscription'])->name('subscriptions.edit');
+    Route::put('/subscriptions/{id}', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'updateSubscription'])->name('subscriptions.update');
+    Route::post('/subscriptions/{id}/toggle-status', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'toggleSubscriptionStatus'])->name('subscriptions.toggle-status');
+
+    // Accounts Actions
+    Route::get('/accounts/create', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'createAccount'])->name('accounts.create');
+    Route::post('/accounts', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'storeAccount'])->name('accounts.store');
+    Route::get('/accounts/{id}', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'viewAccount'])->name('accounts.show');
+    Route::get('/accounts/{id}/view', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'viewAccount'])->name('accounts.view');
+    Route::get('/accounts/{id}/edit', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'editAccount'])->name('accounts.edit');
+    Route::put('/accounts/{id}', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'updateAccount'])->name('accounts.update');
+    Route::post('/accounts/{id}/toggle-status', [\App\Http\Controllers\Enterprise\EnterpriseController::class, 'toggleAccountStatus'])->name('accounts.toggle-status');
 });
 
 /*
@@ -122,31 +153,6 @@ Route::middleware(['auth'])->prefix('iot')->name('iot.')->group(function () {
     Route::get('/energy/trends', [App\Http\Controllers\EnergyMonitoringController::class, 'viewTrends'])->name('energy.trends');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Enterprise Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth'])->prefix('enterprise')->name('enterprise.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'dashboard'])->name('dashboard');
-    Route::get('/accounts', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'accounts'])->name('accounts');
-    Route::get('/accounts/create', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'createAccount'])->name('accounts.create');
-    Route::post('/accounts', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'storeAccount'])->name('accounts.store');
-    Route::get('/accounts/{id}/view', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'viewAccount'])->name('accounts.view');
-    Route::get('/accounts/{id}/edit', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'editAccount'])->name('accounts.edit');
-    Route::put('/accounts/{id}', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'updateAccount'])->name('accounts.update');
-    Route::post('/accounts/{id}/toggle-status', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'toggleAccountStatus'])->name('accounts.toggle-status');
-    Route::get('/subscriptions', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'subscriptions'])->name('subscriptions');
-    Route::get('/subscriptions/create', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'createSubscription'])->name('subscriptions.create');
-    Route::post('/subscriptions', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'storeSubscription'])->name('subscriptions.store');
-    Route::get('/subscriptions/{id}/edit', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'editSubscription'])->name('subscriptions.edit');
-    Route::put('/subscriptions/{id}', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'updateSubscription'])->name('subscriptions.update');
-    Route::get('/subscriptions/{id}/view', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'viewSubscription'])->name('subscriptions.view');
-    Route::post('/subscriptions/{id}/toggle-status', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'toggleSubscriptionStatus'])->name('subscriptions.toggle-status');
-    Route::get('/billing', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'billing'])->name('billing');
-    Route::get('/reports', [App\Http\Controllers\Enterprise\EnterpriseController::class, 'reports'])->name('reports');
-});
 
 // Performance Report Route - Fix the original route
 Route::get('/reports/performance', [PerformanceReportController::class, 'index'])->name('reports.performance.index');
@@ -172,9 +178,8 @@ Route::middleware(['auth'])->prefix('developer')->name('developer.')->group(func
     Route::post('/bim-models/upload', [App\Http\Controllers\Developer\DeveloperController::class, 'uploadBimModel'])->name('bim.models.upload');
     Route::get('/bim-models/export', [App\Http\Controllers\Developer\DeveloperController::class, 'exportBimModels'])->name('bim.models.export');
     Route::get('/construction', [App\Http\Controllers\Developer\DeveloperController::class, 'construction'])->name('construction');
-    Route::get('/permits', [App\Http\Controllers\Developer\DeveloperController::class, 'permits'])->name('permits');
-    // Simple route for permits to match sidebar
-    Route::get('/permits', [App\Http\Controllers\Developer\DeveloperController::class, 'permits'])->name('permits');
+    // Add route for permits that points to the proper controller
+    Route::get('/permits', [App\Http\Controllers\Developer\DeveloperPermitController::class, 'index'])->name('permits');
 });
 
 // ===================================================================
@@ -191,44 +196,72 @@ Route::middleware(['auth'])->prefix('developer')->name('developer.')->group(func
 // - insurance.php, documents.php, inspections.php
 // - appraisals.php, warranties.php
 
-// Test SEO route (requires auth)
+Route::prefix('auctions')->name('auctions.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AuctionController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\AuctionController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\AuctionController::class, 'store'])->name('store');
+    Route::get('/my-auctions', [\App\Http\Controllers\AuctionController::class, 'myAuctions'])->name('my');
+
+    // Results routes
+    Route::get('/results', [\App\Http\Controllers\AuctionResultController::class, 'index'])->name('results');
+    Route::get('/my-results', [\App\Http\Controllers\AuctionResultController::class, 'myResults'])->name('my-results');
+    Route::get('/results/{id}', [\App\Http\Controllers\AuctionResultController::class, 'show'])->name('results.show');
+    Route::post('/{auctionId}/results', [\App\Http\Controllers\AuctionResultController::class, 'create'])->name('results.create');
+    Route::post('/results/{id}/confirm', [\App\Http\Controllers\AuctionResultController::class, 'confirmWinner'])->name('results.confirm');
+    Route::post('/results/{id}/reject', [\App\Http\Controllers\AuctionResultController::class, 'rejectWinner'])->name('results.reject');
+    Route::get('/results/{id}/download', [\App\Http\Controllers\AuctionResultController::class, 'downloadReport'])->name('results.download');
+
+    // Single auction routes
+    Route::get('/{id}', [\App\Http\Controllers\AuctionController::class, 'show'])->name('show');
+    Route::get('/{id}/edit', [\App\Http\Controllers\AuctionController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [\App\Http\Controllers\AuctionController::class, 'update'])->name('update');
+
+    // Actions
+    Route::post('/{id}/start', [\App\Http\Controllers\AuctionController::class, 'start'])->name('start');
+    Route::post('/{id}/end', [\App\Http\Controllers\AuctionController::class, 'end'])->name('end');
+    Route::post('/{id}/cancel', [\App\Http\Controllers\AuctionController::class, 'cancel'])->name('cancel');
+});
 Route::get('/test-seo', function () {
     return 'SEO route test works!';
 })->middleware(['auth', 'admin']);
 
+// Test agents goals route directly in web.php (without middleware for testing)
+Route::get('/agents/goals', [App\Http\Controllers\AgentController::class, 'goals'])->name('agents.goals.web');
+
+// Temporary fix for messages/auctions/results route
+Route::get('/messages/auctions/results', [App\Http\Controllers\AuctionResultController::class, 'index'])->name('messages.auctions.results');
+
 // Direct SEO test route (requires auth)
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/seo-test', function () {
         return 'Direct SEO route works!';
     })->name('seo.test');
-    
-    // SEO Management Routes (moved from content.php)
-    Route::prefix('seo')->name('seo.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\SeoController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\SeoController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\SeoController::class, 'store'])->name('store');
-        Route::get('/{seoMeta}', [\App\Http\Controllers\SeoController::class, 'show'])->name('show');
-        Route::get('/{seoMeta}/edit', [\App\Http\Controllers\SeoController::class, 'edit'])->name('edit');
-        Route::put('/{seoMeta}', [\App\Http\Controllers\SeoController::class, 'update'])->name('update');
-        Route::delete('/{seoMeta}', [\App\Http\Controllers\SeoController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-update', [\App\Http\Controllers\SeoController::class, 'bulkUpdate'])->name('bulk-update');
-        Route::post('/generate-sitemap', [\App\Http\Controllers\SeoController::class, 'generateSitemap'])->name('generate-sitemap');
-        Route::get('/analyze', [\App\Http\Controllers\SeoController::class, 'analyzeSeo'])->name('analyze');
-    });
 });
 
 // Include content routes
 require __DIR__ . '/content.php';
 
+// Include documents routes
+require __DIR__ . '/documents.php';
+
 // Include API routes
-require __DIR__.'/api_notifications.php';
+require __DIR__ . '/api_notifications.php';
+
+// Include blockchain routes
+require __DIR__ . '/blockchain.php';
+
+// Chat JSON Routes for SPA
+Route::middleware(['auth'])->group(function () {
+    Route::get('/messages/chat/json/room/{id}', [ChatController::class, 'getRoom'])->name('messages.chat.json.room');
+    Route::get('/messages/chat/json/conversation/{id}', [ChatController::class, 'getConversation'])->name('messages.chat.json.conversation');
+});
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     // Login Routes
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.post');
-    
+
     // Admin Login Route
     Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->name('admin.login');
     Route::post('/admin/login', [LoginController::class, 'adminLogin'])->name('admin.login.post');
@@ -282,6 +315,9 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
     Route::get('/social-accounts', [SocialAuthController::class, 'index'])->name('social.accounts');
     Route::post('/social-accounts/{provider}/unlink', [SocialAuthController::class, 'unlink'])->name('social.unlink');
 
+    // Include AI routes
+    require __DIR__ . '/ai.php';
+
     // Dashboard Routes
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/profile', [DashboardController::class, 'profile'])->name('dashboard.profile');
@@ -294,17 +330,17 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
     Route::get('/analytics/overview', [AnalyticsController::class, 'overview'])->name('analytics.overview');
     Route::get('/analytics/real-time', [AnalyticsController::class, 'realTime'])->name('analytics.real-time');
     Route::get('/analytics/reports', [AnalyticsController::class, 'reports'])->name('analytics.reports');
-    
+
     // Extended Analytics Routes
     Route::prefix('analytics')->name('analytics.')->group(function () {
         // Market Trends
         Route::get('/market/trends', [App\Http\Controllers\MarketAnalyticsController::class, 'marketTrends'])->name('market.trends');
-        
+
         // User Behavior Analytics
         Route::prefix('behavior')->name('behavior.')->group(function () {
             Route::get('/', [App\Http\Controllers\UserBehaviorController::class, 'index'])->name('index');
         });
-        
+
         // Heatmap Analytics
         Route::prefix('heatmap')->name('heatmap.')->group(function () {
             Route::get('/', [App\Http\Controllers\HeatmapController::class, 'index'])->name('index');
@@ -312,7 +348,7 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
     });
 
     // Test route for debugging
-    Route::get('/debug-favorites', function() {
+    Route::get('/debug-favorites', function () {
         return 'Debug: Favorites system is working!';
     });
 
@@ -330,10 +366,10 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
         Route::get('/{document}/edit', [App\Http\Controllers\DocumentController::class, 'edit'])->name('edit');
         Route::put('/{document}', [App\Http\Controllers\DocumentController::class, 'update'])->name('update');
         Route::delete('/{document}', [App\Http\Controllers\DocumentController::class, 'destroy'])->name('destroy');
-        
+
         // Document upload route
         Route::post('/upload', [App\Http\Controllers\DocumentController::class, 'upload'])->name('upload');
-        
+
         // Document categories
         Route::get('/categories', [App\Http\Controllers\DocumentCategoryController::class, 'index'])->name('categories.index');
         Route::post('/categories', [App\Http\Controllers\DocumentCategoryController::class, 'store'])->name('categories.store');
@@ -366,18 +402,11 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
 // Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])->name('wallet.withdraw');
 
     // Developers Management
-    Route::prefix('developer')->name('developer.')->group(function () {
+    Route::middleware(['auth'])->prefix('developer')->name('developer.')->group(function () {
         // Developer Management
         Route::get('/', [App\Http\Controllers\Developer\DeveloperController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\Developer\DeveloperController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\Developer\DeveloperController::class, 'store'])->name('store');
-        Route::get('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'show'])->name('show');
-        Route::get('/{developer}/edit', [App\Http\Controllers\Developer\DeveloperController::class, 'edit'])->name('edit');
-        Route::put('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'update'])->name('update');
-        Route::delete('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'destroy'])->name('destroy');
-        Route::post('/{developer}/toggle-status', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleStatus'])->name('toggleStatus');
-        Route::post('/{developer}/toggle-verification', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleVerification'])->name('toggleVerification');
-        Route::post('/{developer}/toggle-featured', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleFeatured'])->name('toggleFeatured');
         Route::get('/stats', [App\Http\Controllers\Developer\DeveloperController::class, 'getStats'])->name('stats');
         Route::get('/export', [App\Http\Controllers\Developer\DeveloperController::class, 'export'])->name('export');
 
@@ -598,6 +627,15 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
             Route::get('/stats', [App\Http\Controllers\Developer\DeveloperMetaverseController::class, 'getMetaverseStats'])->name('stats');
             Route::get('/export', [App\Http\Controllers\Developer\DeveloperMetaverseController::class, 'exportMetaverses'])->name('export');
         });
+
+        // Developer wildcard routes (must be last)
+        Route::get('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'show'])->name('show');
+        Route::get('/{developer}/edit', [App\Http\Controllers\Developer\DeveloperController::class, 'edit'])->name('edit');
+        Route::put('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'update'])->name('update');
+        Route::delete('/{developer}', [App\Http\Controllers\Developer\DeveloperController::class, 'destroy'])->name('destroy');
+        Route::post('/{developer}/toggle-status', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleStatus'])->name('toggleStatus');
+        Route::post('/{developer}/toggle-verification', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleVerification'])->name('toggleVerification');
+        Route::post('/{developer}/toggle-featured', [App\Http\Controllers\Developer\DeveloperController::class, 'toggleFeatured'])->name('toggleFeatured');
     });
 
     // Reports System Routes - Moved to routes/reports.php
@@ -615,7 +653,7 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
             Route::get('/download/{filename}', [\App\Http\Controllers\System\SystemController::class, 'downloadBackup'])->name('download');
             Route::delete('/{filename}', [\App\Http\Controllers\System\SystemController::class, 'deleteBackup'])->name('delete');
         });
-        
+
         // Performance Routes
         Route::prefix('performance')->name('performance.')->group(function () {
             Route::get('/', [\App\Http\Controllers\System\SystemController::class, 'performance'])->name('index');
@@ -640,7 +678,7 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
             Route::get('/{bannerAd}/impressions', [App\Http\Controllers\BannerAdController::class, 'impressionAnalytics'])->name('impressions');
         });
         // Admin Dashboard
-        Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('admin.dashboard');
 
         // User Management
         Route::get('/users', [App\Http\Controllers\Admin\AdminController::class, 'users'])->name('users');
@@ -751,189 +789,189 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/settings', [App\Http\Controllers\Admin\AdminSettingsController::class, 'index'])->name('settings');
         Route::put('/settings', [App\Http\Controllers\Admin\AdminSettingsController::class, 'update'])->name('settings.update');
-        
+
         Route::get('/maintenance', [App\Http\Controllers\Admin\AdminMaintenanceController::class, 'index'])->name('maintenance');
         Route::post('/maintenance/run', [App\Http\Controllers\Admin\AdminMaintenanceController::class, 'runMaintenance'])->name('maintenance.run');
-        
+
         Route::get('/backups', [App\Http\Controllers\Admin\AdminBackupController::class, 'index'])->name('backups');
         Route::post('/backups/create', [App\Http\Controllers\Admin\AdminBackupController::class, 'create'])->name('backups.create');
         Route::get('/backups/{backup}/download', [App\Http\Controllers\Admin\AdminBackupController::class, 'download'])->name('backups.download');
     });
 
-// Investors Management Routes
-Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(function () {
+    // Investors Management Routes
+    Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(function () {
 
-    // Crowdfunding (must come before parameterized routes)
-    Route::prefix('crowdfunding')->name('crowdfunding.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'index'])->name('index');
-        Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getMyCrowdfundingInvestments'])->name('my.investments');
-        Route::get('/stats', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignStats'])->name('stats');
-        Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getRecommendedCampaigns'])->name('recommended');
-        Route::post('/calculate-return', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'calculateInvestmentReturn'])->name('calculate.return');
-        Route::post('/compare', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'compareCampaigns'])->name('compare');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'exportCampaigns'])->name('export');
-        Route::get('/{campaign}', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'show'])->name('show');
-        Route::post('/{campaign}/invest', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'invest'])->name('invest');
-        Route::post('/{campaign}/watch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'watchCampaign'])->name('watch');
-        Route::delete('/{campaign}/unwatch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'unwatchCampaign'])->name('unwatch');
-        Route::get('/{campaign}/updates', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignUpdates'])->name('updates');
-        Route::get('/{campaign}/progress', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignProgress'])->name('progress');
+        // Crowdfunding (must come before parameterized routes)
+        Route::prefix('crowdfunding')->name('crowdfunding.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'index'])->name('index');
+            Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getMyCrowdfundingInvestments'])->name('my.investments');
+            Route::get('/stats', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignStats'])->name('stats');
+            Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getRecommendedCampaigns'])->name('recommended');
+            Route::post('/calculate-return', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'calculateInvestmentReturn'])->name('calculate.return');
+            Route::post('/compare', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'compareCampaigns'])->name('compare');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'exportCampaigns'])->name('export');
+            Route::get('/{campaign}', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'show'])->name('show');
+            Route::post('/{campaign}/invest', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'invest'])->name('invest');
+            Route::post('/{campaign}/watch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'watchCampaign'])->name('watch');
+            Route::delete('/{campaign}/unwatch', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'unwatchCampaign'])->name('unwatch');
+            Route::get('/{campaign}/updates', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignUpdates'])->name('updates');
+            Route::get('/{campaign}/progress', [App\Http\Controllers\Investor\InvestmentCrowdfundingController::class, 'getCampaignProgress'])->name('progress');
+        });
+
+        // Investor Management
+        Route::get('/', [App\Http\Controllers\Investor\InvestorController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Investor\InvestorController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Investor\InvestorController::class, 'store'])->name('store');
+        Route::get('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'show'])->name('show');
+        Route::get('/{investor}/edit', [App\Http\Controllers\Investor\InvestorController::class, 'edit'])->name('edit');
+        Route::put('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'update'])->name('update');
+        Route::delete('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'destroy'])->name('destroy');
+        Route::put('/{investor}/status', [App\Http\Controllers\Investor\InvestorController::class, 'updateStatus'])->name('update.status');
+        Route::put('/{investor}/verification', [App\Http\Controllers\Investor\InvestorController::class, 'updateVerification'])->name('update.verification');
+        Route::get('/export', [App\Http\Controllers\Investor\InvestorController::class, 'exportInvestors'])->name('export');
+
+        // Investor Profile Management
+        Route::prefix('profile')->name('profile.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestorProfileController::class, 'show'])->name('show');
+            Route::get('/edit', [App\Http\Controllers\Investor\InvestorProfileController::class, 'edit'])->name('edit');
+            Route::put('/', [App\Http\Controllers\Investor\InvestorProfileController::class, 'update'])->name('update');
+            Route::post('/picture', [App\Http\Controllers\Investor\InvestorProfileController::class, 'updateProfilePicture'])->name('update.picture');
+            Route::delete('/picture', [App\Http\Controllers\Investor\InvestorProfileController::class, 'deleteProfilePicture'])->name('delete.picture');
+            Route::get('/completion', [App\Http\Controllers\Investor\InvestorProfileController::class, 'getProfileCompletion'])->name('completion');
+            Route::get('/public/{investor}', [App\Http\Controllers\Investor\InvestorProfileController::class, 'getPublicProfile'])->name('public');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestorProfileController::class, 'exportProfile'])->name('export');
+        });
+
+        // Investor Dashboard
+        Route::prefix('dashboard')->name('dashboard.')->group(function () {
+            Route::get('/quick-stats', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getQuickStats'])->name('quick.stats');
+            Route::get('/activities', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getRecentActivities'])->name('activities');
+            Route::get('/portfolio-performance', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getPortfolioPerformance'])->name('portfolio.performance');
+            Route::get('/investment-distribution', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getInvestmentDistribution'])->name('investment.distribution');
+            Route::get('/monthly-returns', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getMonthlyReturns'])->name('monthly.returns');
+            Route::get('/top-investments', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getTopPerformingInvestments'])->name('top.investments');
+            Route::get('/upcoming-milestones', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getUpcomingMilestones'])->name('upcoming.milestones');
+            Route::get('/risk-analysis', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getRiskAnalysis'])->name('risk.analysis');
+            Route::get('/market-trends', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getMarketTrends'])->name('market.trends');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'exportDashboardData'])->name('export');
+        });
+
+        // Portfolio Management
+        Route::prefix('portfolio')->name('portfolio.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'store'])->name('store');
+            Route::get('/{portfolio}', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'show'])->name('show');
+            Route::get('/{portfolio}/edit', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'edit'])->name('edit');
+            Route::put('/{portfolio}', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'update'])->name('update');
+            Route::delete('/{portfolio}', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'destroy'])->name('destroy');
+            Route::put('/{portfolio}/value', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'updateValue'])->name('update.value');
+            Route::get('/stats', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'getPortfolioStats'])->name('stats');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'exportPortfolios'])->name('export');
+        });
+
+        // Transactions Management
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'store'])->name('store');
+            Route::get('/{transaction}', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'show'])->name('show');
+            Route::get('/{transaction}/edit', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'edit'])->name('edit');
+            Route::put('/{transaction}', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'update'])->name('update');
+            Route::delete('/{transaction}', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'destroy'])->name('destroy');
+            Route::put('/{transaction}/status', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'updateStatus'])->name('update.status');
+            Route::get('/stats', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'getTransactionStats'])->name('stats');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'exportTransactions'])->name('export');
+            Route::get('/{transaction}/download-receipt', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'downloadReceipt'])->name('download.receipt');
+        });
+
+        // ROI Calculations
+        Route::prefix('roi')->name('roi.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestorRoiController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Investor\InvestorRoiController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Investor\InvestorRoiController::class, 'store'])->name('store');
+            Route::get('/{roi}', [App\Http\Controllers\Investor\InvestorRoiController::class, 'show'])->name('show');
+            Route::get('/calculate', [App\Http\Controllers\Investor\InvestorRoiController::class, 'calculate'])->name('calculate');
+            Route::get('/portfolio/{portfolio}/history', [App\Http\Controllers\Investor\InvestorRoiController::class, 'getPortfolioRoiHistory'])->name('portfolio.history');
+            Route::get('/projections', [App\Http\Controllers\Investor\InvestorRoiController::class, 'getRoiProjections'])->name('projections');
+            Route::get('/comparison', [App\Http\Controllers\Investor\InvestorRoiController::class, 'getRoiComparison'])->name('comparison');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestorRoiController::class, 'exportRoiCalculations'])->name('export');
+        });
+
+        // Risk Assessment
+        Route::prefix('risk')->name('risk.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestorRiskController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Investor\InvestorRiskController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Investor\InvestorRiskController::class, 'store'])->name('store');
+            Route::get('/{risk}', [App\Http\Controllers\Investor\InvestorRiskController::class, 'show'])->name('show');
+            Route::get('/{risk}/edit', [App\Http\Controllers\Investor\InvestorRiskController::class, 'edit'])->name('edit');
+            Route::put('/{risk}', [App\Http\Controllers\Investor\InvestorRiskController::class, 'update'])->name('update');
+            Route::delete('/{risk}', [App\Http\Controllers\Investor\InvestorRiskController::class, 'destroy'])->name('destroy');
+            Route::post('/calculate', [App\Http\Controllers\Investor\InvestorRiskController::class, 'calculatePortfolioRisk'])->name('calculate');
+            Route::get('/dashboard', [App\Http\Controllers\Investor\InvestorRiskController::class, 'getRiskDashboard'])->name('dashboard');
+            Route::get('/portfolio/{portfolio}/performance', [App\Http\Controllers\Investor\InvestorRiskController::class, 'getPortfolioPerformance'])->name('portfolio.performance');
+            Route::post('/stress-test', [App\Http\Controllers\Investor\InvestorRiskController::class, 'runStressTest'])->name('stress.test');
+            Route::get('/alerts', [App\Http\Controllers\Investor\InvestorRiskController::class, 'getRiskAlerts'])->name('alerts');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestorRiskController::class, 'exportRiskAssessments'])->name('export');
+        });
+
+        // Investment Opportunities
+        Route::prefix('opportunities')->name('opportunities.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'index'])->name('index');
+            Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getMyInvestments'])->name('my.investments');
+            Route::get('/stats', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getOpportunityStats'])->name('stats');
+            Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getRecommendedOpportunities'])->name('recommended');
+            Route::get('/watchlist', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getWatchlist'])->name('watchlist');
+            Route::post('/calculate-return', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'calculateInvestmentReturn'])->name('calculate.return');
+            Route::post('/compare', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'compareOpportunities'])->name('compare');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'exportOpportunities'])->name('export');
+            Route::get('/{opportunity}', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'show'])->name('show');
+            Route::post('/{opportunity}/invest', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'invest'])->name('invest');
+            Route::post('/{opportunity}/watch', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'watchOpportunity'])->name('watch');
+            Route::delete('/{opportunity}/unwatch', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'unwatchOpportunity'])->name('unwatch');
+        });
+
+        // Investment Funds
+        Route::prefix('funds')->name('funds.')->group(function () {
+            Route::get('/dashboard', [App\Http\Controllers\Investor\InvestmentFundController::class, 'index'])->name('index');
+            Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getMyFundInvestments'])->name('my.investments');
+            Route::get('/stats', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getFundStats'])->name('stats');
+            Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getRecommendedFunds'])->name('recommended');
+            Route::post('/compare', [App\Http\Controllers\Investor\InvestmentFundController::class, 'compareFunds'])->name('compare');
+            Route::post('/calculate-value', [App\Http\Controllers\Investor\InvestmentFundController::class, 'calculateInvestmentValue'])->name('calculate.value');
+            Route::get('/export', [App\Http\Controllers\Investor\InvestmentFundController::class, 'exportFunds'])->name('export');
+            Route::get('/{fund}', [App\Http\Controllers\Investor\InvestmentFundController::class, 'show'])->name('show');
+            Route::post('/{fund}/invest', [App\Http\Controllers\Investor\InvestmentFundController::class, 'invest'])->name('invest');
+            Route::get('/{fund}/performance', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getFundPerformance'])->name('performance');
+        });
+
+        // DeFi Loans
+        Route::prefix('defi/loans')->name('defi.loans.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\DefiLoanController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Investor\DefiLoanController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Investor\DefiLoanController::class, 'store'])->name('store');
+            Route::get('/stats', [App\Http\Controllers\Investor\DefiLoanController::class, 'getLoanStats'])->name('stats');
+            Route::get('/export', [App\Http\Controllers\Investor\DefiLoanController::class, 'exportLoans'])->name('export');
+            Route::get('/{loan}', [App\Http\Controllers\Investor\DefiLoanController::class, 'show'])->name('show');
+            Route::put('/{loan}/status', [App\Http\Controllers\Investor\DefiLoanController::class, 'updateStatus'])->name('update.status');
+            Route::post('/{loan}/repayment', [App\Http\Controllers\Investor\DefiLoanController::class, 'recordRepayment'])->name('record.repayment');
+            Route::get('/{loan}/performance', [App\Http\Controllers\Investor\DefiLoanController::class, 'getLoanPerformance'])->name('performance');
+        });
+
+        // DeFi Staking
+        Route::prefix('defi/staking')->name('defi.staking.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Investor\DefiStakingController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Investor\DefiStakingController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Investor\DefiStakingController::class, 'store'])->name('store');
+            Route::get('/stats', [App\Http\Controllers\Investor\DefiStakingController::class, 'getStakingStats'])->name('stats');
+            Route::get('/export', [App\Http\Controllers\Investor\DefiStakingController::class, 'exportStaking'])->name('export');
+            Route::get('/{staking}', [App\Http\Controllers\Investor\DefiStakingController::class, 'show'])->name('show');
+            Route::post('/{staking}/unstake', [App\Http\Controllers\Investor\DefiStakingController::class, 'unstake'])->name('unstake');
+            Route::post('/{staking}/claim-rewards', [App\Http\Controllers\Investor\DefiStakingController::class, 'claimRewards'])->name('claim.rewards');
+            Route::put('/{staking}/rewards', [App\Http\Controllers\Investor\DefiStakingController::class, 'updateRewards'])->name('update.rewards');
+            Route::get('/{staking}/performance', [App\Http\Controllers\Investor\DefiStakingController::class, 'getStakingPerformance'])->name('performance');
+        });
     });
-
-    // Investor Management
-    Route::get('/', [App\Http\Controllers\Investor\InvestorController::class, 'index'])->name('index');
-    Route::get('/create', [App\Http\Controllers\Investor\InvestorController::class, 'create'])->name('create');
-    Route::post('/', [App\Http\Controllers\Investor\InvestorController::class, 'store'])->name('store');
-    Route::get('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'show'])->name('show');
-    Route::get('/{investor}/edit', [App\Http\Controllers\Investor\InvestorController::class, 'edit'])->name('edit');
-    Route::put('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'update'])->name('update');
-    Route::delete('/{investor}', [App\Http\Controllers\Investor\InvestorController::class, 'destroy'])->name('destroy');
-    Route::put('/{investor}/status', [App\Http\Controllers\Investor\InvestorController::class, 'updateStatus'])->name('update.status');
-    Route::put('/{investor}/verification', [App\Http\Controllers\Investor\InvestorController::class, 'updateVerification'])->name('update.verification');
-    Route::get('/export', [App\Http\Controllers\Investor\InvestorController::class, 'exportInvestors'])->name('export');
-
-    // Investor Profile Management
-    Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestorProfileController::class, 'show'])->name('show');
-        Route::get('/edit', [App\Http\Controllers\Investor\InvestorProfileController::class, 'edit'])->name('edit');
-        Route::put('/', [App\Http\Controllers\Investor\InvestorProfileController::class, 'update'])->name('update');
-        Route::post('/picture', [App\Http\Controllers\Investor\InvestorProfileController::class, 'updateProfilePicture'])->name('update.picture');
-        Route::delete('/picture', [App\Http\Controllers\Investor\InvestorProfileController::class, 'deleteProfilePicture'])->name('delete.picture');
-        Route::get('/completion', [App\Http\Controllers\Investor\InvestorProfileController::class, 'getProfileCompletion'])->name('completion');
-        Route::get('/public/{investor}', [App\Http\Controllers\Investor\InvestorProfileController::class, 'getPublicProfile'])->name('public');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestorProfileController::class, 'exportProfile'])->name('export');
-    });
-
-    // Investor Dashboard
-    Route::prefix('dashboard')->name('dashboard.')->group(function () {
-        Route::get('/quick-stats', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getQuickStats'])->name('quick.stats');
-        Route::get('/activities', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getRecentActivities'])->name('activities');
-        Route::get('/portfolio-performance', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getPortfolioPerformance'])->name('portfolio.performance');
-        Route::get('/investment-distribution', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getInvestmentDistribution'])->name('investment.distribution');
-        Route::get('/monthly-returns', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getMonthlyReturns'])->name('monthly.returns');
-        Route::get('/top-investments', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getTopPerformingInvestments'])->name('top.investments');
-        Route::get('/upcoming-milestones', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getUpcomingMilestones'])->name('upcoming.milestones');
-        Route::get('/risk-analysis', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getRiskAnalysis'])->name('risk.analysis');
-        Route::get('/market-trends', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'getMarketTrends'])->name('market.trends');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestorDashboardController::class, 'exportDashboardData'])->name('export');
-    });
-
-    // Portfolio Management
-    Route::prefix('portfolio')->name('portfolio.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'store'])->name('store');
-        Route::get('/{portfolio}', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'show'])->name('show');
-        Route::get('/{portfolio}/edit', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'edit'])->name('edit');
-        Route::put('/{portfolio}', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'update'])->name('update');
-        Route::delete('/{portfolio}', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'destroy'])->name('destroy');
-        Route::put('/{portfolio}/value', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'updateValue'])->name('update.value');
-        Route::get('/stats', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'getPortfolioStats'])->name('stats');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestorPortfolioController::class, 'exportPortfolios'])->name('export');
-    });
-
-    // Transactions Management
-    Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'store'])->name('store');
-        Route::get('/{transaction}', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'show'])->name('show');
-        Route::get('/{transaction}/edit', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'edit'])->name('edit');
-        Route::put('/{transaction}', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'update'])->name('update');
-        Route::delete('/{transaction}', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'destroy'])->name('destroy');
-        Route::put('/{transaction}/status', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'updateStatus'])->name('update.status');
-        Route::get('/stats', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'getTransactionStats'])->name('stats');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'exportTransactions'])->name('export');
-        Route::get('/{transaction}/download-receipt', [App\Http\Controllers\Investor\InvestorTransactionController::class, 'downloadReceipt'])->name('download.receipt');
-    });
-
-    // ROI Calculations
-    Route::prefix('roi')->name('roi.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestorRoiController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Investor\InvestorRoiController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Investor\InvestorRoiController::class, 'store'])->name('store');
-        Route::get('/{roi}', [App\Http\Controllers\Investor\InvestorRoiController::class, 'show'])->name('show');
-        Route::get('/calculate', [App\Http\Controllers\Investor\InvestorRoiController::class, 'calculate'])->name('calculate');
-        Route::get('/portfolio/{portfolio}/history', [App\Http\Controllers\Investor\InvestorRoiController::class, 'getPortfolioRoiHistory'])->name('portfolio.history');
-        Route::get('/projections', [App\Http\Controllers\Investor\InvestorRoiController::class, 'getRoiProjections'])->name('projections');
-        Route::get('/comparison', [App\Http\Controllers\Investor\InvestorRoiController::class, 'getRoiComparison'])->name('comparison');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestorRoiController::class, 'exportRoiCalculations'])->name('export');
-    });
-
-    // Risk Assessment
-    Route::prefix('risk')->name('risk.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestorRiskController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Investor\InvestorRiskController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Investor\InvestorRiskController::class, 'store'])->name('store');
-        Route::get('/{risk}', [App\Http\Controllers\Investor\InvestorRiskController::class, 'show'])->name('show');
-        Route::get('/{risk}/edit', [App\Http\Controllers\Investor\InvestorRiskController::class, 'edit'])->name('edit');
-        Route::put('/{risk}', [App\Http\Controllers\Investor\InvestorRiskController::class, 'update'])->name('update');
-        Route::delete('/{risk}', [App\Http\Controllers\Investor\InvestorRiskController::class, 'destroy'])->name('destroy');
-        Route::post('/calculate', [App\Http\Controllers\Investor\InvestorRiskController::class, 'calculatePortfolioRisk'])->name('calculate');
-        Route::get('/dashboard', [App\Http\Controllers\Investor\InvestorRiskController::class, 'getRiskDashboard'])->name('dashboard');
-        Route::get('/portfolio/{portfolio}/performance', [App\Http\Controllers\Investor\InvestorRiskController::class, 'getPortfolioPerformance'])->name('portfolio.performance');
-        Route::post('/stress-test', [App\Http\Controllers\Investor\InvestorRiskController::class, 'runStressTest'])->name('stress.test');
-        Route::get('/alerts', [App\Http\Controllers\Investor\InvestorRiskController::class, 'getRiskAlerts'])->name('alerts');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestorRiskController::class, 'exportRiskAssessments'])->name('export');
-    });
-
-    // Investment Opportunities
-    Route::prefix('opportunities')->name('opportunities.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'index'])->name('index');
-        Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getMyInvestments'])->name('my.investments');
-        Route::get('/stats', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getOpportunityStats'])->name('stats');
-        Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getRecommendedOpportunities'])->name('recommended');
-        Route::get('/watchlist', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'getWatchlist'])->name('watchlist');
-        Route::post('/calculate-return', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'calculateInvestmentReturn'])->name('calculate.return');
-        Route::post('/compare', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'compareOpportunities'])->name('compare');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'exportOpportunities'])->name('export');
-        Route::get('/{opportunity}', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'show'])->name('show');
-        Route::post('/{opportunity}/invest', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'invest'])->name('invest');
-        Route::post('/{opportunity}/watch', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'watchOpportunity'])->name('watch');
-        Route::delete('/{opportunity}/unwatch', [App\Http\Controllers\Investor\InvestmentOpportunityController::class, 'unwatchOpportunity'])->name('unwatch');
-    });
-
-    // Investment Funds
-    Route::prefix('funds')->name('funds.')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Investor\InvestmentFundController::class, 'index'])->name('index');
-        Route::get('/my-investments', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getMyFundInvestments'])->name('my.investments');
-        Route::get('/stats', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getFundStats'])->name('stats');
-        Route::get('/recommended', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getRecommendedFunds'])->name('recommended');
-        Route::post('/compare', [App\Http\Controllers\Investor\InvestmentFundController::class, 'compareFunds'])->name('compare');
-        Route::post('/calculate-value', [App\Http\Controllers\Investor\InvestmentFundController::class, 'calculateInvestmentValue'])->name('calculate.value');
-        Route::get('/export', [App\Http\Controllers\Investor\InvestmentFundController::class, 'exportFunds'])->name('export');
-        Route::get('/{fund}', [App\Http\Controllers\Investor\InvestmentFundController::class, 'show'])->name('show');
-        Route::post('/{fund}/invest', [App\Http\Controllers\Investor\InvestmentFundController::class, 'invest'])->name('invest');
-        Route::get('/{fund}/performance', [App\Http\Controllers\Investor\InvestmentFundController::class, 'getFundPerformance'])->name('performance');
-    });
-
-    // DeFi Loans
-    Route::prefix('defi/loans')->name('defi.loans.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\DefiLoanController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Investor\DefiLoanController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Investor\DefiLoanController::class, 'store'])->name('store');
-        Route::get('/stats', [App\Http\Controllers\Investor\DefiLoanController::class, 'getLoanStats'])->name('stats');
-        Route::get('/export', [App\Http\Controllers\Investor\DefiLoanController::class, 'exportLoans'])->name('export');
-        Route::get('/{loan}', [App\Http\Controllers\Investor\DefiLoanController::class, 'show'])->name('show');
-        Route::put('/{loan}/status', [App\Http\Controllers\Investor\DefiLoanController::class, 'updateStatus'])->name('update.status');
-        Route::post('/{loan}/repayment', [App\Http\Controllers\Investor\DefiLoanController::class, 'recordRepayment'])->name('record.repayment');
-        Route::get('/{loan}/performance', [App\Http\Controllers\Investor\DefiLoanController::class, 'getLoanPerformance'])->name('performance');
-    });
-
-    // DeFi Staking
-    Route::prefix('defi/staking')->name('defi.staking.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Investor\DefiStakingController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Investor\DefiStakingController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Investor\DefiStakingController::class, 'store'])->name('store');
-        Route::get('/stats', [App\Http\Controllers\Investor\DefiStakingController::class, 'getStakingStats'])->name('stats');
-        Route::get('/export', [App\Http\Controllers\Investor\DefiStakingController::class, 'exportStaking'])->name('export');
-        Route::get('/{staking}', [App\Http\Controllers\Investor\DefiStakingController::class, 'show'])->name('show');
-        Route::post('/{staking}/unstake', [App\Http\Controllers\Investor\DefiStakingController::class, 'unstake'])->name('unstake');
-        Route::post('/{staking}/claim-rewards', [App\Http\Controllers\Investor\DefiStakingController::class, 'claimRewards'])->name('claim.rewards');
-        Route::put('/{staking}/rewards', [App\Http\Controllers\Investor\DefiStakingController::class, 'updateRewards'])->name('update.rewards');
-        Route::get('/{staking}/performance', [App\Http\Controllers\Investor\DefiStakingController::class, 'getStakingPerformance'])->name('performance');
-    });
-});
 
 });
 
@@ -941,6 +979,22 @@ Route::prefix('investor')->name('investor.')->middleware(['auth'])->group(functi
 Route::prefix('payments')->name('payments.')->middleware(['auth'])->group(function () {
 
     // Payment Routes - Moved to bottom to avoid conflicts
+
+    // Wallet Routes
+    Route::prefix('wallets')->name('wallets.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Payment\WalletController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Payment\WalletController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Payment\WalletController::class, 'store'])->name('store');
+        Route::get('/stats', [App\Http\Controllers\Payment\WalletController::class, 'getWalletStats'])->name('stats');
+        Route::get('/{wallet}', [App\Http\Controllers\Payment\WalletController::class, 'show'])->name('show');
+        Route::get('/{wallet}/edit', [App\Http\Controllers\Payment\WalletController::class, 'edit'])->name('edit');
+        Route::put('/{wallet}', [App\Http\Controllers\Payment\WalletController::class, 'update'])->name('update');
+        Route::delete('/{wallet}', [App\Http\Controllers\Payment\WalletController::class, 'destroy'])->name('destroy');
+        Route::get('/{wallet}/balance', [App\Http\Controllers\Payment\WalletController::class, 'getBalance'])->name('balance');
+        Route::get('/{wallet}/transactions', [App\Http\Controllers\Payment\WalletController::class, 'getTransactionHistory'])->name('transactions');
+        Route::post('/{wallet}/send', [App\Http\Controllers\Payment\WalletController::class, 'sendTransaction'])->name('send');
+        Route::put('/{wallet}/default', [App\Http\Controllers\Payment\WalletController::class, 'setDefault'])->name('set.default');
+    });
 
     // Payment Methods Routes
     Route::prefix('methods')->name('methods.')->group(function () {
@@ -1119,7 +1173,7 @@ Route::prefix('payments')->name('payments.')->middleware(['auth'])->group(functi
     Route::get('/stats', [App\Http\Controllers\Payment\PaymentController::class, 'getPaymentStats'])->name('stats');
     Route::get('/export', [App\Http\Controllers\Payment\PaymentController::class, 'exportPayments'])->name('export');
     Route::post('/', [App\Http\Controllers\Payment\PaymentController::class, 'process'])->name('process');
-    
+
     // Wildcard routes must be last
     Route::get('/{payment}', [App\Http\Controllers\Payment\PaymentController::class, 'show'])->name('show');
     Route::put('/{payment}/status', [App\Http\Controllers\Payment\PaymentController::class, 'updateStatus'])->name('update.status');
@@ -1277,15 +1331,7 @@ Route::prefix('subscriptions')->name('subscriptions.')->middleware(['auth'])->gr
     Route::get('/', [App\Http\Controllers\Subscription\SubscriptionController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\Subscription\SubscriptionController::class, 'create'])->name('create');
     Route::post('/', [App\Http\Controllers\Subscription\SubscriptionController::class, 'store'])->name('store');
-    Route::get('/{subscription}', [App\Http\Controllers\Subscription\SubscriptionController::class, 'show'])->name('show');
-    Route::get('/{subscription}/edit', [App\Http\Controllers\Subscription\SubscriptionController::class, 'edit'])->name('edit');
-    Route::put('/{subscription}', [App\Http\Controllers\Subscription\SubscriptionController::class, 'update'])->name('update');
-    Route::delete('/{subscription}', [App\Http\Controllers\Subscription\SubscriptionController::class, 'destroy'])->name('destroy');
-    Route::get('/{subscription}/payment', [App\Http\Controllers\Subscription\SubscriptionController::class, 'payment'])->name('payment');
-    Route::post('/{subscription}/process-payment', [App\Http\Controllers\Subscription\SubscriptionController::class, 'processPayment'])->name('process-payment');
-    Route::post('/{subscription}/renew', [App\Http\Controllers\Subscription\SubscriptionController::class, 'renew'])->name('renew');
-    Route::get('/{subscription}/usage', [App\Http\Controllers\Subscription\SubscriptionController::class, 'usage'])->name('usage');
-    Route::get('/{subscription}/invoices', [App\Http\Controllers\Subscription\SubscriptionController::class, 'invoices'])->name('invoices');
+
     Route::get('/stats', [App\Http\Controllers\Subscription\SubscriptionController::class, 'getSubscriptionStats'])->name('stats');
 
     // Subscription Plans (Admin)
@@ -1402,6 +1448,17 @@ Route::prefix('subscriptions')->name('subscriptions.')->middleware(['auth'])->gr
         Route::put('/tax', [App\Http\Controllers\Subscription\BillingController::class, 'updateTaxInfo'])->name('update-tax');
         Route::get('/export', [App\Http\Controllers\Subscription\BillingController::class, 'exportBillingData'])->name('export');
     });
+    // Generic Subscription Routes (must be last)
+    Route::get('/{subscription}', [App\Http\Controllers\Subscription\SubscriptionController::class, 'show'])->name('show');
+    Route::get('/{subscription}/edit', [App\Http\Controllers\Subscription\SubscriptionController::class, 'edit'])->name('edit');
+    Route::put('/{subscription}', [App\Http\Controllers\Subscription\SubscriptionController::class, 'update'])->name('update');
+    Route::delete('/{subscription}', [App\Http\Controllers\Subscription\SubscriptionController::class, 'destroy'])->name('destroy');
+    Route::get('/{subscription}/payment', [App\Http\Controllers\Subscription\SubscriptionController::class, 'payment'])->name('payment');
+    Route::post('/{subscription}/process-payment', [App\Http\Controllers\Subscription\SubscriptionController::class, 'processPayment'])->name('process-payment');
+    Route::post('/{subscription}/renew', [App\Http\Controllers\Subscription\SubscriptionController::class, 'renew'])->name('renew');
+    Route::get('/{subscription}/usage', [App\Http\Controllers\Subscription\SubscriptionController::class, 'usage'])->name('usage');
+    Route::get('/{subscription}/invoices', [App\Http\Controllers\Subscription\SubscriptionController::class, 'invoices'])->name('invoices');
+
 });
 
 // Messaging System Routes
@@ -1418,9 +1475,12 @@ Route::middleware(['auth'])->prefix('messages')->name('messages.')->group(functi
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat');
     Route::get('/chat/room/{id}', [App\Http\Controllers\ChatController::class, 'showRoom'])->name('chat.room');
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
-    Route::post('/chat/rooms', [App\Http\Controllers\ChatRoomController::class, 'create'])->name('chat.create-room');
+    Route::post('/chat/rooms', [App\Http\Controllers\ChatController::class, 'createRoom'])->name('chat.create-room');
     Route::post('/chat/room/{id}/join', [App\Http\Controllers\ChatController::class, 'joinRoom'])->name('chat.join-room');
     Route::post('/chat/room/{id}/leave', [App\Http\Controllers\ChatController::class, 'leaveRoom'])->name('chat.leave-room');
+    Route::get('/chat/room/{id}/participants', [App\Http\Controllers\ChatController::class, 'getRoomParticipants'])->name('chat.participants');
+    Route::get('/chat/room/{id}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/chat/room/{id}/update', [App\Http\Controllers\ChatController::class, 'updateRoom'])->name('chat.update-room');
 
     // Appointments
     Route::get('/appointments', [App\Http\Controllers\AppointmentController::class, 'index'])->name('appointments');
@@ -1466,7 +1526,7 @@ Route::middleware(['auth'])->prefix('messages')->name('messages.')->group(functi
     Route::post('/telegram/webhook', [App\Http\Controllers\TelegramBotController::class, 'webhook'])->name('telegram.webhook');
 
     // Auctions System Routes
-    Route::prefix('auctions')->group(function () {
+    Route::middleware(['auth'])->prefix('auctions')->group(function () {
         // Auction Management
         Route::get('/', [App\Http\Controllers\AuctionController::class, 'index'])->name('auctions.index');
         Route::get('/create', [App\Http\Controllers\AuctionController::class, 'create'])->name('auctions.create');
@@ -1647,18 +1707,7 @@ Route::prefix('ads')->name('ads.')->middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\AdvertisementController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\AdvertisementController::class, 'create'])->name('create');
     Route::post('/', [App\Http\Controllers\AdvertisementController::class, 'store'])->name('store');
-    Route::get('/{advertisement}', [App\Http\Controllers\AdvertisementController::class, 'show'])->name('show');
-    Route::get('/{advertisement}/edit', [App\Http\Controllers\AdvertisementController::class, 'edit'])->name('edit');
-    Route::put('/{advertisement}', [App\Http\Controllers\AdvertisementController::class, 'update'])->name('update');
-    Route::delete('/{advertisement}', [App\Http\Controllers\AdvertisementController::class, 'destroy'])->name('destroy');
-    Route::post('/{advertisement}/pause', [App\Http\Controllers\AdvertisementController::class, 'pause'])->name('pause');
-    Route::post('/{advertisement}/resume', [App\Http\Controllers\AdvertisementController::class, 'resume'])->name('resume');
-    Route::post('/{advertisement}/duplicate', [App\Http\Controllers\AdvertisementController::class, 'duplicate'])->name('duplicate');
-    Route::post('/{advertisement}/approve', [App\Http\Controllers\AdvertisementController::class, 'approve'])->name('approve');
-    Route::post('/{advertisement}/reject', [App\Http\Controllers\AdvertisementController::class, 'reject'])->name('reject');
-    Route::get('/{advertisement}/preview', [App\Http\Controllers\AdvertisementController::class, 'preview'])->name('preview');
-    Route::post('/{advertisement}/track-click', [App\Http\Controllers\AdvertisementController::class, 'trackClick'])->name('track-click');
-    Route::post('/{advertisement}/track-impression', [App\Http\Controllers\AdvertisementController::class, 'trackImpression'])->name('track-impression');
+
 
     // Campaign Routes
     Route::prefix('campaigns')->name('campaigns.')->group(function () {
@@ -1780,6 +1829,20 @@ Route::prefix('ads')->name('ads.')->middleware(['auth'])->group(function () {
     // Public Routes (no auth required for tracking)
     Route::get('/featured-listings', [App\Http\Controllers\PromotedListingController::class, 'featuredListings'])->name('featured-listings');
     Route::get('/spotlight-listings', [App\Http\Controllers\PromotedListingController::class, 'spotlightListings'])->name('spotlight-listings');
+
+    // Advertisement Wildcard Routes (must be last to avoid shadowing)
+    Route::get('/{advertisement}', [App\Http\Controllers\AdvertisementController::class, 'show'])->name('show');
+    Route::get('/{advertisement}/edit', [App\Http\Controllers\AdvertisementController::class, 'edit'])->name('edit');
+    Route::put('/{advertisement}', [App\Http\Controllers\AdvertisementController::class, 'update'])->name('update');
+    Route::delete('/{advertisement}', [App\Http\Controllers\AdvertisementController::class, 'destroy'])->name('destroy');
+    Route::post('/{advertisement}/pause', [App\Http\Controllers\AdvertisementController::class, 'pause'])->name('pause');
+    Route::post('/{advertisement}/resume', [App\Http\Controllers\AdvertisementController::class, 'resume'])->name('resume');
+    Route::post('/{advertisement}/duplicate', [App\Http\Controllers\AdvertisementController::class, 'duplicate'])->name('duplicate');
+    Route::post('/{advertisement}/approve', [App\Http\Controllers\AdvertisementController::class, 'approve'])->name('approve');
+    Route::post('/{advertisement}/reject', [App\Http\Controllers\AdvertisementController::class, 'reject'])->name('reject');
+    Route::get('/{advertisement}/preview', [App\Http\Controllers\AdvertisementController::class, 'preview'])->name('preview');
+    Route::post('/{advertisement}/track-click', [App\Http\Controllers\AdvertisementController::class, 'trackClick'])->name('track-click');
+    Route::post('/{advertisement}/track-impression', [App\Http\Controllers\AdvertisementController::class, 'trackImpression'])->name('track-impression');
 });
 
 
@@ -1971,7 +2034,7 @@ Route::prefix('analytics-alt')->name('analytics-alt.')->middleware(['auth'])->gr
         Route::post('/appointments/{appointment}/confirm', [App\Http\Controllers\AppointmentController::class, 'confirm'])->name('appointments.confirm');
         Route::post('/appointments/{appointment}/cancel', [App\Http\Controllers\AppointmentController::class, 'cancel'])->name('appointments.cancel');
         Route::post('/appointments/{appointment}/reschedule', [App\Http\Controllers\AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
-        
+
         // Auctions Routes
         Route::prefix('auctions')->name('auctions.')->group(function () {
             Route::get('/', [App\Http\Controllers\AuctionController::class, 'index'])->name('index');
@@ -1979,7 +2042,7 @@ Route::prefix('analytics-alt')->name('analytics-alt.')->middleware(['auth'])->gr
             Route::post('/', [App\Http\Controllers\AuctionController::class, 'store'])->name('store');
             Route::get('/my-auctions', [App\Http\Controllers\AuctionController::class, 'myAuctions'])->name('my-auctions');
             Route::get('/my-bids', [App\Http\Controllers\AuctionController::class, 'myBids'])->name('my-bids');
-            
+
             // Auction Results Routes (must come before /{id} to avoid conflicts)
             Route::get('/results', [App\Http\Controllers\AuctionResultController::class, 'index'])->name('results');
             Route::get('/results/stats', [App\Http\Controllers\AuctionResultController::class, 'getStats'])->name('results.stats');
@@ -1987,7 +2050,7 @@ Route::prefix('analytics-alt')->name('analytics-alt.')->middleware(['auth'])->gr
             Route::post('/results/{id}/confirm-winner', [App\Http\Controllers\AuctionResultController::class, 'confirmWinner'])->name('results.confirm-winner');
             Route::post('/results/{id}/reject-winner', [App\Http\Controllers\AuctionResultController::class, 'rejectWinner'])->name('results.reject-winner');
             Route::get('/results/{id}/download', [App\Http\Controllers\AuctionResultController::class, 'downloadReport'])->name('results.download');
-            
+
             // Individual auction routes (must come after specific routes)
             Route::get('/{id}', [App\Http\Controllers\AuctionController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [App\Http\Controllers\AuctionController::class, 'edit'])->name('edit');
@@ -2075,7 +2138,7 @@ Route::middleware(['auth', 'admin'])->prefix('financial')->name('financial.')->g
 });
 
 // Test route for invoices
-Route::get('/test-invoices', function() {
+Route::get('/test-invoices', function () {
     try {
         $invoices = \App\Models\Invoice::paginate(20);
         return view('payments.invoices.index', compact('invoices'));
@@ -2083,3 +2146,22 @@ Route::get('/test-invoices', function() {
         return 'Error: ' . $e->getMessage();
     }
 });
+
+// Modern Dashboard Demo
+Route::get('/modern-dashboard', function () {
+    return view('modern-home');
+})->name('modern.dashboard');
+
+// Modern Landing Page Demo
+Route::get('/modern-landing', function () {
+    return view('modern-landing');
+})->name('modern.landing');
+
+// Temporary redirect for old NFT buy/sell URLs
+Route::post('/nfts/{nft}/buy', function (Request $request, $nft) {
+    return app(\App\Http\Controllers\MetaverseController::class)->buyNft($request, $nft);
+})->middleware('auth');
+
+Route::post('/nfts/{nft}/sell', function (Request $request, $nft) {
+    return app(\App\Http\Controllers\MetaverseController::class)->sellNft($request, $nft);
+})->middleware('auth');

@@ -2,24 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CryptoWallet;
-use App\Models\CryptoTransaction;
+use App\Repositories\Contracts\CryptoWalletRepositoryInterface;
+use App\Repositories\Contracts\CryptoTransactionRepositoryInterface;
+use App\Services\BlockchainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Carbon\Carbon;
 
 class CryptoWalletController extends Controller
 {
-    public function __construct()
-    {
+    protected $cryptoWalletRepository;
+    protected $cryptoTransactionRepository;
+    protected $blockchainService;
+
+    public function __construct(
+        CryptoWalletRepositoryInterface $cryptoWalletRepository,
+        CryptoTransactionRepositoryInterface $cryptoTransactionRepository,
+        BlockchainService $blockchainService
+    ) {
         $this->middleware('auth');
+        $this->cryptoWalletRepository = $cryptoWalletRepository;
+        $this->cryptoTransactionRepository = $cryptoTransactionRepository;
+        $this->blockchainService = $blockchainService;
     }
 
     public function index()
     {
-        $wallets = CryptoWallet::with(['user', 'transactions'])->latest()->paginate(20);
+        $wallets = $this->cryptoWalletRepository->getWallets([], 20);
         
         return view('blockchain.wallets.index', compact('wallets'));
+    }
+
+    public function create()
+    {
+        return view('blockchain.wallets.create');
     }
 
     public function createWallet(Request $request)
@@ -43,7 +59,7 @@ class CryptoWalletController extends Controller
         // Encrypt private key
         $encryptedPrivateKey = Crypt::encrypt($request->private_key);
 
-        $wallet = CryptoWallet::create([
+        $wallet = $this->cryptoWalletRepository->create([
             'user_id' => auth()->id(),
             'name' => $request->name,
             'address' => $request->address,
@@ -68,35 +84,20 @@ class CryptoWalletController extends Controller
 
     public function getWallets(Request $request)
     {
-        $query = CryptoWallet::with(['user', 'transactions']);
-        
-        if ($request->user_id) {
-            $query->where('user_id', $request->user_id);
-        }
-        
-        if ($request->wallet_type) {
-            $query->where('wallet_type', $request->wallet_type);
-        }
-        
-        if ($request->network) {
-            $query->where('network', $request->network);
-        }
-        
-        if ($request->is_active !== null) {
-            $query->where('is_active', $request->is_active);
-        }
+        $filters = array_filter($request->only([
+            'user_id', 'wallet_type', 'network', 'is_active'
+        ]), function($value) {
+            return $value !== null;
+        });
 
-        $wallets = $query->latest()->paginate(20);
+        $wallets = $this->cryptoWalletRepository->getWallets($filters, 20);
         
         return response()->json($wallets);
     }
 
     public function getWallet(Request $request)
     {
-        $wallet = CryptoWallet::with(['user', 'transactions'])
-            ->where('id', $request->id)
-            ->orWhere('address', $request->address)
-            ->first();
+        $wallet = $this->cryptoWalletRepository->getWallet($request->id, $request->address);
         
         if (!$wallet) {
             return response()->json(['error' => 'Wallet not found'], 404);
@@ -115,14 +116,14 @@ class CryptoWalletController extends Controller
             'metadata' => 'nullable|array'
         ]);
 
-        $wallet = CryptoWallet::findOrFail($request->id);
+        $wallet = $this->cryptoWalletRepository->findById($request->id);
         
         // Check if user owns this wallet
         if ($wallet->user_id !== auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $wallet->update([
+        $this->cryptoWalletRepository->update($wallet->id, [
             'name' => $request->name ?? $wallet->name,
             'is_active' => $request->is_active ?? $wallet->is_active,
             'is_default' => $request->is_default ?? $wallet->is_default,
@@ -132,7 +133,7 @@ class CryptoWalletController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'wallet' => $wallet
+            'wallet' => $this->cryptoWalletRepository->findById($wallet->id)
         ]);
     }
 
@@ -142,14 +143,14 @@ class CryptoWalletController extends Controller
             'id' => 'required|integer|exists:crypto_wallets,id'
         ]);
 
-        $wallet = CryptoWallet::findOrFail($request->id);
+        $wallet = $this->cryptoWalletRepository->findById($request->id);
         
         // Check if user owns this wallet
         if ($wallet->user_id !== auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $wallet->delete();
+        $this->cryptoWalletRepository->deleteById($wallet->id);
 
         return response()->json([
             'status' => 'success',
@@ -161,7 +162,7 @@ class CryptoWalletController extends Controller
     {
         $address = $request->address;
         
-        $wallet = CryptoWallet::where('address', $address)->first();
+        $wallet = $this->cryptoWalletRepository->getByAddress($address);
         
         if (!$wallet) {
             return response()->json(['error' => 'Wallet not found'], 404);
@@ -186,13 +187,13 @@ class CryptoWalletController extends Controller
             'currency' => 'required|string|in:ETH,BTC,USDC,USDT'
         ]);
 
-        $wallet = CryptoWallet::where('address', $request->address)->first();
+        $wallet = $this->cryptoWalletRepository->getByAddress($request->address);
         
         if (!$wallet) {
             return response()->json(['error' => 'Wallet not found'], 404);
         }
 
-        $wallet->update([
+        $this->cryptoWalletRepository->update($wallet->id, [
             'balance' => $request->balance,
             'currency' => $request->currency,
             'updated_at' => now()
@@ -200,7 +201,7 @@ class CryptoWalletController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'wallet' => $wallet
+            'wallet' => $this->cryptoWalletRepository->findById($wallet->id)
         ]);
     }
 
@@ -217,7 +218,7 @@ class CryptoWalletController extends Controller
             'memo' => 'nullable|string|max:255'
         ]);
 
-        $wallet = CryptoWallet::where('address', $request->from_address)->first();
+        $wallet = $this->cryptoWalletRepository->getByAddress($request->from_address);
         
         if (!$wallet) {
             return response()->json(['error' => 'Source wallet not found'], 404);
@@ -229,7 +230,7 @@ class CryptoWalletController extends Controller
         }
 
         // Verify private key
-        if (!Crypt::decrypt($wallet->private_key) === $request->private_key) {
+        if (Crypt::decrypt($wallet->private_key) !== $request->private_key) {
             return response()->json(['error' => 'Invalid private key'], 401);
         }
 
@@ -238,13 +239,14 @@ class CryptoWalletController extends Controller
             return response()->json(['error' => 'Insufficient balance'], 400);
         }
 
-        $result = $this->performTransaction($wallet, $request->all());
+        $result = $this->blockchainService->performCryptoTransaction($wallet, $request->all());
 
         return response()->json([
             'status' => $result['status'],
-            'transaction_hash' => $result['transaction_hash'],
-            'gas_used' => $result['gas_used'],
-            'amount' => $result['amount']
+            'transaction_hash' => $result['transaction_hash'] ?? null,
+            'gas_used' => $result['gas_used'] ?? 0,
+            'amount' => $result['amount'] ?? 0,
+            'error' => $result['error'] ?? null
         ]);
     }
 
@@ -252,17 +254,15 @@ class CryptoWalletController extends Controller
     {
         $address = $request->address;
         
-        $wallet = CryptoWallet::where('address', $address)->first();
+        $wallet = $this->cryptoWalletRepository->getByAddress($address);
         
         if (!$wallet) {
             return response()->json(['error' => 'Wallet not found'], 404);
         }
 
-        $transactions = CryptoTransaction::where('from_address', $address)
-            ->orWhere('to_address', $address)
-            ->with(['user'])
-            ->latest()
-            ->paginate(50);
+        $transactions = $this->cryptoTransactionRepository->getFiltered([
+            'address' => $address
+        ], 50);
 
         return response()->json($transactions);
     }
@@ -273,17 +273,17 @@ class CryptoWalletController extends Controller
         $startDate = $this->getStartDate($period);
 
         $stats = [
-            'total_wallets' => CryptoWallet::count(),
-            'active_wallets' => CryptoWallet::where('is_active', true)->count(),
-            'total_balance' => CryptoWallet::sum('balance'),
-            'total_transactions' => CryptoTransaction::count(),
-            'total_volume' => CryptoTransaction::sum('amount'),
-            'wallet_types' => $this->getWalletTypes($startDate),
-            'networks' => $this->getNetworks($startDate),
-            'currencies' => $this->getCurrencies($startDate),
-            'new_wallets' => CryptoWallet::where('created_at', '>=', $startDate)->count(),
-            'average_balance' => CryptoWallet::avg('balance'),
-            'top_wallets' => $this->getTopWallets($startDate)
+            'total_wallets' => $this->cryptoWalletRepository->count(),
+            'active_wallets' => $this->cryptoWalletRepository->countActive(),
+            'total_balance' => $this->cryptoWalletRepository->sumBalance(),
+            'total_transactions' => $this->cryptoTransactionRepository->count(),
+            'total_volume' => $this->cryptoTransactionRepository->totalVolume(),
+            'wallet_types' => $this->cryptoWalletRepository->getWalletTypes($startDate),
+            'networks' => $this->cryptoWalletRepository->getNetworks($startDate),
+            'currencies' => $this->cryptoWalletRepository->getCurrencies($startDate),
+            'new_wallets' => $this->cryptoWalletRepository->countNewWallets($startDate),
+            'average_balance' => $this->cryptoWalletRepository->averageBalance(),
+            'top_wallets' => $this->cryptoWalletRepository->getTopWallets($startDate)
         ];
 
         return response()->json($stats);
@@ -302,12 +302,12 @@ class CryptoWalletController extends Controller
         $walletData = $this->deriveWalletFromPrivateKey($request->private_key);
 
         // Check if wallet already exists
-        $existingWallet = CryptoWallet::where('address', $walletData['address'])->first();
+        $existingWallet = $this->cryptoWalletRepository->getByAddress($walletData['address']);
         if ($existingWallet) {
             return response()->json(['error' => 'Wallet already exists'], 400);
         }
 
-        $wallet = CryptoWallet::create([
+        $wallet = $this->cryptoWalletRepository->create([
             'user_id' => auth()->id(),
             'name' => $request->name,
             'address' => $walletData['address'],
@@ -337,7 +337,7 @@ class CryptoWalletController extends Controller
             'format' => 'required|string|in:json,keystore'
         ]);
 
-        $wallet = CryptoWallet::findOrFail($request->id);
+        $wallet = $this->cryptoWalletRepository->findById($request->id);
         
         // Check if user owns this wallet
         if ($wallet->user_id !== auth()->id()) {
@@ -368,82 +368,6 @@ class CryptoWalletController extends Controller
             'usd_value' => $this->convertToUSD($wallet->balance, $wallet->currency),
             'last_updated' => $wallet->updated_at
         ];
-    }
-
-    private function performTransaction($wallet, $params)
-    {
-        try {
-            $gasUsed = $params['gas_limit'] ?? 21000;
-            $transactionHash = '0x' . bin2hex(random_bytes(32));
-            
-            // Update wallet balance
-            $newBalance = $wallet->balance - $params['amount'];
-            $wallet->update(['balance' => $newBalance]);
-
-            // Create transaction record
-            CryptoTransaction::create([
-                'from_address' => $params['from_address'],
-                'to_address' => $params['to_address'],
-                'amount' => $params['amount'],
-                'currency' => $params['currency'],
-                'gas_price' => $params['gas_price'] ?? 0,
-                'gas_used' => $gasUsed,
-                'hash' => $transactionHash,
-                'status' => 'confirmed',
-                'user_id' => $wallet->user_id,
-                'created_at' => now()
-            ]);
-
-            return [
-                'status' => 'success',
-                'transaction_hash' => $transactionHash,
-                'gas_used' => $gasUsed,
-                'amount' => $params['amount']
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'failed',
-                'error' => $e->getMessage(),
-                'gas_used' => 0,
-                'amount' => 0
-            ];
-        }
-    }
-
-    private function getWalletTypes($startDate)
-    {
-        return CryptoWallet::where('created_at', '>=', $startDate)
-            ->selectRaw('wallet_type, COUNT(*) as count')
-            ->groupBy('wallet_type')
-            ->orderByDesc('count')
-            ->get();
-    }
-
-    private function getNetworks($startDate)
-    {
-        return CryptoWallet::where('created_at', '>=', $startDate)
-            ->selectRaw('network, COUNT(*) as count')
-            ->groupBy('network')
-            ->orderByDesc('count')
-            ->get();
-    }
-
-    private function getCurrencies($startDate)
-    {
-        return CryptoWallet::where('created_at', '>=', $startDate)
-            ->selectRaw('currency, COUNT(*) as count, SUM(balance) as total_balance')
-            ->groupBy('currency')
-            ->orderByDesc('total_balance')
-            ->get();
-    }
-
-    private function getTopWallets($startDate)
-    {
-        return CryptoWallet::where('created_at', '>=', $startDate)
-            ->with('user')
-            ->orderByDesc('balance')
-            ->limit(10)
-            ->get();
     }
 
     private function deriveWalletFromPrivateKey($privateKey)

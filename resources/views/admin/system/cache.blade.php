@@ -76,7 +76,7 @@
                 </div>
             </div>
         </div>
-
+        
         <!-- Cache Status -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
             <h2 class="text-xl font-bold mb-6 flex items-center text-gray-800">

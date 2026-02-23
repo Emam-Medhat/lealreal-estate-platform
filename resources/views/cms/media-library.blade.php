@@ -1,90 +1,129 @@
 @extends('admin.layouts.admin')
 
 @section('title', 'المكتبة الوسائطية')
+@section('page-title', 'المكتبة الوسائطية')
 
 @section('content')
-<div class="container-fluid px-4 py-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">المكتبة الوسائطية</h1>
-            <p class="text-gray-600 mt-2">إدارة الصور والفيديوهات والملفات</p>
-        </div>
-        <div class="flex space-x-3 space-x-reverse">
-            <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors" onclick="document.getElementById('upload-modal').classList.remove('hidden')">
-                <i class="fas fa-upload ml-2"></i>
-                رفع ملفات
-            </button>
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-folder-plus ml-2"></i>
-                مجلد جديد
-            </button>
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 rounded-3xl shadow-2xl p-8 text-white relative overflow-hidden">
+            <!-- Animated Background Pattern -->
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -mr-48 -mt-48 animate-pulse"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full -ml-32 -mb-32 animate-pulse" style="animation-delay: 1s;"></div>
+                <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-yellow-300 rounded-full -ml-24 -mt-24 animate-pulse" style="animation-delay: 2s;"></div>
+            </div>
+            
+            <!-- Grid Pattern Overlay -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="h-full w-full" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 50px 50px;"></div>
+            </div>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <div class="bg-white bg-opacity-25 rounded-2xl p-4 ml-4 backdrop-blur-sm border border-white border-opacity-40 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                                <i class="fas fa-photo-video text-white text-3xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-5xl font-black text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-200">المكتبة الوسائطية</h1>
+                                <p class="text-white text-xl font-medium">إدارة الصور والفيديوهات والملفات بأسلوب احترافي</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-6 mt-6">
+                            <div class="bg-white bg-opacity-25 rounded-xl px-6 py-3 backdrop-blur-sm border border-white border-opacity-40 shadow-lg">
+                                <span class="text-sm text-white font-medium">إجمالي الملفات:</span>
+                                <span class="text-lg font-black text-white ml-2">1,847</span>
+                            </div>
+                            <div class="bg-white bg-opacity-25 rounded-xl px-6 py-3 backdrop-blur-sm border border-white border-opacity-40 shadow-lg">
+                                <span class="text-sm text-white font-medium">المساحة:</span>
+                                <span class="text-lg font-black text-white ml-2">8.7 GB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-reverse space-x-4">
+                        <button class="inline-flex items-center px-8 py-4 bg-white text-purple-600 rounded-2xl text-sm font-bold hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-yellow-300/50" onclick="document.getElementById('upload-modal').classList.remove('hidden')">
+                            <i class="fas fa-upload ml-2"></i>
+                            رفع ملفات
+                        </button>
+                        <button class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-400 to-indigo-500 text-white rounded-2xl text-sm font-bold hover:from-blue-500 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/50" onclick="document.getElementById('create-folder-modal').classList.remove('hidden')">
+                            <i class="fas fa-folder-plus ml-2"></i>
+                            مجلد جديد
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Stats Overview -->
+    <!-- Enhanced Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-gradient-to-br from-purple-50 to-pink-100 rounded-2xl shadow-lg border border-purple-200 p-6 transform hover:scale-105 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600">إجمالي الملفات</p>
-                    <p class="text-2xl font-bold text-gray-900">1,847</p>
+                    <p class="text-sm text-purple-600 font-medium mb-1">إجمالي الملفات</p>
+                    <p class="text-3xl font-black text-purple-900">1,847</p>
+                    <p class="text-xs text-purple-600 mt-2">جميع الملفات المسجلة</p>
                 </div>
-                <div class="bg-purple-100 p-3 rounded-lg">
-                    <i class="fas fa-photo-video text-purple-600"></i>
+                <div class="bg-gradient-to-br from-purple-400 to-pink-600 p-4 rounded-2xl shadow-lg">
+                    <i class="fas fa-photo-video text-white text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-lg border border-blue-200 p-6 transform hover:scale-105 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600">الصور</p>
-                    <p class="text-2xl font-bold text-gray-900">1,234</p>
+                    <p class="text-sm text-blue-600 font-medium mb-1">الصور</p>
+                    <p class="text-3xl font-black text-blue-900">1,234</p>
+                    <p class="text-xs text-blue-600 mt-2">ملفات الصور</p>
                 </div>
-                <div class="bg-blue-100 p-3 rounded-lg">
-                    <i class="fas fa-image text-blue-600"></i>
+                <div class="bg-gradient-to-br from-blue-400 to-indigo-600 p-4 rounded-2xl shadow-lg">
+                    <i class="fas fa-image text-white text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-gradient-to-br from-red-50 to-orange-100 rounded-2xl shadow-lg border border-red-200 p-6 transform hover:scale-105 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600">الفيديوهات</p>
-                    <p class="text-2xl font-bold text-gray-900">456</p>
+                    <p class="text-sm text-red-600 font-medium mb-1">الفيديوهات</p>
+                    <p class="text-3xl font-black text-red-900">456</p>
+                    <p class="text-xs text-red-600 mt-2">ملفات الفيديو</p>
                 </div>
-                <div class="bg-red-100 p-3 rounded-lg">
-                    <i class="fas fa-video text-red-600"></i>
+                <div class="bg-gradient-to-br from-red-400 to-orange-600 p-4 rounded-2xl shadow-lg">
+                    <i class="fas fa-video text-white text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl shadow-lg border border-green-200 p-6 transform hover:scale-105 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600">المساحة المستخدمة</p>
-                    <p class="text-2xl font-bold text-gray-900">8.7 GB</p>
+                    <p class="text-sm text-green-600 font-medium mb-1">المساحة المستخدمة</p>
+                    <p class="text-3xl font-black text-green-900">8.7 GB</p>
+                    <p class="text-xs text-green-600 mt-2">من مساحة التخزين</p>
                 </div>
-                <div class="bg-green-100 p-3 rounded-lg">
-                    <i class="fas fa-database text-green-600"></i>
+                <div class="bg-gradient-to-br from-green-400 to-emerald-600 p-4 rounded-2xl shadow-lg">
+                    <i class="fas fa-database text-white text-2xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
+    <!-- Enhanced Toolbar -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-8">
         <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4 space-x-reverse">
+            <div class="flex items-center space-x-4 space-x-reverse flex-wrap">
                 <!-- Search -->
                 <div class="relative">
-                    <input type="text" placeholder="ابحث في الملفات..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 w-64">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" placeholder="ابحث في الملفات..." class="pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 w-80 font-medium">
+                    <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
                 </div>
 
                 <!-- Filter -->
-                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <select class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium">
                     <option value="">كل الأنواع</option>
                     <option value="image">صور</option>
                     <option value="video">فيديوهات</option>
@@ -93,7 +132,7 @@
                 </select>
 
                 <!-- Date Filter -->
-                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <select class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium">
                     <option value="">كل التواريخ</option>
                     <option value="today">اليوم</option>
                     <option value="week">آخر أسبوع</option>
@@ -102,19 +141,19 @@
                 </select>
             </div>
 
-            <div class="flex items-center space-x-2 space-x-reverse">
+            <div class="flex items-center space-x-3 space-x-reverse">
                 <!-- View Toggle -->
-                <div class="flex border border-gray-300 rounded-lg">
-                    <button class="px-3 py-1 bg-purple-600 text-white rounded-r-lg">
+                <div class="flex border border-gray-300 rounded-xl overflow-hidden">
+                    <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
                         <i class="fas fa-th"></i>
                     </button>
-                    <button class="px-3 py-1 hover:bg-gray-50">
+                    <button class="px-4 py-2 hover:bg-gray-50 transition-colors">
                         <i class="fas fa-list"></i>
                     </button>
                 </div>
 
                 <!-- Sort -->
-                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <select class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium">
                     <option value="date">الأحدث أولاً</option>
                     <option value="name">الاسم</option>
                     <option value="size">الحجم</option>
@@ -123,74 +162,104 @@
         </div>
     </div>
 
-    <!-- Breadcrumb -->
-    <div class="flex items-center text-sm text-gray-600 mb-6">
-        <i class="fas fa-home ml-2"></i>
-        <span>الرئيسية</span>
-        <i class="fas fa-chevron-left mx-2"></i>
-        <span>المكتبة الوسائطية</span>
-        <i class="fas fa-chevron-left mx-2"></i>
-        <span class="text-gray-900">صور العقارات</span>
+    <!-- Enhanced Breadcrumb -->
+    <div class="flex items-center text-sm font-medium mb-6 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-3 rounded-xl border border-gray-200">
+        <i class="fas fa-home ml-2 text-indigo-600"></i>
+        <span class="text-gray-700">الرئيسية</span>
+        <i class="fas fa-chevron-left mx-2 text-gray-400"></i>
+        <span class="text-gray-700">المكتبة الوسائطية</span>
+        <i class="fas fa-chevron-left mx-2 text-gray-400"></i>
+        <span class="text-indigo-600 font-bold">صور العقارات</span>
     </div>
 
-    <!-- Media Grid -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <!-- Enhanced Media Grid -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-images ml-3 text-purple-600"></i>
+                الملفات الوسائطية
+            </h3>
+        </div>
         <div class="p-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                @for($i = 1; $i <= 12; $i++)
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                @forelse($mediaFiles as $file)
                 <div class="media-item group relative">
-                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
-                        @if($i % 3 == 0)
-                            <img src="https://via.placeholder.com/300x300" alt="Property Image" class="w-full h-full object-cover">
-                        @elseif($i % 3 == 1)
-                            <div class="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-                                <i class="fas fa-image text-white text-4xl"></i>
+                    <div class="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-200">
+                        @if($file->type === 'folder')
+                            <div class="w-full h-full bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center">
+                                <i class="fas fa-folder text-yellow-500 text-6xl"></i>
+                            </div>
+                        @elseif($file->type === 'image')
+                            <img src="{{ asset('storage/' . $file->path) }}" alt="{{ $file->alt_text }}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                        @elseif($file->type === 'video')
+                            <div class="w-full h-full bg-gradient-to-br from-red-400 to-pink-400 flex items-center justify-center">
+                                <i class="fas fa-video text-white text-5xl"></i>
+                            </div>
+                        @elseif($file->type === 'audio')
+                            <div class="w-full h-full bg-gradient-to-br from-blue-400 to-green-400 flex items-center justify-center">
+                                <i class="fas fa-music text-white text-5xl"></i>
                             </div>
                         @else
-                            <div class="w-full h-full bg-gradient-to-br from-blue-400 to-green-400 flex items-center justify-center">
-                                <i class="fas fa-video text-white text-4xl"></i>
+                            <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                <i class="fas fa-file text-gray-500 text-5xl"></i>
                             </div>
                         @endif
                     </div>
                     
-                    <!-- Overlay -->
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <!-- Enhanced Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-black via-black to-transparent bg-opacity-0 group-hover:bg-opacity-75 transition-all duration-300 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100">
                         <div class="flex space-x-2 space-x-reverse">
-                            <button class="bg-white text-gray-800 p-2 rounded-lg hover:bg-gray-100">
+                            @if($file->type !== 'folder')
+                            <button class="bg-white text-gray-800 p-3 rounded-xl hover:bg-gray-100 transform hover:scale-110 transition-all duration-200 shadow-lg" onclick="showPreview('{{ asset('storage/' . $file->path) }}', '{{ $file->original_name }}')">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="bg-white text-gray-800 p-2 rounded-lg hover:bg-gray-100">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="bg-white text-gray-800 p-2 rounded-lg hover:bg-gray-100">
+                            <a href="{{ route('admin.media.download', $file->id) }}" class="bg-white text-gray-800 p-3 rounded-xl hover:bg-gray-100 transform hover:scale-110 transition-all duration-200 shadow-lg">
                                 <i class="fas fa-download"></i>
-                            </button>
-                            <button class="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            </a>
+                            @endif
+                            <form action="{{ route('admin.media.destroy', $file->id) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد؟')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-600 text-white p-3 rounded-xl hover:bg-red-700 transform hover:scale-110 transition-all duration-200 shadow-lg">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
 
-                    <!-- Selection Checkbox -->
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <input type="checkbox" class="rounded border-gray-300 bg-white">
-                    </div>
-
-                    <!-- File Info -->
-                    <div class="mt-2">
-                        <p class="text-sm font-medium text-gray-900 truncate">property-{{ $i }}.jpg</p>
-                        <p class="text-xs text-gray-600">{{ rand(100, 2000) }} KB • {{ now()->subDays(rand(1, 30))->format('M d, Y') }}</p>
+                    <!-- Enhanced File Info -->
+                    <div class="mt-3">
+                        <p class="text-sm font-bold text-gray-900 truncate" title="{{ $file->original_name }}">{{ $file->original_name }}</p>
+                        @if($file->type !== 'folder')
+                        <p class="text-xs text-gray-600 flex items-center mt-1">
+                            <i class="fas fa-hdd ml-1 text-gray-400"></i>
+                            {{ $file->getFormattedFileSize() }} • 
+                            <i class="fas fa-calendar ml-1 mr-1 text-gray-400"></i>
+                            {{ $file->created_at->format('M d, Y') }}
+                        </p>
+                        @endif
                     </div>
                 </div>
-                @endfor
+                @empty
+                <div class="col-span-full text-center py-16">
+                    <div class="flex flex-col items-center">
+                        <div class="bg-gradient-to-br from-gray-100 to-gray-200 p-12 rounded-3xl mb-6">
+                            <i class="fas fa-cloud-upload-alt text-gray-400 text-7xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-700 mb-3">لا توجد ملفات حالياً</h3>
+                        <p class="text-gray-500 mb-8 text-lg">قم برفع ملفات جديدة لتبدأ في إدارة المكتبة الوسائطية</p>
+                        <button class="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50" onclick="document.getElementById('upload-modal').classList.remove('hidden')">
+                            <i class="fas fa-upload ml-3"></i>
+                            رفع ملفات جديدة
+                        </button>
+                    </div>
+                </div>
+                @endforelse
             </div>
 
-            <!-- Load More -->
-            <div class="mt-8 text-center">
-                <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                    <i class="fas fa-plus ml-2"></i>
-                    تحميل المزيد
-                </button>
+            <!-- Enhanced Pagination -->
+            <div class="mt-12">
+                {{ $mediaFiles->links() }}
             </div>
         </div>
     </div>
@@ -198,48 +267,80 @@
 
 <!-- Upload Modal -->
 <div id="upload-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">رفع ملفات جديدة</h3>
-            <button onclick="document.getElementById('upload-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+    <div class="relative max-w-4xl w-full mx-4">
+        <button onclick="document.getElementById('upload-modal').classList.add('hidden')" class="absolute -top-10 right-0 text-white hover:text-gray-300">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        <div class="bg-white rounded-3xl shadow-2xl p-8">
+            <form action="{{ route('admin.media.upload') }}" method="POST" enctype="multipart/form-data" id="media-upload-form">
+                @csrf
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">رفع ملفات جديدة</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">المجلد (اختياري)</label>
+                        <select name="category" class="w-full rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500">
+                            <option value="">عام</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->category }}">{{ $category->category }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-        <!-- Drop Zone -->
-        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-500 transition-colors">
-            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-            <p class="text-gray-600 mb-2">اسحب وأفلت الملفات هنا أو</p>
-            <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                اختر الملفات
-            </button>
-            <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF, MP4, PDF (حتى 10MB)</p>
-        </div>
-
-        <!-- Upload Progress -->
-        <div class="mt-4 space-y-2">
-            <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <div class="flex items-center">
-                    <i class="fas fa-image text-purple-600 ml-2"></i>
-                    <span class="text-sm text-gray-700">image-1.jpg</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="text-sm text-gray-600 ml-2">75%</span>
-                    <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                        <div class="bg-purple-600 h-2 rounded-full" style="width: 75%"></div>
+                    <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-purple-500 transition-colors cursor-pointer" onclick="document.getElementById('file-input').click()">
+                        <div class="mb-4">
+                            <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">اسحب وأفلت الملفات هنا أو</p>
+                            <button type="button" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition-colors mt-2">
+                                <i class="fas fa-folder-open ml-2"></i>
+                                اختر الملفات
+                            </button>
+                        </div>
+                        <input type="file" name="files[]" multiple class="hidden" id="file-input" onchange="updateFileList(this)">
+                        <div id="file-list" class="mt-4 text-sm text-gray-600"></div>
                     </div>
                 </div>
-            </div>
+                
+                <div class="flex justify-end space-x-reverse space-x-4">
+                    <button type="button" onclick="document.getElementById('upload-modal').classList.add('hidden')" class="bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 transition-colors">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300">
+                        <i class="fas fa-upload ml-2"></i>
+                        رفع الملفات
+                    </button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
 
-        <div class="mt-6 flex justify-end space-x-3 space-x-reverse">
-            <button onclick="document.getElementById('upload-modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                إلغاء
-            </button>
-            <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                <i class="fas fa-upload ml-2"></i>
-                بدء الرفع
-            </button>
+<!-- Create Folder Modal -->
+<div id="create-folder-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="relative max-w-md w-full mx-4">
+        <button onclick="document.getElementById('create-folder-modal').classList.add('hidden')" class="absolute -top-10 right-0 text-white hover:text-gray-300">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        <div class="bg-white rounded-3xl shadow-2xl p-8">
+            <form action="{{ route('admin.media.create-folder') }}" method="POST">
+                @csrf
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">إنشاء مجلد جديد</h3>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">اسم المجلد</label>
+                    <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="أدخل اسم المجلد...">
+                </div>
+                
+                <div class="flex justify-end space-x-reverse space-x-4">
+                    <button type="button" onclick="document.getElementById('create-folder-modal').classList.add('hidden')" class="bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 transition-colors">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-folder-plus ml-2"></i>
+                        إنشاء
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -250,7 +351,7 @@
         <button onclick="document.getElementById('preview-modal').classList.add('hidden')" class="absolute -top-10 right-0 text-white hover:text-gray-300">
             <i class="fas fa-times text-2xl"></i>
         </button>
-        <img src="https://via.placeholder.com/800x600" alt="Preview" class="max-w-full max-h-screen rounded-lg">
+        <img src="/placeholder/property-800x600.jpg" alt="Preview" class="max-w-full max-h-screen rounded-lg">
         <div class="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-4 rounded-lg">
             <div class="flex items-center justify-between">
                 <div>
@@ -276,17 +377,6 @@
 <script>
 // Initialize media library functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle file selection
-    const mediaItems = document.querySelectorAll('.media-item');
-    mediaItems.forEach(item => {
-        const img = item.querySelector('img');
-        if (img) {
-            img.addEventListener('click', function() {
-                document.getElementById('preview-modal').classList.remove('hidden');
-            });
-        }
-    });
-
     // Handle drag and drop
     const dropZone = document.querySelector('.border-dashed');
     if (dropZone) {
@@ -303,9 +393,33 @@ document.addEventListener('DOMContentLoaded', function() {
         dropZone.addEventListener('drop', function(e) {
             e.preventDefault();
             this.classList.remove('border-purple-500', 'bg-purple-50');
-            // Handle file upload
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const input = document.getElementById('file-input');
+                input.files = files;
+                updateFileList(input);
+            }
         });
     }
 });
+
+function updateFileList(input) {
+    const fileList = document.getElementById('file-list');
+    if (input.files.length > 0) {
+        fileList.innerHTML = `<p>تم اختيار ${input.files.length} ملفات:</p><ul class="list-disc list-inside">` + 
+            Array.from(input.files).map(file => `<li>${file.name}</li>`).join('') + 
+            '</ul>';
+    } else {
+        fileList.innerHTML = '';
+    }
+}
+
+function showPreview(url, name) {
+    const modal = document.getElementById('preview-modal');
+    modal.querySelector('img').src = url;
+    modal.querySelector('h4').textContent = name;
+    modal.classList.remove('hidden');
+}
 </script>
 @endsection

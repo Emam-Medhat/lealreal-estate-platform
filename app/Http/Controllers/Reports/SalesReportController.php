@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class SalesReportController extends Controller
@@ -444,35 +445,61 @@ class SalesReportController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'period_start' => 'required|date',
-            'period_end' => 'required|date|after:period_start',
-            'filters' => 'nullable|array',
-            'format' => 'required|in:pdf,excel,csv',
-        ]);
+        try {
+            Log::info('Sales report store request:', $request->all());
+            
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'template_id' => 'required|integer',
+                'format' => 'required|in:pdf,excel,csv,html',
+                'date_range.start' => 'required|date',
+                'date_range.end' => 'required|date|after:date_range.start',
+                'filters' => 'nullable|array',
+                'fields' => 'nullable|array',
+                'sort_by' => 'nullable|string',
+                'sort_order' => 'nullable|string|in:asc,desc',
+                'parameters' => 'nullable|array',
+            ]);
 
-        $report = Report::create([
-            'title' => $validated['title'],
-            'type' => 'sales',
-            'description' => 'Sales report from ' . $validated['period_start'] . ' to ' . $validated['period_end'],
-            'parameters' => [
-                'period_start' => $validated['period_start'],
-                'period_end' => $validated['period_end'],
-            ],
-            'filters' => $validated['filters'] ?? [],
-            'status' => 'generating',
-            'format' => $validated['format'],
-            'generated_by' => auth()->id(),
-        ]);
+            // Create the main report record
+            $report = Report::create([
+                'title' => $validated['title'],
+                'type' => 'sales',
+                'description' => $validated['description'] ?? 'Sales report from ' . $validated['date_range']['start'] . ' to ' . $validated['date_range']['end'],
+                'parameters' => [
+                    'template_id' => $validated['template_id'],
+                    'period_start' => $validated['date_range']['start'],
+                    'period_end' => $validated['date_range']['end'],
+                    'fields' => $validated['fields'] ?? [],
+                    'sort_by' => $validated['sort_by'] ?? 'sale_date',
+                    'sort_order' => $validated['sort_order'] ?? 'desc',
+                    'parameters' => $validated['parameters'] ?? [],
+                ],
+                'filters' => $validated['filters'] ?? [],
+                'status' => 'generating',
+                'format' => $validated['format'],
+                'generated_by' => auth()->id(),
+            ]);
 
-        // Generate sales report data
-        dispatch(function () use ($report, $validated) {
-            $this->generateSalesReport($report, $validated);
-        });
+            Log::info('Report created successfully:', ['report_id' => $report->id]);
 
-        return redirect()->route('reports.sales.show', $report->id)
-            ->with('success', 'Sales report generation started.');
+            // Generate sales report data asynchronously
+            dispatch(function () use ($report, $validated) {
+                $this->generateSalesReport($report, $validated);
+            });
+
+            return redirect()->route('reports.sales.show', $report->id)
+                ->with('success', 'تم بدء إنشاء تقرير المبيعات بنجاح.');
+
+        } catch (\Exception $e) {
+            Log::error('Sales report store error: ' . $e->getMessage());
+            Log::error('Request data:', $request->all());
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'فشل إنشاء التقرير: ' . $e->getMessage());
+        }
     }
 
     public function show(Report $report)
@@ -623,8 +650,8 @@ class SalesReportController extends Controller
     private function generateSalesReport(Report $report, array $validated)
     {
         try {
-            $startDate = Carbon::parse($validated['period_start']);
-            $endDate = Carbon::parse($validated['period_end']);
+            $startDate = Carbon::parse($validated['date_range']['start']);
+            $endDate = Carbon::parse($validated['date_range']['end']);
 
             $salesData = [
                 'total_sales' => $this->getTotalSales($startDate, $endDate),
@@ -636,6 +663,9 @@ class SalesReportController extends Controller
                 'sales_by_property_type' => $this->getSalesByPropertyType($startDate, $endDate),
                 'sales_by_location' => $this->getSalesByLocation($startDate, $endDate),
                 'monthly_sales' => $this->getMonthlySales($startDate, $endDate),
+                'template_id' => $validated['template_id'] ?? null,
+                'fields' => $validated['fields'] ?? [],
+                'filters' => $validated['filters'] ?? [],
             ];
 
             $salesReport = SalesReport::create([
@@ -645,12 +675,13 @@ class SalesReportController extends Controller
                 'properties_sold' => $salesData['properties_sold'],
                 'average_sale_price' => $salesData['average_sale_price'],
                 'average_days_on_market' => $salesData['average_days_on_market'],
-                'sales_by_agent' => $salesData['sales_by_agent'],
-                'sales_by_property_type' => $salesData['sales_by_property_type'],
-                'sales_by_location' => $salesData['sales_by_location'],
-                'monthly_sales' => $salesData['monthly_sales'],
+                'sales_by_agent' => json_encode($salesData['sales_by_agent']),
+                'sales_by_property_type' => json_encode($salesData['sales_by_property_type']),
+                'sales_by_location' => json_encode($salesData['sales_by_location']),
+                'monthly_sales' => json_encode($salesData['monthly_sales']),
                 'period_start' => $startDate,
                 'period_end' => $endDate,
+                'filters' => json_encode($salesData['filters']),
             ]);
 
             $report->update([
@@ -659,7 +690,10 @@ class SalesReportController extends Controller
                 'generated_at' => now(),
             ]);
 
+            Log::info('Sales report generated successfully:', ['report_id' => $report->id]);
+
         } catch (\Exception $e) {
+            Log::error('Sales report generation error: ' . $e->getMessage());
             $report->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),

@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
+use App\Models\Nft;
+
 class Property extends Model
 {
     use HasFactory, SoftDeletes;
@@ -75,6 +77,11 @@ class Property extends Model
         'shopping_centers',
         'restaurants',
         'transportation',
+        'universities',
+        'metro_stations',
+        'parks',
+        'cinemas',
+        'gyms',
         
         // Financial Information
         'purchase_price',
@@ -82,6 +89,7 @@ class Property extends Model
         'service_charges',
         'maintenance_fees',
         'property_tax',
+        'tax_year',
         'insurance_cost',
         
         // Status and Dates
@@ -101,6 +109,7 @@ class Property extends Model
         
         // Legal Information
         'deed_number',
+        'plot_number',
         'ownership_certificate',
         'building_permit',
         'business_license',
@@ -113,8 +122,10 @@ class Property extends Model
         'occupancy_permit',
         'energy_rating',
         'solar_panels',
+        'heating_system',
         'water_heating',
         'insulation',
+        'ventilation',
         'double_glazing',
         'air_conditioning',
         'virtual_tour_url',
@@ -127,6 +138,13 @@ class Property extends Model
         'latitude',
         'longitude',
         'currency',
+        
+        // Additional Required Fields
+        'ownership_type',
+        'registration_number',
+        'zoning',
+        'zoning_type',
+        'land_use',
     ];
 
     protected $casts = [
@@ -145,7 +163,7 @@ class Property extends Model
         'premium' => 'boolean',
         'solar_panels' => 'boolean',
         'double_glazing' => 'boolean',
-        'air_conditioning' => 'boolean',
+        // 'air_conditioning' => 'boolean', // Changed to string in migration
         'views_count' => 'integer',
         'favorites_count' => 'integer',
         'inquiries_count' => 'integer',
@@ -159,6 +177,11 @@ class Property extends Model
         'shopping_centers' => 'array',
         'restaurants' => 'array',
         'transportation' => 'array',
+        'universities' => 'array',
+        'metro_stations' => 'array',
+        'parks' => 'array',
+        'cinemas' => 'array',
+        'gyms' => 'array',
         'images' => 'array',
         'metadata' => 'json',
         'listed_date' => 'datetime',
@@ -237,6 +260,13 @@ class Property extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function propertyDocuments(): HasMany
+    {
+        return $this->hasMany(PropertyDocument::class);
+    }
+
+
+
     public function legalDocuments(): HasMany
     {
         return $this->hasMany(Document::class)->where('type', 'legal');
@@ -245,6 +275,11 @@ class Property extends Model
     public function media(): HasMany
     {
         return $this->hasMany(PropertyMedia::class);
+    }
+
+    public function nfts(): HasMany
+    {
+        return $this->hasMany(Nft::class);
     }
 
     public function images(): HasMany
@@ -295,11 +330,6 @@ class Property extends Model
     public function features(): BelongsToMany
     {
         return $this->belongsToMany(PropertyFeature::class, 'property_feature_property');
-    }
-
-    public function propertyDocuments(): HasMany
-    {
-        return $this->hasMany(PropertyDocument::class);
     }
 
     public function floorPlans(): HasMany
@@ -388,6 +418,19 @@ class Property extends Model
 
     public function getMainImageAttribute(): ?string
     {
+        if ($this->relationLoaded('media')) {
+            $mainImage = $this->media->where('media_type', 'image')->where('is_primary', true)->first();
+            if ($mainImage) {
+                return asset('storage/properties/' . $mainImage->file_path);
+            }
+
+            $firstImage = $this->media->where('media_type', 'image')->first();
+            if ($firstImage) {
+                return asset('storage/properties/' . $firstImage->file_path);
+            }
+            return null;
+        }
+
         $mainImage = $this->images()->where('is_primary', true)->first();
         if ($mainImage) {
             return asset('storage/properties/' . $mainImage->file_path);

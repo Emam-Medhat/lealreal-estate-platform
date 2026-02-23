@@ -175,7 +175,7 @@
                                     <div class="mb-3">
                                         <label class="form-label">تاريخ الإغلاق المتوقع</label>
                                         <input type="date" name="expected_close_date" class="form-control"
-                                            value="{{ old('expected_close_date', $lead->expected_close_date ? $lead->expected_close_date->format('Y-m-d') : '') }}">
+                                            value="{{ old('expected_close_date', $lead->expected_close_date ? (is_string($lead->expected_close_date) ? $lead->expected_close_date : $lead->expected_close_date->format('Y-m-d')) : '') }}">
                                         @error('expected_close_date')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror

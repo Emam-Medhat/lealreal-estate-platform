@@ -13,14 +13,14 @@
             </div>
             
             <div class="flex gap-2">
-                <button class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors duration-200 font-medium">
+                <a href="{{ route('metaverse.properties.create') }}" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors duration-200 font-medium inline-flex items-center">
                     <i class="fas fa-plus ml-2"></i>
                     إضافة عقار
-                </button>
-                <button class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-medium">
+                </a>
+                <a href="{{ route('metaverse.marketplace.index') }}" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-medium inline-flex items-center">
                     <i class="fas fa-search ml-2"></i>
                     بحث متقدم
-                </button>
+                </a>
             </div>
         </div>
     </div>

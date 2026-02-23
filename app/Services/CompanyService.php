@@ -60,7 +60,7 @@ class CompanyService
             $this->companyRepository->delete($id);
 
             // Clear cache
-            Cache::tags(['company', 'company.' . $id])->flush();
+            Cache::flush();
 
             DB::commit();
 
@@ -142,7 +142,7 @@ class CompanyService
             ]);
 
             // Clear company cache
-            Cache::tags(['company', 'company.' . $company->id])->flush();
+            Cache::flush();
 
             DB::commit();
 
@@ -227,7 +227,7 @@ class CompanyService
             $this->logCompanyChanges($company, $oldData, $data);
 
             // Update cache
-            Cache::tags(['company', 'company.' . $company->id])->flush();
+            Cache::flush();
 
             DB::commit();
 

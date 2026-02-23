@@ -27,6 +27,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
     Route::post('/leads/{lead}/convert', [LeadController::class, 'convert'])->name('leads.convert');
     Route::post('/leads/{lead}/score', [LeadController::class, 'score'])->name('leads.score');
+    Route::post('/leads/{lead}/activities', [LeadController::class, 'storeActivity'])->name('leads.activities.store');
+    Route::post('/leads/{lead}/notes', [LeadController::class, 'storeNote'])->name('leads.notes.store');
 
     // Lead Sources
     Route::get('/lead-sources', [LeadSourceController::class, 'index'])->name('lead-sources.index');
@@ -105,6 +107,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/lead-campaigns/{campaign}', [LeadCampaignController::class, 'destroy'])->name('lead-campaigns.destroy');
     Route::post('/lead-campaigns/{campaign}/toggle', [LeadCampaignController::class, 'toggleStatus'])->name('lead-campaigns.toggle');
     Route::post('/lead-campaigns/{campaign}/leads', [LeadCampaignController::class, 'addLeads'])->name('lead-campaigns.leads.add');
+
+    // Lead Analytics
+    Route::get('/lead-analytics/dashboard', [LeadAnalyticsController::class, 'dashboard'])->name('lead-analytics.dashboard');
+    Route::get('/lead-analytics/conversions', [LeadAnalyticsController::class, 'conversionAnalytics'])->name('lead-analytics.conversions');
+    Route::get('/lead-analytics/sources', [LeadAnalyticsController::class, 'sourceAnalytics'])->name('lead-analytics.sources');
+    Route::get('/lead-analytics/activities', [LeadAnalyticsController::class, 'activityAnalytics'])->name('lead-analytics.activities');
+    Route::get('/lead-analytics/performance', [LeadAnalyticsController::class, 'performanceAnalytics'])->name('lead-analytics.performance');
+    Route::get('/lead-analytics/report', [LeadAnalyticsController::class, 'customReport'])->name('lead-analytics.report');
+    Route::post('/lead-analytics/export', [LeadAnalyticsController::class, 'export'])->name('lead-analytics.export');
     Route::delete('/lead-campaigns/{campaign}/leads/{lead}', [LeadCampaignController::class, 'removeLead'])->name('lead-campaigns.leads.remove');
     Route::get('/lead-campaigns/{campaign}/analytics', [LeadCampaignController::class, 'analytics'])->name('lead-campaigns.analytics');
     Route::post('/lead-campaigns/{campaign}/duplicate', [LeadCampaignController::class, 'duplicate'])->name('lead-campaigns.duplicate');

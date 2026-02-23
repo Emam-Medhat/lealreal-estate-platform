@@ -127,18 +127,17 @@ return new class extends Migration
         $existingChecks = DB::table('compliance_checks')->count();
         if ($existingChecks == 0) {
             DB::table('compliance_checks')->insert([
-                ['status' => 'passed', 'check_type' => 'building_code', 'description' => 'Building code compliance check', 'check_number' => 'BCC-001', 'title' => 'Building Code Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId],
-                ['status' => 'passed', 'check_type' => 'safety', 'description' => 'Safety compliance check', 'check_number' => 'SCC-002', 'title' => 'Safety Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId],
-                ['status' => 'failed', 'check_type' => 'environmental', 'description' => 'Environmental compliance check', 'check_number' => 'ECC-003', 'title' => 'Environmental Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId],
-                ['status' => 'passed', 'check_type' => 'zoning', 'description' => 'Zoning compliance check', 'check_number' => 'ZCC-004', 'title' => 'Zoning Check 1', 'check_date' => DB::raw('CURDATE()'), 'performed_by' => $userId]
+                ['status' => 'passed', 'check_type' => 'building_code', 'description' => 'Building code compliance check', 'check_number' => 'BCC-001', 'title' => 'Building Code Check 1', 'check_date' => now()->toDateString(), 'performed_by' => $userId],
+                ['status' => 'passed', 'check_type' => 'safety', 'description' => 'Safety compliance check', 'check_number' => 'SCC-002', 'title' => 'Safety Check 1', 'check_date' => now()->toDateString(), 'performed_by' => $userId],
+                ['status' => 'failed', 'check_type' => 'environmental', 'description' => 'Environmental compliance check', 'check_number' => 'ECC-003', 'title' => 'Environmental Check 1', 'check_date' => now()->toDateString(), 'performed_by' => $userId],
+                ['status' => 'passed', 'check_type' => 'zoning', 'description' => 'Zoning compliance check', 'check_number' => 'ZCC-004', 'title' => 'Zoning Check 1', 'check_date' => now()->toDateString(), 'performed_by' => $userId]
             ]);
         }
 
         // Check if risk_assessments table exists before inserting
         if (Schema::hasTable('risk_assessments')) {
             // Check if it has the expected columns
-            $columns = DB::select('SHOW COLUMNS FROM risk_assessments');
-            $hasStatus = collect($columns)->contains('Field', 'status');
+            $hasStatus = Schema::hasColumn('risk_assessments', 'status');
             
             if ($hasStatus) {
                 DB::table('risk_assessments')->insert([

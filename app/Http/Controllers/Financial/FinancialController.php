@@ -9,6 +9,11 @@ use Carbon\Carbon;
 
 class FinancialController extends Controller
 {
+    public function dashboard()
+    {
+        return $this->index();
+    }
+
     public function index()
     {
         try {
@@ -106,7 +111,7 @@ class FinancialController extends Controller
                 ->leftJoin('users', 'invoices.user_id', '=', 'users.id')
                 ->leftJoin('properties', 'invoices.property_id', '=', 'properties.id')
                 ->select('invoices.*', 
-                       DB::raw('CONCAT(users.first_name, " ", users.last_name) as user_name'),
+                       DB::raw('COALESCE(CONCAT(users.first_name, " ", users.last_name), "N/A") as user_name'),
                        'properties.title as property_title')
                 ->orderBy('invoices.created_at', 'desc')
                 ->paginate(20);
@@ -114,11 +119,11 @@ class FinancialController extends Controller
             $stats = [
                 'total_invoices' => DB::table('invoices')->count(),
                 'draft_invoices' => DB::table('invoices')->where('status', 'draft')->count(),
-                'sent_invoices' => DB::table('invoices')->where('status', 'sent')->count(),
+                'sent_invoices' => DB::table('invoices')->where('status', 'pending')->count(),
                 'paid_invoices' => DB::table('invoices')->where('status', 'paid')->count(),
                 'overdue_invoices' => DB::table('invoices')->where('status', 'overdue')->count(),
-                'total_amount' => DB::table('invoices')->sum('total_amount'),
-                'outstanding_amount' => DB::table('invoices')->where('status', '!=', 'paid')->sum('total_amount')
+                'total_amount' => DB::table('invoices')->sum('total'),
+                'outstanding_amount' => DB::table('invoices')->where('status', '!=', 'paid')->sum('total')
             ];
 
             return view('financial.invoices', compact('invoices', 'stats'));
@@ -136,6 +141,80 @@ class FinancialController extends Controller
                 ]
             ]);
         }
+    }
+
+    public function showInvoice($id)
+    {
+        try {
+            $invoice = DB::table('invoices')
+                ->leftJoin('users', 'invoices.user_id', '=', 'users.id')
+                ->leftJoin('properties', 'invoices.property_id', '=', 'properties.id')
+                ->select('invoices.*', 
+                       DB::raw('COALESCE(CONCAT(users.first_name, " ", users.last_name), "N/A") as user_name'),
+                       'users.email as user_email',
+                       'properties.title as property_title',
+                       'properties.address as property_address')
+                ->where('invoices.id', $id)
+                ->first();
+
+            if (!$invoice) {
+                return redirect()->route('admin.financial.invoices')->with('error', 'Invoice not found');
+            }
+
+            // Fetch invoice items if table exists, otherwise use empty collection
+            $invoiceItems = collect();
+            try {
+                if (DB::getSchemaBuilder()->hasTable('invoice_items')) {
+                    $invoiceItems = DB::table('invoice_items')->where('invoice_id', $id)->get();
+                }
+            } catch (\Exception $e) {
+                // Ignore if table doesn't exist
+            }
+
+            return view('financial.invoices.show', compact('invoice', 'invoiceItems'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.financial.invoices')->with('error', 'Error loading invoice details: ' . $e->getMessage());
+        }
+    }
+
+    public function createInvoice()
+    {
+        // Placeholder for create invoice
+        return redirect()->route('admin.financial.invoices')->with('info', 'Create invoice feature coming soon');
+    }
+
+    public function storeInvoice(Request $request)
+    {
+        // Placeholder for store invoice
+        return redirect()->route('admin.financial.invoices')->with('info', 'Store invoice feature coming soon');
+    }
+
+    public function editInvoice($id)
+    {
+        // Placeholder for edit invoice
+        return redirect()->route('admin.financial.invoices')->with('info', 'Edit invoice feature coming soon');
+    }
+
+    public function updateInvoice(Request $request, $id)
+    {
+        // Placeholder for update invoice
+        return redirect()->route('admin.financial.invoices')->with('info', 'Update invoice feature coming soon');
+    }
+
+    public function destroyInvoice($id)
+    {
+        try {
+            DB::table('invoices')->where('id', $id)->delete();
+            return redirect()->route('admin.financial.invoices')->with('success', 'Invoice deleted successfully');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.financial.invoices')->with('error', 'Error deleting invoice');
+        }
+    }
+
+    public function downloadInvoice($id)
+    {
+        // Placeholder for download invoice
+        return redirect()->route('admin.financial.invoices')->with('info', 'Download invoice feature coming soon');
     }
 
     public function wallets()
@@ -181,6 +260,63 @@ class FinancialController extends Controller
                     'total_spent' => 0
                 ],
                 'topWallets' => collect()
+            ]);
+        }
+    }
+
+    public function transactions()
+    {
+        try {
+            $transactions = DB::table('financial_transactions')
+                ->leftJoin('users', 'financial_transactions.user_id', '=', 'users.id')
+                ->select('financial_transactions.*', 
+                       DB::raw('CONCAT(users.first_name, " ", users.last_name) as user_name'),
+                       'users.email')
+                ->orderBy('financial_transactions.created_at', 'desc')
+                ->paginate(20);
+
+            $stats = [
+                'total_transactions' => DB::table('financial_transactions')->count(),
+                'credit_transactions' => DB::table('financial_transactions')->where('type', 'credit')->count(),
+                'debit_transactions' => DB::table('financial_transactions')->where('type', 'debit')->count(),
+                'pending_transactions' => DB::table('financial_transactions')->where('status', 'pending')->count(),
+                'completed_transactions' => DB::table('financial_transactions')->where('status', 'completed')->count(),
+                'total_credit_amount' => DB::table('financial_transactions')->where('type', 'credit')->sum('amount'),
+                'total_debit_amount' => DB::table('financial_transactions')->where('type', 'debit')->sum('amount'),
+                'net_amount' => DB::table('financial_transactions')
+                    ->selectRaw('SUM(CASE WHEN type = "credit" THEN amount ELSE -amount END) as net')
+                    ->value('net') ?? 0
+            ];
+
+            $transactionTypes = DB::table('financial_transactions')
+                ->select('transaction_type', DB::raw('count(*) as count'), DB::raw('sum(amount) as total'))
+                ->groupBy('transaction_type')
+                ->get();
+
+            return view('financial.transactions', compact('transactions', 'stats', 'transactionTypes'));
+        } catch (\Exception $e) {
+            // Create empty paginator for error case
+            $emptyTransactions = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect(), 
+                0, 
+                20, 
+                1, 
+                ['path' => request()->url(), 'pageName' => 'page']
+            );
+            
+            return view('financial.transactions', [
+                'transactions' => $emptyTransactions,
+                'stats' => [
+                    'total_transactions' => 0,
+                    'credit_transactions' => 0,
+                    'debit_transactions' => 0,
+                    'pending_transactions' => 0,
+                    'completed_transactions' => 0,
+                    'total_credit_amount' => 0,
+                    'total_debit_amount' => 0,
+                    'net_amount' => 0
+                ],
+                'transactionTypes' => collect()
             ]);
         }
     }

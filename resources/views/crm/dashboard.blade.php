@@ -11,14 +11,16 @@
             <p class="text-gray-600 mt-2">إدارة العملاء والعروض والعمولات</p>
         </div>
         <div class="flex space-x-3 space-x-reverse">
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <a href="{{ route('leads.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 <i class="fas fa-user-plus ml-2"></i>
                 عميل جديد
-            </button>
-            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                <i class="fas fa-chart-line ml-2"></i>
-                التقارير
-            </button>
+            </a>
+            <button onclick="window.open('{{ route('reports.index') }}', '_blank')" 
+                    class="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:via-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center group">
+                    <i class="fas fa-chart-line ml-2 group-hover:rotate-12 transition-transform duration-300"></i>
+                    <span class="font-bold">التقارير</span>
+                    <div class="ml-2 w-0 h-0 bg-white rounded-full opacity-0 group-hover:w-8 group-hover:h-8 group-hover:opacity-100 transition-all duration-300"></div>
+                </button>
         </div>
     </div>
 

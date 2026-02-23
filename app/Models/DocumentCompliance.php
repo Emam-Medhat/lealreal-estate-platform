@@ -37,6 +37,20 @@ class DocumentCompliance extends Model
         return $this->belongsTo(User::class, 'checked_by');
     }
 
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['status'] ?? null, function ($query, $status) {
+            $query->where('overall_status', $status);
+        })->when($filters['document_type'] ?? null, function ($query, $type) {
+            $query->whereHas('document', function ($query) use ($type) {
+                $query->where('type', $type);
+            });
+        })->when($filters['date_range'] ?? null, function ($query, $dateRange) {
+            // Assuming date_range is YYYY-MM-DD
+            $query->whereDate('checked_at', $dateRange);
+        });
+    }
+
     public function scopeCompliant($query)
     {
         return $query->where('overall_status', 'compliant');

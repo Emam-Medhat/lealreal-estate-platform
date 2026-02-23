@@ -17,6 +17,7 @@ use App\Models\PropertyAmenity;
 use App\Models\PropertyFeature;
 use App\Models\PropertyDocument;
 use App\Models\PropertyView;
+use App\Models\Client;
 use App\Services\OptimizedPropertyService;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use Illuminate\Http\Request;
@@ -94,8 +95,11 @@ class PropertyController extends BaseController
             "property_show_{$id}",
             function () use ($id) {
                 return $this->propertyRepository->findById($id, ['*'], [
-                    'agent:id,name,phone,email',
-                    'company:id,name,logo',
+                    'agent:id,name,phone,email,photo',
+                    'company:id,name,logo,website,phone',
+                    'developer:id,name,logo,website',
+                    'manager:id,name,phone,email',
+                    'propertyType:id,name,slug,description',
                     'media' => function ($query) {
                         return $query->orderBy('sort_order', 'asc')->get(['id', 'property_id', 'file_path', 'media_type', 'sort_order']);
                     },
@@ -163,7 +167,15 @@ class PropertyController extends BaseController
             'medium'
         );
 
-        return view('properties.create', compact('propertyTypes', 'amenities', 'features'));
+        $clients = $this->getCachedData(
+            'clients_active',
+            function () {
+                return Client::where('status', 'active')->orderBy('name')->get(['id', 'name']);
+            },
+            'medium'
+        );
+
+        return view('properties.create', compact('propertyTypes', 'amenities', 'features', 'clients'));
     }
 
     /**
@@ -181,12 +193,12 @@ class PropertyController extends BaseController
 
             // Upload images if they exist
             if ($request->hasFile('images')) {
-                $this->handleImageUpload($request->file('images'), $property->id);
+                $this->propertyService->handleImageUpload($request->file('images'), $property->id);
             }
 
             // Handle documents upload
             if ($request->hasFile('documents')) {
-                $this->handleDocumentUpload($request->file('documents'), $property->id);
+                $this->propertyService->handleDocumentUpload($request->file('documents'), $property->id);
             }
 
             DB::commit();
@@ -289,12 +301,12 @@ class PropertyController extends BaseController
 
             // Handle new image uploads
             if ($request->hasFile('images')) {
-                $this->handleImageUpload($request->file('images'), $property->id);
+                $this->propertyService->handleImageUpload($request->file('images'), $property->id);
             }
 
             // Handle new document uploads
             if ($request->hasFile('documents')) {
-                $this->handleDocumentUpload($request->file('documents'), $property->id);
+                $this->propertyService->handleDocumentUpload($request->file('documents'), $property->id);
             }
 
             DB::commit();
@@ -527,39 +539,4 @@ class PropertyController extends BaseController
         }
     }
 
-    /**
-     * Handle image upload with optimization
-     */
-    private function handleImageUpload($images, $propertyId)
-    {
-        foreach ($images as $index => $image) {
-            $path = $image->store('properties/' . $propertyId, 'public');
-
-            PropertyMedia::create([
-                'property_id' => $propertyId,
-                'image_url' => $path,
-                'image_type' => $image->getMimeType(),
-                'sort_order' => $index,
-                'is_primary' => $index === 0
-            ]);
-        }
-    }
-
-    /**
-     * Handle document upload
-     */
-    private function handleDocumentUpload($documents, $propertyId)
-    {
-        foreach ($documents as $document) {
-            $path = $document->store('properties/' . $propertyId . '/documents', 'public');
-
-            PropertyDocument::create([
-                'property_id' => $propertyId,
-                'document_url' => $path,
-                'document_name' => $document->getClientOriginalName(),
-                'document_type' => $document->getMimeType(),
-                'file_size' => $document->getSize()
-            ]);
-        }
-    }
 }

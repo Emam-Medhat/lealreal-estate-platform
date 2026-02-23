@@ -419,7 +419,7 @@ class AgentService
                 ->where('period_start', '>=', $periodStart)
                 ->join('agents', 'agent_performance_metrics.agent_id', '=', 'agents.id')
                 ->join('users', 'agents.user_id', '=', 'users.id')
-                ->select('agents.id', 'users.name as agent_name', 'agent_performance_metrics.value as sales', 'agents.company_id')
+                ->select('agents.id', 'agents.name as agent_name', 'agent_performance_metrics.value as sales', 'agents.company_id')
                 ->orderBy('sales', 'desc')
                 ->limit(20)
                 ->get()

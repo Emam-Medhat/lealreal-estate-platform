@@ -86,7 +86,7 @@ class AdCampaign extends Model
 
     public function ads()
     {
-        return $this->hasMany(Advertisement::class);
+        return $this->hasMany(Advertisement::class, 'campaign_id');
     }
 
     public function budget()

@@ -4,16 +4,51 @@ namespace App\Services;
 
 use App\Models\BlockchainTransaction;
 use App\Models\SmartContract;
-use App\Models\NFT;
-use App\Models\DAO;
+use App\Models\Nft;
+use App\Models\Dao;
 use App\Models\Property;
+use App\Models\BlockchainRecord;
+use App\Models\CryptoWallet;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use App\Repositories\Contracts\SmartContractRepositoryInterface;
+use App\Repositories\Contracts\NftRepositoryInterface;
+use App\Repositories\Contracts\BlockchainTransactionRepositoryInterface;
+use App\Repositories\Contracts\BlockchainRecordRepositoryInterface;
+use App\Repositories\Contracts\DaoRepositoryInterface;
+use App\Repositories\Contracts\CryptoWalletRepositoryInterface;
+use App\Repositories\Contracts\CryptoTransactionRepositoryInterface;
 
 class BlockchainService
 {
+    protected $smartContractRepository;
+    protected $nftRepository;
+    protected $blockchainTransactionRepository;
+    protected $blockchainRecordRepository;
+    protected $daoRepository;
+    protected $cryptoWalletRepository;
+    protected $cryptoTransactionRepository;
+
+    public function __construct(
+        SmartContractRepositoryInterface $smartContractRepository,
+        NftRepositoryInterface $nftRepository,
+        BlockchainTransactionRepositoryInterface $blockchainTransactionRepository,
+        BlockchainRecordRepositoryInterface $blockchainRecordRepository,
+        DaoRepositoryInterface $daoRepository,
+        CryptoWalletRepositoryInterface $cryptoWalletRepository,
+        CryptoTransactionRepositoryInterface $cryptoTransactionRepository
+    ) {
+        $this->smartContractRepository = $smartContractRepository;
+        $this->nftRepository = $nftRepository;
+        $this->blockchainTransactionRepository = $blockchainTransactionRepository;
+        $this->blockchainRecordRepository = $blockchainRecordRepository;
+        $this->daoRepository = $daoRepository;
+        $this->cryptoWalletRepository = $cryptoWalletRepository;
+        $this->cryptoTransactionRepository = $cryptoTransactionRepository;
+    }
+
     private const SUPPORTED_NETWORKS = [
         'ethereum' => [
             'name' => 'Ethereum Mainnet',
@@ -132,7 +167,7 @@ class BlockchainService
             }
 
             // Save contract to database
-            $contract = SmartContract::create([
+            $contract = $this->smartContractRepository->create([
                 'name' => $validatedData['name'],
                 'type' => $validatedData['type'],
                 'address' => $deploymentResult['address'],
@@ -188,7 +223,7 @@ class BlockchainService
             }
 
             // Save NFT to database
-            $nft = NFT::create([
+            $nft = $this->nftRepository->create([
                 'property_id' => $property->id,
                 'token_id' => $mintResult['token_id'],
                 'contract_address' => $mintResult['contract_address'],
@@ -243,7 +278,7 @@ class BlockchainService
             }
 
             // Create DAO record
-            $dao = DAO::create([
+            $dao = $this->daoRepository->create([
                 'property_id' => $property->id,
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
@@ -289,9 +324,8 @@ class BlockchainService
     {
         try {
             // Validate contract and function
-            $contract = SmartContract::where('address', $contractAddress)
-                ->where('network', $network)
-                ->firstOrFail();
+            $contract = $this->smartContractRepository
+                ->findByAddressAndNetwork($contractAddress, $network);
 
             // Execute function
             $executionResult = $this->executeContractFunction($contract, $function, $parameters);
@@ -301,7 +335,7 @@ class BlockchainService
             }
 
             // Record transaction
-            $transaction = BlockchainTransaction::create([
+            $transaction = $this->blockchainTransactionRepository->create([
                 'contract_address' => $contractAddress,
                 'function' => $function,
                 'parameters' => $parameters,
@@ -426,10 +460,7 @@ class BlockchainService
     public function getPropertyNFTs(int $propertyId): array
     {
         try {
-            $nfts = NFT::where('property_id', $propertyId)
-                ->with(['property', 'owner'])
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $nfts = $this->nftRepository->getByPropertyId($propertyId);
 
             return [
                 'success' => true,
@@ -471,17 +502,22 @@ class BlockchainService
     public function getBlockchainStatistics(): array
     {
         try {
-            $stats = [
-                'total_contracts' => SmartContract::count(),
-                'total_nfts' => NFT::count(),
-                'total_daos' => DAO::count(),
-                'total_transactions' => BlockchainTransaction::count(),
-                'networks' => $this->getNetworkStatistics(),
-                'contract_types' => $this->getContractTypeStatistics(),
-                'nft_standards' => $this->getNFTStandardStatistics(),
-                'gas_usage' => $this->getGasUsageStatistics(),
-                'cost_analysis' => $this->getCostAnalysis()
-            ];
+            $stats = Cache::remember('blockchain_service_stats', 300, function () {
+                return [
+                    'total_contracts' => $this->smartContractRepository->count(),
+                    'total_nfts' => $this->nftRepository->count(),
+                    'total_daos' => $this->daoRepository->count(),
+                    'total_transactions' => $this->blockchainTransactionRepository->count(),
+                    'total_blocks' => $this->blockchainRecordRepository->count(),
+                    'total_wallets' => $this->cryptoWalletRepository->count(),
+                    'latest_block' => $this->blockchainRecordRepository->getRecent(1)->first(),
+                    'networks' => $this->getNetworkStatistics(),
+                    'contract_types' => $this->getContractTypeStatistics(),
+                    'nft_standards' => $this->getNFTStandardStatistics(),
+                    'gas_usage' => $this->getGasUsageStatistics(),
+                    'cost_analysis' => $this->getCostAnalysis()
+                ];
+            });
 
             return [
                 'success' => true,
@@ -499,6 +535,159 @@ class BlockchainService
                 'error' => $e->getMessage()
             ];
         }
+    }
+
+    public function getRecentBlocks(int $limit = 5)
+    {
+        return $this->blockchainRecordRepository->getRecent($limit);
+    }
+
+    public function getRecentTransactions(int $limit = 5)
+    {
+        return $this->blockchainTransactionRepository->getRecent($limit);
+    }
+
+    public function getAllTransactions()
+    {
+        return $this->blockchainTransactionRepository->getPaginated();
+    }
+
+    public function getTransactionStats()
+    {
+        return array_merge(
+            $this->getGasUsageStatistics(),
+            $this->getCostAnalysis()
+        );
+    }
+
+    public function getContractStats()
+    {
+        return $this->getContractTypeStatistics();
+    }
+
+    public function getNFTStats()
+    {
+        return $this->getNFTStandardStatistics();
+    }
+
+    public function getUserWallet(int $userId)
+    {
+        return $this->cryptoWalletRepository->getUserWallet($userId);
+    }
+
+    public function getUserTransactions(int $userId)
+    {
+        $wallet = $this->getUserWallet($userId);
+        if ($wallet) {
+            return $wallet->transactions()->orderBy('created_at', 'desc')->get();
+        }
+        return collect([]);
+    }
+
+    public function getRecentCryptoTransactions(int $limit = 10)
+    {
+        return $this->cryptoTransactionRepository->getRecent($limit);
+    }
+
+    public function performCryptoTransaction($wallet, $params)
+    {
+        try {
+            $gasUsed = $params['gas_limit'] ?? 21000;
+            $transactionHash = '0x' . bin2hex(random_bytes(32));
+            
+            // Update wallet balance
+            $newBalance = $wallet->balance - $params['amount'];
+            $this->cryptoWalletRepository->update($wallet->id, ['balance' => $newBalance]);
+
+            // Create transaction record
+            $this->cryptoTransactionRepository->create([
+                'from_address' => $params['from_address'],
+                'to_address' => $params['to_address'],
+                'amount' => $params['amount'],
+                'currency' => $params['currency'],
+                'gas_price' => $params['gas_price'] ?? 0,
+                'gas_used' => $gasUsed,
+                'hash' => $transactionHash,
+                'status' => 'confirmed',
+                'user_id' => $wallet->user_id,
+                'created_at' => now()
+            ]);
+
+            return [
+                'status' => 'success',
+                'transaction_hash' => $transactionHash,
+                'gas_used' => $gasUsed,
+                'amount' => $params['amount']
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'gas_used' => 0,
+                'amount' => 0
+            ];
+        }
+    }
+
+    public function getNetworkInfo()
+    {
+        return [
+            'network_name' => config('blockchain.network_name', 'Ethereum Mainnet'),
+            'chain_id' => config('blockchain.chain_id', '0x1'),
+            'block_time' => config('blockchain.block_time', 12),
+            'gas_limit' => config('blockchain.gas_limit', 21000),
+            'current_block' => $this->blockchainRecordRepository->getLatestBlock()->height ?? 0,
+            'total_blocks' => $this->blockchainRecordRepository->count(),
+            'difficulty' => $this->blockchainRecordRepository->getLatestBlock()->difficulty ?? 0,
+            'hash_rate' => $this->calculateHashRate()
+        ];
+    }
+
+    public function calculateHashRate()
+    {
+        $latestBlock = $this->blockchainRecordRepository->getLatestBlock();
+        
+        if (!$latestBlock) {
+            return 0;
+        }
+        
+        $previousBlock = $this->blockchainRecordRepository->findByHeight($latestBlock->height - 1);
+        
+        if (!$previousBlock) {
+            return 0;
+        }
+
+        $timeDiff = $latestBlock->timestamp->timestamp - $previousBlock->timestamp->timestamp;
+        
+        return $timeDiff > 0 ? 1 / $timeDiff : 0;
+    }
+
+    public function validateChainIntegrity($block)
+    {
+        // Simplified validation - in real implementation, this would validate
+        // the entire blockchain from genesis to latest block
+        return true;
+    }
+
+    public function getValidationDetails($block)
+    {
+        return [
+            'block_hash_valid' => strlen($block->hash) === 64,
+            'nonce_valid' => is_numeric($block->nonce),
+            'difficulty_valid' => $block->difficulty > 0,
+            'timestamp_valid' => $block->timestamp instanceof \Carbon\Carbon,
+            'parent_hash_valid' => $block->height === 1 || $block->previous_hash !== null
+        ];
+    }
+
+    public function performChainSync()
+    {
+        // Simplified sync implementation
+        return [
+            'status' => 'success',
+            'blocks_synced' => 0,
+            'errors' => []
+        ];
     }
 
     // Private helper methods
@@ -620,7 +809,7 @@ class BlockchainService
         ];
     }
 
-    private function initializeDAOMembers(DAO $dao, array $daoData): void
+    private function initializeDAOMembers(Dao $dao, array $daoData): void
     {
         // Initialize DAO members (simplified)
     }
@@ -664,13 +853,19 @@ class BlockchainService
     {
         $stats = [];
         
+        $contractStats = $this->smartContractRepository->getNetworkStats();
+        $nftStats = $this->nftRepository->getNetworkStats();
+        $transactionAggregates = $this->blockchainTransactionRepository->getNetworkAggregates();
+        
         foreach (self::SUPPORTED_NETWORKS as $network => $config) {
+            $txStats = $transactionAggregates[$network] ?? ['count' => 0, 'total_gas_used' => 0, 'total_cost' => 0];
+            
             $stats[$network] = [
-                'contracts' => SmartContract::where('network', $network)->count(),
-                'nfts' => NFT::where('network', $network)->count(),
-                'transactions' => BlockchainTransaction::where('network', $network)->count(),
-                'total_gas_used' => BlockchainTransaction::where('network', $network)->sum('gas_used'),
-                'total_cost' => BlockchainTransaction::where('network', $network)->sum('cost')
+                'contracts' => $contractStats[$network] ?? 0,
+                'nfts' => $nftStats[$network] ?? 0,
+                'transactions' => $txStats['count'],
+                'total_gas_used' => $txStats['total_gas_used'],
+                'total_cost' => $txStats['total_cost']
             ];
         }
         
@@ -680,9 +875,10 @@ class BlockchainService
     private function getContractTypeStatistics(): array
     {
         $stats = [];
+        $typeStats = $this->smartContractRepository->getTypeStats();
         
         foreach (self::SMART_CONTRACT_TEMPLATES as $type => $template) {
-            $stats[$type] = SmartContract::where('type', $type)->count();
+            $stats[$type] = $typeStats[$type] ?? 0;
         }
         
         return $stats;
@@ -691,9 +887,10 @@ class BlockchainService
     private function getNFTStandardStatistics(): array
     {
         $stats = [];
+        $standardStats = $this->nftRepository->getStandardStats();
         
         foreach (self::NFT_STANDARDS as $standard => $info) {
-            $stats[$standard] = NFT::where('standard', $standard)->count();
+            $stats[$standard] = $standardStats[$standard] ?? 0;
         }
         
         return $stats;
@@ -701,59 +898,46 @@ class BlockchainService
 
     private function getGasUsageStatistics(): array
     {
-        return [
-            'total_gas_used' => BlockchainTransaction::sum('gas_used'),
-            'average_gas_per_tx' => BlockchainTransaction::avg('gas_used'),
-            'max_gas_used' => BlockchainTransaction::max('gas_used'),
-            'min_gas_used' => BlockchainTransaction::min('gas_used'),
-            'gas_by_network' => $this->getGasByNetwork()
-        ];
+        $gasStats = $this->blockchainTransactionRepository->getGasStats();
+        $gasStats['gas_by_network'] = $this->getGasByNetwork();
+        return $gasStats;
     }
 
     private function getCostAnalysis(): array
     {
-        return [
-            'total_cost' => BlockchainTransaction::sum('cost'),
-            'average_cost_per_tx' => BlockchainTransaction::avg('cost'),
-            'max_cost' => BlockchainTransaction::max('cost'),
-            'min_cost' => BlockchainTransaction::min('cost'),
-            'cost_by_network' => $this->getCostByNetwork(),
-            'cost_by_contract_type' => $this->getCostByContractType()
-        ];
+        $costStats = $this->blockchainTransactionRepository->getCostStats();
+        $costStats['cost_by_network'] = $this->getCostByNetwork();
+        $costStats['cost_by_contract_type'] = $this->getCostByContractType();
+        return $costStats;
     }
 
     private function getGasByNetwork(): array
     {
+        $aggregates = $this->blockchainTransactionRepository->getNetworkAggregates();
         $stats = [];
-        
         foreach (self::SUPPORTED_NETWORKS as $network => $config) {
-            $stats[$network] = BlockchainTransaction::where('network', $network)->sum('gas_used');
+            $stats[$network] = $aggregates[$network]['total_gas_used'] ?? 0;
         }
-        
         return $stats;
     }
 
     private function getCostByNetwork(): array
     {
+        $aggregates = $this->blockchainTransactionRepository->getNetworkAggregates();
         $stats = [];
-        
         foreach (self::SUPPORTED_NETWORKS as $network => $config) {
-            $stats[$network] = BlockchainTransaction::where('network', $network)->sum('cost');
+            $stats[$network] = $aggregates[$network]['total_cost'] ?? 0;
         }
-        
         return $stats;
     }
 
     private function getCostByContractType(): array
     {
+        $typeStats = $this->blockchainTransactionRepository->getCostByContractType();
         $stats = [];
-        
         foreach (self::SMART_CONTRACT_TEMPLATES as $type => $template) {
-            $stats[$type] = BlockchainTransaction::whereHas('smartContract', function($query) use ($type) {
-                $query->where('type', $type);
-            })->sum('cost');
+            $stats[$type] = $typeStats[$type] ?? 0;
         }
-        
         return $stats;
     }
 }

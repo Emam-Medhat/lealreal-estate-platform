@@ -43,6 +43,45 @@ class SystemController extends Controller
         return view('admin.system.monitoring');
     }
 
+    public function viewLog($filename)
+    {
+        // Sanitize filename to prevent directory traversal
+        $filename = basename($filename);
+        $path = storage_path('logs/' . $filename);
+
+        if (!file_exists($path)) {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+
+        try {
+            // Read up to 100KB from the end of file
+            $size = filesize($path);
+            $maxBytes = 100 * 1024; // 100KB
+            
+            $content = '';
+            if ($size > 0) {
+                $handle = fopen($path, 'rb');
+                if ($size > $maxBytes) {
+                    fseek($handle, -$maxBytes, SEEK_END);
+                    $content = fread($handle, $maxBytes);
+                    // Adjust to first newline to avoid partial line
+                    $newlinePos = strpos($content, "\n");
+                    if ($newlinePos !== false) {
+                        $content = substr($content, $newlinePos + 1);
+                    }
+                    $content = "[... Truncated, showing last 100KB ...]\n" . $content;
+                } else {
+                    $content = fread($handle, $size);
+                }
+                fclose($handle);
+            }
+            
+            return response()->json(['content' => $content]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function security()
     {
         return view('admin.system.security');

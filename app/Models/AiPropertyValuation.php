@@ -19,6 +19,7 @@ class AiPropertyValuation extends Model
         'estimated_value',
         'confidence_score',
         'valuation_method',
+        'valuation_model',
         'market_analysis',
         'comparable_properties',
         'adjustment_factors',
@@ -28,6 +29,11 @@ class AiPropertyValuation extends Model
         'status',
         'created_by',
         'updated_by',
+        'data_points',
+        'property_features',
+        'market_conditions',
+        'notes',
+        'metadata',
     ];
 
     protected $casts = [
@@ -40,6 +46,10 @@ class AiPropertyValuation extends Model
         'valuation_metadata' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'data_points' => 'array',
+        'property_features' => 'array',
+        'market_conditions' => 'array',
+        'metadata' => 'array',
     ];
 
     /**

@@ -250,7 +250,7 @@ class CustomReport extends Model
 
     public function canBeUsedBy($user): bool
     {
-        if ($this->user_id === $user->id) {
+        if ($this->created_by == $user->id) {
             return true;
         }
 
@@ -263,12 +263,12 @@ class CustomReport extends Model
 
     public function canBeEditedBy($user): bool
     {
-        return $this->user_id === $user->id;
+        return $this->created_by == $user->id;
     }
 
     public function canBeDeletedBy($user): bool
     {
-        return $this->user_id === $user->id;
+        return $this->created_by == $user->id;
     }
 
     public function canBeDuplicatedBy($user): bool
@@ -279,7 +279,7 @@ class CustomReport extends Model
     public function duplicate($userId = null)
     {
         $newReport = $this->replicate();
-        $newReport->user_id = $userId ?? $this->user_id;
+        $newReport->created_by = $userId ?? $this->created_by;
         $newReport->name = $this->name . ' (نسخة)';
         $newReport->is_public = false;
         $newReport->is_template = false;

@@ -45,59 +45,84 @@
                         <i class="fas fa-plus w-4 ml-2"></i>
                         إضافة مستخدم
                     </a>
-                    <a href="#" onclick="alert('User details page requires a user ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('admin.users.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-eye w-4 ml-2"></i>
-                        عرض المستخدم
-                    </a>
-                    <a href="#" onclick="alert('User edit page requires a user ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-edit w-4 ml-2"></i>
-                        تعديل المستخدم
+                        عرض المستخدمين
                     </a>
                     <a href="<?php echo e(route('admin.agents.index')); ?>"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-user-tie w-4 ml-2"></i>
                         الوكلاء
                     </a>
-                    <a href="#" onclick="alert('Property details page requires a property ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('admin.properties.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-eye w-4 ml-2"></i>
-                        عرض العقار
+                        عرض العقارات
                     </a>
-                    <a href="#" onclick="alert('Blog post details page requires a post ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('admin.blog.posts.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-eye w-4 ml-2"></i>
-                        عرض المقال
+                        عرض المقالات
                     </a>
-                    <a href="#" onclick="alert('Blog post edit page requires a post ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-edit w-4 ml-2"></i>
-                        تعديل المقال
-                    </a>
-                    <a href="#" onclick="alert('News details page requires a news ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('admin.news.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-eye w-4 ml-2"></i>
-                        عرض الخبر
+                        عرض الأخبار
                     </a>
-                    <a href="#" onclick="alert('Developer details page requires a developer ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('developer.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-eye w-4 ml-2"></i>
-                        عرض المطور
+                        عرض المطورين
                     </a>
-                    <a href="#" onclick="alert('Investor details page requires an investor ID')" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                    <a href="<?php echo e(route('developer.edit', ['developer' => 'id'])); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-edit w-4 ml-2"></i>
-                        تعديل المطور
-                    </a>
-                    <a href="<?php echo e(route('investor.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         المستثمرين
                     </a>
-                    <a href="<?php echo e(route('investor.show', ['investor' => 'id'])); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-eye w-4 ml-2"></i>
-                        عرض المستثمر
-                    </a>
-                    <a href="<?php echo e(route('investor.edit', ['investor' => 'id'])); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-edit w-4 ml-2"></i>
-                        تعديل المستثمر
-                    </a>
-                    <a href="<?php echo e(route('investor.stats.public')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.stats.public')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-line w-4 ml-2"></i>
                         إحصائيات
+                    </a>
+                </div>
+            </div>
+
+            <!-- Enterprise Section -->
+            <div class="nav-section">
+                <button onclick="toggleSection('enterprise')"
+                    class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-purple-50 transition-colors text-gray-700 group">
+                    <div class="flex items-center">
+                        <i class="fas fa-building w-5 ml-3 text-gray-500"></i>
+                        <span class="font-medium">المؤسسات</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="enterprise-arrow"></i>
+                </button>
+                <div id="enterprise-submenu" class="hidden mt-2 space-y-1 mr-8">
+                    <a href="<?php echo e(route('enterprise.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('enterprise.dashboard') ? 'bg-purple-50 text-purple-600' : ''); ?>">
+                        <i class="fas fa-tachometer-alt w-4 ml-2"></i>
+                        لوحة التحكم
+                    </a>
+                    <a href="<?php echo e(route('enterprise.accounts')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('enterprise.accounts*') ? 'bg-purple-50 text-purple-600' : ''); ?>">
+                        <i class="fas fa-users w-4 ml-2"></i>
+                        الحسابات
+                    </a>
+                    <a href="<?php echo e(route('enterprise.subscriptions')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('enterprise.subscriptions*') ? 'bg-purple-50 text-purple-600' : ''); ?>">
+                        <i class="fas fa-crown w-4 ml-2"></i>
+                        الاشتراكات
+                    </a>
+                    <a href="<?php echo e(route('enterprise.billing')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('enterprise.billing') ? 'bg-purple-50 text-purple-600' : ''); ?>">
+                        <i class="fas fa-file-invoice-dollar w-4 ml-2"></i>
+                        الفواتير
+                    </a>
+                    <a href="<?php echo e(route('enterprise.reports')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('enterprise.reports') ? 'bg-purple-50 text-purple-600' : ''); ?>">
+                        <i class="fas fa-chart-bar w-4 ml-2"></i>
+                        التقارير
                     </a>
                 </div>
             </div>
@@ -128,13 +153,13 @@
                         <i class="fas fa-building w-4 ml-2"></i>
                         الشركات
                     </a>
-                    <a href="<?php echo e(route('projects.index')); ?>" 
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('projects.*') ? 'bg-emerald-50 text-emerald-600' : ''); ?>">
+                    <a href="<?php echo e(route('projects.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('projects.*') ? 'bg-emerald-50 text-emerald-600' : ''); ?>">
                         <i class="fas fa-project-diagram w-4 ml-2"></i>
                         المشاريع
                     </a>
-                    <a href="<?php echo e(route('properties.search.index')); ?>" 
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('properties.search.*') ? 'bg-emerald-50 text-emerald-600' : ''); ?>">
+                    <a href="<?php echo e(route('properties.search.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('properties.search.*') ? 'bg-emerald-50 text-emerald-600' : ''); ?>">
                         <i class="fas fa-search-location w-4 ml-2"></i>
                         بحث متقدم
                     </a>
@@ -195,7 +220,7 @@
                     <a href="<?php echo e(route('admin.widgets.index')); ?>"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('admin.widgets.*') ? 'bg-amber-50 text-amber-600' : ''); ?>">
                         <i class="fas fa-puzzle-piece w-4 ml-2"></i>
-ودجات
+                        ودجات
                     </a>
                 </div>
             </div>
@@ -211,19 +236,23 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="sales-arrow"></i>
                 </button>
                 <div id="sales-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('leads.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('leads.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-funnel-dollar w-4 ml-2"></i>
                         العملاء
                     </a>
-                    <a href="<?php echo e(route('leads.pipeline')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('leads.pipeline')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-stream w-4 ml-2"></i>
                         خطوات
                     </a>
-                    <a href="<?php echo e(route('lead-scoring.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('lead-scoring.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-sort-amount-up w-4 ml-2"></i>
                         تقييم
                     </a>
-                    <a href="<?php echo e(route('lead-conversions.analytics')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('lead-conversions.analytics')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-pie w-4 ml-2"></i>
                         تحليلات
                     </a>
@@ -314,7 +343,8 @@
                         <i class="fas fa-users w-4 ml-2"></i>
                         الفرق
                     </a>
-                    <a href="<?php echo e(route('maintenance.reports.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('maintenance.reports.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-bar w-4 ml-2"></i>
                         تقارير
                     </a>
@@ -389,47 +419,58 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="investment-arrow"></i>
                 </button>
                 <div id="investment-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('investor.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users w-4 ml-2"></i>
                         المستثمرين
                     </a>
-                    <a href="<?php echo e(route('investor.dashboard.quick.stats')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.dashboard.quick.stats')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-tachometer-alt w-4 ml-2"></i>
                         لوحة المستثمر
                     </a>
-                    <a href="<?php echo e(route('investors.opportunities.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('investors.opportunities.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('investors.opportunities.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('investors.opportunities.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-lightbulb w-4 ml-2"></i>
                         الفرص
                     </a>
-                    <a href="<?php echo e(route('investor.funds.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.funds.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-coins w-4 ml-2"></i>
                         الصناديق
                     </a>
-                    <a href="<?php echo e(route('investor.crowdfunding.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.crowdfunding.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users-cog w-4 ml-2"></i>
                         التمويل الجماعي
                     </a>
-                    <a href="<?php echo e(route('investor.portfolio.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.portfolio.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-briefcase w-4 ml-2"></i>
                         المحفظة
                     </a>
-                    <a href="<?php echo e(route('investor.transactions.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.transactions.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-exchange-alt w-4 ml-2"></i>
                         المعاملات
                     </a>
-                    <a href="<?php echo e(route('investor.roi.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.roi.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-calculator w-4 ml-2"></i>
                         ROI
                     </a>
-                    <a href="<?php echo e(route('investor.risk.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.risk.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-shield-alt w-4 ml-2"></i>
                         تقييم المخاطر
                     </a>
-                    <a href="<?php echo e(route('investor.defi.loans.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.defi.loans.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         قروض DeFi
                     </a>
-                    <a href="<?php echo e(route('investor.defi.staking.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('investor.defi.staking.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-layer-group w-4 ml-2"></i>
                         تخزين DeFi
                     </a>
@@ -494,30 +535,97 @@
                 </div>
             </div>
 
+            <!-- AI Intelligence Section -->
+            <div class="nav-section">
+                <button onclick="toggleSection('ai')"
+                    class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors text-gray-700 group">
+                    <div class="flex items-center">
+                        <i class="fas fa-robot w-5 ml-3 text-purple-600"></i>
+                        <span class="font-medium">الذكاء الاصطناعي</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="ai-arrow"></i>
+                </button>
+                <div id="ai-submenu" class="hidden mt-2 space-y-1 mr-8">
+                    <a href="<?php echo e(route('ai.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-tachometer-alt w-4 ml-2"></i>
+                        لوحة التحكم
+                    المركزية
+                    </a>
+                    <a href="<?php echo e(route('ai.smart-search')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-search-plus w-4 ml-2"></i>
+                        البحث الذكي (NL)
+                    </a>
+                    <a href="<?php echo e(route('ai.chat')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-comments-alt w-4 ml-2"></i>
+                        المستشار العقاري
+                    </a>
+                    <a href="<?php echo e(route('ai.valuation.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-home w-4 ml-2"></i>
+                        تقييم العقارات الآلي
+                    </a>
+                    <a href="<?php echo e(route('ai.price-prediction')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-chart-line w-4 ml-2"></i>
+                        توقع أسعار السوق
+                    </a>
+                    <a href="<?php echo e(route('ai.images')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-magic w-4 ml-2"></i>
+                        تحليل الصور والعيوب
+                    </a>
+                    <a href="<?php echo e(route('ai.descriptions')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-pen w-4 ml-2"></i>
+                        مولد الوصف الذكي
+                    </a>
+                    <a href="<?php echo e(route('ai.fraud-detection')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-user-secret w-4 ml-2"></i>
+                        كشف الاحتيال والمخاطر
+                    </a>
+                    <a href="<?php echo e(route('ai.virtual-reality')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-vr-cardboard w-4 ml-2"></i>
+                        الواقع الافتراضي (VR)
+                    </a>
+                    <a href="<?php echo e(route('ai.virtual-staging')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-couch w-4 ml-2"></i>
+                        التأثيث الافتراضي
+                    </a>
+                    <a href="<?php echo e(route('ai.investment-advisor')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
+                        مساعد الاستثمار
+                    </a>
+                    <a href="<?php echo e(route('ai.market-insights')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-poll w-4 ml-2"></i>
+                        رؤى واحصائيات السوق
+                    </a>
+                    <a href="<?php echo e(route('ai.analytics')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-microscope w-4 ml-2"></i>
+                        تحليلات أداء النماذج
+                    </a>
+                </div>
+            </div>
+
             <!-- Advanced Analytics Section -->
             <div class="nav-section">
                 <button onclick="toggleSection('analytics')"
                     class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50 transition-colors text-gray-700 group">
                     <div class="flex items-center">
-                        <i class="fas fa-brain w-5 ml-3 text-gray-500"></i>
+                        <i class="fas fa-chart-bar w-5 ml-3 text-gray-500"></i>
                         <span class="font-medium">التحليلات المتقدمة</span>
                     </div>
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="analytics-arrow"></i>
                 </button>
                 <div id="analytics-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('ai.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-microchip w-4 ml-2"></i>
-                        الذكاء الاصطناعي
-                    </a>
-                    <a href="<?php echo e(route('analytics.market.trends')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('analytics.market.trends')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-globe-americas w-4 ml-2"></i>
                         اتجاهات
                     </a>
-                    <a href="<?php echo e(route('analytics.behavior.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('analytics.behavior.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-user-check w-4 ml-2"></i>
                         السلوك
                     </a>
-                    <a href="<?php echo e(route('analytics.heatmap.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('analytics.heatmap.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-fire w-4 ml-2"></i>
                         الخرائط الحرارية
                     </a>
@@ -564,15 +672,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="metaverse-arrow"></i>
                 </button>
                 <div id="metaverse-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('blockchain.metaverse.properties')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.metaverse.properties')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-globe w-4 ml-2"></i>
                         العقارات الافتراضية
                     </a>
-                    <a href="<?php echo e(route('blockchain.metaverse.marketplace')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.metaverse.marketplace')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-shopping-cart w-4 ml-2"></i>
                         السوق الافتراضي
                     </a>
-                    <a href="<?php echo e(route('blockchain.metaverse.nft')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.metaverse.nft')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-certificate w-4 ml-2"></i>
                         NFT
                     </a>
@@ -590,15 +701,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="geospatial-arrow"></i>
                 </button>
                 <div id="geospatial-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('blockchain.geospatial.analysis')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.geospatial.analysis')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-area w-4 ml-2"></i>
                         التحليلات المكانية
                     </a>
-                    <a href="<?php echo e(route('blockchain.geospatial.security')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.geospatial.security')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-shield-alt w-4 ml-2"></i>
                         مقاييس الأمان
                     </a>
-                    <a href="<?php echo e(route('blockchain.geospatial.intelligence')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.geospatial.intelligence')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-satellite w-4 ml-2"></i>
                         الاستخبارات المكانية
                     </a>
@@ -616,15 +730,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="legal-arrow"></i>
                 </button>
                 <div id="legal-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('blockchain.legal.compliance')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.legal.compliance')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-check-shield w-4 ml-2"></i>
                         تدقيق الامتثال
                     </a>
-                    <a href="<?php echo e(route('blockchain.legal.notary')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.legal.notary')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-stamp w-4 ml-2"></i>
                         الكاتب العدل المركزي
                     </a>
-                    <a href="<?php echo e(route('blockchain.legal.signatures')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.legal.signatures')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-pen-nib w-4 ml-2"></i>
                         التوقيعات الإلكترونية
                     </a>
@@ -749,15 +866,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="bigdata-arrow"></i>
                 </button>
                 <div id="bigdata-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('bigdata.predictive-ai')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('bigdata.predictive-ai')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-microchip w-4 ml-2"></i>
                         الذكاء الاصطناعي التنبؤي
                     </a>
-                    <a href="<?php echo e(route('bigdata.heatmaps')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('bigdata.heatmaps')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-fire w-4 ml-2"></i>
                         الخرائط الحرارية
                     </a>
-                    <a href="<?php echo e(route('bigdata.sentiment-analysis')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('bigdata.sentiment-analysis')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-comment-dots w-4 ml-2"></i>
                         تحليل المشاعر
                     </a>
@@ -775,15 +895,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="defi-arrow"></i>
                 </button>
                 <div id="defi-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('defi.crowdfunding.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('defi.crowdfunding.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users w-4 ml-2"></i>
                         التمويل الجماعي
                     </a>
-                    <a href="<?php echo e(route('defi.loans.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('defi.loans.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         قروض DeFi
                     </a>
-                    <a href="<?php echo e(route('defi.risk-assessment.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('defi.risk-assessment.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-exclamation-circle w-4 ml-2"></i>
                         تقييم المخاطر
                     </a>
@@ -801,51 +924,63 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="developer-arrow"></i>
                 </button>
                 <div id="developer-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('developer.bim.models')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.bim.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.bim.models')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.bim.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-cube w-4 ml-2"></i>
                         نماذج BIM
                     </a>
-                    <a href="<?php echo e(route('developer.construction')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.construction') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.construction')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.construction') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-tools w-4 ml-2"></i>
                         البناء
                     </a>
-                    <a href="<?php echo e(route('developer.permits.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.permits.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.permits.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.permits.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-file-signature w-4 ml-2"></i>
                         التصاريح
                     </a>
-                    <a href="<?php echo e(route('developer.projects.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.projects.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.projects.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.projects.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-project-diagram w-4 ml-2"></i>
                         المشاريع
                     </a>
-                    <a href="<?php echo e(route('developer.phases.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.phases.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.phases.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.phases.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-layer-group w-4 ml-2"></i>
                         مراحل المشروع
                     </a>
-                    <a href="<?php echo e(route('developer.contractors.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.contractors.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.contractors.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.contractors.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-hard-hat w-4 ml-2"></i>
                         المقاولون
                     </a>
-                    <a href="<?php echo e(route('developer.milestones.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.milestones.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.milestones.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.milestones.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-flag-checkered w-4 ml-2"></i>
                         المراحل الرئيسية
                     </a>
-                    <a href="<?php echo e(route('developer.financings.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.financings.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.financings.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.financings.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-money-bill-wave w-4 ml-2"></i>
                         التمويل
                     </a>
-                    <a href="<?php echo e(route('developer.certifications.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.certifications.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.certifications.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.certifications.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-certificate w-4 ml-2"></i>
                         الشهادات
                     </a>
-                    <a href="<?php echo e(route('developer.portfolios.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.portfolios.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.portfolios.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.portfolios.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-folder-open w-4 ml-2"></i>
                         معرض الأعمال
                     </a>
-                    <a href="<?php echo e(route('developer.construction-updates.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.construction-updates.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.construction-updates.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.construction-updates.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-hard-hat w-4 ml-2"></i>
                         تحديثات البناء
                     </a>
-                    <a href="<?php echo e(route('developer.metaverses.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.metaverses.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('developer.metaverses.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('developer.metaverses.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-vr-cardboard w-4 ml-2"></i>
                         الميتافيرس
                     </a>
@@ -863,15 +998,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="ai-arrow"></i>
                 </button>
                 <div id="ai-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('ai.price.prediction')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ai.price.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ai.price-prediction')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ai.price.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-crystal-ball w-4 ml-2"></i>
                         متوقع الأسعار
                     </a>
-                    <a href="<?php echo e(route('ai.fraud-detection.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ai.fraud.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ai.fraud-detection')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ai.fraud.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-user-secret w-4 ml-2"></i>
                         كشف الاحتيال
                     </a>
-                    <a href="<?php echo e(route('ai.virtual.reality')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ai.virtual.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ai.virtual-reality')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ai.virtual.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-vr-cardboard w-4 ml-2"></i>
                         العرض الافتراضي
                     </a>
@@ -889,15 +1027,18 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="supreme-cms-arrow"></i>
                 </button>
                 <div id="supreme-cms-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('cms.blog.network')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('cms.blog.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('cms.blog.network')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('cms.blog.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-blog w-4 ml-2"></i>
                         شبكة المدونات
                     </a>
-                    <a href="<?php echo e(route('cms.menu.builder')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('cms.menu.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('cms.menu.builder')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('cms.menu.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-bars w-4 ml-2"></i>
                         منشئ القوائم
                     </a>
-                    <a href="<?php echo e(route('cms.media.library')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('cms.media.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('cms.media.library')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('cms.media.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-photo-video w-4 ml-2"></i>
                         المكتبة الوسائطية
                     </a>
@@ -915,19 +1056,23 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="agent-crm-arrow"></i>
                 </button>
                 <div id="agent-crm-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('crm.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.index') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('crm.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.index') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-users w-4 ml-2"></i>
                         العملاء
                     </a>
-                    <a href="<?php echo e(route('crm.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.dashboard') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('crm.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.dashboard') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-address-book w-4 ml-2"></i>
                         لوحة CRM
                     </a>
-                    <a href="<?php echo e(route('crm.offers')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.offers') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('crm.offers')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.offers') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-handshake w-4 ml-2"></i>
                         نظام العروض
                     </a>
-                    <a href="<?php echo e(route('crm.commissions')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.commissions') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('crm.commissions')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('crm.commissions') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-percent w-4 ml-2"></i>
                         العمولات
                     </a>
@@ -978,47 +1123,58 @@
                         <i class="fas fa-cog w-4 ml-2"></i>
                         إعدادات SEO العامة
                     </a>
-                    <a href="<?php echo e(route('marketing.campaigns')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('marketing.campaigns') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('marketing.campaigns')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('marketing.campaigns') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-ad w-4 ml-2"></i>
                         الحملات الإعلانية
                     </a>
-                    <a href="<?php echo e(route('ads.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.index') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ads.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.index') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-bullseye w-4 ml-2"></i>
                         إدارة الإعلانات
                     </a>
-                    <a href="<?php echo e(route('ads.promoted-listings.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.promoted-listings.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ads.promoted-listings.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.promoted-listings.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-star w-4 ml-2"></i>
                         القوائم المروجة
                     </a>
-                    <a href="<?php echo e(route('ads.placements.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.placements.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ads.placements.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.placements.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-map-marker-alt w-4 ml-2"></i>
                         أماكن الإعلانات
                     </a>
-                    <a href="<?php echo e(route('ads.budgets.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.budgets.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ads.budgets.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.budgets.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-wallet w-4 ml-2"></i>
                         الميزانيات
                     </a>
-                    <a href="<?php echo e(route('ads.campaigns.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.campaigns.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ads.campaigns.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.campaigns.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-layer-group w-4 ml-2"></i>
                         حملات المنصة
                     </a>
-                    <a href="<?php echo e(route('admin.banner-ads.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('admin.banner-ads.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('admin.banner-ads.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('admin.banner-ads.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-image w-4 ml-2"></i>
                         إعلانات البانر
                     </a>
-                    <a href="<?php echo e(route('ads.analytics.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.analytics.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ads.analytics.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('ads.analytics.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-chart-area w-4 ml-2"></i>
                         تحليلات الإعلانات
                     </a>
-                    <a href="<?php echo e(route('surveys.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('surveys.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('surveys.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('surveys.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-poll w-4 ml-2"></i>
                         الاستبيانات
                     </a>
-                    <a href="<?php echo e(route('marketing.reviews')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('marketing.reviews') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('marketing.reviews')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('marketing.reviews') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-star w-4 ml-2"></i>
                         مركز التقييمات
                     </a>
-                    <a href="<?php echo e(route('marketing.complaints')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('marketing.complaints') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('marketing.complaints')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('marketing.complaints') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-exclamation-triangle w-4 ml-2"></i>
                         الشكاوى
                     </a>
@@ -1056,52 +1212,63 @@
                         <i class="fas fa-chart-pie w-4 ml-2"></i>
                         التحليلات المالية
                     </a>
-                    <a href="<?php echo e(route('taxes.payments.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('taxes.payments.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('taxes.payments.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('taxes.payments.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-credit-card w-4 ml-2"></i>
                         المدفوعات الضريبية
                     </a>
-                    <a href="<?php echo e(route('payments.invoices.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.invoices.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.invoices.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.invoices.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-file-invoice-dollar w-4 ml-2"></i>
                         الفواتير
                     </a>
-                    <a href="<?php echo e(route('payments.wallets.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.wallets.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.wallets.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.wallets.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-wallet w-4 ml-2"></i>
                         المحافظ الرقمية
                     </a>
-                    <a href="<?php echo e(route('payments.crypto.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.crypto.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.crypto.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.crypto.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-bitcoin w-4 ml-2"></i>
                         العملات الرقمية
                     </a>
-                    <a href="<?php echo e(route('orders.index')); ?>" 
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('orders.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('orders.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('orders.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-shopping-bag w-4 ml-2"></i>
                         طلباتي
                     </a>
-                    <a href="<?php echo e(route('payments.gateways.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.gateways.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.gateways.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.gateways.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-network-wired w-4 ml-2"></i>
                         بوابات الدفع
                     </a>
-                    <a href="<?php echo e(route('payments.methods.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.methods.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.methods.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.methods.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-credit-card w-4 ml-2"></i>
                         طرق الدفع
                     </a>
-                    <a href="<?php echo e(route('payments.receipts.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.receipts.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.receipts.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.receipts.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-receipt w-4 ml-2"></i>
                         الإيصالات
                     </a>
-                    <a href="<?php echo e(route('payments.refunds.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.refunds.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.refunds.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.refunds.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-undo w-4 ml-2"></i>
                         الاسترداد
                     </a>
-                    <a href="<?php echo e(route('payments.escrow.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.escrow.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.escrow.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.escrow.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         الضمان (Escrow)
                     </a>
-                    <a href="<?php echo e(route('payments.mortgage.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.mortgage.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.mortgage.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.mortgage.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-home w-4 ml-2"></i>
                         الرهن العقاري
                     </a>
-                    <a href="<?php echo e(route('payments.calculator.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.calculator.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('payments.calculator.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('payments.calculator.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-calculator w-4 ml-2"></i>
                         حاسبة الرهن
                     </a>
@@ -1168,59 +1335,73 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="global-services-arrow"></i>
                 </button>
                 <div id="global-services-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('currency.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('currency*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('currency.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('currency*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-money-bill-wave w-4 ml-2"></i>
                         العملات
                     </a>
-                    <a href="<?php echo e(route('language.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('language*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('language.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('language*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-language w-4 ml-2"></i>
                         متعدد اللغات
                     </a>
-                    <a href="<?php echo e(route('gamification.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('gamification*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('gamification.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('gamification*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-gamepad w-4 ml-2"></i>
                         التحفيز والنقاط
                     </a>
-                    <a href="<?php echo e(route('gamification.achievements')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('gamification.achievements')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-trophy w-4 ml-2"></i>
                         الإنجازات
                     </a>
-                    <a href="<?php echo e(route('gamification.leaderboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('gamification.leaderboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-list-ol w-4 ml-2"></i>
                         لوحة المتصدرين
                     </a>
-                    <a href="<?php echo e(route('blockchain.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('blockchain*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('blockchain.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('blockchain*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-link w-4 ml-2"></i>
                         البلوك تشين
                     </a>
-                    <a href="<?php echo e(route('blockchain.smartcontracts.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.smartcontracts.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-file-contract w-4 ml-2"></i>
                         العقود الذكية
                     </a>
-                    <a href="<?php echo e(route('blockchain.nfts.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('blockchain.nfts.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-images w-4 ml-2"></i>
                         NFTs
                     </a>
-                    <a href="<?php echo e(route('ai.descriptions')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('ai*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('ai.descriptions')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('ai*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-robot w-4 ml-2"></i>
                         خدمات الذكاء الاصطناعي
                     </a>
-                    <a href="<?php echo e(route('ai.index')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('ai.index')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-brain w-4 ml-2"></i>
                         لوحة الذكاء الاصطناعي
                     </a>
-                    <a href="<?php echo e(route('ai.chat')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('ai.chat')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-comments w-4 ml-2"></i>
                         المحادثة الذكية
                     </a>
-                    <a href="<?php echo e(route('enterprise.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('enterprise*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                    <a href="<?php echo e(route('enterprise.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->is('enterprise*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
                         <i class="fas fa-building w-4 ml-2"></i>
                         حلول المؤسسات
                     </a>
-                    <a href="<?php echo e(route('enterprise.accounts')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('enterprise.accounts')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-building w-4 ml-2"></i>
                         حسابات المؤسسات
                     </a>
-                    <a href="<?php echo e(route('enterprise.dashboard')); ?>" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="<?php echo e(route('enterprise.dashboard')); ?>"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-users w-4 ml-2"></i>
                         المستأجرين
                     </a>
@@ -1450,7 +1631,7 @@
     function toggleProfileSection() {
         const profileContent = document.getElementById('profile-content');
         const chevron = document.getElementById('profile-chevron');
-        
+
         profileContent.classList.toggle('hidden');
         chevron.classList.toggle('rotate-180');
     }
@@ -1499,7 +1680,7 @@
         } else if (currentRoute.includes('/gamification')) {
             toggleSection('global-services');
         } else if (currentRoute.includes('/ai')) {
-            toggleSection('global-services');
+            toggleSection('ai');
         } else if (currentRoute.includes('/enterprise')) {
             toggleSection('global-services');
         } else if (currentRoute.includes('/modules')) {

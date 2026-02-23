@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,8 @@ class AdminAgentController extends Controller
 
     public function create(): View
     {
-        return view('admin.agents.create');
+        $companies = Company::active()->orderBy('name')->get();
+        return view('admin.agents.create', compact('companies'));
     }
 
     public function store(Request $request)
@@ -55,7 +57,7 @@ class AdminAgentController extends Controller
             // Agent Information
             'agent_license_number' => 'nullable|string|max:100',
             'agent_license_expiry' => 'nullable|date',
-            'agent_company' => 'nullable|string|max:255',
+            'company_id' => 'nullable|exists:companies,id',
             'agent_commission_rate' => 'nullable|numeric|min:0|max:100',
             'average_response_time' => 'nullable|numeric|min:0',
             'client_satisfaction_rate' => 'nullable|numeric|min:0|max:9.99',

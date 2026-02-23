@@ -1,79 +1,122 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AiPropertyValuationController;
-use App\Http\Controllers\AiPricePredictorController;
-use App\Http\Controllers\AiPropertyDescriptionController;
-use App\Http\Controllers\AiChatbotController;
-use App\Http\Controllers\AiFraudDetectionController;
-use App\Http\Controllers\AiImageRecognitionController;
-use App\Http\Controllers\AiInsightsController;
-use App\Http\Controllers\AiInvestmentAdvisorController;
-use App\Http\Controllers\AiLeadScoringController;
-use App\Http\Controllers\AiMarketAnalysisController;
-use App\Http\Controllers\AiPropertyMatchingController;
-use App\Http\Controllers\AiRentalPriceOptimizationController;
-use App\Http\Controllers\AiVirtualStagingController;
+use App\Http\Controllers\AI\SmartSearchController;
+use App\Http\Controllers\AI\RecommendationController;
+use App\Http\Controllers\AI\PricePredictionController;
+use App\Http\Controllers\AI\ChatbotController;
+use App\Http\Controllers\AI\ImageAnalysisController;
 
+// Debug
+Route::get('/debug-ai-test', fn() => 'ai routes loaded')->name('debug.ai.test');
+
+// ─── Web Views (auth required) ────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('ai')->name('ai.')->group(function () {
-    // Main AI Dashboard & Features (from AIController)
+
     Route::get('/dashboard', [\App\Http\Controllers\AI\AIController::class, 'dashboard'])->name('dashboard');
     Route::get('/chat', [\App\Http\Controllers\AI\AIController::class, 'chat'])->name('chat');
     Route::get('/analytics', [\App\Http\Controllers\AI\AIController::class, 'analytics'])->name('analytics');
     Route::get('/descriptions', [\App\Http\Controllers\AI\AIController::class, 'descriptions'])->name('descriptions');
     Route::get('/images', [\App\Http\Controllers\AI\AIController::class, 'images'])->name('images');
+    Route::get('/price-prediction', [\App\Http\Controllers\AI\AIController::class, 'pricePrediction'])->name('price-prediction');
+    Route::get('/fraud-detection', [\App\Http\Controllers\AI\AIController::class, 'fraudDetection'])->name('fraud-detection');
+    Route::get('/virtual-reality', [\App\Http\Controllers\AI\AIController::class, 'virtualReality'])->name('virtual-reality');
+    Route::get('/virtual-staging', [\App\Http\Controllers\AI\AIController::class, 'virtualStaging'])->name('virtual-staging');
+    Route::get('/investment-advisor', [\App\Http\Controllers\AI\AIController::class, 'investmentAdvisor'])->name('investment-advisor');
+    Route::get('/market-insights', [\App\Http\Controllers\AI\AIController::class, 'marketInsights'])->name('market-insights');
 
-    // AI Dashboard/Index
-    Route::get('/', [AiInsightsController::class, 'index'])->name('index');
-    
-    // AI Insights API Routes
-    Route::post('/insights/generate', [AiInsightsController::class, 'generateInsights'])->name('insights.generate');
-    Route::get('/anomaly-detection', [AiInsightsController::class, 'anomalyDetection'])->name('anomaly-detection');
-    Route::get('/pattern-recognition', [AiInsightsController::class, 'patternRecognition'])->name('pattern-recognition');
-    Route::get('/predictive-insights', [AiInsightsController::class, 'predictiveInsights'])->name('predictive-insights');
-    Route::get('/recommendations', [AiInsightsController::class, 'recommendations'])->name('recommendations');
-    
-    // Property Valuation
-    Route::get('/valuation/dashboard', [AiPropertyValuationController::class, 'dashboard'])->name('valuation.dashboard');
-    Route::resource('/valuation', AiPropertyValuationController::class);
+    // NEW: Smart Search UI
+    Route::get('/smart-search', [SmartSearchController::class, 'index'])->name('smart-search');
 
-    // Price Prediction
-    Route::get('/price-predictor/dashboard', [AiPricePredictorController::class, 'dashboard'])->name('price-predictor.dashboard');
-    Route::resource('/price-predictor', AiPricePredictorController::class);
+    // NEW: Chatbot UI
+    Route::get('/chatbot-ui', [ChatbotController::class, 'index'])->name('chatbot-ui');
 
-    // Property Description Generator
-    Route::get('/description-generator/dashboard', [AiPropertyDescriptionController::class, 'dashboard'])->name('description-generator.dashboard');
-    Route::resource('/description-generator', AiPropertyDescriptionController::class);
+    // Valuation Dashboard
+    Route::get('/property-valuation', [\App\Http\Controllers\AI\AIController::class, 'propertyValuation'])->name('valuation.dashboard');
+    Route::get('/property-valuation/index', [\App\Http\Controllers\AI\AIController::class, 'propertyValuation'])->name('valuation.index');
+    Route::post('/property-valuation', [\App\Http\Controllers\AI\AIController::class, 'storeValuation'])->name('valuation.store');
+    Route::get('/property-valuation/{id}', [\App\Http\Controllers\AI\AIController::class, 'showValuation'])->name('valuation.show');
+    Route::get('/property-valuation/{id}/download', [\App\Http\Controllers\AI\AIController::class, 'downloadValuation'])->name('valuation.download');
+});
 
-    // Chatbot
-    Route::get('/chatbot/dashboard', [AiChatbotController::class, 'dashboard'])->name('chatbot.dashboard');
-    Route::resource('/chatbot', AiChatbotController::class);
-    Route::post('/chatbot/{conversation}/message', [AiChatbotController::class, 'sendMessage'])->name('chatbot.message');
+// ─── API Routes ───────────────────────────────────────────────────────────
+Route::prefix('api/ai')->name('api.ai.')->group(function () {
 
-    // Fraud Detection
-    Route::get('/fraud-detection', [AiFraudDetectionController::class, 'index'])->name('fraud-detection.index');
+    // ── Smart NL Search  (guest + auth) ──────────────────────────────────
+    Route::post(
+        '/search',
+        [SmartSearchController::class, 'search']
+    )
+        ->middleware(['throttle:ai-search', 'ai.rate:search'])
+        ->name('search');
 
-    // Image Recognition
-    Route::get('/image-recognition', [AiImageRecognitionController::class, 'index'])->name('image-recognition.index');
+    // ── Recommendations ───────────────────────────────────────────────────
+    Route::middleware(['auth'])->group(function () {
+        Route::get(
+            '/recommendations',
+            [RecommendationController::class, 'forUser']
+        )
+            ->middleware('ai.rate:search')
+            ->name('recommendations.user');
+    });
 
-    // Insights
-    Route::get('/insights', [AiInsightsController::class, 'index'])->name('insights.index');
+    Route::get(
+        '/recommendations/{propertyId}/similar',
+        [RecommendationController::class, 'similar']
+    )
+        ->middleware('ai.rate:search')
+        ->name('recommendations.similar');
 
-    // Investment Advisor
-    Route::get('/investment-advisor', [AiInvestmentAdvisorController::class, 'index'])->name('investment-advisor.index');
+    // ── Price Prediction ──────────────────────────────────────────────────
+    Route::post(
+        '/price-prediction',
+        [PricePredictionController::class, 'predict']
+    )
+        ->middleware('ai.rate:price_prediction')
+        ->name('price-prediction.predict');
 
-    // Lead Scoring
-    Route::get('/lead-scoring', [AiLeadScoringController::class, 'index'])->name('lead-scoring.index');
+    Route::post(
+        '/price-prediction/property/{propertyId}',
+        [PricePredictionController::class, 'predictForProperty']
+    )
+        ->middleware('ai.rate:price_prediction')
+        ->name('price-prediction.property');
 
-    // Market Analysis
-    Route::get('/market-analysis', [AiMarketAnalysisController::class, 'index'])->name('market-analysis.index');
+    // ── Chatbot  (session-based, no auth required) ───────────────────────
+    Route::post(
+        '/chat',
+        [ChatbotController::class, 'chat']
+    )
+        ->middleware('ai.rate:chat')
+        ->name('chat.message');
 
-    // Property Matching
-    Route::get('/property-matching', [AiPropertyMatchingController::class, 'index'])->name('property-matching.index');
+    Route::delete(
+        '/chat/{sessionId}',
+        [ChatbotController::class, 'clearSession']
+    )
+        ->name('chat.clear');
 
-    // Rental Price Optimization
-    Route::get('/rental-optimization', [AiRentalPriceOptimizationController::class, 'index'])->name('rental-optimization.index');
+    // ── Image Analysis ────────────────────────────────────────────────────
+    Route::middleware(['auth'])->group(function () {
+        Route::post(
+            '/images/analyze',
+            [ImageAnalysisController::class, 'upload']
+        )
+            ->middleware('ai.rate:image_analysis')
+            ->name('images.analyze');
 
-    // Virtual Staging
-    Route::get('/virtual-staging', [AiVirtualStagingController::class, 'index'])->name('virtual-staging.index');
+        Route::get(
+            '/images/{id}/result',
+            [ImageAnalysisController::class, 'result']
+        )
+            ->name('images.result');
+
+        // Admin-only: by URL
+        Route::post(
+            '/images/analyze-url',
+            [ImageAnalysisController::class, 'analyzeUrl']
+        )
+            ->middleware('ai.rate:image_analysis')
+            ->name('images.analyze-url');
+    });
 });

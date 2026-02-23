@@ -7,6 +7,7 @@ use App\Models\PropertyType;
 use App\Models\PropertyLocation;
 use App\Models\PropertyPrice;
 use App\Models\PropertyMedia;
+use App\Models\PropertyDocument;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -221,9 +222,9 @@ class OptimizedPropertyService
     public function createProperty(array $data, User $user): Property
     {
         return DB::transaction(function () use ($data, $user) {
-            $property = Property::create([
-                'agent_id' => $user->id, // Assuming current user is the agent
-                'property_type' => $data['property_type_id'] ?? null, // Correct column name from model definition
+            $propertyData = [
+                'agent_id' => $data['agent_id'] ?? $user->id,
+                'property_type' => $data['property_type_id'] ?? ($data['property_type'] ?? null),
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'listing_type' => $data['listing_type'],
@@ -236,22 +237,54 @@ class OptimizedPropertyService
                 'inquiries_count' => 0,
                 'price' => $data['price'],
                 'currency' => $data['currency'] ?? 'SAR',
-                'address' => $data['address'] ?? '', // Fallback to empty string if missing
-                'city' => $data['city'] ?? '',       // Fallback to empty string if missing
+                'address' => $data['address'] ?? '',
+                'city' => $data['city'] ?? '',
                 'state' => $data['state'] ?? null,
-                'country' => $data['country'] ?? '',     // Fallback to empty string if missing
-                'postal_code' => $data['postal_code'] ?? null, // Mapped directly to properties table
-                'latitude' => $data['latitude'] ?? null,      // Mapped directly to properties table
-                'longitude' => $data['longitude'] ?? null,    // Mapped directly to properties table
+                'country' => $data['country'] ?? '',
+                'postal_code' => $data['postal_code'] ?? null,
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
                 'bedrooms' => $data['bedrooms'] ?? 0,
                 'bathrooms' => $data['bathrooms'] ?? 0,
                 'floors' => $data['floors'] ?? 0,
                 'year_built' => $data['year_built'] ?? null,
-                'area' => $data['area'] ?? 0, // Ensure area is not null
+                'area' => $data['area'] ?? 0,
                 'area_unit' => $data['area_unit'] ?? 'sq_m',
                 'virtual_tour_url' => $data['virtual_tour_url'] ?? null,
+                'video_url' => $data['video_url'] ?? null,
                 'slug' => Str::slug($data['title']) . '-' . Str::random(5),
-            ]);
+                // Additional fields from AgentPropertyController
+                'nearby_places' => $data['nearby_places'] ?? null,
+                'schools' => $data['schools'] ?? null,
+                'hospitals' => $data['hospitals'] ?? null,
+                'shopping_centers' => $data['shopping_centers'] ?? null,
+                'restaurants' => $data['restaurants'] ?? null,
+                'parks' => $data['parks'] ?? null,
+                'universities' => $data['universities'] ?? null,
+                'metro_stations' => $data['metro_stations'] ?? null,
+                'cinemas' => $data['cinemas'] ?? null,
+                'gyms' => $data['gyms'] ?? null,
+                'transportation' => $data['transportation'] ?? $data['public_transport'] ?? null,
+                'ownership_type' => $data['ownership_type'] ?? null,
+                'deed_number' => $data['deed_number'] ?? null,
+                'registration_number' => $data['registration_number'] ?? null,
+                'zoning' => $data['zoning'] ?? null,
+                'building_permit' => $data['building_permit'] ?? null,
+                'occupancy_permit' => $data['occupancy_permit'] ?? null,
+                'energy_rating' => $data['energy_rating'] ?? null,
+                'solar_panels' => $data['solar_panels'] ?? false,
+                'water_heating' => $data['water_heating'] ?? null,
+                'insulation' => $data['insulation'] ?? null,
+                'double_glazing' => $data['double_glazing'] ?? false,
+                'air_conditioning' => $data['air_conditioning'] ?? null,
+                // Fields that might be in property or details, passing to property just in case
+                'specifications' => $data['specifications'] ?? null,
+                'materials' => $data['materials'] ?? null,
+                'interior_features' => $data['interior_features'] ?? null,
+                'exterior_features' => $data['exterior_features'] ?? null,
+            ];
+
+            $property = Property::create($propertyData);
 
             // Create related records
             $property->details()->create([
@@ -288,7 +321,7 @@ class OptimizedPropertyService
             $property->price()->create([
                 'price' => $data['price'],
                 'currency' => $data['currency'] ?? 'SAR',
-                'price_type' => $data['listing_type'],
+                'price_type' => $data['listing_type'], // listing_type is used as price_type usually
                 'price_per_sqm' => (isset($data['area']) && $data['area'] > 0) ? $data['price'] / $data['area'] : null,
                 'is_negotiable' => $data['is_negotiable'] ?? false,
                 'includes_vat' => $data['includes_vat'] ?? false,
@@ -299,6 +332,10 @@ class OptimizedPropertyService
                 'payment_terms' => $data['payment_terms'] ?? null,
                 'effective_date' => now()->toDateString(),
                 'is_active' => true,
+                // Additional price fields
+                'rent_period' => $data['rent_period'] ?? null,
+                'original_price' => $data['original_price'] ?? null,
+                'discount_percentage' => $data['discount_percentage'] ?? null,
             ]);
 
             if (isset($data['amenities'])) {
@@ -333,8 +370,69 @@ class OptimizedPropertyService
         return DB::transaction(function () use ($property, $data) {
             $oldStatus = $property->status;
 
+            // Prepare update data for property model
+            $propertyUpdateData = array_filter([
+                'title' => $data['title'] ?? null,
+                'description' => $data['description'] ?? null,
+                'listing_type' => $data['listing_type'] ?? null,
+                'status' => $data['status'] ?? null,
+                'featured' => $data['featured'] ?? null,
+                'premium' => $data['premium'] ?? null,
+                'price' => $data['price'] ?? null,
+                'currency' => $data['currency'] ?? null,
+                'address' => $data['address'] ?? null,
+                'city' => $data['city'] ?? null,
+                'state' => $data['state'] ?? null,
+                'country' => $data['country'] ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
+                'bedrooms' => $data['bedrooms'] ?? null,
+                'bathrooms' => $data['bathrooms'] ?? null,
+                'floors' => $data['floors'] ?? null,
+                'year_built' => $data['year_built'] ?? null,
+                'area' => $data['area'] ?? null,
+                'area_unit' => $data['area_unit'] ?? null,
+                'virtual_tour_url' => $data['virtual_tour_url'] ?? null,
+                'video_url' => $data['video_url'] ?? null,
+                'nearby_places' => $data['nearby_places'] ?? null,
+                'schools' => $data['schools'] ?? null,
+                'hospitals' => $data['hospitals'] ?? null,
+                'shopping_centers' => $data['shopping_centers'] ?? null,
+                'restaurants' => $data['restaurants'] ?? null,
+                'parks' => $data['parks'] ?? null,
+                'universities' => $data['universities'] ?? null,
+                'metro_stations' => $data['metro_stations'] ?? null,
+                'cinemas' => $data['cinemas'] ?? null,
+                'gyms' => $data['gyms'] ?? null,
+                'transportation' => $data['transportation'] ?? $data['public_transport'] ?? null,
+                'ownership_type' => $data['ownership_type'] ?? null,
+                'deed_number' => $data['deed_number'] ?? null,
+                'registration_number' => $data['registration_number'] ?? null,
+                'zoning' => $data['zoning'] ?? null,
+                'building_permit' => $data['building_permit'] ?? null,
+                'occupancy_permit' => $data['occupancy_permit'] ?? null,
+                'energy_rating' => $data['energy_rating'] ?? null,
+                'solar_panels' => $data['solar_panels'] ?? null,
+                'water_heating' => $data['water_heating'] ?? null,
+                'insulation' => $data['insulation'] ?? null,
+                'double_glazing' => $data['double_glazing'] ?? null,
+                'air_conditioning' => $data['air_conditioning'] ?? null,
+                'specifications' => $data['specifications'] ?? null,
+                'materials' => $data['materials'] ?? null,
+                'interior_features' => $data['interior_features'] ?? null,
+                'exterior_features' => $data['exterior_features'] ?? null,
+                'listing_expires_at' => $data['listing_expires_at'] ?? null,
+            ], function($v) { return !is_null($v); });
+
+            if (isset($data['property_type_id'])) {
+                $propertyUpdateData['property_type'] = $data['property_type_id'];
+            } elseif (isset($data['property_type'])) {
+                $propertyUpdateData['property_type'] = $data['property_type'];
+            }
+
             // Update property
-            $property->update($data);
+            $property->update($propertyUpdateData);
 
             // Update related records
             if ($property->details) {
@@ -367,6 +465,9 @@ class OptimizedPropertyService
                         'maintenance_fees' => $data['maintenance_fees'] ?? $propertyPrice->maintenance_fees,
                         'payment_frequency' => $data['payment_frequency'] ?? $propertyPrice->payment_frequency,
                         'payment_terms' => $data['payment_terms'] ?? $propertyPrice->payment_terms,
+                        'rent_period' => $data['rent_period'] ?? $propertyPrice->rent_period,
+                        'original_price' => $data['original_price'] ?? $propertyPrice->original_price,
+                        'discount_percentage' => $data['discount_percentage'] ?? $propertyPrice->discount_percentage,
                     ]);
 
                     // Record price history
@@ -395,7 +496,7 @@ class OptimizedPropertyService
             }
 
             // Record status change
-            if ($oldStatus != ($data['status'] ?? $oldStatus)) {
+            if ($oldStatus != ($data['status'] ?? $oldStatus) && isset($data['status'])) {
                 \App\Models\PropertyStatusHistory::recordStatusChange(
                     $property->id,
                     $oldStatus,
@@ -635,5 +736,175 @@ class OptimizedPropertyService
                 ->where('status', 'active')
                 ->get();
         });
+    }
+
+    /**
+     * Handle image upload with optimization
+     * @return array The created media records
+     */
+    public function handleImageUpload($images, int $propertyId): array
+    {
+        // Check if property has any images already to determine featured status
+        $hasImages = PropertyMedia::where('property_id', $propertyId)
+            ->where('media_type', 'image')
+            ->exists();
+
+        $createdMedia = [];
+
+        foreach ($images as $index => $image) {
+            $path = $image->store('properties/' . $propertyId, 'public');
+
+            $media = PropertyMedia::create([
+                'property_id' => $propertyId,
+                'media_type' => 'image',
+                'file_path' => $path,
+                'file_name' => $image->getClientOriginalName(),
+                'file_size' => $image->getSize(),
+                'file_type' => $image->getMimeType(),
+                'sort_order' => $index,
+                'is_featured' => !$hasImages && $index === 0,
+                'is_primary' => !$hasImages && $index === 0,
+                'uploaded_by' => auth()->id() ?? null
+            ]);
+
+            $createdMedia[] = $media;
+        }
+        
+        Cache::forget("property_details_{$propertyId}");
+        
+        return $createdMedia;
+    }
+
+    /**
+     * Handle room-specific image upload with optimization
+     * @param array $roomImages Array of images keyed by room type
+     * @param int $propertyId
+     * @return array The created media records
+     */
+    public function handleRoomImageUpload(array $roomImages, int $propertyId): array
+    {
+        $createdMedia = [];
+        $allowedRoomTypes = ['living_room', 'kitchen', 'bedrooms', 'bathrooms', 'entrance', 'outdoor', 'garage', 'amenities'];
+
+        foreach ($roomImages as $roomType => $images) {
+            if (!in_array($roomType, $allowedRoomTypes)) {
+                continue;
+            }
+
+            if (!is_array($images)) {
+                continue;
+            }
+            
+            foreach ($images as $index => $image) {
+                if (!$image instanceof \Illuminate\Http\UploadedFile) {
+                    continue;
+                }
+
+                $path = $image->store('properties/' . $propertyId . '/' . $roomType, 'public');
+
+                $media = PropertyMedia::create([
+                    'property_id' => $propertyId,
+                    'media_type' => 'image',
+                    'file_path' => $path,
+                    'file_name' => $image->getClientOriginalName(),
+                    'file_size' => $image->getSize(),
+                    'file_type' => $image->getMimeType(),
+                    'room_type' => $roomType,
+                    'sort_order' => $index,
+                    'is_featured' => false,
+                    'is_primary' => false,
+                    'uploaded_by' => auth()->id() ?? null
+                ]);
+
+                $createdMedia[] = $media;
+            }
+        }
+        
+        Cache::forget("property_details_{$propertyId}");
+        
+        return $createdMedia;
+    }
+
+    /**
+     * Handle document upload
+     * @return array The created document records
+     */
+    public function handleDocumentUpload($documents, int $propertyId): array
+    {
+        $createdDocuments = [];
+        foreach ($documents as $document) {
+            $path = $document->store('properties/' . $propertyId . '/documents', 'public');
+
+            $doc = PropertyDocument::create([
+                'property_id' => $propertyId,
+                'title' => $document->getClientOriginalName(),
+                'file_path' => $path,
+                'file_name' => $document->getClientOriginalName(),
+                'file_type' => $document->getClientOriginalExtension(),
+                'mime_type' => $document->getMimeType(),
+                'file_size' => $document->getSize(),
+                'status' => 'active'
+            ]);
+            $createdDocuments[] = $doc;
+        }
+        
+        Cache::forget("property_details_{$propertyId}");
+        return $createdDocuments;
+    }
+
+    /**
+     * Handle video upload
+     * @return array The created video records
+     */
+    public function handleVideoUpload($videos, int $propertyId): array
+    {
+        $createdVideos = [];
+        foreach ($videos as $index => $video) {
+            $path = $video->store('properties/' . $propertyId . '/videos', 'public');
+
+            $media = PropertyMedia::create([
+                'property_id' => $propertyId,
+                'media_type' => 'video',
+                'file_path' => $path,
+                'file_name' => $video->getClientOriginalName(),
+                'file_size' => $video->getSize(),
+                'file_type' => $video->getMimeType(),
+                'sort_order' => $index,
+                'is_featured' => false,
+                'is_primary' => false
+            ]);
+            $createdVideos[] = $media;
+        }
+        
+        Cache::forget("property_details_{$propertyId}");
+        return $createdVideos;
+    }
+
+    /**
+     * Handle floor plan upload
+     * @return array The created floor plan records
+     */
+    public function handleFloorPlanUpload($floorPlans, int $propertyId): array
+    {
+        $createdFloorPlans = [];
+        foreach ($floorPlans as $index => $floorPlan) {
+            $path = $floorPlan->store('properties/' . $propertyId . '/floor_plans', 'public');
+
+            $media = PropertyMedia::create([
+                'property_id' => $propertyId,
+                'media_type' => 'floor_plan',
+                'file_path' => $path,
+                'file_name' => $floorPlan->getClientOriginalName(),
+                'file_size' => $floorPlan->getSize(),
+                'file_type' => $floorPlan->getMimeType(),
+                'sort_order' => $index,
+                'is_featured' => false,
+                'is_primary' => false
+            ]);
+            $createdFloorPlans[] = $media;
+        }
+        
+        Cache::forget("property_details_{$propertyId}");
+        return $createdFloorPlans;
     }
 }

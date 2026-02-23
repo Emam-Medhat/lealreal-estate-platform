@@ -57,6 +57,9 @@ class StorePropertyRequest extends FormRequest
             'price' => 'required|numeric|min:0|max:999999999.99',
             'currency' => 'required|string|in:SAR,USD,EUR,GBP,AED',
             'is_negotiable' => 'boolean',
+            'original_price' => 'nullable|numeric|min:0|max:999999999.99',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
+            'rent_period' => 'nullable|in:Daily,Weekly,Monthly,Yearly',
             'includes_vat' => 'boolean',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'service_charges' => 'nullable|numeric|min:0|max:999999.99',
@@ -86,26 +89,38 @@ class StorePropertyRequest extends FormRequest
             // Additional Information
             'nearby_places' => 'nullable|array',
             'schools' => 'nullable|array',
+            'universities' => 'nullable|array',
             'hospitals' => 'nullable|array',
             'shopping_centers' => 'nullable|array',
             'restaurants' => 'nullable|array',
             'public_transport' => 'nullable|array',
+            'metro_stations' => 'nullable|array',
+            'parks' => 'nullable|array',
+            'cinemas' => 'nullable|array',
+            'gyms' => 'nullable|array',
 
             // Legal and Compliance
             'ownership_type' => 'nullable|in:freehold,leasehold,shared_ownership',
             'deed_number' => 'nullable|string|max:100',
+            'plot_number' => 'nullable|string|max:100',
             'registration_number' => 'nullable|string|max:100',
             'zoning' => 'nullable|string|max:100',
+            'zoning_type' => 'nullable|string|max:100',
+            'land_use' => 'nullable|string|max:100',
+            'property_tax' => 'nullable|numeric|min:0',
+            'tax_year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
             'building_permit' => 'nullable|string|max:100',
             'occupancy_permit' => 'nullable|string|max:100',
 
             // Energy and Sustainability
             'energy_rating' => 'nullable|string|max:50',
             'solar_panels' => 'boolean',
-            'water_heating' => 'nullable|in:solar,electric,gas,heat_pump',
-            'insulation' => 'nullable|in:poor,fair,good,excellent',
+            'heating_system' => 'nullable|string|max:100',
+            'water_heating' => 'nullable|string',
+            'insulation' => 'nullable|string',
             'double_glazing' => 'boolean',
-            'air_conditioning' => 'nullable|in:none,window,central,split,heat_pump',
+            'air_conditioning' => 'nullable|string',
+            'ventilation' => 'nullable|string',
         ];
     }
 
@@ -203,9 +218,45 @@ class StorePropertyRequest extends FormRequest
             ]);
         }
 
+        if ($this->has('transportation') && is_string($this->transportation)) {
+            $this->merge([
+                'transportation' => array_map('trim', explode(',', $this->transportation))
+            ]);
+        }
+
         if ($this->has('public_transport') && is_string($this->public_transport)) {
             $this->merge([
                 'public_transport' => array_map('trim', explode(',', $this->public_transport))
+            ]);
+        }
+
+        if ($this->has('universities') && is_string($this->universities)) {
+            $this->merge([
+                'universities' => array_map('trim', explode(',', $this->universities))
+            ]);
+        }
+
+        if ($this->has('metro_stations') && is_string($this->metro_stations)) {
+            $this->merge([
+                'metro_stations' => array_map('trim', explode(',', $this->metro_stations))
+            ]);
+        }
+
+        if ($this->has('parks') && is_string($this->parks)) {
+            $this->merge([
+                'parks' => array_map('trim', explode(',', $this->parks))
+            ]);
+        }
+
+        if ($this->has('cinemas') && is_string($this->cinemas)) {
+            $this->merge([
+                'cinemas' => array_map('trim', explode(',', $this->cinemas))
+            ]);
+        }
+
+        if ($this->has('gyms') && is_string($this->gyms)) {
+            $this->merge([
+                'gyms' => array_map('trim', explode(',', $this->gyms))
             ]);
         }
 

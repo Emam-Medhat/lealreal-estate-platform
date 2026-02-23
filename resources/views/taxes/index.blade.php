@@ -112,7 +112,7 @@
                             </a>
                         </div>
                         <div class="col-md-2 col-sm-4 col-6 mb-3">
-                            <a href="{{ route('taxes.capital-gains.index') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column justify-content-center align-items-center">
+                            <a href="{{ route('taxes.capitalGains.index') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column justify-content-center align-items-center">
                                 <i class="fas fa-chart-line fa-2x mb-2"></i>
                                 <span>أرباح رأسمالية</span>
                             </a>

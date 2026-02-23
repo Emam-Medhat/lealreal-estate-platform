@@ -125,15 +125,15 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * @param int $modelId
+     * @param int|string $modelId
      * @param array $columns
      * @param array $relations
      * @param array $appends
      * @return Model|null
      */
     public function findById(
-        int $modelId,
-        array $columns = ['id'],
+        int|string $modelId,
+        array $columns = ['*'],
         array $relations = [],
         array $appends = []
     ): ?Model {
@@ -164,11 +164,11 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * @param int $modelId
+     * @param int|string $modelId
      * @param array $payload
      * @return bool
      */
-    public function update(int $modelId, array $payload): bool
+    public function update(int|string $modelId, array $payload): bool
     {
         DB::beginTransaction();
         try {
@@ -193,10 +193,10 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * @param int $modelId
+     * @param int|string $modelId
      * @return bool
      */
-    public function deleteById(int $modelId): bool
+    public function deleteById(int|string $modelId): bool
     {
         DB::beginTransaction();
         try {
@@ -221,10 +221,10 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * @param int $modelId
+     * @param int|string $modelId
      * @return bool
      */
-    public function restoreById(int $modelId): bool
+    public function restoreById(int|string $modelId): bool
     {
         DB::beginTransaction();
         try {
@@ -242,10 +242,10 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * @param int $modelId
+     * @param int|string $modelId
      * @return bool
      */
-    public function permanentlyDeleteById(int $modelId): bool
+    public function permanentlyDeleteById(int|string $modelId): bool
     {
         DB::beginTransaction();
         try {
@@ -263,10 +263,10 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * @param int $modelId
+     * @param int|string $modelId
      * @return Model|null
      */
-    public function findOnlyTrashedById(int $modelId): ?Model
+    public function findOnlyTrashedById(int|string $modelId): ?Model
     {
         return $this->remember("findOnlyTrashedById_{$modelId}", function () use ($modelId) {
             return $this->model->onlyTrashed()->find($modelId);

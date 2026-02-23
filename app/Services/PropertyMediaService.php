@@ -20,11 +20,11 @@ class PropertyMediaService
         
         return PropertyMedia::create([
             'property_id' => $property->id,
-            'type' => $type,
+            'media_type' => $type,
             'file_path' => $path,
             'file_name' => $file->getClientOriginalName(),
             'file_size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
+            'file_type' => $file->getMimeType(),
             'sort_order' => $sortOrder,
             'is_featured' => $isFeatured,
         ]);
@@ -36,7 +36,7 @@ class PropertyMediaService
     public function storeMultipleMedia(Property $property, array $files, string $type): array
     {
         $results = [];
-        $currentCount = $property->media()->where('type', $type)->count();
+        $currentCount = $property->media()->where('media_type', $type)->count();
 
         foreach ($files as $index => $file) {
             $isFeatured = false;
@@ -69,12 +69,12 @@ class PropertyMediaService
      */
     public function setFeatured(PropertyMedia $media): bool
     {
-        if ($media->type !== 'image') {
+        if ($media->media_type !== 'image') {
             return false;
         }
 
         $media->property->media()
-            ->where('type', 'image')
+            ->where('media_type', 'image')
             ->update(['is_featured' => false]);
 
         return $media->update(['is_featured' => true]);

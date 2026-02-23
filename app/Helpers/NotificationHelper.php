@@ -80,6 +80,52 @@ class NotificationHelper
     }
 
     /**
+     * Get notification color class based on type
+     */
+    public static function getColorClass($type)
+    {
+        $colors = [
+            'property_created' => 'ni-blue',
+            'property_sold' => 'ni-green',
+            'property_reserved' => 'ni-orange',
+            'payment_received' => 'ni-green',
+            'payment_overdue' => 'ni-red',
+            'client_registered' => 'ni-purple',
+            'appointment_scheduled' => 'ni-blue',
+            'appointment_completed' => 'ni-green',
+            'system_error' => 'ni-red',
+            'system_maintenance' => 'ni-orange',
+            'document_uploaded' => 'ni-blue',
+            'contract_signed' => 'ni-green',
+        ];
+
+        return $colors[$type] ?? 'ni-blue';
+    }
+
+    /**
+     * Get notification icon based on type
+     */
+    public static function getIcon($type)
+    {
+        $icons = [
+            'property_created' => 'fas fa-home',
+            'property_sold' => 'fas fa-check-circle',
+            'property_reserved' => 'fas fa-clock',
+            'payment_received' => 'fas fa-money-bill-wave',
+            'payment_overdue' => 'fas fa-exclamation-triangle',
+            'client_registered' => 'fas fa-user-plus',
+            'appointment_scheduled' => 'fas fa-calendar-check',
+            'appointment_completed' => 'fas fa-check-double',
+            'system_error' => 'fas fa-times-circle',
+            'system_maintenance' => 'fas fa-tools',
+            'document_uploaded' => 'fas fa-file-upload',
+            'contract_signed' => 'fas fa-signature',
+        ];
+
+        return $icons[$type] ?? 'fas fa-bell';
+    }
+
+    /**
      * Send notification based on user preferences
      */
     public static function sendNotification($userId, $title, $message, $type = 'info', $data = [])
@@ -141,5 +187,19 @@ class NotificationHelper
         ]);
 
         return $sent;
+    }
+}
+
+if (!function_exists('getNotificationColorClass')) {
+    function getNotificationColorClass($type)
+    {
+        return NotificationHelper::getColorClass($type);
+    }
+}
+
+if (!function_exists('getNotificationIcon')) {
+    function getNotificationIcon($type)
+    {
+        return NotificationHelper::getIcon($type);
     }
 }

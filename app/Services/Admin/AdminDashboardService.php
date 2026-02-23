@@ -6,6 +6,7 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use App\Repositories\Contracts\CompanyRepositoryInterface;
 use App\Repositories\Contracts\InvestorRepositoryInterface;
+use App\Repositories\Contracts\ActivityLogRepositoryInterface;
 use Carbon\Carbon;
 
 class AdminDashboardService
@@ -14,17 +15,20 @@ class AdminDashboardService
     protected $propertyRepository;
     protected $companyRepository;
     protected $investorRepository;
+    protected $activityLogRepository;
 
     public function __construct(
         UserRepositoryInterface $userRepository,
         PropertyRepositoryInterface $propertyRepository,
         CompanyRepositoryInterface $companyRepository,
-        InvestorRepositoryInterface $investorRepository
+        InvestorRepositoryInterface $investorRepository,
+        ActivityLogRepositoryInterface $activityLogRepository
     ) {
         $this->userRepository = $userRepository;
         $this->propertyRepository = $propertyRepository;
         $this->companyRepository = $companyRepository;
         $this->investorRepository = $investorRepository;
+        $this->activityLogRepository = $activityLogRepository;
     }
 
     public function getDashboardStats(): array
@@ -49,9 +53,7 @@ class AdminDashboardService
             ],
             'recent_users' => $this->userRepository->getRecent(5),
             'recent_properties' => $this->propertyRepository->getLatest(5),
-            'recent_activity' => [
-                ['icon' => 'users', 'message' => 'System initialized', 'time' => now()->diffForHumans()],
-            ],
+            'recent_activity' => $this->activityLogRepository->getRecent(5),
         ];
     }
 }

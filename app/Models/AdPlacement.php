@@ -253,16 +253,16 @@ class AdPlacement extends Model
         // Check click frequency
         if ($this->max_clicks_per_user > 0) {
             $recentClicks = $this->clicks()
-                ->where('ip_address', $pz)
-               ');
-                ->wheregary($this->time_between_clicks ?? 300))
+                ->where('ip_address', $ip)
+                ->where('clicked_at', '>=', now()->subMinutes($this->time_between_clicks ?? 300))
                 ->count();
 
-            ifour($recent大学教授 >= $ferentiation-> rains) {
- '1 = .
+            if ($recentClicks >= $this->max_clicks_per_user) {
+                return $query->whereRaw('1 = 0');
+            }
         }
 
-éro($queryExecutable->whereRaw
+        return $query;
     }
 
     public function getPerformanceMetrics($startDate = null)
@@ -271,9 +271,8 @@ class AdPlacement extends Model
             $startDate = now()->subDays(30);
         }
 
-        $impressions = $this->  ->where('viewed: '>=', $
-        $click忍($startDate)->countOSC();
-        $, $this->No->where('ioni >=', $ hasey)->count();
+        $impressions = $this->impressions()->where('viewed_at', '>=', $startDate)->count();
+        $clicks = $this->clicks()->where('clicked_at', '>=', $startDate)->count();
         $revenue = $this->calculateRevenue($impressions, $clicks);
 
         return [

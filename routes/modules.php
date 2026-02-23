@@ -25,19 +25,23 @@ Route::prefix('modules')->name('modules.')->group(function () {
     
     // Individual Module Routes
     Route::get('/{moduleKey}', function($moduleKey) {
-        return view("modules.{$moduleKey}.index");
+        // For now, redirect to dashboard with module info
+        return redirect()->route('modules.dashboard')->with('module', $moduleKey);
     })->name('show');
     
     Route::get('/{moduleKey}/configure', function($moduleKey) {
-        return view("modules.{$moduleKey}.configure");
+        // For now, redirect to dashboard with module info
+        return redirect()->route('modules.dashboard')->with('info', "Configuration for module: {$moduleKey} - Coming soon!");
     })->name('configure');
     
     Route::get('/{moduleKey}/settings', function($moduleKey) {
-        return view("modules.{$moduleKey}.settings");
+        // For now, redirect to dashboard with module info
+        return redirect()->route('modules.dashboard')->with('info', "Settings for module: {$moduleKey} - Coming soon!");
     })->name('settings');
-    
+
     Route::get('/{moduleKey}/statistics', function($moduleKey) {
-        return view("modules.{$moduleKey}.statistics");
+        // For now, redirect to dashboard with module info
+        return redirect()->route('modules.dashboard')->with('info', "Statistics for module: {$moduleKey} - Coming soon!");
     })->name('statistics');
 });
 
@@ -49,62 +53,64 @@ Route::get('/modules/{moduleKey}/routes', function($moduleKey) {
     ]);
 });
 
-function getModuleRoutes($moduleKey) {
-    $routes = [
-        'core' => [
-            'properties.index' => '/properties',
-            'properties.create' => '/properties/create',
-            'properties.show' => '/properties/{id}',
-            'properties.edit' => '/properties/{id}/edit',
-            'users.index' => '/users',
-            'agents.index' => '/agents',
-            'companies.index' => '/companies',
-            'leads.index' => '/leads',
-            'investments.index' => '/investments'
-        ],
-        'global_services' => [
-            'currency.index' => '/currency',
-            'currency.converter' => '/currency/converter',
-            'language.index' => '/language',
-            'language.translations' => '/language/translations',
-            'gamification.index' => '/gamification',
-            'gamification.achievements' => '/gamification/achievements',
-            'blockchain.index' => '/blockchain',
-            'blockchain.contracts' => '/blockchain/contracts',
-            'ai.dashboard' => '/ai',
-            'ai.descriptions' => '/ai/descriptions',
-            'enterprise.dashboard' => '/enterprise'
-        ],
-        'advanced_features' => [
-            'iot.index' => '/iot',
-            'iot.devices' => '/iot/devices',
-            'security.index' => '/security',
-            'security.alerts' => '/security/alerts',
-            'analytics.index' => '/analytics',
-            'automation.index' => '/automation'
-        ],
-        'communication' => [
-            'messaging.index' => '/messages',
-            'notifications.index' => '/notifications',
-            'video_calls.index' => '/video-calls',
-            'forums.index' => '/forums',
-            'support.index' => '/support'
-        ],
-        'marketplace' => [
-            'marketplace.index' => '/marketplace',
-            'auctions.index' => '/auctions',
-            'services.index' => '/services',
-            'reviews.index' => '/reviews',
-            'deals.index' => '/deals'
-        ],
-        'admin_tools' => [
-            'admin.index' => '/admin',
-            'settings.index' => '/settings',
-            'logs.index' => '/logs',
-            'backups.index' => '/backups',
-            'maintenance.index' => '/maintenance'
-        ]
-    ];
+if (!function_exists('getModuleRoutes')) {
+    function getModuleRoutes($moduleKey) {
+        $routes = [
+            'core' => [
+                'properties.index' => '/properties',
+                'properties.create' => '/properties/create',
+                'properties.show' => '/properties/{id}',
+                'properties.edit' => '/properties/{id}/edit',
+                'users.index' => '/users',
+                'agents.index' => '/agents',
+                'companies.index' => '/companies',
+                'leads.index' => '/leads',
+                'investments.index' => '/investments'
+            ],
+            'global_services' => [
+                'currency.index' => '/currency',
+                'currency.converter' => '/currency/converter',
+                'language.index' => '/language',
+                'language.translations' => '/language/translations',
+                'gamification.index' => '/gamification',
+                'gamification.achievements' => '/gamification/achievements',
+                'blockchain.index' => '/blockchain',
+                'blockchain.contracts' => '/blockchain/contracts',
+                'ai.dashboard' => '/ai',
+                'ai.descriptions' => '/ai/descriptions',
+                'enterprise.dashboard' => '/enterprise'
+            ],
+            'advanced_features' => [
+                'iot.index' => '/iot',
+                'iot.devices' => '/iot/devices',
+                'security.index' => '/security',
+                'security.alerts' => '/security/alerts',
+                'analytics.index' => '/analytics',
+                'automation.index' => '/automation'
+            ],
+            'communication' => [
+                'messaging.index' => '/messages',
+                'notifications.index' => '/notifications',
+                'video_calls.index' => '/video-calls',
+                'forums.index' => '/forums',
+                'support.index' => '/support'
+            ],
+            'marketplace' => [
+                'marketplace.index' => '/marketplace',
+                'auctions.index' => '/auctions',
+                'services.index' => '/services',
+                'reviews.index' => '/reviews',
+                'deals.index' => '/deals'
+            ],
+            'admin_tools' => [
+                'admin.index' => '/admin',
+                'settings.index' => '/settings',
+                'logs.index' => '/logs',
+                'backups.index' => '/backups',
+                'maintenance.index' => '/maintenance'
+            ]
+        ];
 
-    return $routes[$moduleKey] ?? [];
+        return $routes[$moduleKey] ?? [];
+    }
 }

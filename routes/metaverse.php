@@ -36,5 +36,7 @@ Route::middleware(['auth'])->prefix('metaverse')->name('metaverse.')->group(func
 Route::middleware(['auth'])->prefix('blockchain/metaverse')->name('blockchain.metaverse.')->group(function () {
     Route::get('/properties', [MetaverseController::class, 'properties'])->name('properties');
     Route::get('/marketplace', [MetaverseController::class, 'marketplace'])->name('marketplace');
-    Route::get('/nft', [MetaverseController::class, 'nft'])->name('nft');
+    Route::match(['get', 'post'], '/nft', [MetaverseController::class, 'nft'])->name('nft');
+    Route::post('/nfts/{nft}/buy', [MetaverseController::class, 'buyNft'])->name('nfts.buy');
+    Route::post('/nfts/{nft}/sell', [MetaverseController::class, 'sellNft'])->name('nfts.sell');
 });

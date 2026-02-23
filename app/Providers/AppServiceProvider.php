@@ -2,8 +2,21 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
+use App\Models\CustomReport;
+use App\Policies\CustomReportPolicy;
+// AI Services
+use App\Services\AI\SmartSearchService;
+use App\Services\AI\RecommendationService;
+use App\Services\AI\PricePredictionService;
+use App\Services\AI\ChatbotService;
+use App\Services\AI\ImageAnalysisService;
+use App\Services\AI\FilterTransformer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +36,14 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Repositories\Contracts\PropertyRepositoryInterface::class)
             );
         });
+
+        // ── AI Services (singletons for DI container) ──────────────────
+        $this->app->singleton(SmartSearchService::class);
+        $this->app->singleton(RecommendationService::class);
+        $this->app->singleton(PricePredictionService::class);
+        $this->app->singleton(ChatbotService::class);
+        $this->app->singleton(ImageAnalysisService::class);
+        $this->app->singleton(FilterTransformer::class);
     }
 
     /**
@@ -30,6 +51,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register policies
+        Gate::policy(CustomReport::class, CustomReportPolicy::class);
+
         // Set default string length for older MySQL versions
         Schema::defaultStringLength(191);
 
@@ -41,10 +65,16 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\AgentTask::observe(\App\Observers\AgentTaskObserver::class);
         \App\Models\Lead::observe(\App\Observers\LeadObserver::class);
 
+        // ── AI Rate Limiter ──────────────────────────────────────────────
+        RateLimiter::for('ai-search', function (Request $request) {
+            $limit = config('ai.rate_limits.search_per_minute', 20);
+            $by = $request->user()?->id ?? $request->ip();
+            return Limit::perMinute($limit)->by($by);
+        });
+
         // Force eager loading in development to detect N+1 problems
         if (app()->environment('local')) {
-            \Illuminate\Database\Eloquent\Model::preventLazyLoading(! app()->environment('testing'));
-            \Illuminate\Database\Eloquent\Model::preventSilentlyDiscardingAttributes(! app()->environment('testing'));
+            \Illuminate\Database\Eloquent\Model::preventSilentlyDiscardingAttributes(!app()->environment('testing'));
         }
     }
 }

@@ -54,10 +54,10 @@ class AdminPropertyController extends Controller
         try {
             // Get property types for the dropdown
             $propertyTypes = \App\Models\PropertyType::all();
-            
+
             // Get amenities for checkboxes
             $amenities = \App\Models\PropertyAmenity::all();
-            
+
             // Get features for checkboxes
             $features = \App\Models\PropertyFeature::all();
         } catch (\Exception $e) {
@@ -69,7 +69,7 @@ class AdminPropertyController extends Controller
                 (object) ['id' => 4, 'name' => 'Land'],
                 (object) ['id' => 5, 'name' => 'Commercial'],
             ]);
-            
+
             // Fallback amenities
             $amenities = collect([
                 (object) ['id' => 1, 'name' => 'Swimming Pool', 'icon' => 'fas fa-swimming-pool'],
@@ -78,7 +78,7 @@ class AdminPropertyController extends Controller
                 (object) ['id' => 4, 'name' => 'Security', 'icon' => 'fas fa-shield-alt'],
                 (object) ['id' => 5, 'name' => 'Gym', 'icon' => 'fas fa-dumbbell'],
             ]);
-            
+
             // Fallback features
             $features = collect([
                 (object) ['id' => 1, 'name' => 'Air Conditioning'],
@@ -111,7 +111,7 @@ class AdminPropertyController extends Controller
         try {
             // Generate unique property code
             $propertyCode = 'PROP-' . strtoupper(substr(md5(uniqid()), 0, 8));
-            
+
             // Generate slug from title (optional, not stored in create array below but usually good practice)
             $slug = \Illuminate\Support\Str::slug($request->title) . '-' . strtolower(substr(md5(uniqid()), 0, 6));
 

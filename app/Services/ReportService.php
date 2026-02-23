@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Repositories\InvoiceRepositoryInterface;
-use App\Repositories\PaymentRepositoryInterface;
-use App\Repositories\PropertyRepositoryInterface;
-use App\Repositories\ClientRepositoryInterface;
+use App\Repositories\Contracts\InvoiceRepositoryInterface;
+use App\Repositories\Contracts\PaymentRepositoryInterface;
+use App\Repositories\Contracts\PropertyRepositoryInterface;
+use App\Repositories\Contracts\ClientRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -320,20 +320,50 @@ class ReportService
         $totalRevenue = 0;
         $totalInvoices = 0;
         $totalPaidInvoices = 0;
+        $activeListings = 0;
+        $soldProperties = 0;
+        $totalViews = 0;
+        $totalDaysOnMarket = 0;
+        $propertiesWithDays = 0;
 
         foreach ($performanceData as $data) {
-            $totalRevenue += $data['revenue']['paid_revenue'];
-            $totalInvoices += $data['metrics']['total_invoices'];
-            $totalPaidInvoices += $data['metrics']['paid_invoices'];
+            $totalRevenue += $data['revenue']['paid_revenue'] ?? 0;
+            $totalInvoices += $data['metrics']['total_invoices'] ?? 0;
+            $totalPaidInvoices += $data['metrics']['paid_invoices'] ?? 0;
+
+            $property = $data['property'];
+
+            if (in_array($property->status, ['active', 'published'])) {
+                $activeListings++;
+            }
+
+            if ($property->status === 'sold') {
+                $soldProperties++;
+            }
+
+            $totalViews += $property->views_count ?? 0;
+
+            if ($property->created_at) {
+                $end = $property->sold_date ? \Carbon\Carbon::parse($property->sold_date) : now();
+                $days = $property->created_at->diffInDays($end);
+                $totalDaysOnMarket += $days;
+                $propertiesWithDays++;
+            }
         }
 
+        $count = count($performanceData);
+
         return [
-            'total_properties' => count($performanceData),
+            'total_properties' => $count,
             'total_revenue' => $totalRevenue,
             'total_invoices' => $totalInvoices,
             'total_paid_invoices' => $totalPaidInvoices,
             'overall_conversion_rate' => $totalInvoices > 0 ? ($totalPaidInvoices / $totalInvoices) * 100 : 0,
-            'average_revenue_per_property' => count($performanceData) > 0 ? $totalRevenue / count($performanceData) : 0,
+            'average_revenue_per_property' => $count > 0 ? $totalRevenue / $count : 0,
+            'active_listings' => $activeListings,
+            'sold_properties' => $soldProperties,
+            'average_views' => $count > 0 ? $totalViews / $count : 0,
+            'average_days_on_market' => $propertiesWithDays > 0 ? $totalDaysOnMarket / $propertiesWithDays : 0,
         ];
     }
 

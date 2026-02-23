@@ -12,6 +12,7 @@ Route::middleware(['auth', 'admin'])->prefix('bigdata')->name('bigdata.')->group
     Route::post('/predictive-ai/analyze', [PredictiveAIController::class, 'analyze'])->name('predictive-ai.analyze');
     Route::get('/predictive-ai/predictions', [PredictiveAIController::class, 'getPredictions'])->name('predictive-ai.predictions');
     Route::post('/predictive-ai/generate-report', [PredictiveAIController::class, 'generateReport'])->name('predictive-ai.generate-report');
+    Route::get('/predictive-ai/download-report/{id}', [PredictiveAIController::class, 'downloadReport'])->name('predictive-ai.download-report');
     
     // Heatmaps Route
     Route::get('/heatmaps', [HeatmapController::class, 'index'])->name('heatmaps');

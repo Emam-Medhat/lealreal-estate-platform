@@ -1,228 +1,227 @@
-@extends('admin.layouts.admin')
-
-@section('title', 'لوحة الذكاء الاصطناعي')
+@extends('layouts.dashboard')
 
 @section('content')
-<div class="container-fluid px-4 py-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">لوحة الذكاء الاصطناعي</h1>
-            <p class="text-gray-600 mt-2">مراقبة وإدارة أنظمة الذكاء الاصطناعي</p>
-        </div>
-        <div class="flex space-x-3 space-x-reverse">
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-sync-alt ml-2"></i>
-                تحديث البيانات
-            </button>
-            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                <i class="fas fa-download ml-2"></i>
-                تصدير تقرير
-            </button>
-        </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">إجمالي التوقعات</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $stats['total_predictions'] ?? 0 }}</p>
-                </div>
-                <div class="bg-blue-100 p-3 rounded-lg">
-                    <i class="fas fa-crystal-ball text-blue-600 text-xl"></i>
-                </div>
+    <div class="p-6 bg-gray-50 min-h-screen rtl" dir="rtl">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">📊 لوحة تحكم الذكاء الاصطناعي</h1>
+                <p class="text-gray-600 mt-2">مراقبة الأداء والتكاليف والاستهلاك في الوقت الفعلي</p>
             </div>
-            <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600"><i class="fas fa-arrow-up ml-1"></i>12%</span>
-                <span class="text-gray-500 mr-2">من الشهر الماضي</span>
+            <div class="flex gap-4">
+                <select
+                    class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="{{ now()->month }}">{{ now()->format('F Y') }}</option>
+                </select>
+                <button onclick="window.location.reload()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    تحديث
+                </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">حالات الاحتيال النشطة</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $stats['active_fraud_cases'] ?? 0 }}</p>
+        @if(isset($error))
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-8 rounded-r-lg shadow-sm" role="alert">
+                <p class="font-bold">تنبيه</p>
+                <p>{{ $error }}</p>
+            </div>
+        @endif
+
+        <!-- Top Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Budget Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-blue-50 rounded-xl">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    @php $percent = $budget > 0 ? ($totalSpent / $budget) * 100 : 0; @endphp
+                    <span class="text-sm font-medium {{ $percent > 80 ? 'text-red-600' : 'text-green-600' }}">
+                        {{ round($percent, 1) }}% من الميزانية
+                    </span>
                 </div>
-                <div class="bg-red-100 p-3 rounded-lg">
-                    <i class="fas fa-user-secret text-red-600 text-xl"></i>
+                <h3 class="text-gray-500 text-sm font-medium">إجمالي الإنفاق</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl font-bold">${{ number_format($totalSpent, 2) }}</span>
+                    <span class="text-gray-400 text-sm">/ ${{ number_format($budget, 0) }}</span>
+                </div>
+                <div class="mt-4 w-full bg-gray-100 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-1000"
+                        style="width: {{ min(100, $percent) }}%"></div>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-sm">
-                <span class="text-red-600"><i class="fas fa-arrow-up ml-1"></i>8%</span>
-                <span class="text-gray-500 mr-2">تحتاج مراجعة</span>
+
+            <!-- Predictions Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-purple-50 rounded-xl">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">توقعات الأسعار</h3>
+                <span class="text-2xl font-bold">{{ number_format($stats['total_predictions'] ?? 0) }}</span>
+                <p class="text-gray-400 text-xs mt-2">دقة التوقع: {{ round($stats['avg_prediction_accuracy'] ?? 0, 1) }}%
+                </p>
+            </div>
+
+            <!-- Image Analysis Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-green-50 rounded-xl">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">تحليل الصور</h3>
+                <span class="text-2xl font-bold">{{ number_format($stats['total_image_analyses'] ?? 0) }}</span>
+                <p class="text-gray-400 text-xs mt-2">عقارات تمت معالجتها</p>
+            </div>
+
+            <!-- Searches Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-yellow-50 rounded-xl">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">عمليات البحث الذكية</h3>
+                <span class="text-2xl font-bold">{{ number_format($stats['total_searches'] ?? 0) }}</span>
+                <p class="text-gray-400 text-xs mt-2">استفسارات بصوت طبيعي</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">جولات الواقع الافتراضي</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $stats['vr_tours_count'] ?? 0 }}</p>
-                </div>
-                <div class="bg-purple-100 p-3 rounded-lg">
-                    <i class="fas fa-vr-cardboard text-purple-600 text-xl"></i>
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Usage Chart -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-6">📉 اتجاه الاستهلاك (آخر 14 يوم)</h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="usageChart"></canvas>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600"><i class="fas fa-arrow-up ml-1"></i>25%</span>
-                <span class="text-gray-500 mr-2">زيادة هذا الشهر</span>
-            </div>
-        </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">متوسط دقة التوقعات</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['avg_prediction_accuracy'] ?? 0, 1) }}%</p>
-                </div>
-                <div class="bg-green-100 p-3 rounded-lg">
-                    <i class="fas fa-chart-line text-green-600 text-xl"></i>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600"><i class="fas fa-arrow-up ml-1"></i>3.2%</span>
-                <span class="text-gray-500 mr-2">تحسن الأداء</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Recent Predictions -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">آخر التوقعات</h3>
-            </div>
-            <div class="p-6">
-                @if($recentPredictions->count() > 0)
-                    <div class="space-y-4">
-                        @foreach($recentPredictions->take(5) as $prediction)
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div class="flex items-center">
-                                    <div class="bg-blue-100 p-2 rounded-lg ml-3">
-                                        <i class="fas fa-home text-blue-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-gray-900">عقار #{{ $prediction->property_id ?? 'N/A' }}</p>
-                                        <p class="text-sm text-gray-600">{{ $prediction->created_at->format('Y-m-d H:i') }}</p>
-                                    </div>
-                                </div>
-                                <div class="text-left">
-                                    <p class="font-semibold text-gray-900">{{ number_format($prediction->predicted_price ?? 0, 0) }} ريال</p>
-                                    <p class="text-sm text-gray-600">دقة: {{ number_format($prediction->confidence_score ?? 0, 1) }}%</p>
-                                </div>
+            <!-- Feature Breakdown -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-6">🧱 توزيع التكاليف</h3>
+                <div class="space-y-6">
+                    @foreach($costs as $item)
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span
+                                    class="font-medium text-gray-700">{{ ucfirst(str_replace('_', ' ', $item->feature)) }}</span>
+                                <span class="text-gray-500">${{ number_format($item->total_cost, 2) }}</span>
                             </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-8">
-                        <i class="fas fa-crystal-ball text-gray-300 text-4xl mb-3"></i>
-                        <p class="text-gray-500">لا توجد توقعات حالياً</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-
-        <!-- Fraud Cases -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">حالات الاحتيال</h3>
-            </div>
-            <div class="p-6">
-                @if($fraudCases->count() > 0)
-                    <div class="space-y-4">
-                        @foreach($fraudCases->take(5) as $case)
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div class="flex items-center">
-                                    <div class="bg-red-100 p-2 rounded-lg ml-3">
-                                        <i class="fas fa-exclamation-triangle text-red-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-gray-900">مستخدم #{{ $case->user_id ?? 'N/A' }}</p>
-                                        <p class="text-sm text-gray-600">{{ $case->created_at->format('Y-m-d H:i') }}</p>
-                                    </div>
-                                </div>
-                                <div class="text-left">
-                                    <span class="px-2 py-1 text-xs rounded-full 
-                                        @if($case->risk_level == 'high') bg-red-100 text-red-800
-                                        @elseif($case->risk_level == 'medium') bg-yellow-100 text-yellow-800
-                                        @else bg-green-100 text-green-800 @endif">
-                                        {{ $case->risk_level ?? 'unknown' }}
-                                    </span>
-                                    <p class="text-sm text-gray-600 mt-1">{{ $case->status ?? 'pending' }}</p>
-                                </div>
+                            @php $itemPercent = $totalSpent > 0 ? ($item->total_cost / $totalSpent) * 100 : 0; @endphp
+                            <div class="w-full bg-gray-50 rounded-full h-1.5">
+                                <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ $itemPercent }}%"></div>
                             </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-8">
-                        <i class="fas fa-shield-alt text-gray-300 text-4xl mb-3"></i>
-                        <p class="text-gray-500">لا توجد حالات احتيال حالياً</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Models Status -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">حالة نماذج الذكاء الاصطناعي</h3>
-        </div>
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center">
-                    <div class="relative inline-flex items-center justify-center">
-                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-brain text-green-600 text-2xl"></i>
+                            <div class="flex justify-between mt-1 text-[10px] text-gray-400">
+                                <span>{{ number_format($item->calls) }} طلب</span>
+                                <span>{{ number_format($item->total_tokens) }} Token</span>
+                            </div>
                         </div>
-                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                    </div>
-                    <h4 class="font-semibold text-gray-900 mt-3">نموذج التسعير</h4>
-                    <p class="text-sm text-gray-600">يعمل بنسبة 98%</p>
-                    <div class="mt-2">
-                        <div class="bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-600 h-2 rounded-full" style="width: 98%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <div class="relative inline-flex items-center justify-center">
-                        <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user-shield text-yellow-600 text-2xl"></i>
-                        </div>
-                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 border-2 border-white rounded-full"></div>
-                    </div>
-                    <h4 class="font-semibold text-gray-900 mt-3">كشف الاحتيال</h4>
-                    <p class="text-sm text-gray-600">يعمل بنسبة 85%</p>
-                    <div class="mt-2">
-                        <div class="bg-gray-200 rounded-full h-2">
-                            <div class="bg-yellow-600 h-2 rounded-full" style="width: 85%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <div class="relative inline-flex items-center justify-center">
-                        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-vr-cardboard text-blue-600 text-2xl"></i>
-                        </div>
-                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 border-2 border-white rounded-full"></div>
-                    </div>
-                    <h4 class="font-semibold text-gray-900 mt-3">الواقع الافتراضي</h4>
-                    <p class="text-sm text-gray-600">يعمل بنسبة 92%</p>
-                    <div class="mt-2">
-                        <div class="bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('usageChart').getContext('2d');
+
+            const labels = @json($trends->pluck('date'));
+            const counts = @json($trends->pluck('count'));
+            const costs = @json($trends->pluck('cost'));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'عدد الطلبات',
+                            data: counts,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'التكلفة ($)',
+                            data: costs,
+                            borderColor: '#9333ea',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            rtl: true,
+                            labels: { font: { family: 'inherit' } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'الطلبات' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'التكلفة ($)' }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'Outfit';
+            src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+        }
+
+        .rtl {
+            direction: rtl;
+        }
+
+        body {
+            font-family: 'Outfit', 'Inter', sans-serif;
+        }
+    </style>
 @endsection

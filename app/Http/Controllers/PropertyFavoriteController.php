@@ -275,7 +275,7 @@ class PropertyFavoriteController extends Controller
         }
     }
 
-    public function shareFavorites(Request $request): JsonResponse
+    public function shareFavorites(Request $request)
     {
         $user = Auth::user();
         
@@ -304,13 +304,11 @@ class PropertyFavoriteController extends Controller
             ];
         });
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'share_url' => route('favorites.shared', ['user_id' => $user->id]),
-                'properties' => $shareData,
-                'total_count' => $favorites->count(),
-            ]
+        return view('properties.favorites-share', [
+            'favorites' => $shareData,
+            'total_count' => $favorites->count(),
+            'share_url' => route('user.favorites.share', ['user_id' => $user->id]),
+            'user' => $user
         ]);
     }
 

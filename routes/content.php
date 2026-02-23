@@ -124,6 +124,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::prefix('media')->name('media.')->group(function () {
         Route::get('/', [MediaLibraryController::class, 'index'])->name('index');
         Route::post('/upload', [MediaLibraryController::class, 'upload'])->name('upload');
+        Route::post('/create-folder', [MediaLibraryController::class, 'createFolder'])->name('create-folder');
         Route::get('/{mediaFile}', [MediaLibraryController::class, 'show'])->name('show');
         Route::get('/{mediaFile}/edit', [MediaLibraryController::class, 'edit'])->name('edit');
         Route::put('/{mediaFile}', [MediaLibraryController::class, 'update'])->name('update');

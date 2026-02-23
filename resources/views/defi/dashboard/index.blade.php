@@ -57,7 +57,7 @@
                         <p class="text-3xl font-bold mt-2">{{ $overview['active_loans'] }}</p>
                         <p class="text-blue-100 text-sm mt-2">
                             <i class="fas fa-hand-holding-usd ml-1"></i>
-                            متوسط القرض: {{ number_format($overview['total_loan_amount'] / $overview['active_loans']) }} ريال
+                            متوسط القرض: {{ $overview['active_loans'] > 0 ? number_format($overview['total_loan_amount'] / $overview['active_loans']) : '0' }} ريال
                         </p>
                     </div>
                     <div class="bg-white/20 rounded-full p-4">

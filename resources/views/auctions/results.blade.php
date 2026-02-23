@@ -1,233 +1,227 @@
 @extends('layouts.app')
 
-@section('title', 'Auction Results')
+@section('title', 'نتائج المزادات')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Auction Results</h1>
-        <p class="text-gray-600">View completed auction results and final prices</p>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse"></div>
+        <div class="absolute top-60 right-20 w-80 h-80 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
+        <div class="absolute bottom-40 left-1/3 w-72 h-72 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-4000"></div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="bg-blue-100 rounded-full p-3 mr-4">
-                    <i class="fas fa-gavel text-blue-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Total Completed</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ $stats['total_completed'] }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="bg-green-100 rounded-full p-3 mr-4">
-                    <i class="fas fa-dollar-sign text-green-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Total Revenue</p>
-                    <p class="text-2xl font-bold text-gray-800">${{ number_format($stats['total_revenue'], 0) }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="bg-purple-100 rounded-full p-3 mr-4">
-                    <i class="fas fa-chart-line text-purple-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Average Price</p>
-                    <p class="text-2xl font-bold text-gray-800">${{ number_format($stats['average_price'], 0) }}</p>
+    <div class="relative z-10 min-h-screen">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header Section -->
+            <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div>
+                        <h1 class="text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+                            <i class="fas fa-gavel ml-4"></i>
+                            نتائج المزادات
+                        </h1>
+                        <p class="text-xl text-gray-600">تصفح نتائج المزادات المكتملة</p>
+                    </div>
+                    
+                    <!-- Navigation Tabs -->
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{{ route('auctions.index') }}" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                            <i class="fas fa-hammer ml-2"></i>
+                            المزادات
+                        </a>
+                        <a href="{{ route('auctions.my') }}" class="px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl hover:border-blue-500 hover:text-blue-600 transition-all duration-300">
+                            <i class="fas fa-list ml-2"></i>
+                            مزاداتي
+                        </a>
+                        <a href="{{ route('auctions.my-results') }}" class="px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl hover:border-blue-500 hover:text-blue-600 transition-all duration-300">
+                            <i class="fas fa-trophy ml-2"></i>
+                            نتائجي
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="bg-orange-100 rounded-full p-3 mr-4">
-                    <i class="fas fa-calendar text-orange-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">This Month</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ $stats['this_month'] }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET" action="{{ route('messages.auctions.results') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Winner</label>
-                    <select name="winner_id" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                        <option value="">All Winners</option>
-                        {{-- @foreach ($users ?? [] as $user)
-                            <option value="{{ $user->id }}" {{ request('winner_id') == $user->id ? 'selected' : '' }}>
-                                {{ $user->name }}
-                            </option>
-                        @endforeach --}}
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Creator</label>
-                    <select name="creator_id" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                        <option value="">All Creators</option>
-                        {{-- @foreach ($creators ?? [] as $creator)
-                            <option value="{{ $creator->id }}" {{ request('creator_id') == $creator->id ? 'selected' : '' }}>
-                                {{ $creator->name }}
-                            </option>
-                        @endforeach --}}
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Min Price</label>
-                    <input type="number" name="min_price" value="{{ request('min_price') }}" 
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Min Price">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
-                    <input type="number" name="max_price" value="{{ request('max_price') }}" 
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Max Price">
-                </div>
+            <!-- Filter Section -->
+            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+                <form method="GET" action="{{ route('auctions.results') }}" class="flex flex-col lg:flex-row gap-4">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <input type="text" name="winner_id" placeholder="بحث عن الفائز..." 
+                                value="{{ request('winner_id') }}"
+                                class="w-full px-6 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 text-lg">
+                            <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="date" name="date_from" placeholder="من تاريخ" 
+                                value="{{ request('date_from') }}"
+                                class="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-2xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300">
+                        <input type="date" name="date_to" placeholder="إلى تاريخ" 
+                                value="{{ request('date_to') }}"
+                                class="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-2xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300">
+                        <input type="number" name="min_price" placeholder="السعر الأدنى" 
+                                value="{{ request('min_price') }}"
+                                class="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-2xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300">
+                        <input type="number" name="max_price" placeholder="السعر الأعلى" 
+                                value="{{ request('max_price') }}"
+                                class="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-2xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300">
+                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-lg">
+                            <i class="fas fa-filter ml-2"></i>
+                            فلترة
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                    Apply Filters
-                </button>
-                <a href="{{ route('messages.auctions.results') }}" class="ml-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400">
-                    Clear
-                </a>
-            </div>
-        </form>
-    </div>
 
-    <!-- Results List -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        @if($results->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Property
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Winner
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Final Price
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Completed
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($results as $result)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        @if($result->auction && $result->auction->property && $result->auction->property->images->first())
-                                            <img src="{{ $result->auction->property->images->first()->url }}" 
-                                                 alt="{{ $result->auction->title }}" 
-                                                 class="w-10 h-10 rounded-full object-cover mr-3">
-                                        @else
-                                            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
-                                                <i class="fas fa-home text-gray-500"></i>
-                                            </div>
-                                        @endif
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ $result->auction->title ?? 'N/A' }}</div>
-                                            <div class="text-sm text-gray-500">{{ $result->auction->property->title ?? 'N/A' }}</div>
+            <!-- Results Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                @forelse($results as $result)
+                <div class="bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden hover:bg-white hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
+                    <!-- Result Header -->
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4 space-x-reverse">
+                                <div class="relative">
+                                    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                        <i class="fas fa-gavel text-white text-2xl"></i>
+                                    </div>
+                                    @if($result->winner_id)
+                                        <div class="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-crown text-white text-xs"></i>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        @if($result->winner)
-                                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-2">
-                                                <span class="text-xs font-medium">{{ strtoupper(substr($result->winner->name, 0, 1)) }}</span>
-                                            </div>
-                                            <div class="text-sm text-gray-900">{{ $result->winner->name }}</div>
-                                        @else
-                                            <div class="text-sm text-gray-500">No winner</div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-lg font-semibold text-green-600">
-                                        ${{ number_format($result->final_price, 0) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $result->completed_at->format('M j, Y g:i A') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('messages.auctions.results.show', $result->id) }}" 
-                                       class="text-blue-600 hover:text-blue-900 mr-3">
-                                        View Details
-                                    </a>
-                                    @if($result->auction && $result->auction->created_by === Auth::id())
-                                        <a href="{{ route('messages.auctions.results.show', $result->id) }}#manage" 
-                                           class="text-green-600 hover:text-green-900">
-                                            Manage
-                                        </a>
                                     @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-900 mb-1">{{ $result->auction->property->title }}</h3>
+                                    <p class="text-gray-600 text-sm">{{ $result->auction->property->address }}</p>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <span class="text-sm text-gray-500">مكتمل: {{ $result->result_time->format('Y-m-d H:i') }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Winner Information -->
+                        @if($result->winner)
+                        <div class="bg-emerald-50 rounded-xl p-4 mb-4">
+                            <div class="flex items-center space-x-3 space-x-reverse">
+                                <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-trophy text-emerald-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-emerald-800">الفائز: {{ $result->winner->name }}</p>
+                                    <p class="text-sm text-emerald-600">السعر النهائي: {{ number_format($result->final_price, 2) }} ريال</p>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Result Stats -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">السعر الابتدائي</p>
+                                <p class="text-gray-900 font-bold text-lg">{{ number_format($result->starting_price, 2) }} ريال</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">السعر النهائي</p>
+                                <p class="text-emerald-600 font-bold text-lg">{{ number_format($result->final_price, 2) }} ريال</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">عدد المزايدات</p>
+                                <p class="text-gray-900 font-bold text-lg">{{ $result->auction->bids_count ?? 0 }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">المدة</p>
+                                <p class="text-gray-900 font-bold text-lg">{{ $result->auction->duration ?? 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="p-6 bg-gray-50">
+                        <div class="grid grid-cols-2 gap-3">
+                            <a href="{{ route('auctions.results.show', $result->id) }}" 
+                                class="py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium text-center">
+                                <i class="fas fa-eye ml-2"></i>
+                                عرض التفاصيل
+                            </a>
+                            @if($result->winner_id)
+                                <a href="{{ route('auctions.results.confirm-winner', $result->id) }}" 
+                                    class="py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-300 font-medium text-center">
+                                    <i class="fas fa-check ml-2"></i>
+                                    تأكيد الفائز
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endforeach
             </div>
-            
+
             <!-- Pagination -->
-            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                <div class="flex-1 flex justify-between sm:hidden">
-                    {{ $results->links() }}
-                </div>
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Showing
-                            <span class="font-medium">{{ $results->firstItem() }}</span>
-                            to
-                            <span class="font-medium">{{ $results->lastItem() }}</span>
-                            of
-                            <span class="font-medium">{{ $results->total() }}</span>
-                            results
-                        </p>
-                    </div>
-                    <div>
-                        {{ $results->links() }}
-                    </div>
-                </div>
+            @if($results->hasPages())
+            <div class="flex justify-center mt-8">
+                {{ $results->links() }}
             </div>
-        @else
-            <div class="text-center py-12">
-                <i class="fas fa-gavel text-6xl text-gray-300 mb-4"></i>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No auction results found</h3>
-                <p class="text-gray-500 mb-4">There are no completed auctions to display.</p>
-                <a href="{{ route('messages.auctions.index') }}" 
-                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                    View Active Auctions
+            @endif
+
+            <!-- Back to Auctions -->
+            <div class="text-center">
+                <a href="{{ route('auctions.index') }}" class="inline-flex items-center px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl hover:border-blue-500 hover:text-blue-600 transition-all duration-300 font-medium">
+                    <i class="fas fa-arrow-right ml-2"></i>
+                    العودة إلى المزادات
                 </a>
             </div>
-        @endif
+        </div>
     </div>
 </div>
+
+<style>
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+    animation-delay: 4s;
+}
+
+.backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+</style>
 @endsection

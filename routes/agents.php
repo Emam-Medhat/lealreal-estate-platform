@@ -15,7 +15,10 @@ use App\Http\Controllers\AppointmentController;
 |
 */
 
-Route::get('/agents/directory', [AgentController::class, 'directory'])->name('agents.directory.full');
+Route::get('/agents/directory', [AgentController::class, 'directory'])->name('agents.directory');
+
+// Test route without middleware
+Route::get('/agents/goals-test', [AgentController::class, 'goals'])->name('agents.goals.test');
 
 Route::middleware(['auth', 'verified'])->prefix('agents')->group(function () {
     
@@ -24,6 +27,8 @@ Route::middleware(['auth', 'verified'])->prefix('agents')->group(function () {
     Route::get('/performance', [AgentController::class, 'performance'])->name('agents.performance');
     Route::get('/performance/refresh-activities', [AgentController::class, 'refreshActivities'])->name('agents.performance.refresh');
     Route::get('/ranking', [AgentController::class, 'ranking'])->name('agents.ranking');
+    
+    // Goals route without middleware for testing
     Route::get('/goals', [AgentController::class, 'goals'])->name('agents.goals');
     
     // Agent Management

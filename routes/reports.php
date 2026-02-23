@@ -45,6 +45,13 @@ Route::prefix('reports/property')->name('reports.property.')->group(function () 
     Route::get('/', [App\Http\Controllers\Reports\PropertyReportController::class, 'index'])->name('index');
 });
 
+// Support and Contact Routes
+Route::prefix('reports/support')->name('reports.support.')->group(function () {
+    Route::get('/contact', [App\Http\Controllers\Reports\SupportController::class, 'contact'])->name('contact');
+    Route::post('/contact', [App\Http\Controllers\Reports\SupportController::class, 'sendContact'])->name('send_contact');
+    Route::get('/help', [App\Http\Controllers\Reports\SupportController::class, 'help'])->name('help');
+});
+
 // Commission Reports
 Route::prefix('reports/commission')->name('reports.commission.')->group(function () {
     Route::get('/', [App\Http\Controllers\Reports\CommissionReportController::class, 'index'])->name('index');
@@ -95,8 +102,8 @@ Route::prefix('reports/custom')->name('reports.custom.')->group(function () {
     Route::get('/{customReport}/edit', [CustomReportController::class, 'edit'])->name('edit');
     Route::put('/{customReport}', [CustomReportController::class, 'update'])->name('update');
     Route::delete('/{customReport}', [CustomReportController::class, 'destroy'])->name('destroy');
-    Route::post('/{customReport}/duplicate', [CustomReportController::class, 'duplicate'])->name('duplicate.report');
-    Route::post('/{customReport}/run', [CustomReportController::class, 'runReport'])->name('run.report');
+    Route::post('/{customReport}/duplicate', [CustomReportController::class, 'duplicate'])->name('duplicate');
+    Route::post('/{customReport}/run', [CustomReportController::class, 'runReport'])->name('run');
     Route::get('/data', [CustomReportController::class, 'getReportData'])->name('data');
 });
 

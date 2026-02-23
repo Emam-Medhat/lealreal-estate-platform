@@ -121,8 +121,15 @@ class DefiController extends Controller
     public function depositPool($id)
     {
         $pool = DefiPool::findOrFail($id);
+        $user = auth()->user();
         
-        return view('blockchain.defi.pool-deposit', compact('pool'));
+        // Fetch user's crypto wallets
+        $wallets = CryptoWallet::where('user_id', $user->id)->get();
+        
+        // Prepare balances keyed by currency
+        $balances = $wallets->pluck('balance', 'currency')->toArray();
+        
+        return view('blockchain.defi.pool-deposit', compact('pool', 'balances'));
     }
 
     public function withdrawPool($id)
@@ -162,6 +169,18 @@ class DefiController extends Controller
 
         $pool = DefiPool::findOrFail($id);
         $user = auth()->user();
+
+        // Check user balance
+        $wallet = CryptoWallet::where('user_id', $user->id)
+            ->where('currency', $request->token)
+            ->first();
+
+        if (!$wallet || $wallet->balance < $request->amount) {
+            return back()->with('error', 'رصيدك غير كافي لإتمام العملية. الرصيد الحالي: ' . ($wallet ? $wallet->balance : 0) . ' ' . $request->token);
+        }
+
+        // Deduct from wallet
+        $wallet->decrement('balance', $request->amount);
 
         // Create new position or add to existing
         $position = DefiPosition::where('user_id', $user->id)

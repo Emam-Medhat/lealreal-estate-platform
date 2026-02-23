@@ -102,7 +102,7 @@
     </div>
 
     <!-- Staking Options -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div id="staking-pools" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         @foreach($stakingPools as $pool)
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
             <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6">
@@ -161,10 +161,10 @@
                 <i class="fas fa-coins text-gray-300 text-6xl mb-4"></i>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">لا توجد مراكز تخزين</h3>
                 <p class="text-gray-600 mb-6">ابدأ بتخزين أصولك لكسب المكافآت</p>
-                <button class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors duration-200 font-medium">
+                <a href="{{ route('blockchain.defi.pools') }}" class="inline-flex items-center bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors duration-200 font-medium">
                     <i class="fas fa-plus ml-2"></i>
                     بدء التخزين
-                </button>
+                </a>
             </div>
         </div>
     </div>

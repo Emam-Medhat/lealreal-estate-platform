@@ -83,9 +83,20 @@ class MetaversePropertyController extends Controller
     {
         $virtualWorlds = VirtualWorld::where('is_active', true)->get();
         
-        return Inertia::render('Metaverse/Properties/Create', [
-            'virtualWorlds' => $virtualWorlds,
-        ]);
+        // Add default virtual worlds if none exist
+        if ($virtualWorlds->isEmpty()) {
+            $virtualWorlds = collect([
+                (object) ['id' => 1, 'name' => 'ديسنترالاند'],
+                (object) ['id' => 2, 'name' => 'ذا ساندي'],
+                (object) ['id' => 3, 'name' => 'أكسي إنفينيتي'],
+                (object) ['id' => 4, 'name' => 'روبلوكس'],
+                (object) ['id' => 5, 'name' => 'مينيكرف'],
+                (object) ['id' => 6, 'name' => 'فورتنايت'],
+                (object) ['id' => 7, 'name' => 'سيكند لايف'],
+            ]);
+        }
+        
+        return view('blockchain.metaverse.properties.create', compact('virtualWorlds'));
     }
 
     /**

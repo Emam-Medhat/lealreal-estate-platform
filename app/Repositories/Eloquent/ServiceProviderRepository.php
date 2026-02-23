@@ -17,7 +17,7 @@ class ServiceProviderRepository extends BaseRepository implements ServiceProvide
 
     public function getPaginated(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->model->with(['maintenanceRequests', 'schedules']);
+        $query = $this->model->with(['maintenanceRequests', 'schedules', 'warranties']);
 
         if (isset($filters['is_active'])) {
             $query->where('is_active', $filters['is_active']);

@@ -156,8 +156,15 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">الشركة</label>
-                            <input type="text" name="agent_company" class="form-control">
-                            @error('agent_company')
+                            <select name="company_id" class="form-select">
+                                <option value="">اختر الشركة</option>
+                                @if(isset($companies))
+                                    @foreach($companies as $company)
+                                        <option value="{{ $company->id }}">{{ $company->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            @error('company_id')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
                         </div>

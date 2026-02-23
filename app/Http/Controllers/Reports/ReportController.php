@@ -17,9 +17,47 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\ReportService;
 
 class ReportController extends Controller
 {
+    protected $reportService;
+
+    public function __construct(ReportService $reportService)
+    {
+        $this->reportService = $reportService;
+    }
+
+    /**
+     * Display property performance report
+     */
+    public function propertyPerformance(Request $request)
+    {
+        $propertyId = $request->input('property_id');
+
+        $performanceData = $this->reportService->generatePropertyPerformanceReport($propertyId);
+        
+        if ($request->wantsJson()) {
+            return response()->json($performanceData);
+        }
+
+        if ($propertyId) {
+            return view('reports.property_performance', compact('performanceData'));
+        }
+
+        // Fallback for overall performance
+        $summary = $performanceData['summary'];
+
+        return view('reports.performance', [
+            'totalProperties' => $summary['total_properties'] ?? 0,
+            'activeListings' => $summary['active_listings'] ?? 0,
+            'soldProperties' => $summary['sold_properties'] ?? 0,
+            'averageDaysOnMarket' => $summary['average_days_on_market'] ?? 0,
+            'averageViews' => $summary['average_views'] ?? 0,
+            'performanceData' => $performanceData
+        ]);
+    }
+
     public function dashboard()
     {
         // For testing purposes, allow access without authentication

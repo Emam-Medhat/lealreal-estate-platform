@@ -17,8 +17,10 @@ class SubscriptionInvoiceController extends Controller
     {
         $user = Auth::user();
         
-        $invoices = SubscriptionInvoice::where('user_id', $user->id)
-            ->with(['subscription.plan', 'renewal'])
+        $invoices = SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })
+            ->with(['subscription.plan', 'subscription.user', 'renewal'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
@@ -287,17 +289,33 @@ class SubscriptionInvoiceController extends Controller
         $user = Auth::user();
         
         $stats = [
-            'total_invoices' => SubscriptionInvoice::where('user_id', $user->id)->count(),
-            'paid_invoices' => SubscriptionInvoice::where('user_id', $user->id)->where('status', 'paid')->count(),
-            'pending_invoices' => SubscriptionInvoice::where('user_id', $user->id)->where('status', 'pending')->count(),
-            'overdue_invoices' => SubscriptionInvoice::where('user_id', $user->id)
+            'total_invoices' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->count(),
+            'paid_invoices' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->where('status', 'paid')->count(),
+            'pending_invoices' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->where('status', 'pending')->count(),
+            'overdue_invoices' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
                 ->where('status', 'pending')
                 ->where('due_date', '<', now())
                 ->count(),
-            'total_amount' => SubscriptionInvoice::where('user_id', $user->id)->sum('amount'),
-            'paid_amount' => SubscriptionInvoice::where('user_id', $user->id)->where('status', 'paid')->sum('amount'),
-            'pending_amount' => SubscriptionInvoice::where('user_id', $user->id)->where('status', 'pending')->sum('amount'),
-            'this_month' => SubscriptionInvoice::where('user_id', $user->id)
+            'total_amount' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->sum('amount'),
+            'paid_amount' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->where('status', 'paid')->sum('amount'),
+            'pending_amount' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->where('status', 'pending')->sum('amount'),
+            'this_month' => SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
                 ->whereMonth('billing_date', now()->month)
                 ->whereYear('billing_date', now()->year)
                 ->sum('amount')
@@ -315,7 +333,9 @@ class SubscriptionInvoiceController extends Controller
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
 
-        $query = SubscriptionInvoice::where('user_id', $user->id)
+        $query = SubscriptionInvoice::whereHas('subscription', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })
             ->with(['subscription.plan']);
 
         if ($status) {

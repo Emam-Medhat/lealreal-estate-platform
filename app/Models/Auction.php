@@ -28,7 +28,7 @@ class Auction extends Model
         'bid_count',
         'winner_id',
         'final_price',
-        'created_by',
+        'seller_id',
         'started_at',
         'ended_at',
         'last_bid_at'
@@ -56,7 +56,7 @@ class Auction extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'seller_id');
     }
 
     public function winner(): BelongsTo
@@ -144,7 +144,7 @@ class Auction extends Model
     public function canUserParticipate(User $user): bool
     {
         // Check if user is not the creator
-        if ($this->created_by === $user->id) {
+        if ($this->seller_id === $user->id) {
             return false;
         }
 
@@ -181,7 +181,7 @@ class Auction extends Model
 
     public function scopeByCreator($query, $userId)
     {
-        return $query->where('created_by', $userId);
+        return $query->where('seller_id', $userId);
     }
 
     public function getFormattedStartingPrice(): string

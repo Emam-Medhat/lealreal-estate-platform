@@ -318,17 +318,24 @@ class MaintenanceController extends Controller
     // Schedule Management Methods
     public function scheduleIndex()
     {
-        $schedules = MaintenanceSchedule::with(['property', 'serviceProvider', 'assignedTeam'])
+        $schedules = MaintenanceSchedule::with(['property', 'serviceProvider', 'maintenanceTeam'])
             ->orderBy('scheduled_date')
             ->paginate(15);
-
+            
         return view('maintenance.schedule.index', compact('schedules'));
     }
 
     public function scheduleCreate()
     {
         $properties = \App\Models\Property::where('status', 'active')->get();
-        $serviceProviders = ServiceProvider::where('is_active', true)->get();
+        
+        // Check if is_active column exists, otherwise use status column
+        if (\Illuminate\Support\Facades\Schema::hasColumn('service_providers', 'is_active')) {
+            $serviceProviders = ServiceProvider::where('is_active', true)->get();
+        } else {
+            $serviceProviders = ServiceProvider::where('status', 'active')->get();
+        }
+
         $teams = MaintenanceTeam::where('status', 'active')->get();
 
         return view('maintenance.schedule.create', compact('properties', 'serviceProviders', 'teams'));
@@ -339,14 +346,19 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'property_id' => 'required|exists:properties,id',
             'service_provider_id' => 'nullable|exists:service_providers,id',
-            'team_id' => 'nullable|exists:maintenance_teams,id',
+            'maintenance_team_id' => 'nullable|exists:maintenance_teams,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'scheduled_date' => 'required|date',
             'estimated_duration' => 'nullable|integer',
             'priority' => 'required|in:low,medium,high,emergency',
-            'category' => 'required|in:plumbing,electrical,hvac,structural,general',
+            'maintenance_type' => 'required|in:inspection,cleaning,service,replacement,testing,repair,maintenance,other',
         ]);
+
+        // Add default values
+        $validated['status'] = 'scheduled';
+        $validated['created_by'] = auth()->id();
+        $validated['schedule_number'] = 'MS-' . date('Y') . '-' . str_pad(MaintenanceSchedule::count() + 1, 4, '0', STR_PAD_LEFT);
 
         MaintenanceSchedule::create($validated);
 
@@ -356,14 +368,21 @@ class MaintenanceController extends Controller
 
     public function scheduleShow(MaintenanceSchedule $schedule)
     {
-        $schedule->load(['property', 'serviceProvider', 'assignedTeam']);
+        $schedule->load(['property', 'serviceProvider', 'maintenanceTeam']);
         return view('maintenance.schedule.show', compact('schedule'));
     }
 
     public function scheduleEdit(MaintenanceSchedule $schedule)
     {
         $properties = \App\Models\Property::where('status', 'active')->get();
-        $serviceProviders = ServiceProvider::where('is_active', true)->get();
+        
+        // Check if is_active column exists, otherwise use status column
+        if (\Illuminate\Support\Facades\Schema::hasColumn('service_providers', 'is_active')) {
+            $serviceProviders = ServiceProvider::where('is_active', true)->get();
+        } else {
+            $serviceProviders = ServiceProvider::where('status', 'active')->get();
+        }
+
         $teams = MaintenanceTeam::where('status', 'active')->get();
 
         return view('maintenance.schedule.edit', compact('schedule', 'properties', 'serviceProviders', 'teams'));
@@ -374,13 +393,13 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'property_id' => 'required|exists:properties,id',
             'service_provider_id' => 'nullable|exists:service_providers,id',
-            'team_id' => 'nullable|exists:maintenance_teams,id',
+            'maintenance_team_id' => 'nullable|exists:maintenance_teams,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'scheduled_date' => 'required|date',
             'estimated_duration' => 'nullable|integer',
             'priority' => 'required|in:low,medium,high,emergency',
-            'category' => 'required|in:plumbing,electrical,hvac,structural,general',
+            'maintenance_type' => 'required|in:inspection,cleaning,service,replacement,testing,repair,maintenance,other',
         ]);
 
         $schedule->update($validated);
@@ -395,6 +414,67 @@ class MaintenanceController extends Controller
 
         return redirect()->route('maintenance.schedule.index')
             ->with('success', 'Maintenance schedule deleted successfully.');
+    }
+
+    public function scheduleStart(MaintenanceSchedule $schedule)
+    {
+        $schedule->update([
+            'status' => 'in_progress',
+            'started_at' => now(),
+            'assigned_at' => now(),
+            'assigned_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('maintenance.schedule.index')
+            ->with('success', 'Maintenance schedule started successfully.');
+    }
+
+    public function scheduleComplete(MaintenanceSchedule $schedule)
+    {
+        $schedule->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        return redirect()->route('maintenance.schedule.index')
+            ->with('success', 'Maintenance schedule completed successfully.');
+    }
+
+    public function scheduleCancel(MaintenanceSchedule $schedule)
+    {
+        $schedule->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'cancellation_reason' => request('cancellation_reason', 'Cancelled by user'),
+        ]);
+
+        return redirect()->route('maintenance.schedule.index')
+            ->with('success', 'Maintenance schedule cancelled successfully.');
+    }
+
+    public function scheduleDetails(MaintenanceSchedule $schedule)
+    {
+        $schedule->load(['property', 'maintenanceTeam', 'serviceProvider', 'assignedBy']);
+        
+        $html = view('maintenance.schedules.partials.details', compact('schedule'))->render();
+        
+        return response()->json(['html' => $html]);
+    }
+
+    public function calendar()
+    {
+        $schedules = MaintenanceSchedule::with(['property'])
+            ->whereDate('scheduled_date', '>=', now()->startOfMonth())
+            ->whereDate('scheduled_date', '<=', now()->endOfMonth())
+            ->get();
+            
+        $currentMonth = now();
+        $todaySchedules = $schedules->where('scheduled_date', now()->format('Y-m-d'));
+        $upcomingSchedules = $schedules->where('scheduled_date', '>', now()->format('Y-m-d'));
+        $completedSchedules = $schedules->where('status', 'completed');
+        $overdueSchedules = $schedules->where('scheduled_date', '<', now()->format('Y-m-d'))->where('status', '!=', 'completed');
+        
+        return view('maintenance.schedules.calendar', compact('schedules', 'currentMonth', 'todaySchedules', 'upcomingSchedules', 'completedSchedules', 'overdueSchedules'));
     }
 
     // Work Order Management Methods

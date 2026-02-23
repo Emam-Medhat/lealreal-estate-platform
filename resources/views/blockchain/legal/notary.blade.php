@@ -865,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900" data-notary-success_rate>{{ $servicesData['success_rate'] }}%</h3>
                 <p class="text-sm text-gray-600">معدل النجاح</p>
-                <div class="mt-2 text-xs text-green-600" data-notary-success_improvement>{{ $servicesData['success_improvement'] }} تحسن</div>
+                <div class="mt-2 text-xs text-green-600" data-notary-success_improvement>{{ $servicesData['success_improvement'] ?? '+0%' }} تحسن</div>
             </div>
             
             <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 notary-module">

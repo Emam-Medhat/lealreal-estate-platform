@@ -27,10 +27,10 @@ class UserService
     /**
      * Get dashboard data for the authenticated user.
      *
-     * @param int $userId
+     * @param int|string $userId
      * @return array
      */
-    public function getDashboardData(int $userId): array
+    public function getDashboardData(int|string $userId): array
     {
         return CacheService::rememberUsers("user_dashboard_{$userId}", function () use ($userId) {
             $user = $this->userRepository->findById($userId, ['*'], ['profile']);
@@ -48,11 +48,11 @@ class UserService
     /**
      * Get recent activity for a user formatted for display.
      *
-     * @param int $userId
+     * @param int|string $userId
      * @param int $limit
      * @return array
      */
-    public function getUserRecentActivity(int $userId, int $limit = 5): array
+    public function getUserRecentActivity(int|string $userId, int $limit = 5): array
     {
         $logs = $this->userRepository->getActivityLogs($userId, $limit);
 
@@ -180,7 +180,7 @@ class UserService
     /**
      * Clear user related caches
      */
-    protected function clearUserCaches(int $userId = null): void
+    protected function clearUserCaches(int|string|null $userId = null): void
     {
         CacheService::forget('users_paginated');
         CacheService::forget('users_filtered');
@@ -196,7 +196,7 @@ class UserService
     /**
      * Update user profile
      */
-    public function updateProfile(int $userId, array $data): User
+    public function updateProfile(int|string $userId, array $data): User
     {
         $user = $this->userRepository->findById($userId);
 
@@ -247,7 +247,7 @@ class UserService
     /**
      * Upload avatar
      */
-    public function uploadAvatar(UploadedFile $file, int $userId): string
+    public function uploadAvatar(UploadedFile $file, int|string $userId): string
     {
         $user = $this->userRepository->findById($userId);
 
@@ -272,7 +272,7 @@ class UserService
     /**
      * Delete user account
      */
-    public function deleteUser(int $userId, bool $hardDelete = false): bool
+    public function deleteUser(int|string $userId, bool $hardDelete = false): bool
     {
         $user = $this->userRepository->findById($userId);
 

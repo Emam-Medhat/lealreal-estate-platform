@@ -1,54 +1,51 @@
-@extends('layouts.app')
+@extends('admin.layouts.admin')
 
 @section('title', 'جدول الصيانة')
 
 @section('content')
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h3">جدول الصيانة</h1>
-                <div>
-                    <a href="{{ route('maintenance.schedules.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> جدولة جديدة
-                    </a>
-                    <a href="{{ route('maintenance.schedules.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-list"></i> القائمة
-                    </a>
-                </div>
-            </div>
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">جدول الصيانة</h1>
+        <div>
+            <a href="{{ route('maintenance.schedule.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> جدولة جديدة
+            </a>
+            <a href="{{ route('maintenance.schedule.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm ml-2">
+                <i class="fas fa-list fa-sm text-white-50"></i> القائمة
+            </a>
         </div>
     </div>
 
     <!-- Calendar Controls -->
-    <div class="card mb-4">
+    <div class="card shadow mb-4">
         <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-outline-primary" id="prevMonth">
+            <div class="row align-items-center justify-content-between">
+                <div class="col-md-4">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="prevMonth">
                             <i class="fas fa-chevron-right"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary" id="currentMonth">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="currentMonth">
                             اليوم
                         </button>
-                        <button type="button" class="btn btn-outline-primary" id="nextMonth">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="nextMonth">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                     </div>
                 </div>
-                <div class="col-md-6 text-center">
-                    <h4 id="currentMonthYear">{{ $currentMonth->format('F Y') }}</h4>
+                <div class="col-md-4 text-center">
+                    <h4 class="m-0 font-weight-bold text-primary" id="currentMonthYear">{{ $currentMonth->format('F Y') }}</h4>
                 </div>
-                <div class="col-md-3">
-                    <div class="btn-group float-left">
-                        <button type="button" class="btn btn-outline-secondary" id="monthView">
+                <div class="col-md-4 text-left">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="monthView">
                             شهر
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="weekView">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="weekView">
                             أسبوع
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="dayView">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="dayView">
                             يوم
                         </button>
                     </div>
@@ -58,9 +55,80 @@
     </div>
 
     <!-- Calendar -->
-    <div class="card">
+    <div class="card shadow mb-4">
         <div class="card-body p-0">
-            <div id="calendar"></div>
+            <div id="calendar" class="p-3"></div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                جداول اليوم</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $todaySchedules->count() }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                جداول قادمة</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $upcomingSchedules->count() }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                جداول مكتملة</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $completedSchedules->count() }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                جداول متأخرة</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $overdueSchedules->count() }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -69,7 +137,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">تفاصيل الجدولة</h5>
+                    <h5 class="modal-title font-weight-bold text-primary">تفاصيل الجدولة</h5>
                     <button type="button" class="close" data-dismiss="modal">
                         <span>&times;</span>
                     </button>
@@ -79,43 +147,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">إغلاق</button>
-                    <button type="button" class="btn btn-primary" id="editSchedule">تعديل</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics -->
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5>{{ $todaySchedules->count() }}</h5>
-                    <p>جداول اليوم</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5>{{ $upcomingSchedules->count() }}</h5>
-                    <p>جداول قادمة</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5>{{ $completedSchedules->count() }}</h5>
-                    <p>جداول مكتملة</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5>{{ $overdueSchedules->count() }}</h5>
-                    <p>جداول متأخرة</p>
+                    <button type="button" class="btn btn-primary" id="editSchedule">
+                        <i class="fas fa-edit"></i> تعديل
+                    </button>
                 </div>
             </div>
         </div>
@@ -128,8 +162,34 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/ar.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
+    <script>
+        function getEventColor(priority) {
+            switch(priority) {
+                case 'high': return '#e74a3b';
+                case 'medium': return '#f6c23e';
+                case 'low': return '#1cc88a';
+                default: return '#4e73df';
+            }
+        }
+
+        function showScheduleDetails(id) {
+            // Show loading state
+            $('#scheduleDetails').html('<div class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>');
+            $('#scheduleModal').modal('show');
+
+            // Fetch details
+            fetch(`{{ url('maintenance/schedule') }}/${id}/details`)
+                .then(response => response.json())
+                .then(data => {
+                    $('#scheduleDetails').html(data.html);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    $('#scheduleDetails').html('<div class="alert alert-danger">حدث خطأ أثناء تحميل التفاصيل</div>');
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
         const currentMonthYear = document.getElementById('currentMonthYear');
         let currentDate = new Date('{{ $currentMonth->format('Y-m-d') }}');
@@ -141,20 +201,25 @@
             initialDate: currentDate,
             headerToolbar: false,
             height: 'auto',
-            events: @json($schedules->map(function($schedule) {
+            events: {!! json_encode($schedules->map(function($schedule) {
                 return [
                     'id' => $schedule->id,
                     'title' => $schedule->title,
-                    'start' => $schedule->scheduled_date->format('Y-m-d H:i:s'),
-                    'backgroundColor' => getEventColor($schedule->priority),
+                    'start' => $schedule->scheduled_date->format('Y-m-d\TH:i:s'),
+                    'backgroundColor' => match($schedule->priority) {
+                        'high' => '#e74a3b',
+                        'medium' => '#f6c23e',
+                        'low' => '#1cc88a',
+                        default => '#4e73df'
+                    },
                     'extendedProps' => [
                         'property' => $schedule->property->title ?? 'N/A',
                         'team' => $schedule->maintenanceTeam->name ?? 'غير محدد',
-                        'status' => $schedule->status_label,
-                        'priority' => $schedule->priority_label
+                        'status' => $schedule->status,
+                        'priority' => $schedule->priority
                     ]
                 ];
-            })),
+            })) !!},
             eventClick: function(info) {
                 showScheduleDetails(info.event.id);
             },
@@ -211,35 +276,12 @@
         }
 
         function showScheduleDetails(scheduleId) {
-            fetch(`/maintenance/schedules/${scheduleId}/details`)
+            fetch(`/maintenance/schedule/${scheduleId}/details`)
                 .then(response => response.json())
                 .then(data => {
-                    const detailsHtml = `
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>العنوان:</strong> ${data.title}</p>
-                                <p><strong>العقار:</strong> ${data.property}</p>
-                                <p><strong>الفريق:</strong> ${data.team}</p>
-                                <p><strong>الحالة:</strong> <span class="badge badge-${data.status_color}">${data.status}</span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>الأولوية:</strong> <span class="badge badge-${data.priority_color}">${data.priority}</span></p>
-                                <p><strong>التاريخ:</strong> ${data.scheduled_date}</p>
-                                <p><strong>المدة:</strong> ${data.estimated_duration} دقيقة</p>
-                                <p><strong>التكلفة:</strong> ${data.estimated_cost || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <p><strong>الوصف:</strong></p>
-                                <p>${data.description || 'لا يوجد وصف'}</p>
-                            </div>
-                        </div>
-                    `;
-                    
-                    document.getElementById('scheduleDetails').innerHTML = detailsHtml;
+                    document.getElementById('scheduleDetails').innerHTML = data.html;
                     document.getElementById('editSchedule').onclick = function() {
-                        window.location.href = `/maintenance/schedules/${scheduleId}/edit`;
+                        window.location.href = `/maintenance/schedule/${scheduleId}/edit`;
                     };
                     
                     $('#scheduleModal').modal('show');

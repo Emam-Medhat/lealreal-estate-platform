@@ -83,9 +83,12 @@
                             <a href="{{ route('contract-templates.edit', $template) }}" class="text-yellow-600 hover:text-yellow-900">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="{{ route('contract-templates.duplicate', $template) }}" class="text-purple-600 hover:text-purple-900">
-                                <i class="fas fa-copy"></i>
-                            </a>
+                            <form action="{{ route('contract-templates.duplicate', $template) }}" method="POST" class="inline-block">
+                                @csrf
+                                <button type="submit" class="text-purple-600 hover:text-purple-900 bg-transparent border-0 p-0 cursor-pointer">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

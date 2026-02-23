@@ -15,11 +15,11 @@ class AiPricePredictorController extends Controller
     {
         $stats = [
             'total_predictions' => AiPricePrediction::count(),
-            'completed_predictions' => AiPricePrediction::where('status', 'completed')->count(),
-            'pending_predictions' => AiPricePrediction::where('status', 'pending')->count(),
+            'today_predictions' => AiPricePrediction::whereDate('created_at', today())->count(),
             'average_accuracy' => $this->getAverageAccuracy(),
             'total_properties_analyzed' => $this->getTotalPropertiesAnalyzed(),
             'prediction_success_rate' => $this->getPredictionSuccessRate(),
+            'last_update' => AiPricePrediction::latest()->first()?->created_at?->diffForHumans() ?? 'الآن',
         ];
 
         $recentPredictions = AiPricePrediction::with(['property', 'user'])
@@ -30,12 +30,48 @@ class AiPricePredictorController extends Controller
         $predictionTrends = $this->getPredictionTrends();
         $accuracyMetrics = $this->getAccuracyMetrics();
 
-        return view('ai.price-predictor.dashboard', compact(
+        return view('ai.price-prediction', compact(
             'stats', 
             'recentPredictions', 
             'predictionTrends', 
             'accuracyMetrics'
         ));
+        }
+
+    public function export()
+    {
+        $predictions = AiPricePrediction::with('property')->latest()->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="price_predictions.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($predictions) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel compatibility with Arabic characters
+            fputs($file, "\xEF\xBB\xBF");
+            
+            fputcsv($file, ['المعرف', 'العقار', 'السعر المتوقع', 'الدقة', 'الحالة', 'تاريخ التوقع']);
+
+            foreach ($predictions as $prediction) {
+                fputcsv($file, [
+                    $prediction->id,
+                    $prediction->property->title ?? 'N/A',
+                    $prediction->predicted_price,
+                    ($prediction->accuracy * 100) . '%',
+                    $prediction->status,
+                    $prediction->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function index(Request $request)
@@ -85,10 +121,10 @@ class AiPricePredictorController extends Controller
             'property_id' => 'required|exists:properties,id',
             'prediction_model' => 'required|string|in:' . implode(',', array_keys($this->getAvailableModels())),
             'time_horizon' => 'required|string|in:' . implode(',', array_keys($this->getTimeHorizons())),
-            'market_data' => 'required|array',
-            'historical_data' => 'required|array',
-            'property_features' => 'required|array',
-            'economic_indicators' => 'required|array',
+            'market_data' => 'nullable|array',
+            'historical_data' => 'nullable|array',
+            'property_features' => 'nullable|array',
+            'economic_indicators' => 'nullable|array',
             'prediction_date' => 'required|date',
             'notes' => 'nullable|string',
         ]);
@@ -97,26 +133,51 @@ class AiPricePredictorController extends Controller
         $model = $validated['prediction_model'];
         $timeHorizon = $validated['time_horizon'];
 
+        // Generate default data if not provided
+        $marketData = $validated['market_data'] ?? $this->generateDefaultMarketData($property);
+        $historicalData = $validated['historical_data'] ?? $this->generateDefaultHistoricalData($property);
+        $propertyFeatures = $validated['property_features'] ?? $this->generateDefaultPropertyFeatures($property);
+        $economicIndicators = $validated['economic_indicators'] ?? $this->generateDefaultEconomicIndicators();
+
         $prediction = AiPricePrediction::create([
             'property_id' => $validated['property_id'],
             'user_id' => auth()->id(),
+            'current_price' => $property->price,
             'prediction_model' => $model,
             'time_horizon' => $timeHorizon,
-            'market_data' => $validated['market_data'],
-            'historical_data' => $validated['historical_data'],
-            'property_features' => $validated['property_features'],
-            'economic_indicators' => $validated['economic_indicators'],
+            'market_data' => $marketData,
+            'historical_data' => $historicalData,
+            'property_features' => $propertyFeatures,
+            'economic_indicators' => $economicIndicators,
             'prediction_date' => $validated['prediction_date'],
-            'predicted_price' => $this->calculatePredictedPrice($property, $validated),
-            'confidence_interval' => $this->calculateConfidenceInterval($property, $validated),
-            'accuracy' => $this->calculateAccuracy($validated),
-            'notes' => $validated['notes'],
+            'predicted_price' => $this->calculatePredictedPrice($property, [
+                'market_data' => $marketData,
+                'historical_data' => $historicalData,
+                'economic_indicators' => $economicIndicators,
+                'time_horizon' => $timeHorizon,
+                'prediction_model' => $model
+            ]),
+            'confidence_interval' => $this->calculateConfidenceInterval($property, [
+                'market_data' => $marketData,
+                'historical_data' => $historicalData,
+                'economic_indicators' => $economicIndicators,
+                'time_horizon' => $timeHorizon,
+                'prediction_model' => $model
+            ]),
+            'accuracy' => $this->calculateAccuracy([
+                'historical_data' => $historicalData,
+                'prediction_model' => $model,
+                'market_data' => $marketData,
+                'property_features' => $propertyFeatures,
+                'economic_indicators' => $economicIndicators
+            ]),
+            'notes' => $validated['notes'] ?? null,
             'status' => 'pending',
             'metadata' => [
                 'model_version' => 'v1.0',
-                'data_points_count' => count($validated['historical_data']),
-                'features_count' => count($validated['property_features']),
-                'indicators_count' => count($validated['economic_indicators']),
+                'data_points_count' => count($historicalData),
+                'features_count' => count($propertyFeatures),
+                'indicators_count' => count($economicIndicators),
                 'created_at' => now(),
             ],
         ]);
@@ -128,9 +189,19 @@ class AiPricePredictorController extends Controller
             ->with('success', 'تم إنشاء التنبؤ بالسعر بالذكاء الاصطناعي بنجاح');
     }
 
-    public function show(AiPricePrediction $prediction)
+    public function show($price_predictor)
     {
-        $prediction->load(['property', 'user', 'metadata']);
+        // Debug: Check what ID we received
+        logger('Controller show method - Received ID: ' . $price_predictor);
+        
+        $prediction = AiPricePrediction::with(['property', 'user'])->find($price_predictor);
+        
+        if (!$prediction) {
+            logger('Controller show method - Prediction not found for ID: ' . $price_predictor);
+            abort(404);
+        }
+        
+        logger('Controller show method - Loaded Prediction ID: ' . $prediction->id);
         
         $predictionDetails = $this->getPredictionDetails($prediction);
         $marketAnalysis = $this->getMarketAnalysis($prediction);
@@ -144,8 +215,14 @@ class AiPricePredictorController extends Controller
         ));
     }
 
-    public function edit(AiPricePrediction $prediction)
+    public function edit($price_predictor)
     {
+        $prediction = AiPricePrediction::find($price_predictor);
+        
+        if (!$prediction) {
+            abort(404);
+        }
+        
         if ($prediction->status === 'completed') {
             return back()->with('error', 'لا يمكن تعديل التنبؤ المكتمل');
         }
@@ -157,8 +234,14 @@ class AiPricePredictorController extends Controller
         return view('ai.price-predictor.edit', compact('prediction', 'properties', 'predictionModels', 'timeHorizons'));
     }
 
-    public function update(Request $request, AiPricePrediction $prediction)
+    public function update(Request $request, $price_predictor)
     {
+        $prediction = AiPricePrediction::find($price_predictor);
+        
+        if (!$prediction) {
+            abort(404);
+        }
+        
         if ($prediction->status === 'completed') {
             return back()->with('error', 'لا يمكن تعديل التنبؤ المكتمل');
         }
@@ -176,14 +259,30 @@ class AiPricePredictorController extends Controller
         $propertyFeatures = $validated['property_features'] ?? $prediction->property_features;
         $economicIndicators = $validated['economic_indicators'] ?? $prediction->economic_indicators;
 
+        $calculationData = [
+            'market_data' => $marketData,
+            'historical_data' => $historicalData,
+            'property_features' => $propertyFeatures,
+            'economic_indicators' => $economicIndicators,
+            'time_horizon' => $prediction->time_horizon,
+            'prediction_model' => $prediction->prediction_model
+        ];
+
+        // Load the property relationship
+        $prediction->load('property');
+        
+        if (!$prediction->property) {
+            return back()->with('error', 'العقار المرتبط بالتوقع غير موجود');
+        }
+
         $prediction->update([
             'market_data' => $marketData,
             'historical_data' => $historicalData,
             'property_features' => $propertyFeatures,
             'economic_indicators' => $economicIndicators,
-            'predicted_price' => $this->calculatePredictedPrice($prediction->property, $validated),
-            'confidence_interval' => $this->calculateConfidenceInterval($prediction->property, $validated),
-            'accuracy' => $this->calculateAccuracy($validated),
+            'predicted_price' => $this->calculatePredictedPrice($prediction->property, $calculationData),
+            'confidence_interval' => $this->calculateConfidenceInterval($prediction->property, $calculationData),
+            'accuracy' => $this->calculateAccuracy($calculationData),
             'notes' => $validated['notes'] ?? $prediction->notes,
             'metadata' => array_merge($prediction->metadata, [
                 'updated_at' => now(),
@@ -198,8 +297,14 @@ class AiPricePredictorController extends Controller
             ->with('success', 'تم تحديث التنبؤ بالسعر بنجاح');
     }
 
-    public function destroy(AiPricePrediction $prediction)
+    public function destroy($price_predictor)
     {
+        $prediction = AiPricePrediction::find($price_predictor);
+        
+        if (!$prediction) {
+            abort(404);
+        }
+        
         if ($prediction->status === 'completed') {
             return back()->with('error', 'لا يمكن حذف التنبؤ المكتمل');
         }
@@ -210,8 +315,14 @@ class AiPricePredictorController extends Controller
             ->with('success', 'تم حذف التنبؤ بالسعر بنجاح');
     }
 
-    public function predict(AiPricePrediction $prediction)
+    public function predict($price_predictor)
     {
+        $prediction = AiPricePrediction::with('property')->find($price_predictor);
+        
+        if (!$prediction) {
+            abort(404);
+        }
+        
         $predictionResults = $this->generatePrediction($prediction);
         
         $prediction->update([
@@ -233,8 +344,14 @@ class AiPricePredictorController extends Controller
         ]);
     }
 
-    public function analyze(AiPricePrediction $prediction)
+    public function analyze($price_predictor)
     {
+        $prediction = AiPricePrediction::find($price_predictor);
+        
+        if (!$prediction) {
+            abort(404);
+        }
+        
         $analysis = $this->performAiAnalysis($prediction);
         
         $prediction->update([
@@ -252,8 +369,14 @@ class AiPricePredictorController extends Controller
         ]);
     }
 
-    public function compare(AiPricePrediction $prediction)
+    public function compare($price_predictor)
     {
+        $prediction = AiPricePrediction::with('property')->find($price_predictor);
+        
+        if (!$prediction) {
+            abort(404);
+        }
+        
         $comparisons = $this->getComparativePredictions($prediction);
         
         return response()->json([
@@ -284,6 +407,56 @@ class AiPricePredictorController extends Controller
             'forecasts' => $forecasts,
             'property' => $property,
         ]);
+    }
+
+    private function generateDefaultMarketData(Property $property): array
+    {
+        return [
+            'demand_trend' => rand(1, 100) / 100,
+            'supply_trend' => rand(1, 100) / 100,
+            'price_trend' => rand(1, 100) / 100,
+            'inventory_level' => rand(1, 1000),
+            'days_on_market' => rand(1, 180),
+            'market_segment' => $property->type ?? 'residential',
+            'location_score' => rand(1, 10),
+        ];
+    }
+
+    private function generateDefaultHistoricalData(Property $property): array
+    {
+        $data = [];
+        $basePrice = $property->price ?? 100000;
+        for ($i = 12; $i >= 0; $i--) {
+            $data[] = [
+                'date' => Carbon::now()->subMonths($i)->format('Y-m-d'),
+                'price' => $basePrice * (1 + (rand(-5, 10) / 100)),
+                'volume' => rand(10, 100)
+            ];
+        }
+        return $data;
+    }
+
+    private function generateDefaultPropertyFeatures(Property $property): array
+    {
+        return [
+            'bedrooms' => $property->bedrooms ?? rand(1, 5),
+            'bathrooms' => $property->bathrooms ?? rand(1, 3),
+            'area' => $property->area ?? rand(50, 500),
+            'age' => $property->age ?? rand(0, 50),
+            'condition' => rand(1, 10),
+            'amenities_score' => rand(1, 10),
+        ];
+    }
+
+    private function generateDefaultEconomicIndicators(): array
+    {
+        return [
+            'interest_rate' => 0.05 + (rand(-10, 10) / 1000),
+            'inflation_rate' => 0.03 + (rand(-10, 10) / 1000),
+            'gdp_growth' => 0.02 + (rand(-10, 10) / 1000),
+            'employment_rate' => 0.95 + (rand(-10, 10) / 1000),
+            'consumer_confidence' => rand(80, 120),
+        ];
     }
 
     // Helper Methods
@@ -318,7 +491,8 @@ class AiPricePredictorController extends Controller
             )
             ->groupBy('date')
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->toArray();
     }
 
     private function getAccuracyMetrics(): array
@@ -415,10 +589,15 @@ class AiPricePredictorController extends Controller
     private function calculateAccuracy(array $data): float
     {
         $dataPoints = count($data['historical_data'] ?? []);
+        // Normalize data points score: 24 points (2 years) gives full score
+        $dataPointsScore = min(1.0, $dataPoints / 24);
+        
         $modelAccuracy = $this->getModelAccuracy($data['prediction_model'] ?? 'default');
         $dataQuality = $this->assessDataQuality($data);
 
-        return ($dataPoints * 0.3) + ($modelAccuracy * 0.4) + ($dataQuality * 0.3);
+        $accuracy = ($dataPointsScore * 0.3) + ($modelAccuracy * 0.4) + ($dataQuality * 0.3);
+        
+        return min(0.99, max(0.1, $accuracy));
     }
 
     private function calculateMarketAdjustment(array $marketData): float
@@ -429,15 +608,34 @@ class AiPricePredictorController extends Controller
             'price_trend' => 0.20,
             'inventory_level' => 0.10,
             'days_on_market' => 0.05,
+            'location_score' => 0.20,
         ];
 
         $adjustment = 0;
-        $totalWeight = array_sum($marketFactors);
-
-        foreach ($marketFactors as $factor => $weight) {
-            if (isset($marketData[$factor])) {
-                $adjustment += ($marketData[$factor] / $totalWeight) * $weight;
+        
+        foreach ($marketData as $factor => $value) {
+            if (!is_numeric($value)) {
+                continue;
             }
+
+            $weight = $marketFactors[$factor] ?? 0.05;
+            $normalizedValue = 0;
+
+            switch ($factor) {
+                case 'inventory_level':
+                    $normalizedValue = (500 - $value) / 5000;
+                    break;
+                case 'days_on_market':
+                    $normalizedValue = (60 - $value) / 600;
+                    break;
+                case 'location_score':
+                    $normalizedValue = ($value - 5) / 50;
+                    break;
+                default:
+                    $normalizedValue = $value * 0.1; 
+            }
+            
+            $adjustment += $normalizedValue * $weight;
         }
 
         return $adjustment;
@@ -473,18 +671,36 @@ class AiPricePredictorController extends Controller
         ];
 
         $impact = 0;
-        $totalWeight = array_sum($indicators);
-
-        foreach ($indicators as $indicator => $weight) {
-            if (isset($economicIndicators[$indicator])) {
-                $impact += ($economicIndicators[$indicator] / $totalWeight) * $weight;
+        
+        foreach ($economicIndicators as $indicator => $value) {
+            if (!is_numeric($value)) {
+                continue;
             }
+
+            $weight = $indicators[$indicator] ?? 0.05;
+            $normalizedValue = 0;
+            
+            switch ($indicator) {
+                case 'consumer_confidence':
+                    $normalizedValue = ($value - 100) / 1000;
+                    break;
+                case 'interest_rate':
+                    $normalizedValue = (0.05 - $value) * 0.5;
+                    break;
+                case 'inflation_rate':
+                     $normalizedValue = (0.02 - $value) * 0.5;
+                     break;
+                default:
+                     $normalizedValue = $value * 0.1;
+            }
+            
+            $impact += $normalizedValue * $weight;
         }
 
         return $impact;
     }
 
-    private function getTimeHorizonFactor(string $timeHorizon): float
+    private function getTimeHorizonFactor(?string $timeHorizon): float
     {
         $factors = [
             '1_month' => 1.02,
@@ -495,10 +711,10 @@ class AiPricePredictorController extends Controller
             '5_years' => 1.65,
         ];
 
-        return $factors[$timeHorizon] ?? 1.20;
+        return $factors[$timeHorizon ?? ''] ?? 1.20;
     }
 
-    private function getModelAccuracy(string $model): float
+    private function getModelAccuracy(?string $model): float
     {
         $accuracyScores = [
             'linear_regression' => 0.82,
@@ -508,7 +724,7 @@ class AiPricePredictorController extends Controller
             'xgboost' => 0.89,
         ];
 
-        return $accuracyScores[$model] ?? 0.80;
+        return $accuracyScores[$model ?? ''] ?? 0.80;
     }
 
     private function assessDataQuality(array $data): float
@@ -543,6 +759,11 @@ class AiPricePredictorController extends Controller
 
     private function processPrediction(AiPricePrediction $prediction): void
     {
+        if (!$prediction->property) {
+            $prediction->update(['status' => 'failed', 'notes' => 'Property not found']);
+            return;
+        }
+
         // Simulate AI prediction process
         $this->sendAiRequest($prediction, 'predict', [
             'property_id' => $prediction->property_id,
@@ -586,6 +807,18 @@ class AiPricePredictorController extends Controller
         $model = $prediction->prediction_model;
         $timeHorizon = $prediction->time_horizon;
 
+        if (!$property) {
+            return [
+                'predicted_price' => 0,
+                'confidence_interval' => ['lower_bound' => 0, 'upper_bound' => 0, 'confidence_level' => 0],
+                'accuracy' => 0,
+                'model_used' => $model,
+                'prediction_date' => now(),
+                'factors' => [],
+                'error' => 'Property not found'
+            ];
+        }
+
         $predictedPrice = $this->calculatePredictedPrice($property, [
             'market_data' => $prediction->market_data,
             'historical_data' => $prediction->historical_data,
@@ -620,12 +853,12 @@ class AiPricePredictorController extends Controller
         return [
             'property_id' => $prediction->property_id,
             'property' => [
-                'id' => $prediction->property->id,
-                'title' => $prediction->property->title,
-                'type' => $prediction->property->type,
-                'location' => $prediction->property->location,
-                'area' => $prediction->property->area,
-                'price' => $prediction->property->price,
+                'id' => $prediction->property?->id,
+                'title' => $prediction->property?->title,
+                'type' => $prediction->property?->type,
+                'location' => $prediction->property?->location,
+                'area' => $prediction->property?->area,
+                'price' => $prediction->property?->price,
             ],
             'prediction_model' => $prediction->prediction_model,
             'time_horizon' => $prediction->time_horizon,
@@ -645,9 +878,9 @@ class AiPricePredictorController extends Controller
     private function getMarketAnalysis(AiPricePrediction $prediction): array
     {
         return [
-            'market_trends' => $this->analyzeMarketTrends($prediction->market_data),
-            'historical_performance' => $this->analyzeHistoricalPerformance($prediction->historical_data),
-            'economic_outlook' => $this->analyzeEconomicOutlook($prediction->economic_indicators),
+            'market_trends' => $this->analyzeMarketTrends($prediction->market_data ?? []),
+            'historical_performance' => $this->analyzeHistoricalPerformance($prediction->historical_data ?? []),
+            'economic_outlook' => $this->analyzeEconomicOutlook($prediction->economic_indicators ?? []),
             'price_factors' => $this->analyzePriceFactors($prediction),
         ];
     }
@@ -658,10 +891,10 @@ class AiPricePredictorController extends Controller
             'overall_accuracy' => $prediction->accuracy,
             'model_accuracy' => $this->getModelAccuracy($prediction->prediction_model),
             'data_quality_score' => $this->assessDataQuality([
-                'market_data' => $prediction->market_data,
-                'historical_data' => $prediction->historical_data,
-                'property_features' => $prediction->property_features,
-                'economic_indicators' => $prediction->economic_indicators,
+                'market_data' => $prediction->market_data ?? [],
+                'historical_data' => $prediction->historical_data ?? [],
+                'property_features' => $prediction->property_features ?? [],
+                'economic_indicators' => $prediction->economic_indicators ?? [],
             ]),
             'confidence_level' => $prediction->confidence_interval['confidence_level'] ?? 0,
             'recommendations' => $this->generateAccuracyRecommendations($prediction),
@@ -686,18 +919,22 @@ class AiPricePredictorController extends Controller
     private function getMarketComparison(AiPricePrediction $prediction): array
     {
         $property = $prediction->property;
-        $location = $property->location ?? '';
+        $location = $property?->location ?? '';
+        $propertyType = $property?->type ?? '';
+        $propertyPrice = $property?->price ?? 1;
 
         return [
             'location_average' => $this->getLocationAveragePrice($location),
-            'property_type_average' => $this->getPropertyTypeAveragePrice($property->type),
+            'property_type_average' => $this->getPropertyTypeAveragePrice($propertyType),
             'market_trend' => $this->getMarketTrend($location),
-            'price_comparison' => $prediction->predicted_price / $property->price,
+            'price_comparison' => $propertyPrice > 0 ? $prediction->predicted_price / $propertyPrice : 0,
         ];
     }
 
     private function generateForecast(Property $property, string $timeHorizon): array
     {
+        $propertyPrice = $property?->price ?? 1;
+        
         return [
             'time_horizon' => $timeHorizon,
             'predicted_price' => $this->calculatePredictedPrice($property, [
@@ -755,9 +992,9 @@ class AiPricePredictorController extends Controller
     private function analyzePriceFactors(AiPricePrediction $prediction): array
     {
         return [
-            'market_adjustment' => $this->calculateMarketAdjustment($prediction->market_data),
-            'historical_trend' => $this->calculateHistoricalTrend($prediction->historical_data),
-            'economic_impact' => $this->calculateEconomicImpact($prediction->economic_indicators),
+            'market_adjustment' => $this->calculateMarketAdjustment($prediction->market_data ?? []),
+            'historical_trend' => $this->calculateHistoricalTrend($prediction->historical_data ?? []),
+            'economic_impact' => $this->calculateEconomicImpact($prediction->economic_indicators ?? []),
             'time_horizon_factor' => $this->getTimeHorizonFactor($prediction->time_horizon),
         ];
     }
@@ -766,7 +1003,7 @@ class AiPricePredictorController extends Controller
     {
         $recommendations = [];
 
-        if ($prediction->accuracy < 0.7) {
+        if (($prediction->accuracy ?? 0) < 0.7) {
             $recommendations[] = 'تحسين جودة البيانات لزيادة الدقة';
         }
 
@@ -774,7 +1011,8 @@ class AiPricePredictorController extends Controller
             $recommendations[] = 'زيادة البيانات التاريخية لتحسين التنبؤ';
         }
 
-        if ($prediction->confidence_interval['confidence_level'] < 0.8) {
+        $confidenceLevel = ($prediction->confidence_interval ?? [])['confidence_level'] ?? 0;
+        if ($confidenceLevel < 0.8) {
             $recommendations[] = 'استخدام نموذج مختلف لزيادة الثقة';
         }
 

@@ -23,10 +23,10 @@
                 </div>
                 
                 <div class="flex gap-3">
-                    <button class="bg-emerald-600 text-white px-6 py-3 rounded-2xl hover:bg-emerald-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <a href="{{ route('blockchain.geospatial.analysis.export') }}" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl hover:bg-emerald-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center">
                         <i class="fas fa-download ml-2"></i>
                         تصدير التقرير
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
                     </div>
                     <span class="text-sm text-green-600 font-medium">+12.5%</span>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-1">2,847</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ number_format($totalDataPoints) }}</h3>
                 <p class="text-gray-600 text-sm">نقاط بيانات مكانية</p>
             </div>
 
@@ -51,7 +51,7 @@
                     </div>
                     <span class="text-sm text-green-600 font-medium">+8.3%</span>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-1">94.2%</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ number_format($accuracy, 1) }}%</h3>
                 <p class="text-gray-600 text-sm">دقة التحليل</p>
             </div>
 
@@ -62,7 +62,7 @@
                     </div>
                     <span class="text-sm text-green-600 font-medium">+15.7%</span>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-1">156</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ number_format($layersCount) }}</h3>
                 <p class="text-gray-600 text-sm">طبقات بيانات</p>
             </div>
 
@@ -73,7 +73,7 @@
                     </div>
                     <span class="text-sm text-red-600 font-medium">-2.1%</span>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-1">1.2s</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ $avgProcessingTime }}</h3>
                 <p class="text-gray-600 text-sm">متوسط وقت المعالجة</p>
             </div>
         </div>
@@ -95,24 +95,27 @@
                     <div class="bg-gray-50 rounded-2xl p-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">الكثافة السكانية</span>
-                            <span class="text-sm text-gray-500">85%</span>
+                            <span class="text-sm text-gray-500">{{ $heatmapStats['population_density'] }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full" style="width: 85%"></div>
+                            <div class="bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full" style="width: {{ $heatmapStats['population_density'] }}%"></div>
                         </div>
                     </div>
                     <div class="bg-gray-50 rounded-2xl p-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">نشاط تجاري</span>
-                            <span class="text-sm text-gray-500">72%</span>
+                            <span class="text-sm text-gray-500">{{ $heatmapStats['commercial_activity'] }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full" style="width: 72%"></div>
+                            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full" style="width: {{ $heatmapStats['commercial_activity'] }}%"></div>
                         </div>
                     </div>
-                    <button class="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 rounded-2xl hover:from-red-700 hover:to-orange-700 transition-all duration-300 font-semibold">
-                        بدء التحليل
-                    </button>
+                    <form action="{{ route('blockchain.geospatial.heatmap.analyze') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 rounded-2xl hover:from-red-700 hover:to-orange-700 transition-all duration-300 font-semibold">
+                            بدء التحليل
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -130,31 +133,31 @@
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-blue-50 rounded-xl p-3 text-center">
-                            <div class="text-2xl font-bold text-blue-600">428</div>
+                            <div class="text-2xl font-bold text-blue-600">{{ $spatialStats['analysis_areas'] }}</div>
                             <div class="text-xs text-gray-600">منطقة تحليل</div>
                         </div>
                         <div class="bg-indigo-50 rounded-xl p-3 text-center">
-                            <div class="text-2xl font-bold text-indigo-600">1.2K</div>
+                            <div class="text-2xl font-bold text-indigo-600">{{ number_format($spatialStats['data_points']) }}</div>
                             <div class="text-xs text-gray-600">نقطة بيانات</div>
                         </div>
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">متوسط المسافة</span>
-                            <span class="font-medium">2.4 km</span>
+                            <span class="font-medium">{{ $spatialStats['avg_distance'] }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">الكثافة</span>
-                            <span class="font-medium">156/km²</span>
+                            <span class="font-medium">{{ $spatialStats['density'] }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">التغطية</span>
-                            <span class="font-medium">89.3%</span>
+                            <span class="font-medium">{{ $spatialStats['coverage'] }}</span>
                         </div>
                     </div>
-                    <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold">
+                    <a href="{{ route('blockchain.geospatial.statistics.details') }}" class="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold">
                         عرض التفاصيل
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -178,7 +181,7 @@
                                 </div>
                                 <span class="text-sm font-medium">نمط سكني</span>
                             </div>
-                            <span class="text-sm text-purple-600 font-medium">94%</span>
+                            <span class="text-sm text-purple-600 font-medium">{{ number_format($patterns['residential'] * 10, 1) }}%</span>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-pink-50 rounded-xl">
                             <div class="flex items-center gap-3">
@@ -187,7 +190,7 @@
                                 </div>
                                 <span class="text-sm font-medium">نمط تجاري</span>
                             </div>
-                            <span class="text-sm text-pink-600 font-medium">87%</span>
+                            <span class="text-sm text-pink-600 font-medium">{{ number_format($patterns['commercial'] * 10, 1) }}%</span>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-xl">
                             <div class="flex items-center gap-3">
@@ -196,12 +199,15 @@
                                 </div>
                                 <span class="text-sm font-medium">نمط صناعي</span>
                             </div>
-                            <span class="text-sm text-indigo-600 font-medium">76%</span>
+                            <span class="text-sm text-indigo-600 font-medium">{{ number_format($patterns['industrial'] * 10, 1) }}%</span>
                         </div>
                     </div>
-                    <button class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-2xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold">
-                        تحليل متقدم
-                    </button>
+                    <form action="{{ route('blockchain.geospatial.patterns.analyze') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-2xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold">
+                            تحليل متقدم
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

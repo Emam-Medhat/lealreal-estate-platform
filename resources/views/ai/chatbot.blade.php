@@ -1,441 +1,233 @@
 @extends('layouts.app')
 
-@section('title', 'المساعد الذكي للعقارات')
-
 @section('content')
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">
-            <i class="fas fa-robot me-2"></i>
-            المساعد الذكي للعقارات
-        </h1>
-        <div>
-            <button type="button" class="btn btn-primary" onclick="startNewConversation()">
-                <i class="fas fa-plus me-2"></i>محادثة جديدة
-            </button>
-        </div>
-    </div>
+    <div class="h-screen bg-slate-50 flex items-center justify-center p-4 md:p-8 font-sans">
+        <div class="max-w-5xl w-full h-[85vh] bg-white rounded-3xl shadow-2xl shadow-blue-100 overflow-hidden flex flex-col md:flex-row rtl"
+            dir="rtl">
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ $stats['total_conversations'] ?? 0 }}</h4>
-                            <p class="card-text">إجمالي المحادثات</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-comments fa-2x opacity-75"></i>
+            <!-- Sidebar: Advisor Profile & Stats -->
+            <div class="w-full md:w-80 bg-gradient-to-br from-blue-700 to-blue-900 text-white p-8 flex flex-col">
+                <div class="flex flex-col items-center text-center mb-8">
+                    <div
+                        class="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-4 border border-white/20 relative">
+                        <span class="text-4xl">🤖</span>
+                        <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-400 border-4 border-blue-800 rounded-full">
                         </div>
                     </div>
+                    <h2 class="text-2xl font-bold">المستشار الذكي</h2>
+                    <p class="text-blue-100/70 text-sm">متاح دائماً لمساعدتك</p>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ $stats['active_conversations'] ?? 0 }}</h4>
-                            <p class="card-text">محادثات نشطة</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-circle fa-2x opacity-75"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ $stats['resolved_conversations'] ?? 0 }}</h4>
-                            <p class="card-text">محادثات محلولة</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ $stats['avg_satisfaction'] ?? 0 }}%</h4>
-                            <p class="card-text">متوسط الرضا</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-smile fa-2x opacity-75"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row">
-        <!-- Chat Interface -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-comments me-2"></i>
-                        واجهة الدردشة
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div id="chatMessages" class="chat-messages" style="height: 500px; overflow-y: auto; padding: 20px; background-color: #f8f9fa;">
-                        <!-- Welcome Message -->
-                        <div class="text-center mb-4">
-                            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
-                            <h5>مرحباً بك في المساعد الذكي للعقارات</h5>
-                            <p class="text-muted">كيف يمكنني مساعدتك اليوم؟</p>
-                        </div>
+                <div class="space-y-6 flex-1">
+                    <div class="bg-white/10 rounded-2xl p-4 border border-white/10">
+                        <h3 class="text-xs font-bold text-blue-200 uppercase tracking-widest mb-2">كيف يمكنني مساعدتك؟</h3>
+                        <ul class="text-sm space-y-3 text-blue-50">
+                            <li class="flex items-start gap-2">
+                                <svg class="w-4 h-4 mt-0.5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                البحث عن عقارات تناسب ميزانيتك
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <svg class="w-4 h-4 mt-0.5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                مقارنة المناطق والأحياء
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <svg class="w-4 h-4 mt-0.5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                تحليل أسعار السوق الحالية
+                            </li>
+                        </ul>
                     </div>
-                    <div class="chat-input p-3 border-top">
-                        <form id="chatForm">
-                            @csrf
-                            <div class="input-group">
-                                <input type="text" id="messageInput" class="form-control" placeholder="اكتب رسالتك هنا..." required>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Conversations List -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-history me-2"></i>
-                        المحادثات السابقة
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
-                        @forelse ($conversations ?? [] as $conversation)
-                            <a href="#" class="list-group-item list-group-item-action" onclick="loadConversation({{ $conversation->id }})">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">{{ $conversation->conversation_type_label }}</h6>
-                                        <p class="mb-1 text-truncate">{{ $conversation->last_message['text'] ?? 'لا توجد رسائل' }}</p>
-                                        <small class="text-muted">{{ $conversation->created_at->format('Y-m-d H:i') }}</small>
-                                    </div>
-                                    <div class="ms-2">
-                                        @if ($conversation->status == 'active')
-                                            <span class="badge bg-success">نشط</span>
-                                        @elseif ($conversation->resolution_status == 'resolved')
-                                            <span class="badge bg-primary">محلول</span>
-                                        @else
-                                            <span class="badge bg-secondary">{{ $conversation->status_label }}</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </a>
-                        @empty
-                            <div class="text-center p-4">
-                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">لا توجد محادثات سابقة</p>
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Conversation Details Modal -->
-<div class="modal fade" id="conversationDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">تفاصيل المحادثة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="conversationDetailsContent">
-                    <!-- Content will be loaded via AJAX -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                <button type="button" class="btn btn-primary" onclick="exportConversation()">
-                    <i class="fas fa-download me-2"></i>تصدير المحادثة
+                <button onclick="clearChat()"
+                    class="text-sm text-blue-300 hover:text-white transition-colors flex items-center justify-center gap-2 mt-8">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                    </svg>
+                    بدء محادثة جديدة
                 </button>
             </div>
+
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col bg-white overflow-hidden">
+                <!-- Messages Container -->
+                <div id="chatBox" class="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+                    <!-- Welcome Message -->
+                    <div class="flex justify-start">
+                        <div
+                            class="bg-gray-100 text-gray-800 rounded-2xl rounded-tr-none p-4 max-w-[85%] text-sm shadow-sm">
+                            أهلاً بك! أنا مستشارك العقاري الذكي. كيف يمكنني مساعدتك في العثور على منزلك المثالي اليوم؟
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="p-6 bg-slate-50 border-t border-gray-100">
+                    <div class="relative flex items-center gap-4">
+                        <input type="text" id="chatInput" placeholder="اكتب سؤالك هنا..."
+                            class="flex-1 bg-white border border-gray-200 rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none shadow-sm transition-all pr-12">
+                        <button id="sendBtn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white p-3.5 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 group">
+                            <svg class="w-6 h-6 transform rotate-180 group-hover:translate-x-1 duration-300" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        <button onclick="quickAsk('عقارات رخيصة في التجمع')"
+                            class="text-[11px] bg-white border border-gray-200 text-gray-500 px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-blue-50 hover:text-blue-600 transition-colors">عقارات
+                            رخيصة في التجمع</button>
+                        <button onclick="quickAsk('أسعار الشقق في زايد')"
+                            class="text-[11px] bg-white border border-gray-200 text-gray-500 px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-blue-50 hover:text-blue-600 transition-colors">أسعار
+                            الشقق في زايد</button>
+                        <button onclick="quickAsk('فلل للايجار بالساحل')"
+                            class="text-[11px] bg-white border border-gray-200 text-gray-500 px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-blue-50 hover:text-blue-600 transition-colors">فلل
+                            للايجار بالساحل</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <script>
+        let sessionId = localStorage.getItem('ai_chat_sid') || '';
+
+        function quickAsk(text) {
+            document.getElementById('chatInput').value = text;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const box = document.getElementById('chatBox');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            // Add user message
+            appendMessage('user', text);
+            input.value = '';
+
+            // Add typing indicator
+            const typingId = 'typing_' + Date.now();
+            const typingDiv = document.createElement('div');
+            typingDiv.id = typingId;
+            typingDiv.className = 'flex justify-start';
+            typingDiv.innerHTML = `
+                            <div class="bg-gray-100 text-gray-400 rounded-2xl rounded-tr-none p-4 max-w-[85%] text-sm italic animate-pulse">
+                                جاري التفكير...
+                            </div>
+                        `;
+            box.appendChild(typingDiv);
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                console.log('Sending message:', { message: text, session_id: sessionId });
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        message: text,
+                        session_id: sessionId
+                    })
+                });
+
+                const responseText = await response.text();
+                console.log('Raw server response:', responseText);
+
+                let res;
+                try {
+                    res = JSON.parse(responseText);
+                } catch (parseErr) {
+                    console.error('Failed to parse JSON:', parseErr, 'Raw:', responseText.substring(0, 500));
+                    document.getElementById(typingId).remove();
+                    appendMessage('error', 'عذراً، السيرفر رجّع رد غير صالح. شوف الكونسول.');
+                    return;
+                }
+
+                console.log('Server response:', res);
+                document.getElementById(typingId).remove();
+
+                if (!response.ok) {
+                    console.error('HTTP Error:', response.status, res);
+                    if (res.debug_error) console.error('🔴 Backend Error Detail:', res.debug_error);
+                    appendMessage('error', res.message || res.reply || 'عذراً، حدث خطأ في النظام.');
+                    return;
+                }
+
+                if (res.success) {
+                    sessionId = res.session_id;
+                    localStorage.setItem('ai_chat_sid', sessionId);
+                    appendMessage('ai', res.reply);
+                } else {
+                    console.warn('AI Service Error:', res);
+                    if (res.debug_error) console.error('🔴 Backend Error Detail:', res.debug_error);
+                    appendMessage('error', res.reply || 'حدث خطأ في خدمة الذكاء الاصطناعي.');
+                }
+            } catch (e) {
+                console.error('Chat Script Exception:', e);
+                document.getElementById(typingId).remove();
+                appendMessage('error', 'عذراً، حدث خطأ ما. حاول مرة أخرى.');
+            }
+        }
+
+        function appendMessage(type, text) {
+            const box = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            const bgColor = type === 'user' ? 'bg-blue-600 text-white' : (type === 'error' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-800');
+            const rounded = type === 'user' ? 'rounded-tl-none' : 'rounded-tr-none';
+
+            div.innerHTML = `
+                            <div class="${bgColor} ${rounded} rounded-2xl p-4 max-w-[85%] text-sm shadow-sm leading-relaxed">
+                                ${text.replace(/\n/g, '<br>')}
+                            </div>
+                        `;
+
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function clearChat() {
+            if (!sessionId) return;
+            await fetch(`/api/ai/chat/${sessionId}`, { method: 'DELETE' });
+            localStorage.removeItem('ai_chat_sid');
+            sessionId = '';
+            window.location.reload();
+        }
+
+        document.getElementById('sendBtn').onclick = sendMessage;
+        document.getElementById('chatInput').onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+    </script>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 @endsection
-
-@push('scripts')
-<script>
-let currentConversationId = null;
-let isTyping = false;
-
-// Chat Form
-document.getElementById('chatForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const messageInput = document.getElementById('messageInput');
-    const message = messageInput.value.trim();
-    
-    if (!message) return;
-    
-    // Add user message
-    addMessage('user', message);
-    messageInput.value = '';
-    
-    // Show typing indicator
-    showTypingIndicator();
-    
-    // Send to AI
-    sendMessageToAI(message);
-});
-
-// Add message to chat
-function addMessage(sender, message, timestamp = null) {
-    const chatMessages = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `d-flex mb-3 ${sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
-    
-    const time = timestamp || new Date().toLocaleTimeString('ar-SA');
-    
-    messageDiv.innerHTML = `
-        <div class="max-width-70">
-            <div class="card ${sender === 'user' ? 'bg-primary text-white' : 'bg-light'}">
-                <div class="card-body py-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong>${sender === 'user' ? 'أنت' : 'المساعد الذكي'}</strong>
-                        <small class="${sender === 'user' ? 'text-white' : 'text-muted'}">${time}</small>
-                    </div>
-                    <p class="mb-0">${message}</p>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Show typing indicator
-function showTypingIndicator() {
-    const chatMessages = document.getElementById('chatMessages');
-    const typingDiv = document.createElement('div');
-    typingDiv.id = 'typingIndicator';
-    typingDiv.className = 'd-flex justify-content-start mb-3';
-    typingDiv.innerHTML = `
-        <div class="max-width-70">
-            <div class="card bg-light">
-                <div class="card-body py-2">
-                    <div class="d-flex align-items-center">
-                        <strong>المساعد الذكي</strong>
-                        <div class="ms-2">
-                            <div class="spinner-border spinner-border-sm" role="status">
-                                <span class="visually-hidden">جاري الكتابة...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    chatMessages.appendChild(typingDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Hide typing indicator
-function hideTypingIndicator() {
-    const typingIndicator = document.getElementById('typingIndicator');
-    if (typingIndicator) {
-        typingIndicator.remove();
-    }
-}
-
-// Send message to AI
-function sendMessageToAI(message) {
-    const formData = new FormData();
-    formData.append('message', message);
-    formData.append('conversation_id', currentConversationId || '');
-    
-    fetch('{{ route("ai.chatbot.send") }}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideTypingIndicator();
-        
-        if (data.success) {
-            addMessage('ai', data.response.text);
-            
-            // Update conversation ID if new
-            if (data.conversation_id && !currentConversationId) {
-                currentConversationId = data.conversation_id;
-            }
-            
-            // Show suggestions if available
-            if (data.response.suggestions && data.response.suggestions.length > 0) {
-                showSuggestions(data.response.suggestions);
-            }
-        } else {
-            addMessage('ai', 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.');
-        }
-    })
-    .catch(error => {
-        hideTypingIndicator();
-        console.error('Error:', error);
-        addMessage('ai', 'عذراً، حدث خطأ في الاتصال بالخادم.');
-    });
-}
-
-// Show suggestions
-function showSuggestions(suggestions) {
-    const chatMessages = document.getElementById('chatMessages');
-    const suggestionsDiv = document.createElement('div');
-    suggestionsDiv.className = 'd-flex justify-content-start mb-3';
-    suggestionsDiv.innerHTML = `
-        <div class="max-width-70">
-            <div class="card bg-info text-white">
-                <div class="card-body py-2">
-                    <small class="d-block mb-2">اقتراحات:</small>
-                    <div class="d-flex flex-wrap gap-2">
-                        ${suggestions.map(suggestion => `<button type="button" class="btn btn-sm btn-light" onclick="sendSuggestion('${suggestion}')">${suggestion}</button>`).join('')}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    chatMessages.appendChild(suggestionsDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Send suggestion
-function sendSuggestion(suggestion) {
-    document.getElementById('messageInput').value = suggestion;
-    document.getElementById('chatForm').dispatchEvent(new Event('submit'));
-}
-
-// Start new conversation
-function startNewConversation() {
-    currentConversationId = null;
-    document.getElementById('chatMessages').innerHTML = `
-        <div class="text-center mb-4">
-            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
-            <h5>بدأت محادثة جديدة</h5>
-            <p class="text-muted">كيف يمكنني مساعدتك اليوم؟</p>
-        </div>
-    `;
-}
-
-// Load conversation
-function loadConversation(conversationId) {
-    fetch(`/ai/chatbot/conversation/${conversationId}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            currentConversationId = conversationId;
-            displayConversation(data.conversation);
-            new bootstrap.Modal(document.getElementById('conversationDetailsModal')).show();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ!',
-            text: 'حدث خطأ أثناء تحميل المحادثة',
-            confirmButtonText: 'موافق'
-        });
-    });
-}
-
-// Display conversation
-function displayConversation(conversation) {
-    const content = document.getElementById('conversationDetailsContent');
-    const messages = conversation.messages || [];
-    
-    let html = `
-        <div class="mb-3">
-            <h6>تفاصيل المحادثة</h6>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>النوع:</strong> ${conversation.conversation_type_label}<br>
-                    <strong>الحالة:</strong> ${conversation.status_label}<br>
-                    <strong>التاريخ:</strong> ${conversation.created_at}
-                </div>
-                <div class="col-md-6">
-                    <strong>مستوى الرضا:</strong> ${conversation.satisfaction_level || 'غير محدد'}<br>
-                    <strong>المدة:</strong> ${conversation.formatted_duration}<br>
-                    <strong>عدد الرسائل:</strong> ${conversation.message_count}
-                </div>
-            </div>
-        </div>
-        <div class="chat-messages" style="max-height: 400px; overflow-y: auto; padding: 20px; background-color: #f8f9fa;">
-    `;
-    
-    messages.forEach(msg => {
-        const time = new Date(msg.timestamp).toLocaleTimeString('ar-SA');
-        html += `
-            <div class="d-flex mb-3 ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}">
-                <div class="max-width-70">
-                    <div class="card ${msg.sender === 'user' ? 'bg-primary text-white' : 'bg-light'}">
-                        <div class="card-body py-2">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <strong>${msg.sender === 'user' ? 'المستخدم' : 'المساعد الذكي'}</strong>
-                                <small class="${msg.sender === 'user' ? 'text-white' : 'text-muted'}">${time}</small>
-                            </div>
-                            <p class="mb-0">${msg.text}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    content.innerHTML = html;
-}
-
-// Export conversation
-function exportConversation() {
-    if (!currentConversationId) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'تنبيه!',
-            text: 'يرجى اختيار محادثة أولاً',
-            confirmButtonText: 'موافق'
-        });
-        return;
-    }
-    
-    window.open(`/ai/chatbot/conversation/${currentConversationId}/export`, '_blank');
-}
-
-// Auto-scroll to bottom on load
-document.addEventListener('DOMContentLoaded', function() {
-    const chatMessages = document.getElementById('chatMessages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-</script>
-@endpush

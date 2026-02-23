@@ -41,6 +41,8 @@ Route::prefix('gamification')->name('gamification.')->group(function () {
 });
 
 // Blockchain Routes
+// Moved to routes/blockchain.php to prevent conflicts and ensure proper resource routing
+/*
 Route::prefix('blockchain')->name('blockchain.')->group(function () {
     Route::get('/', [BlockchainController::class, 'index'])->name('index');
     Route::get('/dashboard', [BlockchainController::class, 'dashboard'])->name('dashboard');
@@ -53,6 +55,7 @@ Route::prefix('blockchain')->name('blockchain.')->group(function () {
     Route::get('/daos', [BlockchainController::class, 'daos'])->name('daos');
     Route::get('/statistics', [BlockchainController::class, 'statistics'])->name('statistics');
 });
+*/
 
 // Enterprise Routes
 Route::prefix('enterprise')->name('enterprise.')->group(function () {

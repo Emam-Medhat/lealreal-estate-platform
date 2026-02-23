@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentVersion;
 use App\Http\Requests\GenerateDocumentRequest;
+use App\Services\DocumentTemplateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,13 @@ use Dompdf\Dompdf;
 
 class DocumentGenerationController extends Controller
 {
+    protected $documentTemplateService;
+
+    public function __construct(DocumentTemplateService $documentTemplateService)
+    {
+        $this->documentTemplateService = $documentTemplateService;
+    }
+
     public function index()
     {
         $templates = DocumentTemplate::active()->get();
@@ -23,7 +31,13 @@ class DocumentGenerationController extends Controller
             ->take(10)
             ->get();
             
-        return view('documents.generation.index', compact('templates', 'recentDocuments'));
+        // Calculate statistics
+        $todayGenerations = Document::whereDate('created_at', today())->count();
+        $thisMonthGenerations = Document::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+                    
+        return view('documents.generation.index', compact('templates', 'recentDocuments', 'todayGenerations', 'thisMonthGenerations'));
     }
     
     public function create(DocumentTemplate $template)
@@ -37,7 +51,7 @@ class DocumentGenerationController extends Controller
     {
         $data = $request->except(['_token', '_method']);
         
-        $content = $this->processTemplate($template, $data);
+        $content = $this->documentTemplateService->preview($template, $data);
         
         return response()->json([
             'content' => $content,
@@ -53,7 +67,7 @@ class DocumentGenerationController extends Controller
             $data = $request->validated();
             
             // Process template content
-            $content = $this->processTemplate($template, $data);
+            $content = $this->documentTemplateService->render($template, $data);
             
             // Create document
             $document = Document::create([
@@ -137,7 +151,7 @@ class DocumentGenerationController extends Controller
         ];
         
         // Process template
-        $content = $this->processTemplate($template, $data);
+        $content = $this->documentTemplateService->render($template, $data);
         
         // Create document
         $document = Document::create([
@@ -184,7 +198,7 @@ class DocumentGenerationController extends Controller
         
         try {
             foreach ($request->data as $item) {
-                $content = $this->processTemplate($template, $item);
+                $content = $this->documentTemplateService->render($template, $item);
                 
                 $document = Document::create([
                     'title' => $item['title'],
@@ -228,154 +242,6 @@ class DocumentGenerationController extends Controller
                 'message' => 'حدث خطأ أثناء الإنشاء المجمع: ' . $e->getMessage()
             ], 500);
         }
-    }
-    
-    private function processTemplate(DocumentTemplate $template, array $data)
-    {
-        $content = $template->content;
-        
-        // Replace variables
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                // Handle arrays (like parties, terms)
-                $value = $this->processArrayVariable($key, $value, $template);
-            } elseif (is_object($value)) {
-                // Handle objects
-                $value = $this->processObjectVariable($value);
-            } else {
-                // Handle simple values
-                $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            }
-            
-            $content = str_replace('{{' . $key . '}}', $value, $content);
-        }
-        
-        // Process conditional blocks
-        $content = $this->processConditionals($content, $data);
-        
-        // Process loops
-        $content = $this->processLoops($content, $data);
-        
-        return $content;
-    }
-    
-    private function processArrayVariable(string $key, array $value, DocumentTemplate $template)
-    {
-        $result = '';
-        
-        foreach ($value as $index => $item) {
-            if (is_array($item)) {
-                // Handle array of objects
-                foreach ($item as $subKey => $subValue) {
-                    $result .= $subValue . "\n";
-                }
-            } else {
-                $result .= $item . "\n";
-            }
-        }
-        
-        return trim($result);
-    }
-    
-    private function processObjectVariable($object)
-    {
-        if (method_exists($object, 'toArray')) {
-            return json_encode($object->toArray(), JSON_UNESCAPED_UNICODE);
-        }
-        
-        return (string) $object;
-    }
-    
-    private function processConditionals(string $content, array $data)
-    {
-        // Process @if blocks
-        preg_match_all('/@if\((.*?)\)(.*?)@endif/s', $content, $matches);
-        
-        foreach ($matches[0] as $index => $fullMatch) {
-            $condition = $matches[1][$index];
-            $blockContent = $matches[2][$index];
-            
-            if ($this->evaluateCondition($condition, $data)) {
-                $content = str_replace($fullMatch, $blockContent, $content);
-            } else {
-                $content = str_replace($fullMatch, '', $content);
-            }
-        }
-        
-        return $content;
-    }
-    
-    private function processLoops(string $content, array $data)
-    {
-        // Process @foreach blocks
-        preg_match_all('/@foreach\((.*?) as (.*?)\)(.*?)@endforeach/s', $content, $matches);
-        
-        foreach ($matches[0] as $index => $fullMatch) {
-            $arrayExpression = $matches[1][$index];
-            $itemVariable = $matches[2][$index];
-            $loopContent = $matches[3][$index];
-            
-            $array = $this->getArrayFromExpression($arrayExpression, $data);
-            $result = '';
-            
-            foreach ($array as $item) {
-                $itemContent = $loopContent;
-                
-                if (is_array($item)) {
-                    foreach ($item as $key => $value) {
-                        $itemContent = str_replace('{{' . $itemVariable . '.' . $key . '}}', $value, $itemContent);
-                    }
-                } else {
-                    $itemContent = str_replace('{{' . $itemVariable . '}}', $item, $itemContent);
-                }
-                
-                $result .= $itemContent;
-            }
-            
-            $content = str_replace($fullMatch, $result, $content);
-        }
-        
-        return $content;
-    }
-    
-    private function evaluateCondition(string $condition, array $data)
-    {
-        // Simple condition evaluation
-        if (strpos($condition, '!==') !== false) {
-            list($var, $value) = explode('!==', $condition);
-            $var = trim($var);
-            $value = trim($value, " '\"");
-            return ($data[$var] ?? '') !== $value;
-        }
-        
-        if (strpos($condition, '==') !== false) {
-            list($var, $value) = explode('==', $condition);
-            $var = trim($var);
-            $value = trim($value, " '\"");
-            return ($data[$var] ?? '') == $value;
-        }
-        
-        if (strpos($condition, '!=') !== false) {
-            list($var, $value) = explode('!=', $condition);
-            $var = trim($var);
-            $value = trim($value, " '\"");
-            return ($data[$var] ?? '') != $value;
-        }
-        
-        // Check if variable exists and is not empty
-        $var = trim($condition);
-        return !empty($data[$var] ?? null);
-    }
-    
-    private function getArrayFromExpression(string $expression, array $data)
-    {
-        $expression = trim($expression);
-        
-        if (isset($data[$expression]) && is_array($data[$expression])) {
-            return $data[$expression];
-        }
-        
-        return [];
     }
     
     private function generatePDF(Document $document, DocumentVersion $version)

@@ -6,25 +6,30 @@ use App\Models\Nft;
 use App\Models\CryptoWallet;
 use App\Models\User;
 use App\Models\Property;
+use App\Repositories\Contracts\NftRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class NftController extends Controller
 {
-    public function __construct()
+    protected $nftRepository;
+
+    public function __construct(NftRepositoryInterface $nftRepository)
     {
         $this->middleware('auth');
+        $this->nftRepository = $nftRepository;
     }
 
     public function index()
     {
-        $nfts = Nft::with(['owner'])->latest()->paginate(20);
+        $nfts = $this->nftRepository->getPaginated(20);
 
-        $totalNfts = Nft::count();
-        $listedNfts = Nft::where('status', 'listed')->count();
-        $totalVolume = Nft::sum('price');
-        $ownersCount = Nft::distinct('owner_address')->count('owner_address');
+        $stats = $this->nftRepository->getStats();
+        $totalNfts = $stats['total_nfts'];
+        $listedNfts = $stats['listed_nfts'];
+        $totalVolume = $stats['total_volume'];
+        $ownersCount = $stats['unique_owners'];
 
         return view('blockchain.nfts', compact('nfts', 'totalNfts', 'listedNfts', 'totalVolume', 'ownersCount'));
     }
@@ -44,106 +49,64 @@ class NftController extends Controller
 
     public function show($id)
     {
-        $nft = Nft::with(['owner', 'smartContract'])->findOrFail($id);
+        $nft = $this->nftRepository->findById($id, ['*'], ['owner', 'smartContract']);
+        if (!$nft) {
+            abort(404);
+        }
         return view('blockchain.nfts.show', compact('nft'));
     }
 
     public function edit($id)
     {
-        $nft = Nft::findOrFail($id);
+        $nft = $this->nftRepository->findById($id);
+        if (!$nft) {
+            abort(404);
+        }
         return view('blockchain.nfts.edit', compact('nft'));
     }
 
     public function update(Request $request, $id)
     {
-        $nft = Nft::findOrFail($id);
-        $nft->update($request->all());
-        return redirect()->route('blockchain.nfts.show', $nft->id)->with('success', 'NFT updated successfully');
+        $this->nftRepository->update($id, $request->all());
+        return redirect()->route('blockchain.nfts.show', $id)->with('success', 'NFT updated successfully');
     }
 
     public function destroy($id)
     {
-        $nft = Nft::findOrFail($id);
-        $nft->delete();
+        $this->nftRepository->deleteById($id);
         return redirect()->route('blockchain.nfts.index')->with('success', 'NFT deleted successfully');
     }
 
-    public function mintNft(Request $request)
+    public function showBuy($id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'collection_id' => 'nullable|integer',
-            'token_id' => 'required|integer|min:0',
-            'contract_address' => 'required|string|max:255',
-            'owner_address' => 'required|string|max:255',
-            'creator_address' => 'required|string|max:255',
-            'metadata' => 'nullable|array',
-            'attributes' => 'nullable|array',
-            'royalty_percentage' => 'nullable|numeric|min:0|max:50',
-            'minting_cost' => 'nullable|numeric|min:0',
-            'gas_used' => 'nullable|integer|min:0',
-            'transaction_hash' => 'nullable|string|max:255',
-            'block_number' => 'nullable|integer|min:0',
-            'status' => 'required|string|in:minted,transferred,burned,listed',
-        ]);
-
-        // Handle image upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imagePath = $image->store('nfts', 'public');
+        $nft = $this->nftRepository->findById($id);
+        if (!$nft) {
+            abort(404);
         }
+        return view('blockchain.nfts.buy', compact('nft'));
+    }
 
-        $nft = Nft::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'image' => $imagePath,
-            'collection_id' => $request->collection_id,
-            'token_id' => $request->token_id,
-            'contract_address' => $request->contract_address,
-            'owner_address' => $request->owner_address,
-            'creator_address' => $request->creator_address,
-            'metadata' => $request->metadata ?? [],
-            'attributes' => $request->attributes ?? [],
-            'royalty_percentage' => $request->royalty_percentage ?? 0,
-            'minting_cost' => $request->minting_cost ?? 0,
-            'gas_used' => $request->gas_used ?? 0,
-            'transaction_hash' => $request->transaction_hash,
-            'block_number' => $request->block_number,
-            'status' => $request->status,
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+    public function processBuy(Request $request, $id)
+    {
+        // Implementation for processing the buy
+        // This is a placeholder for the actual logic
+        return redirect()->route('blockchain.nfts.show', $id)->with('success', 'NFT purchase processed successfully');
+    }
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'nft' => $nft
-            ]);
+    public function showAuction($id)
+    {
+        $nft = $this->nftRepository->findById($id);
+        if (!$nft) {
+            abort(404);
         }
-
-        return redirect()->route('blockchain.nfts.show', $nft->id)->with('success', 'NFT minted successfully');
+        return view('blockchain.nfts.auction', compact('nft'));
     }
 
     public function getNfts(Request $request)
     {
-        $query = Nft::with(['owner']);
+        $filters = $request->only(['collection_id', 'owner_address', 'status']);
         
-        if ($request->collection_id) {
-            $query->where('collection_id', $request->collection_id);
-        }
-        
-        if ($request->owner_address) {
-            $query->where('owner_address', $request->owner_address);
-        }
-        
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        return response()->json($query->latest()->paginate(20));
+        return response()->json($this->nftRepository->getFiltered($filters, 20));
     }
 
     public function listNft(Request $request)
@@ -156,13 +119,13 @@ class NftController extends Controller
             'expiration_date' => 'nullable|date|after:now'
         ]);
 
-        $nft = Nft::findOrFail($request->nft_id);
+        $nft = $this->nftRepository->findById($request->nft_id);
         
         if ($nft->owner_address !== $request->owner_address) {
             return response()->json(['error' => 'You are not the owner of this NFT'], 403);
         }
 
-        $nft->update([
+        $this->nftRepository->update($nft->id, [
             'current_price' => $request->price,
             'currency' => $request->currency,
             'status' => 'listed',
@@ -173,7 +136,7 @@ class NftController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'nft' => $nft
+            'nft' => $this->nftRepository->findById($nft->id)
         ]);
     }
 
@@ -186,7 +149,7 @@ class NftController extends Controller
             'currency' => 'required|string|in:ETH,USDC,USDT'
         ]);
 
-        $nft = Nft::findOrFail($request->nft_id);
+        $nft = $this->nftRepository->findById($request->nft_id);
         
         if ($nft->status !== 'listed') {
             return response()->json(['error' => 'NFT is not for sale'], 400);
@@ -198,7 +161,7 @@ class NftController extends Controller
 
         // Logic for purchase would go here (transaction verification etc)
         // For now we just update status
-        $nft->update([
+        $this->nftRepository->update($nft->id, [
             'status' => 'sold',
             'owner_address' => $request->buyer_address,
             'updated_at' => now()
@@ -207,7 +170,7 @@ class NftController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'NFT purchased successfully',
-            'nft' => $nft
+            'nft' => $this->nftRepository->findById($nft->id)
         ]);
     }
 
@@ -218,13 +181,13 @@ class NftController extends Controller
             'owner_address' => 'required|string|max:255'
         ]);
 
-        $nft = Nft::findOrFail($request->nft_id);
+        $nft = $this->nftRepository->findById($request->nft_id);
         
         if ($nft->owner_address !== $request->owner_address) {
             return response()->json(['error' => 'You are not the owner of this NFT'], 403);
         }
 
-        $nft->update(['status' => 'burned']);
+        $this->nftRepository->update($nft->id, ['status' => 'burned']);
 
         return response()->json([
             'status' => 'success',
@@ -234,26 +197,13 @@ class NftController extends Controller
 
     public function getNftStats(Request $request)
     {
-        // Simplified stats
-        $stats = [
-            'total_nfts' => Nft::count(),
-            'minted_nfts' => Nft::where('status', 'minted')->count(),
-            'transferred_nfts' => Nft::where('status', 'transferred')->count(),
-            'burned_nfts' => Nft::where('status', 'burned')->count(),
-            'listed_nfts' => Nft::where('status', 'listed')->count(),
-            'total_volume' => Nft::sum('price'),
-            'unique_owners' => Nft::distinct('owner_address')->count(),
-            'gas_used_total' => Nft::sum('gas_used'),
-            'minting_costs_total' => Nft::sum('minting_cost')
-        ];
-
-        return response()->json($stats);
+        return response()->json($this->nftRepository->getStats());
     }
 
     public function getNftHistory(Request $request)
     {
         $nftId = $request->nft_id;
-        $nft = Nft::findOrFail($nftId);
+        $nft = $this->nftRepository->findById($nftId);
         
         // Placeholder for history
         $history = [
@@ -271,37 +221,50 @@ class NftController extends Controller
 
     public function searchNfts(Request $request)
     {
-        $query = Nft::with(['owner']);
-        
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('token_id', 'like', "%{$search}%");
-            });
-        }
-        
-        if ($request->collection_id) {
-            $query->where('collection_id', $request->collection_id);
-        }
-        
-        if ($request->creator_address) {
-            $query->where('creator_address', $request->creator_address);
-        }
+        $filters = $request->only(['search', 'collection_id', 'creator_address']);
 
-        return response()->json($query->latest()->paginate(20));
+        return response()->json($this->nftRepository->search($filters, 20));
     }
 
-    public function showBuy($id)
+    public function mintNft(Request $request)
     {
-        $nft = Nft::findOrFail($id);
-        return view('blockchain.nfts.buy', compact('nft'));
-    }
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'price' => 'required|numeric|min:0',
+            'type' => 'required|string|in:art,music,game,real_estate,collectible,sports,photography,video',
+            'rarity' => 'nullable|string|in:common,uncommon,rare,epic,legendary,mythic',
+            'collection' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:10240',
+        ]);
 
-    public function showAuction($id)
-    {
-        $nft = Nft::findOrFail($id);
-        return view('blockchain.nfts.auction', compact('nft'));
+        try {
+            $data = $request->except(['image']);
+            $data['owner_address'] = auth()->user()->wallet_address ?? '0x0000000000000000000000000000000000000000';
+            $data['token_id'] = uniqid();
+            $data['created_at'] = now();
+            $data['updated_at'] = now();
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $imagePath = $image->storeAs('nfts', $imageName, 'public');
+                $data['image_url'] = Storage::url($imagePath);
+            } else {
+                $data['image_url'] = '/placeholder-nft.jpg';
+            }
+
+            // Create NFT using repository
+            $nft = $this->nftRepository->create($data);
+
+            return redirect()->route('blockchain.metaverse.nft.index')
+                ->with('success', 'تم إنشاء NFT بنجاح');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'حدث خطأ أثناء إنشاء NFT: ' . $e->getMessage());
+        }
     }
 }

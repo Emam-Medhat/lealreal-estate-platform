@@ -59,6 +59,11 @@ class MediaFile extends Model
         return $query->where('type', 'document');
     }
 
+    public function isFolder()
+    {
+        return $this->type === 'folder';
+    }
+
     public function isImage()
     {
         return $this->type === 'image';
@@ -72,6 +77,11 @@ class MediaFile extends Model
     public function isDocument()
     {
         return $this->type === 'document';
+    }
+
+    public function isAudio()
+    {
+        return $this->type === 'audio';
     }
 
     public function getFormattedFileSize()

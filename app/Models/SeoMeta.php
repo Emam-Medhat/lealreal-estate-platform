@@ -14,11 +14,11 @@ class SeoMeta extends Model
     protected $table = 'seo_meta';
 
     protected $fillable = [
-        'metaable_type',
-        'metaable_id',
-        'title',
-        'description',
-        'keywords',
+        'model_type',
+        'model_id',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
         'og_title',
         'og_description',
         'og_image',
@@ -29,16 +29,17 @@ class SeoMeta extends Model
 
     protected $casts = [
         'structured_data' => 'array',
+        'robots' => 'string', // Allow null values
     ];
 
     public function metaable(): MorphTo
     {
-        return $this->morphTo();
+        return $this->morphTo(__FUNCTION__, 'model_type', 'model_id');
     }
 
     public function scopeForModel($query, $model)
     {
-        return $query->where('metaable_type', get_class($model))
-            ->where('metaable_id', $model->id);
+        return $query->where('model_type', get_class($model))
+            ->where('model_id', $model->id);
     }
 }

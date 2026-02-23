@@ -22,9 +22,9 @@
                             <p><strong>Price:</strong> {{ $nft->price }} {{ $nft->currency }}</p>
                             <p><strong>Owner:</strong> {{ $nft->owner_address }}</p>
                             
-                            <form action="#" method="POST">
+                            <form action="{{ route('blockchain.nfts.buy.process', $nft->id) }}" method="POST">
                                 @csrf
-                                <button type="button" class="btn btn-success btn-lg btn-block" onclick="alert('Purchase functionality coming soon!')">
+                                <button type="submit" class="btn btn-success btn-lg btn-block">
                                     <i class="fas fa-shopping-cart"></i> Buy Now
                                 </button>
                             </form>

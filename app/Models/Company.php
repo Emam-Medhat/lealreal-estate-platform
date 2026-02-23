@@ -147,6 +147,11 @@ class Company extends Model
         return $this->hasMany(CompanyTransaction::class);
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(CompanyActivity::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

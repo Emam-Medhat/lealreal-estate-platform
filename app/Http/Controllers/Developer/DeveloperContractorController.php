@@ -17,7 +17,12 @@ class DeveloperContractorController extends Controller
 {
     public function index(Request $request)
     {
-        $developer = Auth::user()->developer;
+        $developer = $this->getDeveloper();
+
+        if (!$developer) {
+            return redirect()->route('developer.create')
+                ->with('warning', 'Please create a developer profile first.');
+        }
         
         $contractors = $developer->contractors()
             ->when($request->search, function ($query, $search) {
@@ -39,13 +44,21 @@ class DeveloperContractorController extends Controller
 
     public function create()
     {
-        $developer = Auth::user()->developer;
+        $developer = $this->getDeveloper();
+        if (!$developer) {
+            return redirect()->route('developer.create')
+                ->with('warning', 'Please create a developer profile first.');
+        }
         return view('developer.contractors.create', compact('developer'));
     }
 
     public function store(StoreContractorRequest $request)
     {
-        $developer = Auth::user()->developer;
+        $developer = $this->getDeveloper();
+        if (!$developer) {
+            return redirect()->route('developer.create')
+                ->with('warning', 'Please create a developer profile first.');
+        }
         
         $contractor = DeveloperContractor::create([
             'developer_id' => $developer->id,
@@ -275,7 +288,10 @@ class DeveloperContractorController extends Controller
 
     public function getContractorStats(): JsonResponse
     {
-        $developer = Auth::user()->developer;
+        $developer = $this->getDeveloper();
+        if (!$developer) {
+            return response()->json(['success' => false, 'message' => 'Developer profile not found'], 404);
+        }
         
         $stats = [
             'total_contractors' => $developer->contractors()->count(),
@@ -305,7 +321,10 @@ class DeveloperContractorController extends Controller
 
     public function getAvailableContractors(Request $request): JsonResponse
     {
-        $developer = Auth::user()->developer;
+        $developer = $this->getDeveloper();
+        if (!$developer) {
+            return response()->json(['success' => false, 'message' => 'Developer profile not found'], 404);
+        }
         
         $contractors = $developer->contractors()
             ->where('status', 'active')
@@ -329,7 +348,10 @@ class DeveloperContractorController extends Controller
             'specialization' => 'nullable|string|max:100',
         ]);
 
-        $developer = Auth::user()->developer;
+        $developer = $this->getDeveloper();
+        if (!$developer) {
+            return response()->json(['success' => false, 'message' => 'Developer profile not found'], 404);
+        }
         
         $query = $developer->contractors();
 
@@ -351,5 +373,18 @@ class DeveloperContractorController extends Controller
             'filename' => $filename,
             'message' => 'Contractors exported successfully'
         ]);
+    }
+
+    private function getDeveloper()
+    {
+        $developer = Auth::user()->developer;
+
+        if (!$developer) {
+            $developer = Auth::user()->ownedDeveloper;
+            if ($developer) {
+                Auth::user()->update(['developer_id' => $developer->id]);
+            }
+        }
+        return $developer;
     }
 }

@@ -11,14 +11,14 @@
             <p class="text-gray-600 mt-2">تحليل وتوقعات أسعار العقارات باستخدام الذكاء الاصطناعي</p>
         </div>
         <div class="flex space-x-3 space-x-reverse">
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <a href="{{ route('ai.price-predictor.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus ml-2"></i>
                 توقع جديد
-            </button>
-            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+            </a>
+            <a href="{{ route('ai.price-predictor.export') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
                 <i class="fas fa-download ml-2"></i>
                 تصدير البيانات
-            </button>
+            </a>
         </div>
     </div>
 
@@ -83,7 +83,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">إجمالي التوقعات</p>
-                    <p class="text-2xl font-bold text-gray-900">1,234</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['total_predictions'] ?? 0 }}</p>
                 </div>
                 <div class="bg-blue-100 p-3 rounded-lg">
                     <i class="fas fa-chart-line text-blue-600"></i>
@@ -95,7 +95,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">متوسط الدقة</p>
-                    <p class="text-2xl font-bold text-gray-900">94.5%</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ number_format(($accuracyMetrics['average_accuracy'] ?? 0) * 100, 1) }}%</p>
                 </div>
                 <div class="bg-green-100 p-3 rounded-lg">
                     <i class="fas fa-bullseye text-green-600"></i>
@@ -107,7 +107,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">التوقعات اليوم</p>
-                    <p class="text-2xl font-bold text-gray-900">45</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['today_predictions'] ?? 0 }}</p>
                 </div>
                 <div class="bg-purple-100 p-3 rounded-lg">
                     <i class="fas fa-calendar-day text-purple-600"></i>
@@ -119,7 +119,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">التحديث الأخير</p>
-                    <p class="text-2xl font-bold text-gray-900">2 دقيقة</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['last_update'] ?? 'الآن' }}</p>
                 </div>
                 <div class="bg-yellow-100 p-3 rounded-lg">
                     <i class="fas fa-clock text-yellow-600"></i>
@@ -147,7 +147,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @for($i = 1; $i <= 10; $i++)
+                    @forelse($recentPredictions as $prediction)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -155,48 +155,59 @@
                                     <i class="fas fa-home text-gray-600"></i>
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-900">عقار #{{ 1000 + $i }}</p>
-                                    <p class="text-sm text-gray-600">شقة - الرياض</p>
+                                    <p class="font-medium text-gray-900">{{ $prediction->property->title ?? 'عقار #' . $prediction->id }}</p>
+                                    <p class="text-sm text-gray-600">{{ $prediction->property->type ?? 'شقة' }} - {{ $prediction->property->location ?? 'الرياض' }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <p class="font-medium text-gray-900">{{ number_format(rand(800000, 2000000), 0) }} ريال</p>
+                            <p class="font-medium text-gray-900">{{ number_format($prediction->property->price ?? 0, 0) }} ريال</p>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <p class="font-medium text-blue-600">{{ number_format(rand(850000, 2100000), 0) }} ريال</p>
+                            <p class="font-medium text-blue-600">{{ number_format($prediction->predicted_price ?? 0, 0) }} ريال</p>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                                <i class="fas fa-arrow-up ml-1"></i>{{ rand(2, 15) }}%
+                            @php
+                                $currentPrice = $prediction->property->price ?? 0;
+                                $predictedPrice = $prediction->predicted_price ?? 0;
+                                $changePercent = $currentPrice > 0 ? (($predictedPrice - $currentPrice) / $currentPrice) * 100 : 0;
+                            @endphp
+                            <span class="px-2 py-1 text-xs rounded-full {{ $changePercent >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <i class="fas fa-arrow-{{ $changePercent >= 0 ? 'up' : 'down' }} ml-1"></i>{{ number_format($changePercent, 1) }}%
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="bg-gray-200 rounded-full h-2 w-20 ml-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ rand(75, 98) }}%"></div>
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ ($prediction->accuracy ?? 0) * 100 }}%"></div>
                                 </div>
-                                <span class="text-sm text-gray-600">{{ rand(75, 98) }}%</span>
+                                <span class="text-sm text-gray-600">{{ number_format(($prediction->accuracy ?? 0) * 100, 0) }}%</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                                نشط
+                                {{ $prediction->status ?? 'نشط' }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-left">
-                            <button class="text-blue-600 hover:text-blue-900 ml-3">
+                            <a href="#" class="text-blue-600 hover:text-blue-900 ml-3" title="عرض" onclick="alert('Not implemented'); return false;">
                                 <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="text-green-600 hover:text-green-900 ml-3">
+                            </a>
+                            <a href="#" class="text-green-600 hover:text-green-900 ml-3" title="تعديل" onclick="alert('Not implemented'); return false;">
                                 <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="text-red-600 hover:text-red-900">
+                            </a>
+                            <button type="button" class="text-red-600 hover:text-red-900" title="حذف" onclick="alert('Not implemented');">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
-                    @endfor
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            لا توجد توقعات حالياً
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

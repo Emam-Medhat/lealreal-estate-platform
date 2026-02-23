@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 // Tax System Routes
 Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () {
-    
+
     // Main Tax Routes
     Route::get('/', [TaxController::class, 'index'])->name('index');
     Route::get('/dashboard', [TaxController::class, 'dashboard'])->name('dashboard');
@@ -24,7 +24,12 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
     Route::get('/statistics', [TaxController::class, 'statistics'])->name('statistics');
     Route::get('/reports', [TaxReportController::class, 'index'])->name('reports');
     Route::get('/export', [TaxController::class, 'export'])->name('export');
-    
+
+    // Tax CRUD Routes (Generic) - Moved to bottom to avoid shadowing specific routes
+    Route::get('/create', [TaxController::class, 'create'])->name('create');
+    Route::post('/', [TaxController::class, 'store'])->name('store');
+
+
     // Property Tax Routes
     Route::prefix('property')->name('property.')->group(function () {
         Route::get('/', [PropertyTaxController::class, 'index'])->name('index');
@@ -52,7 +57,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/{propertyTax}/certificate', [PropertyTaxController::class, 'certificate'])->name('certificate');
         Route::get('/{propertyTax}/clearance', [PropertyTaxController::class, 'clearance'])->name('clearance');
     });
-    
+
     // Tax Calculator Routes
     Route::prefix('calculator')->name('calculator.')->group(function () {
         Route::get('/', [TaxCalculatorController::class, 'index'])->name('index');
@@ -69,7 +74,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/projections', [TaxCalculatorController::class, 'projections'])->name('projections');
         Route::post('/projections', [TaxCalculatorController::class, 'calculateProjections'])->name('calculateProjections');
     });
-    
+
     // Tax Filing Routes
     Route::prefix('filings')->name('filings.')->group(function () {
         Route::get('/', [TaxFilingController::class, 'index'])->name('index');
@@ -93,14 +98,14 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/rejected', [TaxFilingController::class, 'rejected'])->name('rejected');
         Route::get('/overdue', [TaxFilingController::class, 'overdue'])->name('overdue');
     });
-    
+
     // Single Tax Filing Route (for /taxes/filing)
     Route::get('/filing', [TaxFilingController::class, 'index'])->name('filing');
     Route::get('/filing/create', [TaxFilingController::class, 'create'])->name('filing.create');
     Route::post('/filing', [TaxFilingController::class, 'store'])->name('filing.store');
     Route::get('/filing/{taxFiling}', [TaxFilingController::class, 'show'])->name('filing.show');
     Route::get('/filing/{taxFiling}/edit', [TaxFilingController::class, 'edit'])->name('filing.edit');
-    
+
     // Tax Payment Routes
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::get('/', [TaxPaymentController::class, 'index'])->name('index');
@@ -126,7 +131,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/recurring', [TaxPaymentController::class, 'recurring'])->name('recurring');
         Route::post('/batch', [TaxPaymentController::class, 'batchProcess'])->name('batchProcess');
     });
-    
+
     // Tax Exemption Routes
     Route::prefix('exemptions')->name('exemptions.')->group(function () {
         Route::get('/', [TaxExemptionController::class, 'index'])->name('index');
@@ -150,7 +155,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/rejected', [TaxExemptionController::class, 'rejected'])->name('rejected');
         Route::get('/expired', [TaxExemptionController::class, 'expired'])->name('expired');
     });
-    
+
     // Tax Assessment Routes
     Route::prefix('assessments')->name('assessments.')->group(function () {
         Route::get('/', [TaxAssessmentController::class, 'index'])->name('index');
@@ -175,7 +180,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/rejected', [TaxAssessmentController::class, 'rejected'])->name('rejected');
         Route::get('/appealed', [TaxAssessmentController::class, 'appealed'])->name('appealed');
     });
-    
+
     // Tax Document Routes
     Route::prefix('documents')->name('documents.')->group(function () {
         Route::get('/', [TaxDocumentController::class, 'index'])->name('index');
@@ -199,7 +204,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/categories', [TaxDocumentController::class, 'categories'])->name('categories');
         Route::get('/tags', [TaxDocumentController::class, 'tags'])->name('tags');
     });
-    
+
     // Tax Report Routes
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [TaxReportController::class, 'index'])->name('index');
@@ -223,7 +228,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::post('/custom', [TaxReportController::class, 'custom'])->name('custom');
         Route::get('/templates', [TaxReportController::class, 'templates'])->name('templates');
     });
-    
+
     // Capital Gains Tax Routes
     Route::prefix('capital-gains')->name('capitalGains.')->group(function () {
         Route::get('/', [CapitalGainsTaxController::class, 'index'])->name('index');
@@ -249,7 +254,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/filed', [CapitalGainsTaxController::class, 'filed'])->name('filed');
         Route::get('/paid', [CapitalGainsTaxController::class, 'paid'])->name('paid');
     });
-    
+
     // VAT Routes
     Route::prefix('vat')->name('vat.')->group(function () {
         Route::get('/', [VatController::class, 'index'])->name('index');
@@ -259,6 +264,8 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/{vatRecord}/edit', [VatController::class, 'edit'])->name('edit');
         Route::put('/{vatRecord}', [VatController::class, 'update'])->name('update');
         Route::delete('/{vatRecord}', [VatController::class, 'destroy'])->name('destroy');
+        Route::get('/calculator', [VatController::class, 'calculator'])->name('calculator');
+        Route::post('/calculate', [VatController::class, 'calculate'])->name('calculate');
         Route::post('/{vatRecord}/calculate', [VatController::class, 'calculate'])->name('calculate.record');
         Route::post('/{vatRecord}/submit', [VatController::class, 'submit'])->name('submit');
         Route::post('/{vatRecord}/approve', [VatController::class, 'approve'])->name('approve');
@@ -282,7 +289,7 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/liability', [VatController::class, 'liability'])->name('liability');
         Route::get('/compliance', [VatController::class, 'compliance'])->name('compliance');
     });
-    
+
     // API Routes for AJAX requests
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/search', [TaxController::class, 'search'])->name('search');
@@ -303,4 +310,11 @@ Route::middleware(['auth'])->prefix('taxes')->name('taxes.')->group(function () 
         Route::get('/capital-gains-list', [CapitalGainsTaxController::class, 'apiIndex'])->name('capitalGainsList');
         Route::get('/vat-records-list', [VatController::class, 'apiIndex'])->name('vatRecordsList');
     });
+
+    // Generic Tax Routes (must be last)
+    Route::get('/{tax}', [TaxController::class, 'show'])->name('show');
+    Route::get('/{tax}/edit', [TaxController::class, 'edit'])->name('edit');
+    Route::put('/{tax}', [TaxController::class, 'update'])->name('update');
+    Route::delete('/{tax}', [TaxController::class, 'destroy'])->name('destroy');
+
 });

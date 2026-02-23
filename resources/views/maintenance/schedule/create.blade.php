@@ -50,7 +50,7 @@
                                         <option value="">Select Team</option>
                                         @foreach($teams as $team)
                                             <option value="{{ $team->id }}" {{ old('maintenance_team_id') == $team->id ? 'selected' : '' }}>
-                                                {{ $team->name }} - {{ $team->specialization }}
+                                                {{ $team->name_ar }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -74,16 +74,24 @@
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="type" class="form-label">Maintenance Type *</label>
-                                    <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
+                                    <label for="maintenance_type" class="form-label">Maintenance Type *</label>
+                                    <select class="form-select @error('maintenance_type') is-invalid @enderror" id="maintenance_type" name="maintenance_type" required>
                                         <option value="">Select Type</option>
-                                        <option value="routine" {{ old('type') == 'routine' ? 'selected' : '' }}>Routine Maintenance</option>
-                                        <option value="preventive" {{ old('type') == 'preventive' ? 'selected' : '' }}>Preventive Maintenance</option>
-                                        <option value="corrective" {{ old('type') == 'corrective' ? 'selected' : '' }}>Corrective Maintenance</option>
-                                        <option value="emergency" {{ old('type') == 'emergency' ? 'selected' : '' }}>Emergency Maintenance</option>
-                                        <option value="inspection" {{ old('type') == 'inspection' ? 'selected' : '' }}>Inspection</option>
+                                        <option value="plumbing" {{ old('maintenance_type') == 'plumbing' ? 'selected' : '' }}>Plumbing</option>
+                                        <option value="electrical" {{ old('maintenance_type') == 'electrical' ? 'selected' : '' }}>Electrical</option>
+                                        <option value="hvac" {{ old('maintenance_type') == 'hvac' ? 'selected' : '' }}>HVAC</option>
+                                        <option value="structural" {{ old('maintenance_type') == 'structural' ? 'selected' : '' }}>Structural</option>
+                                        <option value="general" {{ old('maintenance_type') == 'general' ? 'selected' : '' }}>General</option>
+                                        <option value="repair" {{ old('maintenance_type') == 'repair' ? 'selected' : '' }}>Repair</option>
+                                        <option value="maintenance" {{ old('maintenance_type') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                        <option value="inspection" {{ old('maintenance_type') == 'inspection' ? 'selected' : '' }}>Inspection</option>
+                                        <option value="cleaning" {{ old('maintenance_type') == 'cleaning' ? 'selected' : '' }}>Cleaning</option>
+                                        <option value="service" {{ old('maintenance_type') == 'service' ? 'selected' : '' }}>Service</option>
+                                        <option value="replacement" {{ old('maintenance_type') == 'replacement' ? 'selected' : '' }}>Replacement</option>
+                                        <option value="testing" {{ old('maintenance_type') == 'testing' ? 'selected' : '' }}>Testing</option>
+                                        <option value="other" {{ old('maintenance_type') == 'other' ? 'selected' : '' }}>Other</option>
                                     </select>
-                                    @error('type')
+                                    @error('maintenance_type')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -99,7 +107,7 @@
                                         <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
                                         <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>Medium</option>
                                         <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>
-                                        <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                                        <option value="emergency" {{ old('priority') == 'emergency' ? 'selected' : '' }}>Emergency</option>
                                     </select>
                                     @error('priority')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>

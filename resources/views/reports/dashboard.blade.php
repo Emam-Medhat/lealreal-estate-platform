@@ -1,33 +1,45 @@
-@extends('layouts.dashboard')
+@extends('layouts.app')
 
 @section('title', 'لوحة التقارير')
 
 @section('content')
-
-<div class="max-w-7xl mx-auto">
-    <!-- Reports Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-8 mb-8 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold mb-3 flex items-center">
-                    <i class="fas fa-chart-line ml-3 text-blue-200"></i>
-                    لوحة التقارير
-                </h1>
-                <p class="text-blue-100 text-lg">إدارة وتحليل تقارير العقارات</p>
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-slate-700 to-slate-900 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -mr-32 -mt-32"></div>
+                <div class="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full -ml-24 -mb-24"></div>
             </div>
-            <div class="flex items-center space-x-3 space-x-reverse">
-                <a href="{{ route('reports.create') }}" class="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
-                    <i class="fas fa-plus ml-2"></i>
-                    تقرير جديد
-                </a>
-                <a href="{{ route('reports.index') }}" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-400 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
-                    <i class="fas fa-list ml-2"></i>
-                    كل التقارير
-                </a>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center mb-3">
+                            <div class="bg-white bg-opacity-20 rounded-xl p-3 ml-4 backdrop-blur-sm border border-white border-opacity-30">
+                                <i class="fas fa-chart-line text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-4xl font-bold text-white mb-1">لوحة التقارير</h1>
+                                <p class="text-white text-lg">إدارة وتحليل تقارير العقارات</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-reverse space-x-3">
+                        <a href="{{ route('reports.create') }}" class="inline-flex items-center px-6 py-3 bg-white text-black rounded-xl text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-plus ml-2"></i>
+                            تقرير جديد
+                        </a>
+                        <a href="{{ route('reports.index') }}" class="inline-flex items-center px-6 py-3 bg-slate-600 text-white rounded-xl text-sm font-medium hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-600 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-list ml-2"></i>
+                            كل التقارير
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border-l-4 border-blue-500 transform hover:-translate-y-1">

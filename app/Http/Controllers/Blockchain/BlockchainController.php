@@ -4,26 +4,48 @@ namespace App\Http\Controllers\Blockchain;
 
 use App\Http\Controllers\Controller;
 use App\Services\BlockchainService;
-use App\Models\SmartContract;
-use App\Models\NFT;
+use App\Repositories\Contracts\SmartContractRepositoryInterface;
+use App\Repositories\Contracts\NftRepositoryInterface;
+use App\Repositories\Contracts\PropertyRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class BlockchainController extends Controller
 {
     private BlockchainService $blockchainService;
+    private SmartContractRepositoryInterface $smartContractRepository;
+    private NftRepositoryInterface $nftRepository;
+    private PropertyRepositoryInterface $propertyRepository;
 
-    public function __construct(BlockchainService $blockchainService)
-    {
+    public function __construct(
+        BlockchainService $blockchainService,
+        SmartContractRepositoryInterface $smartContractRepository,
+        NftRepositoryInterface $nftRepository,
+        PropertyRepositoryInterface $propertyRepository
+    ) {
         $this->blockchainService = $blockchainService;
+        $this->smartContractRepository = $smartContractRepository;
+        $this->nftRepository = $nftRepository;
+        $this->propertyRepository = $propertyRepository;
     }
 
     public function index()
     {
-        $stats = $this->blockchainService->getDashboardStats();
-        $recentTransactions = $this->blockchainService->getRecentTransactions();
+        $statistics = $this->blockchainService->getBlockchainStatistics();
+        $stats = $statistics['statistics'] ?? [];
         
-        return view('blockchain.index', compact('stats', 'recentTransactions'));
+        $contracts = $this->smartContractRepository->getRecent(5);
+        $nfts = $this->nftRepository->getRecent(5);
+        $properties = $this->propertyRepository->getLatestActive(5);
+
+        return view('blockchain.dashboard', [
+            'stats' => $stats,
+            'contracts' => $contracts,
+            'nfts' => $nfts,
+            'properties' => $properties,
+            'recentBlocks' => $this->blockchainService->getRecentBlocks(),
+            'recentTransactions' => $this->blockchainService->getRecentTransactions()
+        ]);
     }
 
     public function transactions()
@@ -34,17 +56,17 @@ class BlockchainController extends Controller
         return view('blockchain.transactions', compact('transactions', 'stats'));
     }
 
-    public function contracts()
+    public function contracts(Request $request)
     {
-        $contracts = SmartContract::with('deployer')->get();
+        $contracts = $this->smartContractRepository->getFiltered($request->all(), 15);
         $stats = $this->blockchainService->getContractStats();
         
         return view('blockchain.contracts', compact('contracts', 'stats'));
     }
 
-    public function nft()
+    public function nft(Request $request)
     {
-        $nfts = NFT::with('owner')->get();
+        $nfts = $this->nftRepository->getFiltered($request->all(), 15);
         $stats = $this->blockchainService->getNFTStats();
         
         return view('blockchain.nft', compact('nfts', 'stats'));
@@ -92,7 +114,11 @@ class BlockchainController extends Controller
                 'created_by' => 'required|integer|exists:users,id'
             ]);
 
-            $property = \App\Models\Property::findOrFail($request->property_id);
+            $property = $this->propertyRepository->findById($request->property_id);
+            if (!$property) {
+                return response()->json(['success' => false, 'message' => 'Property not found'], 404);
+            }
+
             $result = $this->blockchainService->mintPropertyNFT($property, $request->all());
 
             return response()->json($result);
@@ -215,22 +241,7 @@ class BlockchainController extends Controller
     public function getContracts(Request $request): JsonResponse
     {
         try {
-            $query = SmartContract::with(['deployer']);
-
-            if ($request->has('network')) {
-                $query->where('network', $request->network);
-            }
-
-            if ($request->has('type')) {
-                $query->where('type', $request->type);
-            }
-
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $contracts = $query->orderBy('created_at', 'desc')
-                ->paginate($request->per_page ?? 20);
+            $contracts = $this->smartContractRepository->getFiltered($request->all(), $request->per_page ?? 20);
 
             return response()->json([
                 'success' => true,
@@ -254,9 +265,11 @@ class BlockchainController extends Controller
     public function getContract(Request $request, string $address): JsonResponse
     {
         try {
-            $contract = SmartContract::with(['deployer', 'transactions'])
-                ->where('address', $address)
-                ->firstOrFail();
+            $contract = $this->smartContractRepository->findByAddress($address);
+            
+            if (!$contract) {
+                return response()->json(['success' => false, 'message' => 'Contract not found'], 404);
+            }
 
             return response()->json([
                 'success' => true,
@@ -285,7 +298,11 @@ class BlockchainController extends Controller
                 'created_by' => 'required|integer|exists:users,id'
             ]);
 
-            $property = \App\Models\Property::findOrFail($request->property_id);
+            $property = $this->propertyRepository->findById($request->property_id);
+            if (!$property) {
+                return response()->json(['success' => false, 'message' => 'Property not found'], 404);
+            }
+            
             $result = $this->blockchainService->createPropertyDAO($property, $request->all());
 
             return response()->json($result);

@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Agent\StorePropertyRequest;
-use App\Http\Requests\Agent\UpdatePropertyRequest;
+use App\Http\Requests\StorePropertyRequest;
+use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Agent;
 use App\Models\Property;
 use App\Models\PropertyPrice;
 use App\Models\PropertyMedia;
 use App\Models\UserActivityLog;
+use App\Services\OptimizedPropertyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -22,10 +23,14 @@ use App\Repositories\Contracts\PropertyRepositoryInterface;
 class AgentPropertyController extends Controller
 {
     protected $propertyRepository;
+    protected $optimizedPropertyService;
 
-    public function __construct(PropertyRepositoryInterface $propertyRepository)
-    {
+    public function __construct(
+        PropertyRepositoryInterface $propertyRepository,
+        OptimizedPropertyService $optimizedPropertyService
+    ) {
         $this->propertyRepository = $propertyRepository;
+        $this->optimizedPropertyService = $optimizedPropertyService;
     }
 
     public function index(Request $request)
@@ -51,8 +56,6 @@ class AgentPropertyController extends Controller
 
     public function store(StorePropertyRequest $request)
     {
-        DB::beginTransaction();
-        
         try {
             $agent = Auth::user()->agent;
             
@@ -61,162 +64,29 @@ class AgentPropertyController extends Controller
                 return redirect()->route('dashboard')->with('error', 'Agent profile not found. Please contact administrator.');
             }
             
-            $property = Property::create([
-                'agent_id' => $agent->id,
-                'title' => $request->title,
-                'slug' => Str::slug($request->title) . '-' . time(),
-                'property_code' => 'PROP-' . strtoupper(uniqid()),
-                'description' => $request->description,
-                'property_type' => $request->property_type,
-                'listing_type' => $request->listing_type,
-                'status' => $request->status ?? 'draft',
-                'bedrooms' => $request->bedrooms,
-                'bathrooms' => $request->bathrooms,
-                'area' => $request->area,
-                'area_unit' => $request->area_unit ?? 'sq_m',
-                'floors' => $request->floors,
-                'year_built' => $request->year_built,
-                'parking_spaces' => $request->parking_spaces,
-                'land_area' => $request->land_area,
-                'land_area_unit' => $request->land_area_unit,
-                'featured' => $request->featured ?? false,
-                'premium' => $request->premium ?? false,
-                'views_count' => 0,
-                'inquiries_count' => 0,
-                'specifications' => $request->specifications,
-                'materials' => $request->materials,
-                'interior_features' => $request->interior_features,
-                'exterior_features' => $request->exterior_features,
-                'nearby_places' => $request->nearby_places,
-                'schools' => $request->schools,
-                'hospitals' => $request->hospitals,
-                'shopping_centers' => $request->shopping_centers,
-                'restaurants' => $request->restaurants,
-                'public_transport' => $request->public_transport,
-                'ownership_type' => $request->ownership_type,
-                'deed_number' => $request->deed_number,
-                'registration_number' => $request->registration_number,
-                'zoning' => $request->zoning,
-                'building_permit' => $request->building_permit,
-                'occupancy_permit' => $request->occupancy_permit,
-                'energy_rating' => $request->energy_rating,
-                'solar_panels' => $request->solar_panels ?? false,
-                'water_heating' => $request->water_heating,
-                'insulation' => $request->insulation,
-                'double_glazing' => $request->double_glazing ?? false,
-                'air_conditioning' => $request->air_conditioning,
-                'virtual_tour_url' => $request->virtual_tour_url,
-            ]);
-
-            // Create property location
-            $property->location()->create([
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'postal_code' => $request->postal_code,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'neighborhood' => $request->neighborhood,
-                'coordinates' => [
-                    'lat' => $request->latitude,
-                    'lng' => $request->longitude,
-                ],
-            ]);
-
-            // Create property price
-            $property->price()->create([
-                'price' => $request->price,
-                'currency' => $request->currency ?? 'USD',
-                'price_type' => $request->listing_type,
-                'rent_period' => $request->payment_frequency,
-                'is_negotiable' => $request->is_negotiable ?? false,
-                'original_price' => $request->original_price,
-                'discount_percentage' => $request->discount_percentage,
-                'includes_vat' => $request->includes_vat ?? false,
-                'vat_rate' => $request->vat_rate,
-                'service_charges' => $request->service_charges,
-                'maintenance_fees' => $request->maintenance_fees,
-                'payment_terms' => $request->payment_terms,
-            ]);
+            $data = $request->validated();
+            $data['agent_id'] = $agent->id;
+            
+            $property = $this->optimizedPropertyService->createProperty($data, Auth::user());
 
             // Handle property media
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
-                    $path = $image->store('properties/images', 'public');
-                    
-                    PropertyMedia::create([
-                        'property_id' => $property->id,
-                        'type' => 'image',
-                        'file_path' => $path,
-                        'file_name' => $image->getClientOriginalName(),
-                        'file_size' => $image->getSize(),
-                        'mime_type' => $image->getMimeType(),
-                        'sort_order' => $index,
-                        'is_featured' => $index === 0, // First image is featured
-                    ]);
-                }
+                $this->optimizedPropertyService->handleImageUpload($request->file('images'), $property->id);
             }
 
             // Handle documents
             if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $index => $document) {
-                    $path = $document->store('properties/documents', 'public');
-                    
-                    PropertyMedia::create([
-                        'property_id' => $property->id,
-                        'type' => 'document',
-                        'file_path' => $path,
-                        'file_name' => $document->getClientOriginalName(),
-                        'file_size' => $document->getSize(),
-                        'mime_type' => $document->getMimeType(),
-                        'sort_order' => $index,
-                    ]);
-                }
+                $this->optimizedPropertyService->handleDocumentUpload($request->file('documents'), $property->id);
             }
 
             // Handle videos
             if ($request->hasFile('videos')) {
-                foreach ($request->file('videos') as $index => $video) {
-                    $path = $video->store('properties/videos', 'public');
-                    
-                    PropertyMedia::create([
-                        'property_id' => $property->id,
-                        'type' => 'video',
-                        'file_path' => $path,
-                        'file_name' => $video->getClientOriginalName(),
-                        'file_size' => $video->getSize(),
-                        'mime_type' => $video->getMimeType(),
-                        'sort_order' => $index,
-                    ]);
-                }
+                $this->optimizedPropertyService->handleVideoUpload($request->file('videos'), $property->id);
             }
 
             // Handle floor plans
             if ($request->hasFile('floor_plans')) {
-                foreach ($request->file('floor_plans') as $index => $floorPlan) {
-                    $path = $floorPlan->store('properties/floor_plans', 'public');
-                    
-                    PropertyMedia::create([
-                        'property_id' => $property->id,
-                        'type' => 'floor_plan',
-                        'file_path' => $path,
-                        'file_name' => $floorPlan->getClientOriginalName(),
-                        'file_size' => $floorPlan->getSize(),
-                        'mime_type' => $floorPlan->getMimeType(),
-                        'sort_order' => $index,
-                    ]);
-                }
-            }
-
-            // Add amenities if provided
-            if ($request->amenities) {
-                $property->amenities()->attach($request->amenities);
-            }
-
-            // Add features if provided
-            if ($request->features) {
-                $property->features()->attach($request->features);
+                $this->optimizedPropertyService->handleFloorPlanUpload($request->file('floor_plans'), $property->id);
             }
 
             UserActivityLog::create([
@@ -226,14 +96,10 @@ class AgentPropertyController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
-            DB::commit();
-
             return redirect()->route('agent.properties.show', $property)
                 ->with('success', 'Property created successfully.');
 
         } catch (\Exception $e) {
-            DB::rollback();
-            
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create property: ' . $e->getMessage());
@@ -323,75 +189,21 @@ class AgentPropertyController extends Controller
     {
         $this->authorize('update', $property);
         
-        DB::beginTransaction();
-        
         try {
-            $property->update([
-                'title' => $request->title,
-                'description' => $request->description,
-                'property_type' => $request->property_type,
-                'status' => $request->status,
-                'bedrooms' => $request->bedrooms,
-                'bathrooms' => $request->bathrooms,
-                'area' => $request->area,
-                'year_built' => $request->year_built,
-                'parking_spaces' => $request->parking_spaces,
-                'listing_expires_at' => $request->listing_expires_at,
-                'featured' => $request->featured ?? false,
-            ]);
-
-            // Update location
-            $property->location()->update([
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'postal_code' => $request->postal_code,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'neighborhood' => $request->neighborhood,
-                'coordinates' => [
-                    'lat' => $request->latitude,
-                    'lng' => $request->longitude,
-                ],
-            ]);
-
-            // Update price
-            if ($property->price) {
-                $property->price()->update([
-                    'price' => $request->price,
-                    'currency' => $request->currency,
-                    'price_type' => $request->price_type,
-                    'rent_period' => $request->rent_period,
-                    'is_negotiable' => $request->is_negotiable ?? false,
-                    'original_price' => $request->original_price,
-                    'discount_percentage' => $request->discount_percentage,
-                ]);
-            } else {
-                // Create price if it doesn't exist
-                PropertyPrice::create([
-                    'property_id' => $property->id,
-                    'price' => $request->price,
-                    'currency' => $request->currency,
-                    'price_type' => $request->price_type,
-                    'rent_period' => $request->rent_period,
-                    'is_negotiable' => $request->is_negotiable ?? false,
-                    'original_price' => $request->original_price,
-                    'discount_percentage' => $request->discount_percentage,
-                    'effective_date' => now()->toDateString(),
-                    'is_active' => true,
-                ]);
+            $data = $request->validated();
+            
+            // Explicitly handle boolean fields that might be missing from request if unchecked
+            // and ensure they are passed as boolean values
+            $data['featured'] = $request->boolean('featured');
+            $data['premium'] = $request->boolean('premium');
+            $data['is_negotiable'] = $request->boolean('is_negotiable');
+            
+            // Add other potentially missing booleans if they exist in request/form
+            if ($request->has('includes_vat') || $request->exists('includes_vat')) {
+                $data['includes_vat'] = $request->boolean('includes_vat');
             }
-
-            // Update amenities
-            if ($request->amenities) {
-                $property->amenities()->sync($request->amenities);
-            }
-
-            // Update features
-            if ($request->features) {
-                $property->features()->sync($request->features);
-            }
+            
+            $this->optimizedPropertyService->updateProperty($property, $data);
 
             UserActivityLog::create([
                 'user_id' => Auth::id(),
@@ -400,14 +212,10 @@ class AgentPropertyController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
-            DB::commit();
-
             return redirect()->route('agent.properties.show', $property)
                 ->with('success', 'Property updated successfully.');
 
         } catch (\Exception $e) {
-            DB::rollback();
-            
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update property: ' . $e->getMessage());

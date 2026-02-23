@@ -782,6 +782,25 @@
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label for="owner_id" class="form-label">Property Owner</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-user"></i>
+                                        <select class="form-select @error('owner_id') is-invalid @enderror" id="owner_id" name="owner_id">
+                                            <option value="">Select Owner (Optional)</option>
+                                            @foreach($clients as $client)
+                                                <option value="{{ $client->id }}" {{ old('owner_id') == $client->id ? 'selected' : '' }}>
+                                                    {{ $client->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    @error('owner_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label for="title" class="form-label">
                                         Property Title <span class="required">*</span>
                                     </label>
@@ -1218,6 +1237,323 @@
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label">Finishing Type</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-paint-roller"></i>
+                                        <select class="form-select" name="specifications[finishing_type]">
+                                            <option value="">Select...</option>
+                                            <option value="super_lux">Super Lux</option>
+                                            <option value="lux">Lux</option>
+                                            <option value="semi_finished">Semi Finished</option>
+                                            <option value="core_shell">Core & Shell</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label">Interface</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-compass"></i>
+                                        <select class="form-select" name="specifications[interface]">
+                                            <option value="">Select...</option>
+                                            <option value="north">North</option>
+                                            <option value="south">South</option>
+                                            <option value="east">East</option>
+                                            <option value="west">West</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label">Furnished?</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-couch"></i>
+                                        <select class="form-select" name="specifications[furnished]">
+                                            <option value="no">No</option>
+                                            <option value="yes">Yes</option>
+                                            <option value="semi">Semi Furnished</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Features -->
+                <div class="form-card mt-4">
+                    <div class="form-card-header">
+                        <div class="header-icon">
+                            <i class="fas fa-puzzle-piece"></i>
+                        </div>
+                        <div>
+                            <h3 class="form-card-title">Detailed Features</h3>
+                            <p class="form-card-subtitle">Materials and specific features</p>
+                        </div>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="materials" class="form-label">Building Materials</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-cubes"></i>
+                                        <textarea class="form-control" id="materials" name="materials" rows="2" placeholder="e.g., Brick, Concrete, Glass facade...">{{ old('materials') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="interior_features" class="form-label">Interior Features</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-couch"></i>
+                                        <textarea class="form-control" id="interior_features" name="interior_features" rows="3" placeholder="e.g., High ceilings, Hardwood floors, Smart home system...">{{ old('interior_features') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="exterior_features" class="form-label">Exterior Features</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-tree"></i>
+                                        <textarea class="form-control" id="exterior_features" name="exterior_features" rows="3" placeholder="e.g., Private garden, Swimming pool, BBQ area...">{{ old('exterior_features') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nearby Places -->
+                <div class="form-card mt-4">
+                    <div class="form-card-header">
+                        <div class="header-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <div>
+                            <h3 class="form-card-title">Nearby Places</h3>
+                            <p class="form-card-subtitle">Distances to important locations (e.g., "5 mins walk")</p>
+                        </div>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="schools" class="form-label">Schools</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-school"></i>
+                                        <input type="text" class="form-control" id="schools" name="schools" value="{{ old('schools') }}" placeholder="e.g., King Saud University (2km)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="hospitals" class="form-label">Hospitals</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-hospital"></i>
+                                        <input type="text" class="form-control" id="hospitals" name="hospitals" value="{{ old('hospitals') }}" placeholder="e.g., Kingdom Hospital (5km)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="shopping_centers" class="form-label">Shopping Centers</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <input type="text" class="form-control" id="shopping_centers" name="shopping_centers" value="{{ old('shopping_centers') }}" placeholder="e.g., Riyadh Park (10 mins)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="restaurants" class="form-label">Restaurants</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-utensils"></i>
+                                        <input type="text" class="form-control" id="restaurants" name="restaurants" value="{{ old('restaurants') }}" placeholder="e.g., Various options nearby">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="transportation" class="form-label">Transportation</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-bus"></i>
+                                        <input type="text" class="form-control" id="transportation" name="transportation" value="{{ old('transportation') }}" placeholder="e.g., Metro Station (500m)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="universities" class="form-label">Universities</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        <input type="text" class="form-control" id="universities" name="universities" value="{{ old('universities') }}" placeholder="e.g., King Saud University (5km)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="metro_stations" class="form-label">Metro Stations</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-subway"></i>
+                                        <input type="text" class="form-control" id="metro_stations" name="metro_stations" value="{{ old('metro_stations') }}" placeholder="e.g., Olaya Station (500m)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="cinemas" class="form-label">Cinemas</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-film"></i>
+                                        <input type="text" class="form-control" id="cinemas" name="cinemas" value="{{ old('cinemas') }}" placeholder="e.g., VOX Cinemas (2km)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="parks" class="form-label">Parks</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-tree"></i>
+                                        <input type="text" class="form-control" id="parks" name="parks" value="{{ old('parks') }}" placeholder="e.g., King Abdullah Park (1km)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="gyms" class="form-label">Gyms</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-dumbbell"></i>
+                                        <input type="text" class="form-control" id="gyms" name="gyms" value="{{ old('gyms') }}" placeholder="e.g., Fitness Time (300m)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="nearby_places" class="form-label">Other Places</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-map-signs"></i>
+                                        <input type="text" class="form-control" id="nearby_places" name="nearby_places" value="{{ old('nearby_places') }}" placeholder="Other nearby landmarks">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal & Energy Details -->
+                <div class="form-card mt-4">
+                    <div class="form-card-header">
+                        <div class="header-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div>
+                            <h3 class="form-card-title">Legal & Energy Details</h3>
+                            <p class="form-card-subtitle">Legal status and energy efficiency information</p>
+                        </div>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="ownership_type" class="form-label">Ownership Type</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-file-signature"></i>
+                                        <select class="form-select" id="ownership_type" name="ownership_type">
+                                            <option value="">Select Type</option>
+                                            <option value="freehold" {{ old('ownership_type') == 'freehold' ? 'selected' : '' }}>Freehold</option>
+                                            <option value="leasehold" {{ old('ownership_type') == 'leasehold' ? 'selected' : '' }}>Leasehold</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="deed_number" class="form-label">Deed Number</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-certificate"></i>
+                                        <input type="text" class="form-control" id="deed_number" name="deed_number" value="{{ old('deed_number') }}" placeholder="Deed Number">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="registration_number" class="form-label">Registration Number</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-registered"></i>
+                                        <input type="text" class="form-control" id="registration_number" name="registration_number" value="{{ old('registration_number') }}" placeholder="Registration Number">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="zoning" class="form-label">Zoning</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-draw-polygon"></i>
+                                        <input type="text" class="form-control" id="zoning" name="zoning" value="{{ old('zoning') }}" placeholder="e.g., Residential R1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="energy_rating" class="form-label">Energy Rating</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-leaf"></i>
+                                        <select class="form-select" id="energy_rating" name="energy_rating">
+                                            <option value="">Select Rating</option>
+                                            <option value="A+" {{ old('energy_rating') == 'A+' ? 'selected' : '' }}>A+</option>
+                                            <option value="A" {{ old('energy_rating') == 'A' ? 'selected' : '' }}>A</option>
+                                            <option value="B" {{ old('energy_rating') == 'B' ? 'selected' : '' }}>B</option>
+                                            <option value="C" {{ old('energy_rating') == 'C' ? 'selected' : '' }}>C</option>
+                                            <option value="D" {{ old('energy_rating') == 'D' ? 'selected' : '' }}>D</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 mt-4">
+                                <h6 class="mb-3">Additional Features</h6>
+                                <div class="feature-toggles">
+                                    <div class="toggle-item">
+                                        <input type="checkbox" id="solar_panels" name="solar_panels" value="1" {{ old('solar_panels') ? 'checked' : '' }}>
+                                        <label for="solar_panels">
+                                            <i class="fas fa-solar-panel"></i>
+                                            <span>Solar Panels</span>
+                                        </label>
+                                    </div>
+                                    <div class="toggle-item">
+                                        <input type="checkbox" id="water_heating" name="water_heating" value="1" {{ old('water_heating') ? 'checked' : '' }}>
+                                        <label for="water_heating">
+                                            <i class="fas fa-water"></i>
+                                            <span>Water Heating</span>
+                                        </label>
+                                    </div>
+                                    <div class="toggle-item">
+                                        <input type="checkbox" id="insulation" name="insulation" value="1" {{ old('insulation') ? 'checked' : '' }}>
+                                        <label for="insulation">
+                                            <i class="fas fa-temperature-low"></i>
+                                            <span>Insulation</span>
+                                        </label>
+                                    </div>
+                                    <div class="toggle-item">
+                                        <input type="checkbox" id="double_glazing" name="double_glazing" value="1" {{ old('double_glazing') ? 'checked' : '' }}>
+                                        <label for="double_glazing">
+                                            <i class="fas fa-window-maximize"></i>
+                                            <span>Double Glazing</span>
+                                        </label>
+                                    </div>
+                                    <div class="toggle-item">
+                                        <input type="checkbox" id="air_conditioning" name="air_conditioning" value="1" {{ old('air_conditioning') ? 'checked' : '' }}>
+                                        <label for="air_conditioning">
+                                            <i class="fas fa-snowflake"></i>
+                                            <span>Air Conditioning</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1321,6 +1657,21 @@
                                         <li><i class="fas fa-check"></i>Ensure good lighting and clear focus</li>
                                         <li><i class="fas fa-check"></i>Avoid heavy filters or editing</li>
                                     </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Property Video</h5>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Video URL (YouTube/Vimeo)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fab fa-youtube"></i>
+                                        <input type="url" class="form-control" name="video_url" placeholder="https://youtube.com/..." value="{{ old('video_url') }}">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1526,6 +1877,17 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label for="original_price" class="form-label">Original Price</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-tag"></i>
+                                        <input type="number" class="form-control @error('original_price') is-invalid @enderror"
+                                            id="original_price" name="original_price" value="{{ old('original_price') }}" min="0" step="0.01" placeholder="0.00">
+                                    </div>
+                                    <div class="form-hint">If this is a discounted price, enter the original price here</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label for="payment_frequency" class="form-label">Payment Frequency</label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-calendar-check"></i>
@@ -1538,6 +1900,25 @@
                                         </select>
                                     </div>
                                     @error('payment_frequency')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="rent_period" class="form-label">Rent Period</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-clock"></i>
+                                        <select class="form-select @error('rent_period') is-invalid @enderror"
+                                            id="rent_period" name="rent_period">
+                                            <option value="">Select Period</option>
+                                            <option value="Daily" {{ old('rent_period') == 'Daily' ? 'selected' : '' }}>Daily</option>
+                                            <option value="Weekly" {{ old('rent_period') == 'Weekly' ? 'selected' : '' }}>Weekly</option>
+                                            <option value="Monthly" {{ old('rent_period') == 'Monthly' ? 'selected' : '' }}>Monthly</option>
+                                            <option value="Yearly" {{ old('rent_period') == 'Yearly' ? 'selected' : '' }}>Yearly</option>
+                                        </select>
+                                    </div>
+                                    @error('rent_period')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -1588,6 +1969,83 @@
                                     @error('maintenance_fees')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="property_tax" class="form-label">Property Tax</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                        <input type="number" class="form-control @error('property_tax') is-invalid @enderror"
+                                            id="property_tax" name="property_tax" value="{{ old('property_tax') }}" min="0" step="0.01" placeholder="0.00">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="tax_year" class="form-label">Tax Year</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-calendar"></i>
+                                        <input type="number" class="form-control @error('tax_year') is-invalid @enderror"
+                                            id="tax_year" name="tax_year" value="{{ old('tax_year') }}" min="2000" max="{{ date('Y') + 1 }}" placeholder="{{ date('Y') }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="insurance_cost" class="form-label">Insurance Cost</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <input type="number" class="form-control @error('insurance_cost') is-invalid @enderror"
+                                            id="insurance_cost" name="insurance_cost" value="{{ old('insurance_cost') }}" min="0" step="0.01" placeholder="0.00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dates & Availability -->
+                <div class="form-card mt-4">
+                    <div class="form-card-header">
+                        <div class="header-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="form-card-title">Availability & Dates</h3>
+                            <p class="form-card-subtitle">Important dates for the property</p>
+                        </div>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="rental_start_date" class="form-label">Available From</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <input type="date" class="form-control @error('rental_start_date') is-invalid @enderror"
+                                            id="rental_start_date" name="rental_start_date" value="{{ old('rental_start_date') }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="rental_end_date" class="form-label">Available Until (Optional)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-calendar-minus"></i>
+                                        <input type="date" class="form-control @error('rental_end_date') is-invalid @enderror"
+                                            id="rental_end_date" name="rental_end_date" value="{{ old('rental_end_date') }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="expiry_date" class="form-label">Listing Expiry Date</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-hourglass-end"></i>
+                                        <input type="date" class="form-control @error('expiry_date') is-invalid @enderror"
+                                            id="expiry_date" name="expiry_date" value="{{ old('expiry_date') }}">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2058,10 +2516,38 @@
                 container.appendChild(toast);
 
                 setTimeout(() => {
-                    toast.style.animation = 'slideInRight 0.3s ease reverse';
-                    setTimeout(() => toast.remove(), 300);
+                    toast.remove();
                 }, 3000);
             };
+
+            // Date Validation Logic
+            const startDateInput = document.getElementById('rental_start_date');
+            const endDateInput = document.getElementById('rental_end_date');
+
+            if (startDateInput && endDateInput) {
+                // Set initial min date if start date is already selected
+                if (startDateInput.value) {
+                    endDateInput.min = startDateInput.value;
+                }
+
+                startDateInput.addEventListener('change', function() {
+                    const startDate = this.value;
+                    endDateInput.min = startDate;
+
+                    // If end date is before start date, clear it
+                    if (endDateInput.value && endDateInput.value < startDate) {
+                        endDateInput.value = '';
+                        window.showToast('Rental end date has been reset because it cannot be before the start date.', 'warning');
+                    }
+                });
+
+                endDateInput.addEventListener('change', function() {
+                    if (startDateInput.value && this.value < startDateInput.value) {
+                        this.value = '';
+                        window.showToast('Rental end date must be after or equal to start date.', 'error');
+                    }
+                });
+            }
 
             // Remove image preview
             window.removeImage = function (button) {

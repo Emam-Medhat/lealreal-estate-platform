@@ -38,7 +38,13 @@
                 <div class="text-sm text-gray-600">إجمالي الوكلاء</div>
             </div>
             <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                <div class="text-2xl font-bold text-purple-600">{{ round((($agentRanking['total_agents'] - $agentRanking['current_rank'] + 1) / $agentRanking['total_agents']) * 100, 1) }}%</div>
+                <div class="text-2xl font-bold text-purple-600">
+                    @if(isset($agentRanking['total_agents']) && $agentRanking['total_agents'] > 0)
+                        {{ round((($agentRanking['total_agents'] - ($agentRanking['current_rank'] ?? 0) + 1) / $agentRanking['total_agents']) * 100, 1) }}%
+                    @else
+                        0%
+                    @endif
+                </div>
                 <div class="text-sm text-gray-600">نسبة الأداء</div>
             </div>
             <div class="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg">

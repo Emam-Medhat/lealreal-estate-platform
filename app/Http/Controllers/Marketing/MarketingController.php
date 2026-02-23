@@ -194,9 +194,9 @@ class MarketingController extends Controller
                 ->groupBy('severity')
                 ->get();
 
-            return view('marketing.complaints', compact('complaints', 'stats', 'complaintCategories', 'severityDistribution'));
+            return view('marketing.complaints.index', compact('complaints', 'stats', 'complaintCategories', 'severityDistribution'));
         } catch (\Exception $e) {
-            return view('marketing.complaints', [
+            return view('marketing.complaints.index', [
                 'complaints' => collect(),
                 'stats' => [
                     'total_complaints' => 0,

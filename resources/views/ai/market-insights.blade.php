@@ -84,7 +84,7 @@
     <!-- Search and Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('ai.market-insights.index') }}">
+            <form method="GET" action="{{ route('ai.market-insights') }}">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">بحث</label>
@@ -128,7 +128,7 @@
                             <button type="submit" class="btn btn-outline-primary">
                                 <i class="fas fa-search me-1"></i>بحث
                             </button>
-                            <a href="{{ route('ai.market-insights.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('ai.market-insights') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i>مسح
                             </a>
                         </div>

@@ -28,6 +28,21 @@ class PredictiveAIController extends Controller
         return view('bigdata.predictive-ai.dashboard', compact('predictions'));
     }
 
+    private function getPredictiveData()
+    {
+        return Cache::remember('predictive_dashboard_data', 3600, function () {
+            return [
+                'price_predictions' => $this->predictPropertyPrices(),
+                'market_trends' => $this->predictMarketTrends(),
+                'investment_opportunities' => $this->predictInvestmentOpportunities(),
+                'risk_assessments' => $this->predictRisks(),
+                'total_predictions' => $this->getTotalPredictions(),
+                'recent_predictions' => $this->getRecentPredictions(),
+                'predictions_summary' => $this->getPredictionsSummary()
+            ];
+        });
+    }
+
     public function analyze(Request $request)
     {
         $request->validate([
@@ -530,5 +545,168 @@ class PredictiveAIController extends Controller
         ], 3600);
 
         return ['id' => $reportId];
+    }
+
+    public function downloadReport($id)
+    {
+        $reportData = Cache::get("predictive_report_{$id}");
+        
+        if (!$reportData) {
+            abort(404, 'التقرير غير موجود أو انتهت صلاحيته');
+        }
+
+        // Generate formatted HTML report
+        $html = $this->generateReportHtml($reportData);
+        
+        // Return as downloadable HTML file
+        $filename = "predictive_report_{$id}_" . date('Y-m-d') . ".html";
+        
+        return response($html)
+            ->header('Content-Type', 'text/html; charset=utf-8')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
+
+    private function generateReportHtml($reportData): string
+    {
+        $data = $reportData['data'];
+        
+        $html = '<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير التحليل التنبؤي</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .header { text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .section h2 { color: #007bff; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .metric { display: inline-block; margin: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+        .neutral { color: #6c757d; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
+        th { background-color: #007bff; color: white; }
+        .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>تقرير التحليل التنبؤي</h1>
+        <p>نوع التقرير: ' . $reportData['type'] . '</p>
+        <p>تاريخ الإنشاء: ' . $reportData['generated_at'] . '</p>
+    </div>';
+
+        // Price Predictions Section
+        if (isset($data['price_predictions'])) {
+            $html .= '
+    <div class="section">
+        <h2>تنبؤات الأسعار</h2>
+        <div class="metric">متوسط تغير السعر: <span class="positive">' . $data['price_predictions']['avg_price_change'] . '</span></div>
+        <div class="metric">مستوى الثقة: ' . $data['price_predictions']['confidence'] . '%</div>';
+            
+            if (isset($data['price_predictions']['hot_markets'])) {
+                $html .= '<h3>الأسواق الساخنة:</h3><ul>';
+                foreach ($data['price_predictions']['hot_markets'] as $market) {
+                    $html .= '<li>' . $market . '</li>';
+                }
+                $html .= '</ul>';
+            }
+            
+            if (isset($data['price_predictions']['predictions'])) {
+                $html .= '<h3>التنبؤات المستقبلية:</h3><ul>';
+                foreach ($data['price_predictions']['predictions'] as $period => $prediction) {
+                    $html .= '<li>' . $period . ': <span class="positive">' . $prediction . '</span></li>';
+                }
+                $html .= '</ul>';
+            }
+            
+            $html .= '</div>';
+        }
+
+        // Market Trends Section
+        if (isset($data['market_trends'])) {
+            $trend = $data['market_trends'];
+            $trendClass = $trend['trend_direction'] === 'upward' ? 'positive' : ($trend['trend_direction'] === 'downward' ? 'negative' : 'neutral');
+            
+            $html .= '
+    <div class="section">
+        <h2>اتجاهات السوق</h2>
+        <div class="metric">اتجاه السوق: <span class="' . $trendClass . '">' . $trend['trend_direction'] . '</span></div>
+        <div class="metric">مؤشر الطلب: ' . ($trend['key_indicators']['demand_index'] ?? 'N/A') . '</div>
+        <div class="metric">مؤشر العرض: ' . ($trend['key_indicators']['supply_index'] ?? 'N/A') . '</div>
+        <div class="metric">مؤشر القدرة على الشراء: ' . ($trend['key_indicators']['affordability_index'] ?? 'N/A') . '</div>
+    </div>';
+        }
+
+        // Investment Opportunities Section
+        if (isset($data['investment_opportunities'])) {
+            $html .= '
+    <div class="section">
+        <h2>فرص الاستثمار</h2>';
+            
+            if (isset($data['investment_opportunities']['high_potential_areas'])) {
+                $html .= '<h3>المناطق ذات الإمكانات العالية:</h3>
+                <table>
+                    <tr><th>المنطقة</th><th>العائد المتوقع</th></tr>';
+                foreach ($data['investment_opportunities']['high_potential_areas'] as $area) {
+                    $html .= '<tr><td>' . $area['area'] . '</td><td class="positive">' . $area['potential_return'] . '</td></tr>';
+                }
+                $html .= '</table>';
+            }
+            
+            if (isset($data['investment_opportunities']['recommended_investment_types'])) {
+                $html .= '<h3>أنواع الاستثمار الموصى بها:</h3><ul>';
+                foreach ($data['investment_opportunities']['recommended_investment_types'] as $type) {
+                    $html .= '<li>' . $type . '</li>';
+                }
+                $html .= '</ul>';
+            }
+            
+            $html .= '</div>';
+        }
+
+        // Risk Assessment Section
+        if (isset($data['risk_assessments'])) {
+            $html .= '
+    <div class="section">
+        <h2>تقييم المخاطر</h2>
+        <div class="metric">مخاطر السوق: ' . $data['risk_assessments']['market_risk'] . '</div>
+        <div class="metric">المخاطر الاقتصادية: ' . $data['risk_assessments']['economic_risk'] . '</div>
+        <div class="metric">المخاطر التنظيمية: ' . $data['risk_assessments']['regulatory_risk'] . '</div>';
+            
+            if (isset($data['risk_assessments']['risk_factors'])) {
+                $html .= '<h3>عوامل المخاطر:</h3><ul>';
+                foreach ($data['risk_assessments']['risk_factors'] as $factor) {
+                    $html .= '<li>' . $factor . '</li>';
+                }
+                $html .= '</ul>';
+            }
+            
+            $html .= '</div>';
+        }
+
+        // Summary Section
+        if (isset($data['predictions_summary'])) {
+            $html .= '
+    <div class="section">
+        <h2>ملخص التنبؤات</h2>
+        <div class="metric">تنبؤات أسعار العقارات: ' . $data['predictions_summary']['property_prices'] . '</div>
+        <div class="metric">اتجاهات السوق: ' . $data['predictions_summary']['market_trends'] . '</div>
+        <div class="metric">عوائد الاستثمار: ' . $data['predictions_summary']['investment_returns'] . '</div>
+        <div class="metric">تقييم المخاطر: ' . $data['predictions_summary']['risk_assessment'] . '</div>
+    </div>';
+        }
+
+        $html .= '
+    <div class="footer">
+        <p>تم إنشاء هذا التقرير بواسطة نظام التحليل التنبؤي</p>
+        <p>تاريخ الإنشاء: ' . date('Y-m-d H:i:s') . '</p>
+    </div>
+</body>
+</html>';
+
+        return $html;
     }
 }

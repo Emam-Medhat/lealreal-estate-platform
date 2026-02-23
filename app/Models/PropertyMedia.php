@@ -14,7 +14,7 @@ class PropertyMedia extends Model
     protected $fillable = [
         'property_id', 'media_type', 'file_name', 'file_path', 
         'file_size', 'file_type', 'is_primary', 'is_featured', 
-        'uploaded_by', 'description', 'sort_order',
+        'uploaded_by', 'description', 'sort_order', 'room_type',
         'created_at', 'updated_at',
     ];
 

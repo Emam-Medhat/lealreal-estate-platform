@@ -4,19 +4,403 @@
 
 @push('styles')
 <style>
-.compliance-module {
-    transition: all 0.3s ease;
-}
-.compliance-module:hover {
-    transform: translateY(-2px);
-}
-.dynamic-content {
-    transition: all 0.5s ease;
-}
-.status-green { border-left: 4px solid #10b981; }
-.status-yellow { border-left: 4px solid #f59e0b; }
-.status-red { border-left: 4px solid #ef4444; }
-.status-blue { border-left: 4px solid #3b82f6; }
+    /* Clean website-style compliance page */
+    .page-header {
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 300;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-header p {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .btn-refresh {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        background: #f59e0b;
+        color: white;
+        border-color: #f59e0b;
+    }
+    
+    .btn-refresh:hover {
+        background: #d97706;
+        border-color: #d97706;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    }
+    
+    .btn-refresh i {
+        margin-right: 0.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        font-size: 1rem;
+    }
+    
+    .stat-icon.green { background: #10b981; }
+    .stat-icon.blue { background: #3b82f6; }
+    .stat-icon.purple { background: #8b5cf6; }
+    .stat-icon.orange { background: #f59e0b; }
+    
+    .stat-info h3 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .stat-info p {
+        color: #7f8c8d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .stat-trend {
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .trend-positive { color: #10b981; }
+    .trend-negative { color: #ef4444; }
+    .trend-neutral { color: #6b7280; }
+    
+    .compliance-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 2rem;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .section-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        font-size: 1.25rem;
+    }
+    
+    .section-icon.blue { background: #3b82f6; }
+    .section-icon.green { background: #10b981; }
+    
+    .section-title h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .section-title p {
+        color: #7f8c8d;
+        font-size: 0.875rem;
+        margin: 0.25rem 0 0 0;
+    }
+    
+    .compliance-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .compliance-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .compliance-item:hover {
+        background: #f8fafc;
+    }
+    
+    .compliance-item.status-green { 
+        background: #f0fdf4; 
+        border-left-color: #10b981;
+    }
+    
+    .compliance-item.status-yellow { 
+        background: #fffbeb; 
+        border-left-color: #f59e0b;
+    }
+    
+    .compliance-item.status-red { 
+        background: #fef2f2; 
+        border-left-color: #ef4444;
+    }
+    
+    .compliance-item.status-blue { 
+        background: #eff6ff; 
+        border-left-color: #3b82f6;
+    }
+    
+    .item-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .item-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+    }
+    
+    .item-icon.green { background: #10b981; }
+    .item-icon.blue { background: #3b82f6; }
+    .item-icon.yellow { background: #f59e0b; }
+    .item-icon.red { background: #ef4444; }
+    .item-icon.purple { background: #8b5cf6; }
+    
+    .item-name {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.875rem;
+    }
+    
+    .item-right {
+        text-align: left;
+    }
+    
+    .item-percentage {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-percentage.green { color: #10b981; }
+    .item-percentage.blue { color: #3b82f6; }
+    .item-percentage.yellow { color: #f59e0b; }
+    .item-percentage.red { color: #ef4444; }
+    .item-percentage.purple { color: #8b5cf6; }
+    
+    .item-status {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .activities-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .activities-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .activities-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .view-all-btn {
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+    
+    .view-all-btn:hover {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+    
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background: #f1f5f9;
+    }
+    
+    .activity-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+    
+    .activity-icon.green { background: #10b981; }
+    .activity-icon.blue { background: #3b82f6; }
+    .activity-icon.yellow { background: #f59e0b; }
+    .activity-icon.red { background: #ef4444; }
+    
+    .activity-info h4 {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin: 0 0 0.25rem 0;
+    }
+    
+    .activity-info p {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    .activity-status {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .activity-status.green { color: #10b981; }
+    .activity-status.blue { color: #3b82f6; }
+    .activity-status.yellow { color: #f59e0b; }
+    .activity-status.red { color: #ef4444; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+        }
+        
+        .header-actions {
+            flex-direction: column;
+        }
+        
+        .btn-refresh {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .compliance-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .item-right {
+            text-align: right;
+        }
+        
+        .activity-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    }
 </style>
 @endpush
 
@@ -347,167 +731,161 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-orange-100">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 mb-8">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div class="space-y-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-check-shield text-white text-xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                                تدقيق الامتثال
-                            </h1>
-                            <p class="text-gray-600 text-lg">مراقبة الامتثال القانوني والتنظيمي</p>
-                        </div>
-                    </div>
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1>تدقيق الامتثال</h1>
+                    <p>مراقبة الامتثال القانوني والتنظيمي</p>
                 </div>
-                
-                <div class="flex gap-3">
-                    <button data-action="perform-check" class="bg-amber-600 text-white px-6 py-3 rounded-2xl hover:bg-amber-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
-                        <i class="fas fa-sync-alt ml-2"></i>
+                <div class="header-actions">
+                    <button data-action="perform-check" class="btn-refresh">
+                        <i class="fas fa-sync-alt"></i>
                         تحديث الفحص
                     </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Compliance Dashboard -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 compliance-module">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-check-circle text-white text-xl"></i>
+    <div class="container">
+        <!-- Statistics Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="text-xs text-gray-500">مباشر</div>
+                    <div class="stat-info">
+                        <h3 data-compliance-compliance_rate>{{ $complianceData['compliance_rate'] }}%</h3>
+                        <p>معدل الامتثال</p>
+                        <div class="stat-trend trend-positive" data-compliance-compliance_trend>{{ $complianceData['compliance_trend'] }} من الشهر الماضي</div>
+                    </div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900" data-compliance-compliance_rate>{{ $complianceData['compliance_rate'] }}%</h3>
-                <p class="text-sm text-gray-600">معدل الامتثال</p>
-                <div class="mt-2 text-xs text-green-600" data-compliance-compliance_trend>{{ $complianceData['compliance_trend'] }} من الشهر الماضي</div>
             </div>
             
-            <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 compliance-module">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-file-contract text-white text-xl"></i>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-file-contract"></i>
                     </div>
-                    <div class="text-xs text-gray-500">مباشر</div>
+                    <div class="stat-info">
+                        <h3 data-compliance-completed_documents>{{ $complianceData['completed_documents'] }}</h3>
+                        <p>وثائق مكتملة</p>
+                        <div class="stat-trend trend-neutral" data-compliance-pending_reviews>{{ $complianceData['pending_reviews'] }} معلقة للمراجعة</div>
+                    </div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900" data-compliance-completed_documents>{{ $complianceData['completed_documents'] }}</h3>
-                <p class="text-sm text-gray-600">وثائق مكتملة</p>
-                <div class="mt-2 text-xs text-blue-600" data-compliance-pending_reviews>{{ $complianceData['pending_reviews'] }} معلقة للمراجعة</div>
             </div>
             
-            <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 compliance-module">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <div class="text-xs text-gray-500">مباشر</div>
+                    <div class="stat-info">
+                        <h3 data-compliance-identified_risks>{{ $complianceData['identified_risks'] }}</h3>
+                        <p>مخاطر محددة</p>
+                        <div class="stat-trend trend-negative" data-compliance-high_priority_risks>{{ $complianceData['high_priority_risks'] }} عالية الأولوية</div>
+                    </div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900" data-compliance-identified_risks>{{ $complianceData['identified_risks'] }}</h3>
-                <p class="text-sm text-gray-600">مخاطر محددة</p>
-                <div class="mt-2 text-xs text-purple-600" data-compliance-high_priority_risks>{{ $complianceData['high_priority_risks'] }} عالية الأولوية</div>
             </div>
             
-            <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 compliance-module">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-clock text-white text-xl"></i>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-clock"></i>
                     </div>
-                    <div class="text-xs text-gray-500">مباشر</div>
+                    <div class="stat-info">
+                        <h3 data-compliance-average_review_time>{{ $complianceData['average_review_time'] }}</h3>
+                        <p>متوسط وقت المراجعة</p>
+                        <div class="stat-trend trend-positive" data-compliance-review_time_improvement>{{ $complianceData['review_time_improvement'] }} من الأسبوع الماضي</div>
+                    </div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900" data-compliance-average_review_time>{{ $complianceData['average_review_time'] }}</h3>
-                <p class="text-sm text-gray-600">متوسط وقت المراجعة</p>
-                <div class="mt-2 text-xs text-orange-600" data-compliance-review_time_improvement>{{ $complianceData['review_time_improvement'] }} من الأسبوع الماضي</div>
             </div>
         </div>
 
         <!-- Compliance Areas -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Regulatory Compliance -->
-            <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
-                <div class="flex items-center gap-4 mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-balance-scale text-white text-2xl"></i>
+            <div class="compliance-section">
+                <div class="section-header">
+                    <div class="section-icon blue">
+                        <i class="fas fa-balance-scale"></i>
                     </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900">الامتثال التنظيمي</h2>
-                        <p class="text-sm text-gray-600">الالتزام بالقوانين واللوائح</p>
+                    <div class="section-title">
+                        <h2>الامتثال التنظيمي</h2>
+                        <p>الالتزام بالقوانين واللوائح</p>
                     </div>
                 </div>
                 
-                <div class="space-y-4">
-                @foreach($regulatoryCompliance as $item)
-                <div class="flex items-center justify-between p-3 bg-{{ $item['color'] }}-50 rounded-xl dynamic-content status-{{ $item['color'] }}">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-{{ $item['color'] }}-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-{{ $item['icon'] }} text-{{ $item['color'] }}-600 text-sm"></i>
+                <div class="compliance-list">
+                    @foreach($regulatoryCompliance as $item)
+                    <div class="compliance-item status-{{ $item['color'] }}">
+                        <div class="item-left">
+                            <div class="item-icon {{ $item['color'] }}">
+                                <i class="fas fa-{{ $item['icon'] }}"></i>
+                            </div>
+                            <span class="item-name">{{ $item['name'] }}</span>
                         </div>
-                        <span class="text-sm font-medium">{{ $item['name'] }}</span>
+                        <div class="item-right">
+                            <div class="item-percentage {{ $item['color'] }}">{{ $item['percentage'] }}%</div>
+                            <div class="item-status">{{ $item['status'] }}</div>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-sm text-{{ $item['color'] }}-600 font-medium">{{ $item['percentage'] }}%</div>
-                        <div class="text-xs text-gray-500">{{ $item['status'] }}</div>
-                    </div>
+                    @endforeach
                 </div>
-                @endforeach
-            </div>
             </div>
             
             <!-- Internal Compliance -->
-            <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
-                <div class="flex items-center gap-4 mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-shield-alt text-white text-2xl"></i>
+            <div class="compliance-section">
+                <div class="section-header">
+                    <div class="section-icon green">
+                        <i class="fas fa-shield-alt"></i>
                     </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900">الامتثال الداخلي</h2>
-                        <p class="text-sm text-gray-600">السياسات والإجراءات الداخلية</p>
+                    <div class="section-title">
+                        <h2>الامتثال الداخلي</h2>
+                        <p>السياسات والإجراءات الداخلية</p>
                     </div>
                 </div>
                 
-                <div class="space-y-4">
-                @foreach($internalCompliance as $item)
-                <div class="flex items-center justify-between p-3 bg-{{ $item['color'] }}-50 rounded-xl dynamic-content status-{{ $item['color'] }}">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-{{ $item['color'] }}-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-{{ $item['icon'] }} text-{{ $item['color'] }}-600 text-sm"></i>
+                <div class="compliance-list">
+                    @foreach($internalCompliance as $item)
+                    <div class="compliance-item status-{{ $item['color'] }}">
+                        <div class="item-left">
+                            <div class="item-icon {{ $item['color'] }}">
+                                <i class="fas fa-{{ $item['icon'] }}"></i>
+                            </div>
+                            <span class="item-name">{{ $item['name'] }}</span>
                         </div>
-                        <span class="text-sm font-medium">{{ $item['name'] }}</span>
+                        <span class="item-status {{ $item['color'] }}">{{ $item['status'] }}</span>
                     </div>
-                    <span class="text-sm text-{{ $item['color'] }}-600 font-medium">{{ $item['status'] }}</span>
+                    @endforeach
                 </div>
-                @endforeach
-            </div>
             </div>
         </div>
 
         <!-- Recent Activities -->
-        <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-bold text-gray-900">الأنشطة الحديثة</h2>
-                <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    عرض الكل
-                </button>
+        <div class="activities-section">
+            <div class="activities-header">
+                <h2 class="activities-title">الأنشطة الحديثة</h2>
+                <a href="#" class="view-all-btn">عرض الكل</a>
             </div>
             
-            <div class="space-y-4">
+            <div class="activity-list">
                 @foreach($recentActivities as $activity)
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl dynamic-content">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-{{ $activity['color'] }}-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-{{ $activity['icon'] }} text-{{ $activity['color'] }}-600"></i>
+                <div class="activity-item">
+                    <div class="activity-left">
+                        <div class="activity-icon {{ $activity['color'] }}">
+                            <i class="fas fa-{{ $activity['icon'] }}"></i>
                         </div>
-                        <div>
-                            <p class="font-medium">{{ $activity['title'] }}</p>
-                            <p class="text-sm text-gray-500">{{ $activity['time'] }}</p>
+                        <div class="activity-info">
+                            <h4>{{ $activity['title'] }}</h4>
+                            <p>{{ $activity['time'] }}</p>
                         </div>
                     </div>
-                    <span class="text-sm text-{{ $activity['color'] }}-600 font-medium">{{ $activity['status'] }}</span>
+                    <span class="activity-status {{ $activity['color'] }}">{{ $activity['status'] }}</span>
                 </div>
                 @endforeach
             </div>

@@ -75,6 +75,11 @@ class AdminUserController extends Controller
     {
         try {
             $user = $this->userRepository->findById($id);
+            
+            if (!$user) {
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'User not found.');
+            }
         } catch (\Exception $e) {
             return redirect()->route('admin.users.index')
                 ->with('error', 'User not found.');
@@ -87,6 +92,11 @@ class AdminUserController extends Controller
     {
         try {
             $user = $this->userRepository->findById($id);
+            
+            if (!$user) {
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'User not found.');
+            }
         } catch (\Exception $e) {
             return redirect()->route('admin.users.index')
                 ->with('error', 'User not found.');

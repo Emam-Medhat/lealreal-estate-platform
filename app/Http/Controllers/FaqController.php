@@ -38,6 +38,19 @@ class FaqController extends Controller
     {
         $categories = Faq::distinct()->pluck('category');
         
+        // Add default categories if none exist
+        if ($categories->isEmpty()) {
+            $categories = collect([
+                'عام',
+                'عقارات',
+                'دفع',
+                'حساب',
+                'تسجيل',
+                'دعم فني',
+                'خصوصية'
+            ]);
+        }
+        
         return view('admin.faqs.create', compact('categories'));
     }
 
@@ -47,12 +60,18 @@ class FaqController extends Controller
             'question' => 'required|string|max:255',
             'answer' => 'required',
             'category' => 'required|string|max:100',
+            'new_category' => 'nullable|string|max:100',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
         ]);
 
+        // Use new category if provided, otherwise use selected category
+        $category = $validated['new_category'] ?? $validated['category'];
+        
         $validated['order'] = $validated['order'] ?? 0;
+        $validated['category'] = $category;
+        unset($validated['new_category']);
 
         Faq::create($validated);
 

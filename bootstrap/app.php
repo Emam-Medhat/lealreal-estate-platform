@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'maintenance.php',
                 'inventory.php',
                 'companies.php',
+                'enterprise.php',
                 'rentals.php',
                 'insurance.php',
                 'inspections.php',
@@ -50,6 +51,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'user.php',
                 'modules.php',
                 'performance.php',
+                'global_services.php',
+                'developer.php',
+                'auctions.php',
+                'content.php',
+                'web_services.php',
             ];
 
             foreach ($routeFiles as $file) {
@@ -61,6 +67,11 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            '/lead-analytics/export',
+            'api/ai/*',          // AI AJAX endpoints - these use JSON, not HTML forms
+        ]);
+
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
             'agent' => \App\Http\Middleware\AgentMiddleware::class,
@@ -73,6 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'request.logger' => \App\Http\Middleware\RequestLogger::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'financial.permission' => \App\Http\Middleware\FinancialPermissionMiddleware::class,
+            'ai.rate' => \App\Http\Middleware\AiRateLimitMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

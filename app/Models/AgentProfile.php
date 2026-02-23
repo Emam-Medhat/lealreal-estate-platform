@@ -32,6 +32,7 @@ class AgentProfile extends Model
         'awards',
         'professional_memberships',
         'areas_of_expertise',
+        'certifications',
         'personal_statement',
         'company_name',
         'company_logo',
@@ -56,6 +57,7 @@ class AgentProfile extends Model
         'awards' => 'json',
         'professional_memberships' => 'json',
         'areas_of_expertise' => 'json',
+        'certifications' => 'json',
         'working_hours' => 'json',
     ];
 
@@ -155,6 +157,11 @@ class AgentProfile extends Model
     public function getAreasOfExpertiseListAttribute(): array
     {
         return $this->areas_of_expertise ?? [];
+    }
+
+    public function getCertificationsListAttribute(): array
+    {
+        return $this->certifications ?? [];
     }
 
     public function getWorkingHoursAttribute(): array
@@ -272,6 +279,7 @@ class AgentProfile extends Model
             'awards' => $this->getAwardsListAttribute(),
             'professional_memberships' => $this->getProfessionalMembershipsListAttribute(),
             'areas_of_expertise' => $this->getAreasOfExpertiseListAttribute(),
+            'certifications' => $this->getCertificationsListAttribute(),
         ];
     }
 

@@ -3,7 +3,7 @@
 @section('title', 'إدارة العملاء المحتملين')
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -19,7 +19,7 @@
                         <a href="{{ route('leads.pipeline') }}" class="btn btn-success">
                             <i class="fas fa-stream"></i> مسار المبيعات
                         </a>
-                        <a href="{{ route('leads.analytics') }}" class="btn btn-warning">
+                        <a href="{{ route('lead-analytics.dashboard') }}" class="btn btn-warning">
                             <i class="fas fa-chart-bar"></i> التحليلات
                         </a>
                     </div>

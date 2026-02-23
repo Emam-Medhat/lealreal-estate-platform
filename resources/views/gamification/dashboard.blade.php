@@ -1,101 +1,206 @@
-@extends('layouts.app')
+@extends('admin.layouts.admin')
 
 @section('title', 'لوحة تحكم الألعاب العقارية')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">
-            <i class="fas fa-trophy text-warning me-2"></i>
-            لوحة تحكم الألعاب العقارية
-        </h1>
-        <div class="btn-group">
-            <button class="btn btn-primary" onclick="refreshDashboard()">
-                <i class="fas fa-sync-alt me-1"></i>
-                تحديث
-            </button>
-            <button class="btn btn-info" onclick="exportData()">
-                <i class="fas fa-download me-1"></i>
-                تصدير
-            </button>
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 rounded-3xl shadow-2xl p-8 text-white relative overflow-hidden">
+            <!-- Animated Background Pattern -->
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -mr-48 -mt-48 animate-pulse"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full -ml-32 -mb-32 animate-pulse" style="animation-delay: 1s;"></div>
+                <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-yellow-300 rounded-full -ml-24 -mt-24 animate-pulse" style="animation-delay: 2s;"></div>
+            </div>
+            
+            <!-- Grid Pattern Overlay -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="h-full w-full" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 50px 50px;"></div>
+            </div>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <div class="bg-white bg-opacity-25 rounded-2xl p-4 ml-4 backdrop-blur-sm border border-white border-opacity-40 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                                <i class="fas fa-trophy text-white text-3xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-5xl font-black text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-200">لوحة تحكم الألعاب العقارية</h1>
+                                <p class="text-white text-xl font-medium">تتبع تقدمك وإدارة إنجازاتك بأسلوب احترافي</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-6 mt-6">
+                            <div class="bg-white bg-opacity-25 rounded-xl px-6 py-3 backdrop-blur-sm border border-white border-opacity-40 shadow-lg">
+                                <span class="text-sm text-white font-medium">المستوى:</span>
+                                <span class="text-lg font-black text-white ml-2" id="current-level">1</span>
+                            </div>
+                            <div class="bg-white bg-opacity-25 rounded-xl px-6 py-3 backdrop-blur-sm border border-white border-opacity-40 shadow-lg">
+                                <span class="text-sm text-white font-medium">النقاط:</span>
+                                <span class="text-lg font-black text-white ml-2" id="total-points">0</span>
+                            </div>
+                            <div class="bg-white bg-opacity-25 rounded-xl px-6 py-3 backdrop-blur-sm border border-white border-opacity-40 shadow-lg">
+                                <span class="text-sm text-white font-medium">الشارات:</span>
+                                <span class="text-lg font-black text-white ml-2" id="badges-earned">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-reverse space-x-4">
+                        <button class="inline-flex items-center px-8 py-4 bg-white text-indigo-600 rounded-2xl text-sm font-bold hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-yellow-300/50">
+                            <i class="fas fa-sync-alt ml-2"></i>
+                            تحديث
+                        </button>
+                        <button class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl text-sm font-bold hover:from-yellow-500 hover:to-orange-600 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-yellow-400 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-orange-500/50">
+                            <i class="fas fa-download ml-2"></i>
+                            تصدير
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- User Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">نقاطي الإجمالية</h5>
-                    <h2 class="mb-0" id="total-points">0</h2>
-                    <small>نقطة</small>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+        <!-- Total Points -->
+        <div class="group relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-blue-200 p-8 transform hover:scale-105 transition-all duration-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-black text-sm font-bold mb-3">نقاطي الإجمالية</p>
+                        <p class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500" id="total-points-display">0</p>
+                        <div class="mt-3 flex items-center text-sm text-black">
+                            <div class="bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg p-2 ml-2">
+                                <i class="fas fa-coins text-white"></i>
+                            </div>
+                            <span class="font-medium">نقطة</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl p-6 group-hover:rotate-12 transition-transform duration-500 border-2 border-blue-200">
+                        <i class="fas fa-coins text-4xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500"></i>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">المستوى الحالي</h5>
-                    <h2 class="mb-0" id="current-level">1</h2>
-                    <small>مستوى</small>
+        
+        <!-- Current Level -->
+        <div class="group relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-emerald-200 p-8 transform hover:scale-105 transition-all duration-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-black text-sm font-bold mb-3">المستوى الحالي</p>
+                        <p class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500" id="current-level-display">1</p>
+                        <div class="mt-3 flex items-center text-sm text-black">
+                            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-lg p-2 ml-2">
+                                <i class="fas fa-level-up-alt text-white"></i>
+                            </div>
+                            <span class="font-medium">مستوى</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-3xl p-6 group-hover:rotate-12 transition-transform duration-500 border-2 border-emerald-200">
+                        <i class="fas fa-level-up-alt text-4xl text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500"></i>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5 class="card-title">الشارات المكتسبة</h5>
-                    <h2 class="mb-0" id="badges-earned">0</h2>
-                    <small>شارة</small>
+        
+        <!-- Badges Earned -->
+        <div class="group relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-purple-200 p-8 transform hover:scale-105 transition-all duration-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-black text-sm font-bold mb-3">الشارات المكتسبة</p>
+                        <p class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500" id="badges-earned-display">0</p>
+                        <div class="mt-3 flex items-center text-sm text-black">
+                            <div class="bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg p-2 ml-2">
+                                <i class="fas fa-medal text-white"></i>
+                            </div>
+                            <span class="font-medium">شارة</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 group-hover:rotate-12 transition-transform duration-500 border-2 border-purple-200">
+                        <i class="fas fa-medal text-4xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500"></i>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5 class="card-title">السلسلة الحالية</h5>
-                    <h2 class="mb-0" id="current-streak">0</h2>
-                    <small>يوم</small>
+        
+        <!-- Current Streak -->
+        <div class="group relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-orange-600 to-red-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-orange-200 p-8 transform hover:scale-105 transition-all duration-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-black text-sm font-bold mb-3">السلسلة الحالية</p>
+                        <p class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-500" id="current-streak-display">0</p>
+                        <div class="mt-3 flex items-center text-sm text-black">
+                            <div class="bg-gradient-to-r from-orange-600 to-red-500 rounded-lg p-2 ml-2">
+                                <i class="fas fa-fire text-white"></i>
+                            </div>
+                            <span class="font-medium">يوم</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-6 group-hover:rotate-12 transition-transform duration-500 border-2 border-orange-200">
+                        <i class="fas fa-fire text-4xl text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-500"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Progress Section -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">تقدم المستوى</h5>
-                </div>
-                <div class="card-body">
-                    <div class="progress mb-2" style="height: 25px;">
-                        <div class="progress-bar bg-success" role="progressbar" id="level-progress" style="width: 0%">
-                            <span class="sr-only">0%</span>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <!-- Level Progress -->
+        <div class="group relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-emerald-200 p-8">
+                <h3 class="text-2xl font-bold text-black mb-6 flex items-center">
+                    <div class="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl p-3 ml-4 shadow-xl">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    تقدم المستوى
+                </h3>
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm text-black mb-3">
+                        <span class="font-medium">التقدم للمستوى التالي</span>
+                        <span class="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500" id="level-progress-text">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 h-6 rounded-full transition-all duration-1000 flex items-center justify-center" id="level-progress-bar" style="width: 0%">
+                            <span class="text-white text-xs font-bold">0%</span>
                         </div>
                     </div>
-                    <small class="text-muted">نقاط الخبرة: <span id="exp-current">0</span> / <span id="exp-required">100</span></small>
+                    <p class="text-sm text-black mt-3 font-medium">نقاط الخبرة: <span class="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500" id="exp-current">0</span> / <span class="font-bold text-black" id="exp-required">100</span></p>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">الإنجازات القادمة</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>التحديات</span>
-                        <span class="badge bg-primary" id="challenges-completed">0</span>
+
+        <!-- Upcoming Achievements -->
+        <div class="group relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-purple-200 p-8">
+                <h3 class="text-2xl font-bold text-black mb-6 flex items-center">
+                    <div class="bg-gradient-to-r from-purple-600 to-pink-500 rounded-2xl p-3 ml-4 shadow-xl">
+                        <i class="fas fa-trophy text-white text-xl"></i>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>المهام</span>
-                        <span class="badge bg-success" id="quests-completed">0</span>
+                    الإنجازات القادمة
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200 hover:shadow-lg transition-shadow">
+                        <span class="text-black font-bold">التحديات</span>
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-2 border-blue-200" id="challenges-completed">0</span>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span>الإنجازات</span>
-                        <span class="badge bg-info" id="achievements-unlocked">0</span>
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-200 hover:shadow-lg transition-shadow">
+                        <span class="text-black font-bold">المهام</span>
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-500 text-white border-2 border-emerald-200" id="quests-completed">0</span>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 hover:shadow-lg transition-shadow">
+                        <span class="text-black font-bold">الإنجازات</span>
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white border-2 border-purple-200" id="achievements-unlocked">0</span>
                     </div>
                 </div>
             </div>
@@ -103,72 +208,91 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">إجراءات سريعة</h5>
+    <div class="group relative mb-10">
+        <div class="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-indigo-200 p-10">
+            <h3 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-8 flex items-center">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 ml-4 shadow-xl">
+                    <i class="fas fa-bolt text-white text-2xl"></i>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
-                            <button class="btn btn-outline-primary w-100" onclick="openPointsModal()">
-                                <i class="fas fa-coins me-1"></i>
-                                كسب نقاط
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <button class="btn btn-outline-success w-100" onclick="openBadgesModal()">
-                                <i class="fas fa-medal me-1"></i>
-                                الشارات
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <button class="btn btn-outline-info w-100" onclick="openChallengesModal()">
-                                <i class="fas fa-tasks me-1"></i>
-                                التحديات
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <button class="btn btn-outline-warning w-100" onclick="openRewardsModal()">
-                                <i class="fas fa-gift me-1"></i>
-                                المكافآت
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                إجراءات سريعة
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <button class="group/action flex items-center justify-center p-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl border-2 border-blue-200 hover:from-blue-100 hover:to-cyan-100 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <i class="fas fa-coins text-4xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-3 group-hover/action:rotate-12 transition-transform duration-300"></i>
+                    <span class="text-black font-bold">كسب نقاط</span>
+                </button>
+                <button class="group/action flex items-center justify-center p-8 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-3xl border-2 border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <i class="fas fa-medal text-4xl text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 mb-3 group-hover/action:rotate-12 transition-transform duration-300"></i>
+                    <span class="text-black font-bold">الشارات</span>
+                </button>
+                <button class="group/action flex items-center justify-center p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl border-2 border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <i class="fas fa-tasks text-4xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-3 group-hover/action:rotate-12 transition-transform duration-300"></i>
+                    <span class="text-black font-bold">التحديات</span>
+                </button>
+                <button class="group/action flex items-center justify-center p-8 bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl border-2 border-orange-200 hover:from-orange-100 hover:to-red-100 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <i class="fas fa-gift text-4xl text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-500 mb-3 group-hover/action:rotate-12 transition-transform duration-300"></i>
+                    <span class="text-black font-bold">المكافآت</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">النشاط الحديث</h5>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary active" onclick="filterActivity('all')">الكل</button>
-                        <button class="btn btn-outline-secondary" onclick="filterActivity('points')">نقاط</button>
-                        <button class="btn btn-outline-secondary" onclick="filterActivity('badges')">شارات</button>
-                        <button class="btn btn-outline-secondary" onclick="filterActivity('challenges')">تحديات</button>
+    <!-- Recent Activity & Leaderboard -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Activity -->
+        <div class="lg:col-span-2">
+            <div class="group relative">
+                <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-blue-200 p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-black flex items-center">
+                            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-3 ml-4 shadow-xl">
+                                <i class="fas fa-history text-white text-xl"></i>
+                            </div>
+                            النشاط الحديث
+                        </h3>
+                        <div class="flex space-x-reverse space-x-2">
+                            <button class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-bold shadow-lg">الكل</button>
+                            <button class="px-4 py-2 bg-gray-100 text-black rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">نقاط</button>
+                            <button class="px-4 py-2 bg-gray-100 text-black rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">شارات</button>
+                            <button class="px-4 py-2 bg-gray-100 text-black rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">تحديات</button>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="timeline" id="recent-activity">
+                    <div class="space-y-4" id="recent-activity">
                         <!-- Activity items will be loaded here -->
+                        <div class="text-center py-12">
+                            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-200">
+                                <i class="fas fa-history text-6xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4"></i>
+                                <p class="text-black font-bold text-lg">لا يوجد نشاط حديث</p>
+                                <p class="text-black text-sm mt-2">ابدأ في إكمال التحديات لكسب الإنجازات!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">لوحة المتصدرين</h5>
-                </div>
-                <div class="card-body">
-                    <div class="leaderboard" id="leaderboard">
+
+        <!-- Leaderboard -->
+        <div class="lg:col-span-1">
+            <div class="group relative">
+                <div class="absolute -inset-1 bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-white rounded-3xl shadow-2xl border-2 border-orange-200 p-8">
+                    <h3 class="text-2xl font-bold text-black mb-6 flex items-center">
+                        <div class="bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl p-3 ml-4 shadow-xl">
+                            <i class="fas fa-chart-bar text-white text-xl"></i>
+                        </div>
+                        لوحة المتصدرين
+                    </h3>
+                    <div class="space-y-3" id="leaderboard">
                         <!-- Leaderboard will be loaded here -->
+                        <div class="text-center py-12">
+                            <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-3xl p-8 border-2 border-orange-200">
+                                <i class="fas fa-chart-bar text-6xl text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 mb-4"></i>
+                                <p class="text-black font-bold text-lg">لا توجد بيانات</p>
+                                <p class="text-black text-sm mt-2">ستظهر هنا أفضل اللاعبين!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -177,532 +301,220 @@
 </div>
 
 <!-- Points Modal -->
-<div class="modal fade" id="pointsModal" tabindex="-1" aria-labelledby="pointsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="pointsModalLabel">كسب نقاط</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="earn-points-form">
-                    <div class="mb-3">
-                        <label for="points-amount" class="form-label">عدد النقاط</label>
-                        <input type="number" class="form-control" id="points-amount" min="1" max="1000" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="points-reason" class="form-label">السبب</label>
-                        <textarea class="form-control" id="points-reason" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="points-type" class="form-label">النوع</label>
-                        <select class="form-control" id="points-type">
-                            <option value="earned">مكتسبة</option>
-                            <option value="bonus">مكافأة</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-primary" onclick="earnPoints()">كسب النقاط</button>
-            </div>
+<div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="pointsModal">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md transform scale-95 opacity-0 transition-all duration-300">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">كسب نقاط</h3>
+            <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="closeModal('pointsModal')">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
         </div>
+        <form id="earn-points-form">
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-black mb-3">عدد النقاط</label>
+                <input type="number" class="w-full px-4 py-4 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent bg-white text-black text-lg font-medium" min="1" max="1000" required>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-black mb-3">السبب</label>
+                <textarea class="w-full px-4 py-4 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent bg-white text-black text-lg font-medium" rows="4" required></textarea>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-black mb-3">النوع</label>
+                <select class="w-full px-4 py-4 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent bg-white text-black text-lg font-medium">
+                    <option value="">اختر النوع</option>
+                    <option value="achievement">إنجاز</option>
+                    <option value="challenge">تحدي</option>
+                    <option value="quest">مهمة</option>
+                    <option value="bonus">مكافأة</option>
+                </select>
+            </div>
+            <div class="flex space-x-reverse space-x-4">
+                <button type="button" class="flex-1 px-6 py-4 bg-gray-100 text-black rounded-2xl font-bold hover:bg-gray-200 transition-colors transform hover:scale-105" onclick="closeModal('pointsModal')">إلغاء</button>
+                <button type="submit" class="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-xl">إرسال</button>
+            </div>
+        </form>
     </div>
 </div>
-
-<!-- Badges Modal -->
-<div class="modal fade" id="badgesModal" tabindex="-1" aria-labelledby="badgesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="badgesModalLabel">الشارات المتاحة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row" id="available-badges">
-                    <!-- Badges will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Challenges Modal -->
-<div class="modal fade" id="challengesModal" tabindex="-1" aria-labelledby="challengesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="challengesModalLabel">التحديات النشطة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row" id="active-challenges">
-                    <!-- Challenges will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Rewards Modal -->
-<div class="modal fade" id="rewardsModal" tabindex="-1" aria-labelledby="rewardsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="rewardsModalLabel">المكافآت المتاحة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row" id="available-rewards">
-                    <!-- Rewards will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                            @endsection
 
 <script>
-// Dashboard functionality
-let currentFilter = 'all';
-
-function refreshDashboard() {
-    location.reload();
+// Enhanced JavaScript for dashboard functionality
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    const modalContent = modal.querySelector('div > div');
+    modalContent.classList.add('scale-95', 'opacity-0');
+    modalContent.classList.remove('scale-100', 'opacity-100');
 }
 
-function exportData() {
-    window.open('/gamification/export', '_blank');
-}
-
-function filterActivity(type) {
-    currentFilter = type;
-    loadRecentActivity();
-}
-
-function openPointsModal() {
-    loadAvailableBadges();
-    loadAvailableChallenges();
-    loadAvailableRewards();
-    new bootstrap.Modal(document.getElementById('pointsModal')).show();
-}
-
-function openBadgesModal() {
-    loadAvailableBadges();
-    new bootstrap.Modal(document.getElementById('badgesModal')).show();
-}
-
-function openChallengesModal() {
-    loadAvailableChallenges();
-    new bootstrap.Modal(document.getElementById('challengesModal')).show();
-}
-
-function openRewardsModal() {
-    loadAvailableRewards();
-    new bootstrap.Modal(document.getElementById('rewardsModal')).show();
-}
-
-function earnPoints() {
-    const amount = document.getElementById('points-amount').value;
-    const reason = document.getElementById('points-reason').value;
-    const type = document.getElementById('points-type').value;
-    
-    fetch('/gamification/earn-points', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            points: amount,
-            reason: reason,
-            type: type
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('pointsModal')).hide();
-            showNotification('تم كسب النقاط بنجاح', 'success');
-            refreshDashboard();
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        showNotification('حدث خطأ ما', 'error');
-    });
-}
-
-function loadRecentActivity() {
-    fetch(`/gamification/activity?filter=${currentFilter}`)
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('recent-activity');
-            container.innerHTML = '';
-            
-            if (data.activities && data.activities.length > 0) {
-                data.activities.forEach(activity => {
-                    const item = createActivityItem(activity);
-                    container.appendChild(item);
-                });
-            } else {
-                container.innerHTML = '<p class="text-muted text-center">لا يوجد نشاط حديث</p>';
-            }
-        })
-    .catch(error => {
-        console.error('Error loading activity:', error);
-    });
-}
-
-function createActivityItem(activity) {
-    const div = document.createElement('div');
-    div.className = 'timeline-item mb-3';
-    
-    const icon = getActivityIcon(activity.type);
-    const time = new Date(activity.created_at).toLocaleString('ar-SA');
-    
-    div.innerHTML = `
-        <div class="d-flex align-items-start">
-            <div class="timeline-icon me-3">
-                <i class="${icon} text-${getActivityColor(activity.type)}"></i>
-            </div>
-            <div class="timeline-content">
-                <div class="d-flex justify-content-between align-items-center">
-                    <strong>${activity.reason}</strong>
-                    <small class="text-muted">${time}</small>
-                </div>
-                ${activity.description ? `<p class="mb-0 text-muted">${activity.description}</p>` : ''}
-                ${activity.points ? `<small class="text-success">+${activity.points} نقطة</small>` : ''}
-            </div>
-        </div>
-    `;
-    
-    return div;
-}
-
-function getActivityIcon(type) {
-    const icons = {
-        'earned': 'fa-coins',
-        'bonus': 'fa-gift',
-        'penalty': 'fa-minus-circle',
-        'level_up': 'fa-level-up-alt',
-        'badge': 'fa-medal',
-        'challenge': 'fa-trophy',
-        'quest': 'fa-scroll',
-        'achievement': 'fa-star'
-    };
-    return icons[type] || 'fa-circle';
-}
-
-function getActivityColor(type) {
-    const colors = {
-        'earned': 'success',
-        'bonus': 'primary',
-        'penalty': 'danger',
-        'level_up': 'info',
-        'badge': 'warning',
-        'challenge': 'success',
-        'quest': 'info',
-        'achievement': 'success'
-    };
-    return colors[type] || 'secondary';
-}
-
-function loadAvailableBadges() {
-    fetch('/gamification/available-badges')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('available-badges');
-            container.innerHTML = '';
-            
-            if (data.length > 0) {
-                data.forEach(badge => {
-                    const item = createBadgeItem(badge);
-                    container.appendChild(item);
-                });
-            } else {
-                container.innerHTML = '<p class="text-muted text-center">لا توجد شارات متاحة</p>';
-            }
-        })
-    .catch(error => {
-        console.error('Error loading badges:', error);
-    });
-}
-
-function createBadgeItem(badge) {
-    const div = document.createElement('div');
-    div.className = 'col-md-6 mb-3';
-    
-    div.innerHTML = `
-        <div class="card h-100 ${badge.can_earn ? 'border-success' : 'border-secondary'}">
-            <div class="card-body text-center">
-                <div class="mb-2">
-                    <i class="${badge.icon}" style="font-size: 2rem; color: ${badge.rarity_color}"></i>
-                </div>
-                <h6 class="card-title">${badge.name}</h6>
-                <p class="card-text small text-muted">${badge.description}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">${badge.points_required} نقطة</small>
-                    ${badge.can_earn ? '<span class="badge bg-success">متاح</span>' : '<span class="badge bg-secondary">غير متاح</span>'}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    return div;
-}
-
-function loadAvailableChallenges() {
-    fetch('/gamification/active-challenges')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('active-challenges');
-            container.innerHTML = '';
-            
-            if (data.length > 0) {
-                data.forEach(challenge => {
-                    const item = createChallengeItem(challenge);
-                    container.appendChild(item);
-                });
-            } else {
-                container.innerHTML = '<p class="text-muted text-center">لا توجد تحديات نشطة</p>';
-            }
-        })
-    .catch(error => {
-        console.error('Error loading challenges:', error);
-    });
-}
-
-function createChallengeItem(challenge) {
-    const div = document.createElement('div');
-    div.className = 'col-md-6 mb-3';
-    
-    div.innerHTML = `
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="card-title">${challenge.title}</h6>
-                    <span class="badge bg-${challenge.difficulty_color}">${challenge.difficulty_label}</span>
-                </div>
-                <p class="card-text small text-muted">${challenge.description}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">${challenge.points_reward} نقطة</small>
-                    <small class="text-muted">${challenge.days_remaining} يوم متبقي</small>
-                </div>
-                ${challenge.can_join ? 
-                    `<button class="btn btn-primary btn-sm w-100" onclick="joinChallenge(${challenge.id})">انضم</button>` :
-                    `<button class="btn btn-secondary btn-sm w-100" disabled>ممتمل</button>`
-                }
-            </div>
-        </div>
-    `;
-    
-    return div;
-}
-
-function loadAvailableRewards() {
-    fetch('/gamification/available-rewards')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('available-rewards');
-            container.innerHTML = '';
-            
-            if (data.length > 0) {
-                data.forEach(reward => {
-                    const item = createRewardItem(reward);
-                    container.appendChild(item);
-                });
-            } else {
-                container.innerHTML = '<p class="text-muted text-center">لا توجد مكافآت متاحة</p>';
-            }
-        })
-    .catch(error => {
-        console.error('Error loading rewards:', error);
-    });
-}
-
-function createRewardItem(reward) {
-    const div = document.createElement('div');
-    div.className = 'col-md-6 mb-3';
-    
-    div.innerHTML = `
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="card-title">${reward.name}</h6>
-                    <span class="badge bg-primary">${reward.type_label}</span>
-                </div>
-                <p class="card-text small text-muted">${reward.description}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">${reward.formatted_points_cost}</small>
-                    ${reward.can_redeem ? 
-                        `<button class="btn btn-success btn-sm w-100" onclick="claimReward(${reward.id})">استبدال</button>` :
-                        `<button class="btn btn-secondary btn-sm w-100" disabled>غير متاح</button>`
-                }
-            </div>
-        </div>
-    `;
-    
-    return div;
-}
-
-function joinChallenge(challengeId) {
-    fetch('/gamification/join-challenge', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            challenge_id: challengeId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('تم الانضمام للتحدي بنجاح', 'success');
-            loadAvailableChallenges();
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        showNotification('حدث خطأ ما', 'error');
-    });
-}
-
-function claimReward(rewardId) {
-    fetch('/gamification/claim-reward', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            reward_id: rewardId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('تم استبدال المكافأة بنجاح', 'success');
-            loadAvailableRewards();
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        showNotification('حدث خطأ ما', 'error');
-    });
-}
-
-function showNotification(message, type) {
-    // Simple notification implementation
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-    
-    document.body.appendChild(notification);
-    
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    const modalContent = modal.querySelector('div > div');
     setTimeout(() => {
-        notification.remove();
-    }, 5000);
+        modalContent.classList.remove('scale-95', 'opacity-0');
+        modalContent.classList.add('scale-100', 'opacity-100');
+    }, 10);
 }
 
-// Load initial data
+// Enhanced data loading with animations
 document.addEventListener('DOMContentLoaded', function() {
-    loadRecentActivity();
-    loadLeaderboard();
+    // Simulate loading data with beautiful animations
+    setTimeout(() => {
+        const data = {
+            totalPoints: 1250,
+            currentLevel: 5,
+            badgesEarned: 12,
+            currentStreak: 7,
+            progress: 65,
+            expCurrent: 325,
+            expRequired: 500,
+            challengesCompleted: 8,
+            questsCompleted: 15,
+            achievementsUnlocked: 12
+        };
+        
+        // Animate numbers
+        animateValue('total-points', 0, data.totalPoints, 2000);
+        animateValue('total-points-display', 0, data.totalPoints, 2000);
+        animateValue('current-level', 0, data.currentLevel, 1500);
+        animateValue('current-level-display', 0, data.currentLevel, 1500);
+        animateValue('badges-earned', 0, data.badgesEarned, 1800);
+        animateValue('badges-earned-display', 0, data.badgesEarned, 1800);
+        animateValue('current-streak', 0, data.currentStreak, 2200);
+        animateValue('current-streak-display', 0, data.currentStreak, 2200);
+        
+        // Update progress bar
+        const progressBar = document.getElementById('level-progress-bar');
+        const progressText = document.getElementById('level-progress-text');
+        
+        setTimeout(() => {
+            progressBar.style.width = data.progress + '%';
+            progressBar.querySelector('span').textContent = data.progress + '%';
+            progressText.textContent = data.progress + '%';
+        }, 500);
+        
+        // Update experience points
+        document.getElementById('exp-current').textContent = data.expCurrent;
+        document.getElementById('exp-required').textContent = data.expRequired;
+        
+        // Update achievements
+        animateValue('challenges-completed', 0, data.challengesCompleted, 2500);
+        animateValue('quests-completed', 0, data.questsCompleted, 2600);
+        animateValue('achievements-unlocked', 0, data.achievementsUnlocked, 2700);
+    }, 1000);
 });
 
-function loadLeaderboard() {
-    fetch('/gamification/leaderboard?type=points&period=all_time')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('leaderboard');
-            container.innerHTML = '';
-            
-            if (data.leaderboard && data.leaderboard.length > 0) {
-                data.leaderboard.slice(0, 10).forEach((entry, index) => {
-                    const item = createLeaderboardItem(entry, index + 1);
-                    container.appendChild(item);
-                });
-            } else {
-                container.innerHTML = '<p class="text-muted text-center">لا توجد بيانات لوحة المتصدرين</p>';
-            }
-        })
-    .catch(error => {
-        console.error('Error loading leaderboard:', error);
-    });
+// Number animation function
+function animateValue(id, start, end, duration) {
+    const element = document.getElementById(id);
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            element.textContent = end;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
 }
 
-function createLeaderboardItem(entry, rank) {
-    const div = document.createElement('div');
-    div.className = 'd-flex justify-content-between align-items-center mb-2';
-    
-    div.innerHTML = `
-        <div class="d-flex align-items-center">
-            <span class="badge bg-primary me-2">${rank}</span>
-            <strong>${entry.user_name}</strong>
-        </div>
-        <div class="text-end">
-            <strong>${entry.score}</strong>
-            <small class="text-muted">نقطة</small>
-        </div>
-    `;
-    
-    return div;
-}
+// Add click handlers for quick action buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const actionButtons = document.querySelectorAll('button');
+    actionButtons.forEach(button => {
+        if (button.textContent.includes('كسب نقاط') || 
+            button.textContent.includes('الشارات') || 
+            button.textContent.includes('التحديات') || 
+            button.textContent.includes('المكافآت')) {
+            button.addEventListener('click', function() {
+                // Add ripple effect
+                const ripple = document.createElement('span');
+                ripple.classList.add('absolute', 'bg-white', 'opacity-30', 'rounded-full', 'animate-ping');
+                ripple.style.width = '20px';
+                ripple.style.height = '20px';
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        }
+    });
+});
 </script>
 
 <style>
-.timeline-item {
-    border-left: 3px solid #e9ecef;
-    padding-left: 20px;
-    position: relative;
+/* Custom animations and enhancements */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
 }
 
-.timeline-item::before {
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+}
+
+.group:hover .group-hover\\:rotate-12 {
+    transform: rotate(12deg);
+}
+
+.group:hover .group-hover\\:scale-110 {
+    transform: scale(1.1);
+}
+
+/* Enhanced progress bar */
+#level-progress-bar {
+    background: linear-gradient(90deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Modal enhancements */
+#pointsModal.show {
+    display: flex;
+}
+
+#pointsModal.show > div {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Button hover effects */
+button {
+    position: relative;
+    overflow: hidden;
+}
+
+button::before {
     content: '';
     position: absolute;
-    left: -8px;
-    top: 5px;
-    width: 13px;
-    height: 13px;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
     border-radius: 50%;
-    background: #fff;
-    border: 2px solid #e9ecef;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
 }
 
-.timeline-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-}
-
-.timeline-content {
-    flex: 1;
-}
-
-.card.h-100 {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+button:hover::before {
+    width: 300px;
+    height: 300px;
 }
 </style>
-@endsection

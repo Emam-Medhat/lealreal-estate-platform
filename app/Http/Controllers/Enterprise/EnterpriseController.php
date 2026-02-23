@@ -99,20 +99,10 @@ class EnterpriseController extends Controller
         $account = \App\Models\EnterpriseAccount::find($id);
         
         if (!$account) {
-            return response()->json(['success' => false, 'message' => 'Account not found']);
+            return redirect()->route('enterprise.accounts')->with('error', 'Account not found');
         }
 
-        return response()->json([
-            'success' => true,
-            'account' => [
-                'company_name' => $account->company_name,
-                'contact_email' => $account->contact_email,
-                'contact_person' => $account->contact_person,
-                'status' => ucfirst($account->status),
-                'company_type' => ucfirst($account->company_type),
-                'created_at' => $account->created_at ? \Carbon\Carbon::parse($account->created_at)->format('M d, Y') : 'Unknown'
-            ]
-        ]);
+        return view('enterprise.show', compact('account'));
     }
 
     public function editAccount($id)
@@ -168,18 +158,14 @@ class EnterpriseController extends Controller
         $account = \App\Models\EnterpriseAccount::find($id);
         
         if (!$account) {
-            return response()->json(['success' => false, 'message' => 'Account not found']);
+            return redirect()->route('enterprise.accounts')->with('error', 'Account not found');
         }
 
         // Toggle status
         $newStatus = $account->status === 'active' ? 'suspended' : 'active';
         $account->update(['status' => $newStatus]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Account status updated successfully',
-            'new_status' => $newStatus
-        ]);
+        return redirect()->route('enterprise.accounts')->with('success', 'Account status updated successfully');
     }
 
     public function subscriptions()
@@ -309,25 +295,10 @@ class EnterpriseController extends Controller
         $subscription = Subscription::with(['user', 'plan'])->find($id);
         
         if (!$subscription) {
-            return response()->json(['success' => false, 'message' => 'Subscription not found']);
+            return redirect()->route('enterprise.subscriptions')->with('error', 'Subscription not found');
         }
 
-        return response()->json([
-            'success' => true,
-            'subscription' => [
-                'user_name' => $subscription->user->first_name . ' ' . $subscription->user->last_name,
-                'user_email' => $subscription->user->email,
-                'plan_name' => $subscription->plan->name ?? 'Unknown Plan',
-                'amount' => number_format($subscription->amount, 2),
-                'status' => ucfirst($subscription->status),
-                'starts_at' => $subscription->starts_at,
-                'ends_at' => $subscription->ends_at,
-                'billing_cycle' => ucfirst($subscription->billing_cycle),
-                'payment_status' => ucfirst($subscription->payment_status),
-                'auto_renew' => $subscription->auto_renew ? 'Yes' : 'No',
-                'notes' => $subscription->notes
-            ]
-        ]);
+        return view('enterprise.show-subscription', compact('subscription'));
     }
 
     public function toggleSubscriptionStatus($id)

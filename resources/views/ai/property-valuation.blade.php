@@ -84,7 +84,7 @@
     <!-- Search and Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('ai.property-valuation.index') }}">
+            <form method="GET" action="{{ route('ai.valuation.index') }}">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">بحث</label>
@@ -125,7 +125,7 @@
                             <button type="submit" class="btn btn-outline-primary">
                                 <i class="fas fa-search me-1"></i>بحث
                             </button>
-                            <a href="{{ route('ai.property-valuation.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('ai.valuation.index') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i>مسح
                             </a>
                         </div>
@@ -290,7 +290,7 @@ document.getElementById('newValuationForm').addEventListener('submit', function(
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التقييم...';
     
-    fetch('{{ route("ai.property-valuation.store") }}', {
+    fetch('{{ route("ai.valuation.store") }}', {
         method: 'POST',
         body: formData,
         headers: {

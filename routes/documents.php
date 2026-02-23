@@ -15,6 +15,21 @@ use App\Http\Controllers\DocumentComplianceController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     
+    // Document Compliance (Moved to top to prevent conflict with documents/{document})
+    Route::get('/documents/compliance', [DocumentComplianceController::class, 'index'])->name('documents.compliance.index');
+    Route::post('/documents/compliance/bulk-check', [DocumentComplianceController::class, 'bulkCheck'])->name('documents.compliance.bulk-check');
+    Route::get('/documents/compliance/report', [DocumentComplianceController::class, 'report'])->name('documents.compliance.report');
+    Route::get('/documents/compliance/export', [DocumentComplianceController::class, 'export'])->name('documents.compliance.export');
+    Route::get('/documents/compliance/reminders', [DocumentComplianceController::class, 'reminders'])->name('documents.compliance.reminders');
+    Route::post('/documents/compliance/send-reminders', [DocumentComplianceController::class, 'sendReminders'])->name('documents.compliance.send-reminders');
+    
+    // Dynamic compliance routes
+    Route::get('/documents/compliance/{document}/create', [DocumentComplianceController::class, 'create'])->name('documents.compliance.create');
+    Route::post('/documents/compliance/{document}', [DocumentComplianceController::class, 'store'])->name('documents.compliance.store');
+    Route::get('/documents/compliance/{compliance}', [DocumentComplianceController::class, 'show'])->name('documents.compliance.show');
+    Route::get('/documents/compliance/{compliance}/edit', [DocumentComplianceController::class, 'edit'])->name('documents.compliance.edit');
+    Route::put('/documents/compliance/{compliance}', [DocumentComplianceController::class, 'update'])->name('documents.compliance.update');
+
     // Document Management
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/create', [DocumentController::class, 'create'])->name('documents.create');
@@ -32,18 +47,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/templates', [DocumentTemplateController::class, 'index'])->name('documents.templates.index');
     Route::get('/document-templates/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
     Route::post('/document-templates', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+    
+    // Static routes before dynamic routes
+    Route::get('/document-templates/export', [DocumentTemplateController::class, 'export'])->name('document-templates.export');
+    Route::get('/document-templates/analytics', [DocumentTemplateController::class, 'analytics'])->name('document-templates.analytics');
+    Route::get('/document-templates/search', [DocumentTemplateController::class, 'search'])->name('document-templates.search');
+    
     Route::get('/document-templates/{template}', [DocumentTemplateController::class, 'show'])->name('document-templates.show');
     Route::get('/document-templates/{template}/edit', [DocumentTemplateController::class, 'edit'])->name('document-templates.edit');
     Route::put('/document-templates/{template}', [DocumentTemplateController::class, 'update'])->name('document-templates.update');
     Route::delete('/document-templates/{template}', [DocumentTemplateController::class, 'destroy'])->name('document-templates.destroy');
     Route::post('/document-templates/{template}/duplicate', [DocumentTemplateController::class, 'duplicate'])->name('document-templates.duplicate');
     Route::get('/document-templates/{template}/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
+    Route::get('/document-templates/{template}/generate', [DocumentTemplateController::class, 'showGenerateForm'])->name('document-templates.generate-form');
     Route::post('/document-templates/{template}/generate', [DocumentTemplateController::class, 'generate'])->name('document-templates.generate');
     Route::post('/document-templates/{template}/toggle', [DocumentTemplateController::class, 'toggle'])->name('document-templates.toggle');
     Route::get('/document-templates/{template}/create-contract', [DocumentTemplateController::class, 'createContract'])->name('document-templates.create-contract');
-    Route::get('/document-templates/export', [DocumentTemplateController::class, 'export'])->name('document-templates.export');
-    Route::get('/document-templates/analytics', [DocumentTemplateController::class, 'analytics'])->name('document-templates.analytics');
-    Route::get('/document-templates/search', [DocumentTemplateController::class, 'search'])->name('document-templates.search');
     Route::get('/document-templates/{template}/variables', [DocumentTemplateController::class, 'variables'])->name('document-templates.variables');
     Route::post('/document-templates/{template}/validate', [DocumentTemplateController::class, 'validate'])->name('document-templates.validate');
 
@@ -57,7 +76,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Document Signatures
     Route::get('/document-signatures', [DocumentSignatureController::class, 'index'])->name('document-signatures.index');
-    Route::get('/document-signatures/create/{document}', [DocumentSignatureController::class, 'create'])->name('document-signatures.create');
+    Route::get('/document-signatures/create', [DocumentSignatureController::class, 'create'])->name('document-signatures.create');
+    Route::get('/document-signatures/create/{document}', [DocumentSignatureController::class, 'create'])->name('document-signatures.create.with.document');
     Route::post('/document-signatures', [DocumentSignatureController::class, 'store'])->name('document-signatures.store');
     Route::get('/document-signatures/{signature}', [DocumentSignatureController::class, 'show'])->name('document-signatures.show');
     Route::post('/document-signatures/{signature}/verify', [DocumentSignatureController::class, 'verify'])->name('document-signatures.verify');
@@ -82,11 +102,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/contract-templates', [ContractTemplateController::class, 'index'])->name('contract-templates.index');
     Route::get('/contract-templates/create', [ContractTemplateController::class, 'create'])->name('contract-templates.create');
     Route::post('/contract-templates', [ContractTemplateController::class, 'store'])->name('contract-templates.store');
+    
+    // Static routes before dynamic routes
+    Route::get('/contract-templates/analytics', [ContractTemplateController::class, 'analytics'])->name('contract-templates.analytics');
+    Route::get('/contract-templates/search', [ContractTemplateController::class, 'search'])->name('contract-templates.search');
+    Route::post('/contract-templates/validate', [ContractTemplateController::class, 'validateTemplate'])->name('contract-templates.validate');
+
     Route::get('/contract-templates/{template}', [ContractTemplateController::class, 'show'])->name('contract-templates.show');
     Route::get('/contract-templates/{template}/edit', [ContractTemplateController::class, 'edit'])->name('contract-templates.edit');
     Route::put('/contract-templates/{template}', [ContractTemplateController::class, 'update'])->name('contract-templates.update');
     Route::delete('/contract-templates/{template}', [ContractTemplateController::class, 'destroy'])->name('contract-templates.destroy');
     Route::post('/contract-templates/{template}/duplicate', [ContractTemplateController::class, 'duplicate'])->name('contract-templates.duplicate');
+    Route::post('/contract-templates/{template}/toggle', [ContractTemplateController::class, 'toggleStatus'])->name('contract-templates.toggle');
+    Route::get('/contract-templates/{template}/preview', [ContractTemplateController::class, 'preview'])->name('contract-templates.preview');
+    Route::get('/contract-templates/{template}/create-contract', [ContractTemplateController::class, 'createContract'])->name('contract-templates.create-contract');
+    Route::get('/contract-templates/{template}/export', [ContractTemplateController::class, 'export'])->name('contract-templates.export');
+    Route::get('/contract-templates/{template}/variables', [ContractTemplateController::class, 'variables'])->name('contract-templates.variables');
 
     // Contract Negotiation
     Route::get('/contract-negotiations', [ContractNegotiationController::class, 'index'])->name('contract-negotiations.index');
@@ -156,16 +187,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/document-versions/{version}/history', [DocumentVersionController::class, 'history'])->name('document-versions.history');
 
     // Document Compliance
-    Route::get('/documents/compliance', [DocumentComplianceController::class, 'index'])->name('documents.compliance.index');
-    Route::get('/documents/compliance/{document}/create', [DocumentComplianceController::class, 'create'])->name('documents.compliance.create');
-    Route::post('/documents/compliance/{document}', [DocumentComplianceController::class, 'store'])->name('documents.compliance.store');
-    Route::get('/documents/compliance/{compliance}', [DocumentComplianceController::class, 'show'])->name('documents.compliance.show');
-    Route::get('/documents/compliance/{compliance}/edit', [DocumentComplianceController::class, 'edit'])->name('documents.compliance.edit');
-    Route::put('/documents/compliance/{compliance}', [DocumentComplianceController::class, 'update'])->name('documents.compliance.update');
-    Route::post('/documents/compliance/bulk-check', [DocumentComplianceController::class, 'bulkCheck'])->name('documents.compliance.bulk-check');
-    Route::get('/documents/compliance/report', [DocumentComplianceController::class, 'report'])->name('documents.compliance.report');
-    Route::get('/documents/compliance/export', [DocumentComplianceController::class, 'export'])->name('documents.compliance.export');
-    Route::get('/documents/compliance/reminders', [DocumentComplianceController::class, 'reminders'])->name('documents.compliance.reminders');
-    Route::post('/documents/compliance/send-reminders', [DocumentComplianceController::class, 'sendReminders'])->name('documents.compliance.send-reminders');
+    // Moved to top of file
+
 
 });

@@ -209,14 +209,29 @@ class LeadController extends BaseController
         $this->rateLimit($request, 30, 5);
 
         try {
-            $data = $request->except(['tags']);
+            $data = $request->except(['tags', '_token']);
             $data['full_name'] = $request->first_name . ' ' . $request->last_name;
             $data['lead_status'] = $this->getStatusName($request->status_id);
             $data['priority'] = $this->getPriorityName($request->priority);
             $data['created_by'] = auth()->id();
             $data['uuid'] = (string) \Illuminate\Support\Str::uuid();
 
-            $tagIds = $request->tags ? explode(',', $request->tags) : [];
+            $tagIds = [];
+            if ($request->has('tags')) {
+                // If tags are sent as comma-separated string of IDs
+                if (is_string($request->tags)) {
+                    $tagIds = array_filter(explode(',', $request->tags), function($value) {
+                        return is_numeric($value);
+                    });
+                } 
+                // If tags are sent as array of IDs
+                elseif (is_array($request->tags)) {
+                    $tagIds = array_filter($request->tags, function($value) {
+                        return is_numeric($value);
+                    });
+                }
+            }
+            
             $lead = $this->leadService->createLead($data, $tagIds);
 
             // Clear relevant caches
@@ -258,7 +273,7 @@ class LeadController extends BaseController
         $lead = $this->getCachedData(
             "lead_show_{$id}",
             function () use ($id) {
-                return $this->leadRepository->findById($id, ['id'], [
+                return $this->leadRepository->findById($id, ['*'], [
                     'tags',
                     'campaign',
                     'assignedUser:id,full_name,email',
@@ -344,18 +359,33 @@ class LeadController extends BaseController
         $this->rateLimit($request, 50, 5);
 
         try {
-            $data = $request->except(['tags']);
+            $lead = $this->leadRepository->findById($id);
+            
+            if (!$lead) {
+                return $this->errorResponse('Lead not found', 404);
+            }
+
+            $data = $request->except(['tags', '_token', '_method']);
             $data['full_name'] = $request->first_name . ' ' . $request->last_name;
             $data['lead_status'] = $this->getStatusName($request->status_id);
             $data['priority'] = $this->getPriorityName($request->priority);
             $data['updated_by'] = auth()->id();
 
-            $tagIds = $request->tags ? explode(',', $request->tags) : [];
-            $lead = $this->leadService->updateLead($id, $data, $tagIds);
-
-            if (!$lead) {
-                return $this->errorResponse('Lead not found', 404);
+            $tagIds = $request->tags ? array_filter(explode(',', $request->tags), function($value) {
+                return is_numeric(trim($value));
+            }) : [];
+            
+            // Debug: Show what data we're trying to update
+            if (app()->environment('local')) {
+                \Log::info('Lead Update Data:', [
+                    'lead_id' => $id,
+                    'data' => $data,
+                    'tagIds' => $tagIds,
+                    'request_all' => $request->all()
+                ]);
             }
+            
+            $updatedLead = $this->leadService->updateLead($lead, $data, $tagIds);
 
             // Clear relevant caches
             $this->clearCache("lead_show_{$id}");
@@ -368,15 +398,27 @@ class LeadController extends BaseController
                 ->with('success', 'تم تحديث العميل المحتمل بنجاح');
 
         } catch (\Exception $e) {
-            Log::error('Lead update failed: ' . $e->getMessage(), [
-                'lead_id' => $id,
-                'request_data' => $request->all(),
-                'user_id' => auth()->id()
-            ]);
+            // Debug: Show the actual error
+            if (app()->environment('local')) {
+                \Log::error('Lead Update Error:', [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine(),
+                    'lead_id' => $id ?? 'unknown',
+                    'request_data' => $request->all(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                // For development - show actual error
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'حدث خطأ: ' . $e->getMessage() . ' في الملف: ' . $e->getFile() . ' السطر: ' . $e->getLine());
+            }
 
+            // For production - show generic error
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'حدث خطأ أثناء تحديث العميل المحتمل');
+                ->with('error', 'حدث خطأ أثناء تحديث العميل المحتمل. يرجى المحاولة مرة أخرى.');
         }
     }
 
@@ -405,14 +447,106 @@ class LeadController extends BaseController
                 ->with('success', 'تم حذف العميل المحتمل بنجاح');
 
         } catch (\Exception $e) {
-            Log::error('Lead deletion failed: ' . $e->getMessage(), [
-                'lead_id' => $id,
-                'user_id' => auth()->id()
-            ]);
-
-            return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء حذف العميل المحتمل');
+            return redirect()->back()->with('error', 'حدث خطأ أثناء حذف العميل المحتمل');
         }
+    }
+
+    public function storeActivity(Request $request, Lead $lead)
+    {
+        $request->validate([
+            'type' => 'required|string',
+            'activity_date' => 'required|date',
+            // Conditional validation based on type
+            'title' => 'nullable|string',
+            'activity_title' => 'nullable|string',
+            'description' => 'nullable|string',
+            'activity_description' => 'nullable|string',
+            'to_email' => 'nullable|email',
+            'attachments.*' => 'nullable|file|max:10240', // Max 10MB per file
+        ]);
+
+        $title = $request->type === 'email' ? $request->title : $request->activity_title;
+        $description = $request->type === 'email' ? $request->description : $request->activity_description;
+
+        if ($request->type === 'email') {
+            try {
+                // Ensure email is provided
+                $toEmail = $request->to_email ?? $lead->email;
+                if (!$toEmail) {
+                    throw new \Exception('No email address provided.');
+                }
+
+                $attachments = [];
+                if ($request->hasFile('attachments')) {
+                    foreach ($request->file('attachments') as $file) {
+                        $attachments[] = [
+                            'path' => $file->getRealPath(),
+                            'name' => $file->getClientOriginalName(),
+                            'mime' => $file->getMimeType(),
+                        ];
+                    }
+                }
+
+                // Send using a closure to handle attachments
+                $senderName = auth()->user()->name;
+                $subject = $title ?? 'No Subject';
+                $content = $description ?? ' ';
+
+                \Illuminate\Support\Facades\Mail::send('emails.leads.contact', [
+                    'subject' => $subject,
+                    'messageContent' => $content,
+                    'senderName' => $senderName
+                ], function($message) use ($toEmail, $subject, $attachments) {
+                    $message->to($toEmail)
+                            ->subject($subject);
+                    
+                    foreach ($attachments as $attachment) {
+                        $message->attach($attachment['path'], [
+                            'as' => $attachment['name'],
+                            'mime' => $attachment['mime'],
+                        ]);
+                    }
+                });
+
+            } catch (\Exception $e) {
+                \Log::error('Failed to send email to lead: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'فشل إرسال البريد الإلكتروني: ' . $e->getMessage());
+            }
+        }
+
+        \App\Models\LeadActivity::create([
+            'lead_id' => $lead->id,
+            'type' => $request->type,
+            'title' => $title ?? 'نشاط',
+            'description' => $description,
+            'activity_date' => $request->activity_date,
+            'user_id' => auth()->id(),
+        ]);
+
+        $message = 'تم إضافة النشاط بنجاح';
+        if ($request->type === 'email') {
+            $message = 'تم إرسال البريد الإلكتروني وتسجيل النشاط بنجاح';
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    public function storeNote(Request $request, Lead $lead)
+    {
+        $request->validate([
+            'note_content' => 'required|string',
+        ]);
+
+        \App\Models\LeadNote::create([
+            'lead_id' => $lead->id,
+            'content' => $request->note_content,
+            'title' => 'ملاحظة سريعة',
+            'type' => 'general',
+            'agent_id' => auth()->id(),
+            'created_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'تم إضافة الملاحظة بنجاح');
     }
 
     /**

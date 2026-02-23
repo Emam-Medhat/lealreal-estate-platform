@@ -70,6 +70,13 @@ class DeveloperController extends Controller
                 'ongoing_projects' => 0,
             ]);
 
+            // Assign the new developer profile to the current user
+            $user = Auth::user();
+            if (!$user->developer_id) {
+                $user->developer_id = $developer->id;
+                $user->save();
+            }
+
             \Log::info('Developer created successfully', ['developer_id' => $developer->id]);
 
             UserActivityLog::create([
@@ -380,6 +387,12 @@ class DeveloperController extends Controller
     public function permits(Request $request)
     {
         try {
+            // Check if user has developer profile
+            $developer = auth()->user()->developer;
+            if (!$developer) {
+                return redirect()->route('dashboard')->with('error', 'Developer profile not found. Please complete your profile first.');
+            }
+            
             // Use sample data if tables don't exist
             $stats = [
                 'total_permits' => 156,

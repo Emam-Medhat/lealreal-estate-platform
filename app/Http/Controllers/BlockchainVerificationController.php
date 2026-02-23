@@ -3,34 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\BlockchainVerification;
+use App\Repositories\Contracts\BlockchainVerificationRepositoryInterface;
+use App\Services\BlockchainVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class BlockchainVerificationController extends Controller
 {
+    protected $verificationRepository;
+    protected $verificationService;
+
+    public function __construct(
+        BlockchainVerificationRepositoryInterface $verificationRepository,
+        BlockchainVerificationService $verificationService
+    ) {
+        $this->verificationRepository = $verificationRepository;
+        $this->verificationService = $verificationService;
+    }
+
     public function index()
     {
         $user = Auth::user();
         
-        $verificationStats = [
-            'total_verifications' => BlockchainVerification::where('user_id', $user->id)->count(),
-            'verified_transactions' => BlockchainVerification::where('user_id', $user->id)
-                ->where('verification_status', 'verified')
-                ->count(),
-            'pending_verifications' => BlockchainVerification::where('user_id', $user->id)
-                ->where('verification_status', 'pending')
-                ->count(),
-            'failed_verifications' => BlockchainVerification::where('user_id', $user->id)
-                ->where('verification_status', 'failed')
-                ->count(),
-        ];
-
-        $recentVerifications = BlockchainVerification::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get();
+        $verificationStats = $this->verificationRepository->getVerificationStats($user->id);
+        $recentVerifications = $this->verificationRepository->getRecentVerifications($user->id);
 
         return view('security.blockchain.index', compact('verificationStats', 'recentVerifications'));
     }
@@ -66,53 +63,25 @@ class BlockchainVerificationController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        // Generate blockchain verification record
-        $blockchainVerification = BlockchainVerification::create([
-            'user_id' => Auth::id(),
-            'property_id' => $validated['property_id'],
-            'verification_type' => $validated['verification_type'],
-            'blockchain_network' => $validated['blockchain_network'],
-            'transaction_hash' => $validated['transaction_hash'],
-            'block_number' => $validated['block_number'],
-            'contract_address' => $validated['contract_address'],
-            'smart_contract_data' => json_encode($validated['smart_contract_data'] ?? []),
-            'verification_data' => json_encode($validated['verification_data']),
-            'digital_signature' => $validated['digital_signature'],
-            'public_key' => $validated['public_key'],
-            'gas_used' => $validated['gas_used'],
-            'gas_price' => $validated['gas_price'],
-            'transaction_fee' => $validated['transaction_fee'],
-            'confirmation_blocks' => $validated['confirmation_blocks'],
-            'verification_method' => $validated['verification_method'],
-            'verification_level' => $validated['verification_level'],
-            'metadata' => json_encode($validated['metadata'] ?? []),
-            'notes' => $validated['notes'],
-            'verification_status' => 'pending',
-            'verification_score' => 0,
-            'blockchain_timestamp' => now(),
-            'verification_id' => $this->generateVerificationId(),
-        ]);
+        $validated['user_id'] = Auth::id();
+        
+        try {
+            $blockchainVerification = $this->verificationService->createVerification($validated);
 
-        // Perform blockchain verification
-        $verificationResult = $this->performBlockchainVerification($blockchainVerification);
+            // Log verification attempt
+            Log::info('Blockchain verification performed', [
+                'user_id' => Auth::id(),
+                'verification_id' => $blockchainVerification->id,
+                'transaction_hash' => $validated['transaction_hash'],
+                'status' => $blockchainVerification->verification_status,
+            ]);
 
-        $blockchainVerification->update([
-            'verification_status' => $verificationResult['status'],
-            'verification_score' => $verificationResult['score'],
-            'verification_result' => json_encode($verificationResult),
-            'verified_at' => $verificationResult['status'] === 'verified' ? now() : null,
-        ]);
-
-        // Log verification attempt
-        Log::info('Blockchain verification performed', [
-            'user_id' => Auth::id(),
-            'verification_id' => $blockchainVerification->id,
-            'transaction_hash' => $validated['transaction_hash'],
-            'status' => $verificationResult['status'],
-        ]);
-
-        return redirect()->route('security.blockchain.show', $blockchainVerification)
-            ->with('success', 'تم إجراء التحقق بالبلوكشين بنجاح');
+            return redirect()->route('security.blockchain.show', $blockchainVerification)
+                ->with('success', 'تم إجراء التحقق بالبلوكشين بنجاح');
+        } catch (\Exception $e) {
+            Log::error('Blockchain verification failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to perform verification: ' . $e->getMessage());
+        }
     }
 
     public function show(BlockchainVerification $blockchainVerification)
@@ -132,19 +101,14 @@ class BlockchainVerificationController extends Controller
             'additional_data' => 'nullable|array',
         ]);
 
-        $verificationResult = $this->performDetailedVerification($blockchainVerification, $validated);
+        try {
+            $this->verificationService->performVerification($blockchainVerification, $validated);
 
-        $blockchainVerification->update([
-            'verification_status' => $verificationResult['status'],
-            'verification_score' => $verificationResult['score'],
-            'verification_result' => json_encode($verificationResult),
-            'verified_at' => $verificationResult['status'] === 'verified' ? now() : null,
-            'verification_method' => $validated['verification_method'],
-            'verification_level' => $validated['verification_level'],
-        ]);
-
-        return redirect()->route('security.blockchain.show', $blockchainVerification)
-            ->with('success', 'تم التحقق بالبلوكشين بنجاح');
+            return redirect()->route('security.blockchain.show', $blockchainVerification)
+                ->with('success', 'تم التحقق بالبلوكشين بنجاح');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Verification failed: ' . $e->getMessage());
+        }
     }
 
     public function smartContractVerification(Request $request)
@@ -156,7 +120,7 @@ class BlockchainVerificationController extends Controller
             'blockchain_network' => 'required|in:ethereum,polygon,bnb_chain,avalanche,arbitrum',
         ]);
 
-        $result = $this->executeSmartContractVerification($validated);
+        $result = $this->verificationService->executeSmartContractVerification($validated);
 
         return response()->json($result);
     }
@@ -169,7 +133,7 @@ class BlockchainVerificationController extends Controller
             'blockchain_network' => 'required|in:ethereum,polygon,bnb_chain,avalanche,arbitrum',
         ]);
 
-        $result = $this->performOracleVerification($validated);
+        $result = $this->verificationService->performOracleVerification($validated);
 
         return response()->json($result);
     }
@@ -183,7 +147,7 @@ class BlockchainVerificationController extends Controller
             'circuit_type' => 'required|string|max:100',
         ]);
 
-        $result = $this->performZeroKnowledgeVerification($validated);
+        $result = $this->verificationService->performZeroKnowledgeVerification($validated);
 
         return response()->json($result);
     }
@@ -196,7 +160,7 @@ class BlockchainVerificationController extends Controller
             'verification_depth' => 'required|in:basic,full,deep',
         ]);
 
-        $result = $this->verifyTransaction($validated);
+        $result = $this->verificationService->verifyTransaction($validated);
 
         return response()->json($result);
     }
@@ -210,38 +174,9 @@ class BlockchainVerificationController extends Controller
             'verification_level' => 'required|in:basic,standard',
         ]);
 
-        $results = [];
-        $errors = [];
+        $result = $this->verificationService->batchVerification($validated['transactions'], $validated['verification_level']);
 
-        foreach ($validated['transactions'] as $index => $transaction) {
-            try {
-                $result = $this->verifyTransaction([
-                    'transaction_hash' => $transaction['hash'],
-                    'blockchain_network' => $transaction['network'],
-                    'verification_depth' => $validated['verification_level'] === 'standard' ? 'full' : 'basic',
-                ]);
-
-                $results[] = [
-                    'index' => $index,
-                    'hash' => $transaction['hash'],
-                    'result' => $result,
-                ];
-
-            } catch (\Exception $e) {
-                $errors[] = [
-                    'index' => $index,
-                    'hash' => $transaction['hash'],
-                    'error' => $e->getMessage(),
-                ];
-            }
-        }
-
-        return response()->json([
-            'success' => count($results) > 0,
-            'results' => $results,
-            'errors' => $errors,
-            'total_processed' => count($validated['transactions']),
-        ]);
+        return response()->json($result);
     }
 
     public function analytics()
@@ -249,12 +184,12 @@ class BlockchainVerificationController extends Controller
         $user = Auth::user();
         
         $analytics = [
-            'verification_trends' => $this->getVerificationTrends($user->id),
-            'network_distribution' => $this->getNetworkDistribution($user->id),
-            'verification_types' => $this->getVerificationTypes($user->id),
-            'success_rates' => $this->getSuccessRates($user->id),
-            'gas_usage_analysis' => $this->getGasUsageAnalysis($user->id),
-            'blockchain_performance' => $this->getBlockchainPerformance($user->id),
+            'verification_trends' => $this->verificationRepository->getVerificationTrends($user->id),
+            'network_distribution' => $this->verificationRepository->getNetworkDistribution($user->id),
+            'verification_types' => $this->verificationRepository->getVerificationTypes($user->id),
+            'success_rates' => $this->verificationRepository->getSuccessRates($user->id),
+            'gas_usage_analysis' => $this->verificationRepository->getGasUsageAnalysis($user->id),
+            'blockchain_performance' => $this->verificationRepository->getBlockchainPerformance($user->id),
         ];
 
         return view('security.blockchain.analytics', compact('analytics'));
@@ -271,7 +206,8 @@ class BlockchainVerificationController extends Controller
             'blockchain_network' => 'nullable|in:ethereum,polygon,bnb_chain,avalanche,arbitrum',
         ]);
 
-        $verifications = $this->getFilteredVerifications($validated);
+        $validated['user_id'] = Auth::id();
+        $verifications = $this->verificationRepository->getFilteredVerifications($validated);
 
         switch ($validated['format']) {
             case 'csv':
@@ -281,255 +217,6 @@ class BlockchainVerificationController extends Controller
             case 'pdf':
                 return $this->exportPDF($verifications);
         }
-    }
-
-    private function generateVerificationId()
-    {
-        return 'BCV-' . Str::upper(Str::random(8)) . '-' . time();
-    }
-
-    private function performBlockchainVerification(BlockchainVerification $verification)
-    {
-        // Simulate blockchain verification
-        $result = [
-            'status' => 'verified',
-            'score' => 95,
-            'verification_details' => [
-                'transaction_valid' => true,
-                'block_confirmed' => true,
-                'signature_valid' => true,
-                'data_integrity' => true,
-                'timestamp_valid' => true,
-            ],
-            'blockchain_data' => [
-                'block_hash' => '0x' . Str::random(64),
-                'block_timestamp' => now(),
-                'miner_address' => '0x' . Str::random(40),
-                'difficulty' => rand(1000000, 9999999),
-            ],
-            'security_checks' => [
-                'double_spend_check' => 'passed',
-                'replay_attack_check' => 'passed',
-                'signature_verification' => 'passed',
-                'hash_verification' => 'passed',
-            ],
-        ];
-
-        return $result;
-    }
-
-    private function performDetailedVerification(BlockchainVerification $verification, $data)
-    {
-        // Perform detailed verification based on method
-        switch ($data['verification_method']) {
-            case 'smart_contract':
-                return $this->performSmartContractVerification([
-                    'contract_address' => $verification->contract_address,
-                    'function_name' => 'verify',
-                    'parameters' => json_decode($verification->verification_data, true),
-                    'blockchain_network' => $verification->blockchain_network,
-                ]);
-            
-            case 'oracle':
-                return $this->performOracleVerification([
-                    'oracle_address' => $verification->contract_address,
-                    'data_request' => json_decode($verification->verification_data, true),
-                    'blockchain_network' => $verification->blockchain_network,
-                ]);
-            
-            case 'zero_knowledge':
-                return $this->performZeroKnowledgeVerification([
-                    'proof_data' => $verification->digital_signature,
-                    'public_inputs' => json_decode($verification->verification_data, true),
-                    'verification_key' => $verification->public_key,
-                    'circuit_type' => $verification->verification_type,
-                ]);
-            
-            default:
-                return $this->performBlockchainVerification($verification);
-        }
-    }
-
-    private function executeSmartContractVerification($data)
-    {
-        // Simulate smart contract verification
-        return [
-            'success' => true,
-            'verification_result' => 'verified',
-            'contract_response' => [
-                'status' => 'success',
-                'result' => true,
-                'gas_used' => rand(21000, 100000),
-                'block_number' => rand(15000000, 16000000),
-            ],
-            'verification_score' => 95,
-        ];
-    }
-
-    private function performOracleVerification($data)
-    {
-        // Simulate oracle verification
-        return [
-            'success' => true,
-            'oracle_response' => [
-                'data_verified' => true,
-                'data_source' => 'trusted',
-                'timestamp' => now(),
-                'confidence_score' => 98,
-            ],
-            'verification_score' => 98,
-        ];
-    }
-
-    private function performZeroKnowledgeVerification($data)
-    {
-        // Simulate zero-knowledge verification
-        return [
-            'success' => true,
-            'proof_valid' => true,
-            'verification_result' => [
-                'circuit_satisfied' => true,
-                'witness_valid' => true,
-                'public_inputs_match' => true,
-            ],
-            'verification_score' => 99,
-        ];
-    }
-
-    private function verifyTransaction($data)
-    {
-        // Simulate transaction verification
-        return [
-            'success' => true,
-            'transaction_details' => [
-                'hash' => $data['transaction_hash'],
-                'block_number' => rand(15000000, 16000000),
-                'block_hash' => '0x' . Str::random(64),
-                'transaction_index' => rand(0, 200),
-                'from_address' => '0x' . Str::random(40),
-                'to_address' => '0x' . Str::random(40),
-                'value' => rand(1000000000000000000, 10000000000000000000),
-                'gas' => rand(21000, 1000000),
-                'gas_price' => rand(1000000000, 100000000000),
-                'nonce' => rand(0, 1000),
-                'status' => 'confirmed',
-                'confirmations' => rand(12, 1000),
-            ],
-            'verification_score' => 100,
-        ];
-    }
-
-    private function getVerificationTrends($userId)
-    {
-        return BlockchainVerification::where('user_id', $userId)
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->where('created_at', '>=', now()->subDays(30))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-    }
-
-    private function getNetworkDistribution($userId)
-    {
-        return BlockchainVerification::where('user_id', $userId)
-            ->selectRaw('blockchain_network, COUNT(*) as count')
-            ->groupBy('blockchain_network')
-            ->get();
-    }
-
-    private function getVerificationTypes($userId)
-    {
-        return BlockchainVerification::where('user_id', $userId)
-            ->selectRaw('verification_type, COUNT(*) as count')
-            ->groupBy('verification_type')
-            ->get();
-    }
-
-    private function getSuccessRates($userId)
-    {
-        $total = BlockchainVerification::where('user_id', $userId)->count();
-        $verified = BlockchainVerification::where('user_id', $userId)
-            ->where('verification_status', 'verified')
-            ->count();
-
-        return [
-            'total_verifications' => $total,
-            'successful_verifications' => $verified,
-            'success_rate' => $total > 0 ? ($verified / $total) * 100 : 0,
-        ];
-    }
-
-    private function getGasUsageAnalysis($userId)
-    {
-        return [
-            'total_gas_used' => BlockchainVerification::where('user_id', $userId)
-                ->sum('gas_used'),
-            'average_gas_price' => BlockchainVerification::where('user_id', $userId)
-                ->avg('gas_price'),
-            'total_transaction_fees' => BlockchainVerification::where('user_id', $userId)
-                ->sum('transaction_fee'),
-            'gas_efficiency' => $this->calculateGasEfficiency($userId),
-        ];
-    }
-
-    private function getBlockchainPerformance($userId)
-    {
-        return [
-            'average_confirmation_time' => $this->calculateAverageConfirmationTime($userId),
-            'network_reliability' => 99.5, // Example value
-            'verification_speed' => 'fast',
-            'security_level' => 'high',
-        ];
-    }
-
-    private function calculateGasEfficiency($userId)
-    {
-        $totalGas = BlockchainVerification::where('user_id', $userId)
-            ->sum('gas_used');
-        $totalVerifications = BlockchainVerification::where('user_id', $userId)
-            ->count();
-
-        return $totalVerifications > 0 ? $totalGas / $totalVerifications : 0;
-    }
-
-    private function calculateAverageConfirmationTime($userId)
-    {
-        // Simulate average confirmation time calculation
-        return rand(30, 300); // seconds
-    }
-
-    private function getFilteredVerifications($validated)
-    {
-        $query = BlockchainVerification::where('user_id', Auth::id());
-
-        // Apply date range filter
-        switch ($validated['date_range']) {
-            case 'last_week':
-                $query->where('created_at', '>=', now()->subWeek());
-                break;
-            case 'last_month':
-                $query->where('created_at', '>=', now()->subMonth());
-                break;
-            case 'last_quarter':
-                $query->where('created_at', '>=', now()->subQuarter());
-                break;
-            case 'last_year':
-                $query->where('created_at', '>=', now()->subYear());
-                break;
-            case 'custom':
-                $query->whereBetween('created_at', [$validated['start_date'], $validated['end_date']]);
-                break;
-        }
-
-        if (isset($validated['verification_status'])) {
-            $query->where('verification_status', $validated['verification_status']);
-        }
-
-        if (isset($validated['blockchain_network'])) {
-            $query->where('blockchain_network', $validated['blockchain_network']);
-        }
-
-        return $query->get();
     }
 
     private function exportCSV($verifications)

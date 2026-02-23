@@ -187,41 +187,47 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="fw-semibold">${{ number_format($loan->amount, 2) }}</span>
+                                                <span class="fw-semibold">${{ number_format($loan->loan_amount, 2) }}</span>
                                             </td>
                                             <td>
-                                                <span class="badge bg-info">{{ number_format($loan->apr, 2) }}%</span>
+                                                <span class="badge bg-info">{{ number_format($loan->interest_rate, 2) }}%</span>
                                             </td>
-                                            <td>{{ $loan->loan_term }} شهر</td>
+                                            <td>{{ $loan->loan_term_months ?? 12 }} شهر</td>
                                             <td>
-                                                <span class="badge bg-secondary">{{ $loan->collateral_type_text }}</span>
+                                                <span class="badge bg-secondary">{{ $loan->collateral_type_text ?? 'عقاري' }}</span>
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $loan->risk_level_color }}">
-                                                    {{ $loan->risk_level_text }}
+                                                <span class="badge bg-{{ $loan->risk_level_color ?? 'warning' }}">
+                                                    {{ $loan->risk_level_text ?? 'متوسط' }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $loan->status_color }}">
-                                                    {{ $loan->status_text }}
+                                                <span class="badge bg-{{ $loan->status_color ?? 'success' }}">
+                                                    {{ $loan->status_text ?? 'نشط' }}
                                                 </span>
                                             </td>
-                                            <td>{{ $loan->created_at->format('Y-m-d') }}</td>
+                                            <td>{{ is_string($loan->created_at) ? $loan->created_at : $loan->created_at->format('Y-m-d') }}</td>
                                             <td>
                                                 <div class="btn-group">
                                                     <a href="{{ route('defi.loans.show', $loan->id) }}" class="btn btn-sm btn-outline-primary">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    @if($loan->status === 'pending')
-                                                        <a href="{{ route('defi.loans.approve', $loan->id) }}" class="btn btn-sm btn-outline-success">
-                                                            <i class="fas fa-check"></i>
-                                                        </a>
-                                                        <a href="{{ route('defi.loans.reject', $loan->id) }}" class="btn btn-sm btn-outline-danger">
-                                                            <i class="fas fa-times"></i>
-                                                        </a>
+                                                    @if(($loan->status ?? 'approved') === 'pending' && auth()->user()->is_admin)
+                                                        <form action="{{ route('defi.loans.approve', $loan->id) }}" method="POST" style="display: inline;">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                        </form>
+                                                        <form action="{{ route('defi.loans.reject', $loan->id) }}" method="POST" style="display: inline;">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </form>
                                                     @endif
-                                                    @if($loan->status === 'active')
-                                                        <a href="{{ route('defi.loans.repay', $loan->id) }}" class="btn btn-sm btn-outline-warning">
+                                                    @if(($loan->status ?? 'approved') === 'active' && (auth()->user()->is_admin || auth()->user()->email === ($loan->borrower_email ?? '')))
+                                                        <a href="{{ route('defi.loans.repay.form', $loan->id) }}" class="btn btn-sm btn-outline-warning">
                                                             <i class="fas fa-dollar-sign"></i>
                                                         </a>
                                                     @endif
@@ -246,12 +252,11 @@
                     </div>
                     
                     <!-- Pagination -->
-                    @if($loans->hasPages())
+                    @if($loans->count() > 6)
                         <div class="d-flex justify-content-between align-items-center mt-3">
                             <div class="text-muted">
-                                عرض {{ $loans->firstItem() }} إلى {{ $loans->lastItem() }} من {{ $loans->total() }} عنصر
+                                عرض {{ $loans->first() }} إلى {{ $loans->last() }} من {{ $loans->count() }} عنصر
                             </div>
-                            {{ $loans->links() }}
                         </div>
                     @endif
                 </div>

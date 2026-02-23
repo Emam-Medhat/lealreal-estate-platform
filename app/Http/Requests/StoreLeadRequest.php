@@ -26,9 +26,12 @@ class StoreLeadRequest extends FormRequest
             'assigned_to' => 'nullable|exists:users,id',
             'priority' => 'required|in:1,2,3',
             'estimated_value' => 'nullable|numeric|min:0',
-            'expected_close_date' => 'nullable|date|after:today',
+            'expected_close_date' => 'nullable|date|after_or_equal:today',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:2000',
-            'tags' => 'nullable|string',
+            'tags' => 'nullable|string|max:500',
         ];
     }
 

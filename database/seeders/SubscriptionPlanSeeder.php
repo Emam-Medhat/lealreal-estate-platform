@@ -32,6 +32,7 @@ class SubscriptionPlanSeeder extends Seeder
         DB::table('subscription_plans')->insert([
             [
                 'name' => 'Basic',
+                'slug' => 'basic',
                 'description' => 'Perfect for individuals getting started',
                 'price' => 9.99,
                 'currency' => 'USD',
@@ -50,6 +51,7 @@ class SubscriptionPlanSeeder extends Seeder
             ],
             [
                 'name' => 'Professional',
+                'slug' => 'professional',
                 'description' => 'Ideal for growing businesses',
                 'price' => 29.99,
                 'currency' => 'USD',
@@ -69,6 +71,7 @@ class SubscriptionPlanSeeder extends Seeder
             ],
             [
                 'name' => 'Enterprise',
+                'slug' => 'enterprise',
                 'description' => 'Complete solution for large organizations',
                 'price' => 99.99,
                 'currency' => 'USD',

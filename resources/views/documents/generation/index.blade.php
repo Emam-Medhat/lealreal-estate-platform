@@ -1,386 +1,497 @@
-@extends('layouts.app')
+@extends('admin.layouts.admin')
 
-@section('title', 'توليد الوثائق')
+@section('title', 'إنشاء الوثائق')
+
+@push('styles')
+<style>
+    /* ============================================
+       DOCUMENTS GENERATION PAGE STYLES
+       ============================================ */
+    
+    /* Root Variables */
+    :root {
+        --primary-blue: #6366f1;
+        --primary-blue-light: #818cf8;
+        --secondary-purple: #a855f7;
+        --success-green: #10b981;
+        --warning-orange: #f59e0b;
+        --danger-red: #ef4444;
+        
+        --bg-body: #f8fafc;
+        --bg-card: #ffffff;
+        --text-main: #334155;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+        --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.03);
+        
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+        
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Page Background */
+    .page-background {
+        background-color: var(--bg-body);
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.03) 0px, transparent 50%);
+        min-height: 100vh;
+    }
+    
+    /* Modern Cards */
+    .modern-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+        overflow: hidden;
+    }
+    
+    .modern-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-blue-light);
+    }
+    
+    /* Stat Cards */
+    .stat-card {
+        border-radius: var(--radius-xl);
+        padding: 24px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: none;
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        filter: blur(20px);
+    }
+    
+    .stat-card-blue { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+    .stat-card-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-card-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-card-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    
+    /* Icon Containers */
+    .icon-container {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        margin-right: 12px;
+        transition: var(--transition);
+    }
+    
+    .icon-container.blue { background: #e0e7ff; color: #4f46e5; }
+    .icon-container.green { background: #dcfce7; color: #16a34a; }
+    .icon-container.orange { background: #ffedd5; color: #ea580c; }
+    .icon-container.red { background: #fee2e2; color: #dc2626; }
+    .icon-container.purple { background: #f3e8ff; color: #9333ea; }
+    
+    /* Template List Items */
+    .template-item {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: var(--transition);
+        text-decoration: none;
+        color: var(--text-main);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .template-item:hover {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        color: var(--primary-blue);
+        transform: translateX(4px);
+    }
+    
+    .template-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.05), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .template-item:hover::before {
+        left: 100%;
+    }
+    
+    .template-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary-blue);
+        color: white;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .action-btn:hover {
+        background: var(--primary-blue-light);
+        transform: scale(1.1);
+    }
+    
+    /* Table Styles */
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .modern-table thead {
+        background: #f8fafc;
+    }
+    
+    .modern-table th {
+        padding: 12px 16px;
+        text-align: right;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .modern-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+    
+    .modern-table tbody tr {
+        transition: var(--transition);
+    }
+    
+    .modern-table tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    /* Badges */
+    .badge-modern {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Section Headers */
+    .section-header {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 20px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .section-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 40px;
+        height: 3px;
+        background: var(--primary-blue);
+        border-radius: 2px;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .empty-state img {
+        opacity: 0.6;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+    
+    /* Buttons */
+    .btn-primary-modern {
+        background: var(--primary-blue);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-primary-modern:hover {
+        background: var(--primary-blue-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .btn-info-modern {
+        background: #e0f2fe;
+        color: #0284c7;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    
+    .btn-info-modern:hover {
+        background: #bae6fd;
+        transform: translateY(-1px);
+    }
+    
+    /* Avatar */
+    .avatar-small {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        margin-left: 8px;
+        border: 2px solid white;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stat-card { padding: 20px; }
+        .modern-card { margin-bottom: 16px; }
+        .template-item { padding: 12px 16px; }
+        .modern-table { font-size: 14px; }
+        .modern-table th, .modern-table td { padding: 8px 12px; }
+    }
+</style>
+@endpush
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">توليد الوثائق</h1>
-        <div class="flex space-x-2 space-x-reverse">
-            <a href="{{ route('document-generation.create') }}" class="bg-green-500 text-white px-4 py-2 منحن- rounded-lg hover:bg-green-600">
-                <i class="fas fa-plus ml-2"></i>توليد وثيقة جديدة
-            </a>
-            <a href="{{ route('document-generation.history') }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                <i class="fas fa-history ml-2"></i>سجل التوليد
-            </a>
-        </div>
-    </div>
-
-    <!-- Search and Filters -->
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="md:col-span-2">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="ابحث في المستندات المولدة..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            </div>
+<div class="min-h-screen page-background">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
             <div>
-                <select name="template_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">جميع القوالب</option>
-                    @foreach($templates as $template)
-                        <option value="{{ $template->id }}" {{ request('template_id') == $template->id ? 'selected' : '' }}>
-                            {{ $template->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">إنشاء الوثائق</h1>
+                <p class="text-gray-600">إنشاء وإدارة الوثائق من القوالب المتاحة</p>
             </div>
-            <div>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-full">
-                    <i class="fas fa-search ml-2"></i>بحث
-                </button>
-            </div>
-        </form>
-    </div>
+            <a href="{{ route('document-templates.index') }}" class="btn-primary-modern mt-4 sm:mt-0">
+                <i class="fas fa-cogs"></i>
+                إدارة القوالب
+            </a>
+        </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="bg-blue-500 text-white rounded-full p-3 ml-3">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">القوالب المتاحة</p>
-                    <p class="text-2xl font-bold text-blue-600">{{ $templates->count() }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="bg-green-500 text-white rounded-full p-3 ml-3">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">المستندات المولدة</p>
-                    <p class="text-2xl font-bold text-green-600">{{ $recentDocuments->count() }}</p>
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Templates Count -->
+            <div class="stat-card stat-card-blue">
+                <div class="flex items-center justify-between relative z-10">
+                    <div>
+                        <p class="text-white/90 text-sm font-medium mb-1">القوالب النشطة</p>
+                        <p class="text-3xl font-bold mb-2">{{ $templates->count() }}</p>
+                        <p class="text-white/80 text-sm flex items-center">
+                            <i class="fas fa-file-alt ml-1"></i>
+                            قوالب متاحة
+                        </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                        <i class="fas fa-file-alt text-2xl text-white"></i>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="bg-purple-500 text-white rounded-full p-3 ml-3">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">معدد التوليد اليوم</p>
-                    <p class="text-2xl font-bold text-purple-600">{{ $todayGenerations ?? 0 }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="bg-orange-500 text-white rounded-full p-3 ml-3">
-                    <i class="fas fa-percentage"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">معدد التوليد هذا الشهر</p>
-                    <p class="text-2xl font-bold text-orange-600">{{ $thisMonthGenerations ?? 0 }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Recent Documents -->
-    @if($recentDocuments->count() > 0)
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-lg font-semibold mb-4">المستندات المولدة حديثاً</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($recentDocuments as $document)
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="flex-1">
-                                <h3 class="font-medium text-gray-900">{{ $document->title }}</h3>
-                                <p class="text-sm text-gray-600">{{ $document->template->name }}</p>
-                            </div>
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                مكتمل
-                            </span>
-                        </div>
-                        
-                        <div class="flex items-center text-sm text-gray-500 mb-2">
-                            <span class="ml-4">
-                                <i class="fas fa-calendar ml-1"></i>
-                                {{ $document->created_at->format('Y-m-d') }}
-                            </span>
-                            <span class="ml-4">
-                                <i class="fas fa-user ml-1"></i>
-                                {{ $document->createdBy->name }}
-                            </span>
-                        </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <div class="text-sm text-gray-500">
-                                <i class="fas fa-file ml-1"></i>
-                                {{ $document->file_name }}
-                            </div>
-                            <div class="flex space-x-2 space-x-reverse">
-                                <a href="{{ route('documents.show', $document) }}" class="text-blue-600 hover:text-blue-900">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('documents.download', $document) }}" class="text-gray-600 hover:text-gray-900">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </div>
+            <!-- Today's Generations -->
+            <div class="stat-card stat-card-green">
+                <div class="flex items-center justify-between relative z-10">
+                    <div>
+                        <p class="text-white/90 text-sm font-medium mb-1">تم إنشاؤها اليوم</p>
+                        <p class="text-3xl font-bold mb-2">{{ $todayGenerations }}</p>
+                        <p class="text-white/80 text-sm flex items-center">
+                            <i class="fas fa-calendar-day ml-1"></i>
+                            وثائق جديدة
+                        </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                        <i class="fas fa-calendar-day text-2xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Generations -->
+            <div class="stat-card stat-card-orange">
+                <div class="flex items-center justify-between relative z-10">
+                    <div>
+                        <p class="text-white/90 text-sm font-medium mb-1">هذا الشهر</p>
+                        <p class="text-3xl font-bold mb-2">{{ $thisMonthGenerations }}</p>
+                        <p class="text-white/80 text-sm flex items-center">
+                            <i class="fas fa-calendar-alt ml-1"></i>
+                            إجمالي الشهر
+                        </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                        <i class="fas fa-calendar-alt text-2xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Generate Document Form -->
+            <div class="modern-card">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="section-header m-0">إنشاء وثيقة جديدة</h3>
+                        <div class="icon-container blue">
+                            <i class="fas fa-plus"></i>
                         </div>
                     </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
-
-    <!-- Templates Grid -->
-    @if($templates->count() > 0)
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-lg font-semibold mb-4">قوالب الوثائق</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($templates as $template)
-                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-blue-100 text-blue-600 rounded-full p-3 ml-3">
-                                <i class="fas fa-file-alt"></i>
+                    @if($templates->isEmpty())
+                        <div class="empty-state">
+                            <div class="icon-container gray mx-auto mb-4" style="width: 48px; height: 48px; font-size: 20px;">
+                                <i class="fas fa-folder-open"></i>
                             </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-900">{{ $template->name }}</h3>
-                                <p class="text-sm text-gray-600">{{ $template->description }}</p>
-                            </div>
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $template->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                {{ $template->is_active ? 'نشط' : 'غير نشط' }}
-                            </span>
+                            <p class="text-gray-500 mb-4">لا توجد قوالب نشطة متاحة.</p>
+                            <a href="{{ route('document-templates.create') }}" class="btn-primary-modern">
+                                <i class="fas fa-plus"></i>
+                                إنشاء قالب جديد
+                            </a>
                         </div>
-                        
-                        <div class="text-sm text-gray-600 mb-4">
-                            {{ Str::limit($template->description, 100) }}
-                        </div>
-                        
-                        <div class="flex items-center text-sm text-gray-500 mb-4">
-                            <span class="ml-4">
-                                <i class="fas fa-layer-group ml-1"></i>
-                                {{ $template->variables_count ?? 0 }} متغير
-                            </span>
-                            <span class="ml-4">
-                                <i class="fas fa-file ml-1"></i>
-                                {{ $template->documents_count ?? 0 }} مستند
-                            </span>
-                        </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <div class="text-sm text-gray-500">
-                                <i class="fas fa-calendar ml-1"></i>
-                                {{ $template->updated_at->format('Y-m-d') }}
-                            </div>
-                            <div class="flex space-x-2 space-x-reverse">
-                                <a href="{{ route('document-generation.create', $template) }}" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                                    <i class="fas fa-plus ml-1"></i>توليد
-                                </a>
-                                <a href="{{ route('document-templates.preview', $template) }}" class="text-blue-500 hover:text-blue-900">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('document-templates.show', $template) }}" class="text-gray-500 hover:text-gray-900">
-                                    <i class="fas fa-info-circle"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
-
-    <!-- Quick Actions -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-lg font-semibold mb-4">إجراءات سريعة</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
-                <div class="bg-blue-100 text-blue-600 rounded-full p-3 mx-auto mb-3">
-                    <i class="fas fa-bolt"></i>
-                </div>
-                <h3 class="font-semibold text-gray-900 mb-2">توليد سريع</h3>
-                <p class="text-sm text-gray-600 mb-4">توليد مستندات متعددة باستخدام قالب محدد</p>
-                <button onclick="showBulkGenerationModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full">
-                    <i class="fas fa-layer-group ml-2"></i>توليد جماعي
-                </button>
-            </div>
-            
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
-                <div class="bg-green-100 text-green-600 rounded-full p-3 mx-auto mb-3">
-                    <i class="fas fa-download"></i>
-                </div>
-                <h3 class="font-semibold text-gray-900 mb-2">تصدير جماعي</h3>
-                <p class="text-sm text-gray-600 mb-4">تصدير المستندات المولدة بتنسيقات مختلفة</p>
-                <button onclick="showBulkExportModal()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 w-full">
-                    <i class="fas fa-file-export ml-2"></i>تصدير جماعي
-                </button>
-            </div>
-            
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
-                <div class="bg-purple-100 text-purple-600 rounded-full p-3 mx-auto mb-3">
-                    <i class="fas fa-cog"></i>
-                </div>
-                <h3 class="font-semibold text-gray-900 mb-2">إعدادات متقدمة</h3>
-                <p class="text-sm text-gray-600 mb-4">تكوين إعدادات التوليد المتقدم</p>
-                <button onclick="showAdvancedSettingsModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 w-full">
-                    <i class="fas fa-cogs ml-2"></i>إعدادات
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Bulk Generation Modal -->
-<div id="bulkGenerationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full z-50">
-    <div class="flex min-h-full items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">توليد جماعي</h3>
-                <button onclick="hideBulkGenerationModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="p-6">
-                <form id="bulkGenerationForm">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">اختر القالب</label>
-                        <select name="template_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="">اختر قالب</option>
+                    @else
+                        <div class="space-y-2">
                             @foreach($templates as $template)
-                                <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                <a href="{{ route('document-templates.generate-form', $template) }}" class="template-item">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <h4 class="font-semibold text-gray-900 m-0">{{ $template->name }}</h4>
+                                            <span class="badge-modern">{{ $template->category ?? 'عام' }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 m-0">{{ Str::limit($template->description, 100) }}</p>
+                                    </div>
+                                    <div class="action-btn mr-3">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </div>
+                                </a>
                             @endforeach
-                        </select>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">بيانات المستندات (واحدة لكل مستند)</label>
-                        <div id="documentsContainer" class="space-y-2 max-h-60 overflow-y-auto">
-                            <div class="border border-gray-200 rounded p-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">المستند 1</label>
-                                <input type="text" name="documents[0][title]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="عنوان المستند">
-                                <input type="text" name="documents[0][description]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="وصف المستند">
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Recent Documents -->
+            <div class="modern-card">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="section-header m-0">أحدث الوثائق</h3>
+                        <div class="flex items-center gap-3">
+                            <div class="icon-container green">
+                                <i class="fas fa-clock"></i>
                             </div>
-                        </div>
-                        </div>
-                        <button type="button" onclick="addDocumentField()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                            <i class="fas fa-plus ml-2"></i>إضافة مستند
-                        </button>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">متغيرات القالب (اختياري)</label>
-                        <div id="templateVariables" class="space-y-2">
-                            <!-- Variables will be loaded dynamically -->
+                            <a href="{{ route('documents.index') }}" class="btn-info-modern">
+                                <i class="fas fa-list"></i>
+                                عرض الكل
+                            </a>
                         </div>
                     </div>
-                    
-                    <div class="flex justify-end space-x-4 space-x-reverse">
-                        <button type="button" onclick="hideBulkGenerationModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
-                            إلغاء
-                        </button>
-                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-                            <i class="fas fa-layer-group ml-2"></i>توليد المستندات
-                        </button>
-                    </div>
-                </form>
+                    @if($recentDocuments->isEmpty())
+                        <div class="empty-state">
+                            <div class="icon-container gray mx-auto mb-4" style="width: 48px; height: 48px; font-size: 20px;">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <p class="text-gray-500">لم يتم إنشاء أي وثائق بعد.</p>
+                        </div>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>العنوان</th>
+                                        <th>القالب</th>
+                                        <th>بواسطة</th>
+                                        <th>التاريخ</th>
+                                        <th class="text-center">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($recentDocuments as $doc)
+                                        <tr>
+                                            <td class="font-semibold text-gray-900">{{ $doc->title }}</td>
+                                            <td>
+                                                <span class="badge-modern">{{ $doc->template->name ?? 'N/A' }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <img class="avatar-small" src="{{ $doc->createdBy->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode($doc->createdBy->name ?? 'System') }}" alt="Avatar">
+                                                    <span class="text-sm text-gray-700">{{ $doc->createdBy->name ?? 'System' }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-sm text-gray-600">{{ $doc->created_at->format('Y-m-d') }}</td>
+                                            <td class="text-center">
+                                                <a href="{{ route('documents.show', $doc) }}" class="action-btn" title="عرض">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-@section('scripts'>
-let documentCount = 1;
-
-function showBulkGenerationModal() {
-    document.getElementById('bulkGenerationModal').classList.remove('hidden');
-}
-
-function hideBulkGenerationModal() {
-    document.getElementById('bulkGenerationModal').classList.add('hidden');
-}
-
-function showBulkExportModal() {
-    alert('سيتم تفعيل تصدير جماعي قريباً');
-}
-
-function showAdvancedSettingsModal() {
-    alert('سيتم تفعيل الإعدادات المتقدمة قريباً');
-}
-
-function addDocumentField() {
-    const container = document.getElementById('documentsContainer');
-    const documentDiv = document.createElement('div');
-    documentDiv.className = 'border border-gray-200 rounded p-3';
-    documentDiv.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 mb-1">المستند ${documentCount + 1}</label>
-        <input type="text" name="documents[${documentCount}][title]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="عنوان المستند">
-        <input type="text" name="documents[${documentCount}][description]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="وصف المستند">
-    `;
-    container.appendChild(documentDiv);
-    documentCount++;
-}
-
-// Load template variables when template is selected
-document.querySelector('select[name="template_id"]').addEventListener('change', function() {
-    const templateId = this.value;
-    if (templateId) {
-        // Load template variables via AJAX
-        fetch(`/document-templates/${templateId}/variables`)
-            .then(response => response.json())
-            .then(data => {
-                const variablesContainer = document.getElementById('templateVariables');
-                variablesContainer.innerHTML = '';
-                
-                if (data.variables && data.variables.length > 0) {
-                    data.variables.forEach((variable, index) => {
-                        const variableDiv = document.createElement('div');
-                        variableDiv.className = 'border border-gray-200 rounded p-3';
-                        variableDiv.innerHTML = `
-                            <label class="block text-sm font-medium text-gray-700 mb-1">${variable.description}</label>
-                            <input type="text" name="variables[${index}][value]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="${variable.example || ''}">
-                        `;
-                        variablesContainer.appendChild(variableDiv);
-                    });
-                }
-            });
-    }
-});
-
-// Bulk generation form submission
-document.getElementById('bulkGenerationForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    fetch('{{ route('document-generation.bulk') }}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            hideBulkGenerationModal();
-            location.reload();
-        } else {
-            alert('حدث خطأء: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('حدث خطأء أثناء إرسال الطلب');
-    });
-});
-</script>
 @endsection

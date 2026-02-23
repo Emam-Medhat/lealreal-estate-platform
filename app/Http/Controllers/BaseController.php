@@ -38,11 +38,11 @@ class BaseController extends RoutingController
     protected function clearCache(?string $key = null, array $tags = []): void
     {
         if ($key) {
-            $this->cacheService->forget($key);
+            CacheService::forget($key);
         }
 
         if (!empty($tags)) {
-            $this->cacheService->clearTags($tags);
+            CacheService::clearTags($tags);
         }
     }
 

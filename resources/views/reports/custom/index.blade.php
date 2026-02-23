@@ -52,7 +52,7 @@
                                                     <td>{{ Str::limit($report->description, 50) }}</td>
                                                     <td>{{ $report->created_at->format('Y-m-d') }}</td>
                                                     <td>
-                                                        <a href="{{ route('reports.custom.show', $report->id) }}" class="btn btn-sm btn-info" title="عرض">
+                                                        <a href="{{ route('reports.custom.show', $report->report_id) }}" class="btn btn-sm btn-info" title="عرض">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
                                                         <a href="{{ route('reports.custom.edit', $report->id) }}" class="btn btn-sm btn-primary" title="تعديل">

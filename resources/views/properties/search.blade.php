@@ -201,7 +201,7 @@
                             <!-- Property Image -->
                             <div class="md:w-1/3">
                                 <div class="h-48 md:h-full bg-gray-200 relative">
-                                    @if($property->images->isNotEmpty())
+                                    @if($property->images && $property->images->isNotEmpty())
                                         <img src="{{ $property->images->first()->url }}" alt="{{ $property->title }}" class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full bg-gray-200 flex items-center justify-center">

@@ -23,7 +23,7 @@ class Lead extends Model
         'preferred_bathrooms', 'preferred_area_min', 'preferred_area_max',
         'preferred_price_min', 'preferred_price_max', 'preferred_amenities',
         'timeline', 'financing_status', 'pre_approved', 'property_purpose',
-        'notes', 'tags', 'assigned_to', 'created_by', 'last_contacted_at',
+        'notes', 'tags', 'assigned_to', 'created_by', 'updated_by', 'last_contacted_at',
         'next_follow_up_at', 'follow_up_count', 'conversion_probability',
         'estimated_value', 'lost_reason', 'won_reason', 'converted_at',
         'archived_at', 'score', 'temperature', 'stage', 'pipeline_position',
@@ -42,6 +42,7 @@ class Lead extends Model
         'timeline_details', 'budget_details', 'stakeholder_analysis', 'risk_factors',
         'opportunity_strength', 'relationship_strength', 'trust_level', 'credibility_score',
         'custom_fields', 'metadata', 'internal_notes', 'private_notes',
+        'position', 'source_id', 'status_id', 'expected_close_date', 'address', 'city', 'country'
     ];
 
     protected $casts = [
@@ -66,6 +67,7 @@ class Lead extends Model
         'meeting_count' => 'integer',
         'property_viewings' => 'integer',
         'offer_count' => 'integer',
+        'priority' => 'integer',
         'days_in_pipeline' => 'integer',
         'contact_frequency' => 'integer',
         'response_rate' => 'decimal:2',
@@ -103,9 +105,37 @@ class Lead extends Model
         'last_activity_at' => 'datetime',
         'opt_out_date' => 'datetime',
         'deleted_at' => 'datetime',
+        'expected_close_date' => 'datetime',
     ];
 
+    /**
+     * Exclude temporary properties from being saved to database
+     */
+    public function getDirty()
+    {
+        $dirty = parent::getDirty();
+        
+        // Remove temporary properties that start with underscore
+        foreach ($dirty as $key => $value) {
+            if (str_starts_with($key, '_')) {
+                unset($dirty[$key]);
+            }
+        }
+        
+        return $dirty;
+    }
+
     // Relationships
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(LeadSource::class, 'source_id');
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(LeadStatus::class, 'status_id');
+    }
+
     public function agent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'agent_id');
@@ -113,7 +143,12 @@ class Lead extends Model
 
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(Agent::class, 'assigned_to');
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function createdBy(): BelongsTo
@@ -149,6 +184,22 @@ class Lead extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(LeadDocument::class);
+    }
+
+    public function scores(): HasMany
+    {
+        return $this->hasMany(LeadScore::class);
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(LeadTag::class, 'lead_tag', 'lead_id', 'tag_id')
+            ->withTimestamps();
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(LeadCampaign::class, 'campaign_source', 'id');
     }
 
     public function properties(): BelongsToMany

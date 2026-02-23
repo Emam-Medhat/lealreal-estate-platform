@@ -267,30 +267,18 @@ class AdClick extends Model
                            ->where('clicked_at', '>=', now()->subMinutes(5))
                            ->count();
         
-        if ($recentClicks > .0);_criteria) {
- 
-            $ .
-            'criteria' => [
-                'audience' => $this->audience_criteria,
-                'location' => $this->location_criteria,
-                'age_range' => $this->age_range,
-                'gender' => $this->gender_criteria,
-                'interest' => $this->interest_criteria,
-                'behavior' => $this->behavior_criteria,
-                'device' => $this->device_criteria,
-                'time' => $this->time_criteria,
-                'language' => $this->language_criteria,
-                'income' => $this->income_criteria,
-                'education' => $this->education_criteria,
-                'custom' => $this->custom_criteria,
-                'exclusion' => $this->exclusion_criteria
-            ],
-            'metrics' => [
-                'estimated_reach' => $this->estimated_reach,
-                'actual_reach' => $this->actual_reach,
-                'match_rate' => $this->match_rate,
-                'targeting_score' => $this->targeting_score
-            ]
-        ];
+        if ($recentClicks > 10) {
+            $score += 50;
+        }
+
+        if (self::isBot($userAgent)) {
+            $score += 100;
+        }
+
+        if (empty($referer)) {
+            $score += 20;
+        }
+
+        return min($score, 100);
     }
 }

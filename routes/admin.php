@@ -175,7 +175,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/dashboard', [FinancialController::class, 'dashboard'])->name('dashboard');
         Route::get('/transactions', [FinancialController::class, 'transactions'])->name('transactions');
         Route::get('/invoices', [FinancialController::class, 'invoices'])->name('invoices');
+        Route::get('/invoices/create', [FinancialController::class, 'createInvoice'])->name('invoices.create');
+        Route::post('/invoices', [FinancialController::class, 'storeInvoice'])->name('invoices.store');
+        Route::get('/invoices/{invoice}', [FinancialController::class, 'showInvoice'])->name('invoices.show');
+        Route::get('/invoices/{invoice}/edit', [FinancialController::class, 'editInvoice'])->name('invoices.edit');
+        Route::put('/invoices/{invoice}', [FinancialController::class, 'updateInvoice'])->name('invoices.update');
+        Route::delete('/invoices/{invoice}', [FinancialController::class, 'destroyInvoice'])->name('invoices.destroy');
+        Route::get('/invoices/{invoice}/download', [FinancialController::class, 'downloadInvoice'])->name('invoices.download');
         Route::get('/payments', [FinancialController::class, 'payments'])->name('payments');
+        Route::get('/wallets', [FinancialController::class, 'wallets'])->name('wallets');
         Route::get('/expenses', [FinancialController::class, 'expenses'])->name('expenses');
         Route::get('/reports', [FinancialController::class, 'reports'])->name('reports');
         Route::get('/analytics', [FinancialController::class, 'analytics'])->name('analytics');
@@ -183,6 +191,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/financial', [ReportController::class, 'financial'])->name('financial.index');
         Route::get('/property-performance', [ReportController::class, 'propertyPerformance'])->name('property.performance');
         Route::get('/agent-performance', [ReportController::class, 'agentPerformance'])->name('agent.performance');
@@ -212,8 +221,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/analyze', [SeoController::class, 'analyze'])->name('analyze');
         Route::get('/keywords', [SeoController::class, 'keywords'])->name('keywords');
         Route::get('/meta-tags', [SeoController::class, 'metaTags'])->name('meta.tags');
+        Route::get('/create', [SeoController::class, 'create'])->name('create');
+        Route::post('/', [SeoController::class, 'store'])->name('store');
+        Route::get('/{seoMeta}', [SeoController::class, 'show'])->name('show');
+        Route::get('/{seoMeta}/edit', [SeoController::class, 'edit'])->name('edit');
+        Route::put('/{seoMeta}', [SeoController::class, 'update'])->name('update');
+        Route::delete('/{seoMeta}', [SeoController::class, 'destroy'])->name('destroy');
         Route::get('/sitemap', [SeoController::class, 'sitemap'])->name('sitemap');
+        Route::post('/sitemap/generate', [SeoController::class, 'generateSitemap'])->name('generate-sitemap');
         Route::get('/robots', [SeoController::class, 'robots'])->name('robots');
+        Route::post('/robots', [SeoController::class, 'storeRobots'])->name('robots.store');
+        Route::put('/robots', [SeoController::class, 'updateRobots'])->name('robots.update');
     });
     
     // Performance Management
@@ -232,6 +250,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::prefix('system')->name('system.')->group(function () {
         Route::get('/dashboard', [SystemController::class, 'dashboard'])->name('dashboard');
         Route::get('/logs', [SystemController::class, 'logs'])->name('logs');
+        Route::get('/logs/view/{filename}', [SystemController::class, 'viewLog'])->name('logs.view');
         Route::get('/cache', [SystemController::class, 'cache'])->name('cache');
         Route::get('/queue', [SystemController::class, 'queue'])->name('queue');
         Route::get('/storage', [SystemController::class, 'storage'])->name('storage');

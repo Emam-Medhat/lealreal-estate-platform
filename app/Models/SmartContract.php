@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
 
+use App\Models\CryptoWallet;
+
 class SmartContract extends Model
 {
     use HasFactory;
@@ -53,6 +55,17 @@ class SmartContract extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
+
+    // Relationships
+    public function deployer(): BelongsTo
+    {
+        return $this->belongsTo(CryptoWallet::class, 'deployer_address', 'address');
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(CryptoTransaction::class, 'to_address', 'address');
+    }
 
     // Scopes
     public function scopeVerified($query)

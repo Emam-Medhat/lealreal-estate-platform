@@ -136,21 +136,74 @@ class AdminCompanyController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
+            // Basic Information
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:companies,email,' . $id,
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'website' => 'nullable|url|max:255',
+            'type' => 'required|string|in:developer,brokerage,property_management,construction,investment,consulting',
+            'status' => 'required|string|in:active,pending,suspended,rejected',
             'description' => 'nullable|string',
-            'status' => 'required|string|in:active,pending,inactive',
+            
+            // Business Details
+            'registration_number' => 'nullable|string|max:255',
+            'tax_id' => 'nullable|string|max:255',
+            'founded_date' => 'nullable|date',
+            'employee_count' => 'required|integer|min:1',
+            'annual_revenue' => 'nullable|numeric|min:0',
+            'subscription_plan' => 'required|string|in:basic,professional,enterprise',
+            
+            // Address Information
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            
+            // Verification & Features
+            'is_featured' => 'nullable|boolean',
+            'is_verified' => 'nullable|boolean',
+            'verification_level' => 'required|integer|min:0|max:3',
+            'rating' => 'required|numeric|min:0|max:5',
+            'total_reviews' => 'required|integer|min:0',
+            'subscription_expires_at' => 'nullable|date',
+            
+            // API Settings
+            'api_key' => 'nullable|string|max:255',
+            'webhook_url' => 'nullable|url|max:500',
+            'logo_url' => 'nullable|image|max:2048',
+            'cover_image_url' => 'nullable|image|max:4096',
         ]);
 
         try {
-            $this->companyService->updateCompany($id, $request->all());
+            // Handle file uploads
+            $data = $request->all();
+            
+            if ($request->hasFile('logo_url')) {
+                $data['logo_url'] = $request->file('logo_url')->store('company-logos', 'public');
+            }
+            
+            if ($request->hasFile('cover_image_url')) {
+                $data['cover_image_url'] = $request->file('cover_image_url')->store('company-covers', 'public');
+            }
 
-            return redirect()->route('admin.companies.index')
+            // Convert checkboxes to boolean
+            $data['is_featured'] = $request->has('is_featured');
+            $data['is_verified'] = $request->has('is_verified');
+
+            $this->companyService->updateCompany($id, $data);
+
+            return redirect()->route('admin.companies.show', $id)
                 ->with('success', 'Company updated successfully');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update company');
+            \Log::error('Company update failed: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update company: ' . $e->getMessage());
         }
     }
 

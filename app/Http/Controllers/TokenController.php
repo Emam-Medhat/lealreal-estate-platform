@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Token;
 use App\Models\CryptoTransaction;
+use App\Repositories\Contracts\CryptoTransactionRepositoryInterface;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class TokenController extends Controller
 {
-    public function __construct()
+    protected $transactionRepository;
+
+    public function __construct(CryptoTransactionRepositoryInterface $transactionRepository)
     {
         $this->middleware('auth');
+        $this->transactionRepository = $transactionRepository;
     }
 
     public function index()
@@ -252,11 +256,10 @@ class TokenController extends Controller
             return response()->json(['error' => 'Token not found'], 404);
         }
 
-        $transactions = CryptoTransaction::where('contract_address', $address)
-            ->with(['user', 'wallet'])
-            ->latest()
-            ->limit($limit)
-            ->get();
+        $transactions = $this->transactionRepository->getFiltered([
+            'contract_address' => $address,
+            'limit' => $limit
+        ]);
 
         return response()->json($transactions);
     }
@@ -400,14 +403,7 @@ class TokenController extends Controller
 
     private function getTokenTransactionStats($token)
     {
-        return [
-            'total_transactions' => CryptoTransaction::where('contract_address', $token->address)->count(),
-            'transactions_24h' => CryptoTransaction::where('contract_address', $token->address)
-                ->where('created_at', '>=', now()->subDay())->count(),
-            'unique_addresses' => CryptoTransaction::where('contract_address', $token->address)
-                ->selectRaw('COUNT(DISTINCT from_address) as unique_addresses')
-                ->value('unique_addresses')
-        ];
+        return $this->transactionRepository->getTokenStats($token->address);
     }
 
     private function getTokenPriceStats($token)

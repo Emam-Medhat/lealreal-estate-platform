@@ -287,12 +287,18 @@
         <h2 class="text-lg font-semibold mb-4">الإجراءات سريعة</h2>
         
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('contract-templates.duplicate', $template) }}" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600">
-                <i class="fas fa-copy ml-2"></i>نسخ القالب
-            </a>
-            <a href="{{ route('contract-templates.toggle', $template) }}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
-                <i class="fas fa-toggle-on ml-2"></i>تفعيل الحالة
-            </a>
+            <form action="{{ route('contract-templates.duplicate', $template) }}" method="POST" class="inline-block">
+                @csrf
+                <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600">
+                    <i class="fas fa-copy ml-2"></i>نسخ القالب
+                </button>
+            </form>
+            <form action="{{ route('contract-templates.toggle', $template) }}" method="POST" class="inline-block">
+                @csrf
+                <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+                    <i class="fas fa-toggle-on ml-2"></i>تفعيل الحالة
+                </button>
+            </form>
             <a href="{{ route('contract-templates.export', $template) }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
                 <i class="fas fa-download ml-2"></i>تصدير القالب
             </a>

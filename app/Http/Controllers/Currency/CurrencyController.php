@@ -20,6 +20,63 @@ class CurrencyController extends Controller
     public function index()
     {
         $currencies = Currency::active()->get();
+        
+        // Add default currencies if none exist
+        if ($currencies->isEmpty()) {
+            $currencies = collect([
+                'USD' => [
+                    'code' => 'USD',
+                    'name' => 'US Dollar',
+                    'symbol' => '$'
+                ],
+                'EUR' => [
+                    'code' => 'EUR',
+                    'name' => 'Euro',
+                    'symbol' => '€'
+                ],
+                'GBP' => [
+                    'code' => 'GBP',
+                    'name' => 'British Pound',
+                    'symbol' => '£'
+                ],
+                'JPY' => [
+                    'code' => 'JPY',
+                    'name' => 'Japanese Yen',
+                    'symbol' => '¥'
+                ],
+                'SAR' => [
+                    'code' => 'SAR',
+                    'name' => 'Saudi Riyal',
+                    'symbol' => 'ر.س'
+                ],
+                'AED' => [
+                    'code' => 'AED',
+                    'name' => 'UAE Dirham',
+                    'symbol' => 'د.إ'
+                ],
+                'EGP' => [
+                    'code' => 'EGP',
+                    'name' => 'Egyptian Pound',
+                    'symbol' => 'ج.م'
+                ],
+                'KWD' => [
+                    'code' => 'KWD',
+                    'name' => 'Kuwaiti Dinar',
+                    'symbol' => 'د.ك'
+                ],
+                'QAR' => [
+                    'code' => 'QAR',
+                    'name' => 'Qatari Riyal',
+                    'symbol' => 'ر.ق'
+                ],
+                'BHD' => [
+                    'code' => 'BHD',
+                    'name' => 'Bahraini Dinar',
+                    'symbol' => 'د.ب'
+                ]
+            ]);
+        }
+        
         return view('currency.index', compact('currencies'));
     }
 

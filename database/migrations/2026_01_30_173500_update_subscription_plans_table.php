@@ -34,12 +34,15 @@ return new class extends Migration
             if (!Schema::hasColumn('subscription_plans', 'api_calls_limit')) {
                 $table->integer('api_calls_limit')->default(0)->after('bandwidth_limit');
             }
-            // Check if index exists before adding
-            $indexes = DB::select("SHOW INDEX FROM subscription_plans WHERE Key_name = 'subscription_plans_is_active_sort_order_index'");
-            if (empty($indexes)) {
-                $table->index(['is_active', 'sort_order']);
-            }
         });
+
+        try {
+            Schema::table('subscription_plans', function (Blueprint $table) {
+                $table->index(['is_active', 'sort_order']);
+            });
+        } catch (\Exception $e) {
+            // Index likely exists
+        }
 
         // Create pivot table for plan features
         if (!Schema::hasTable('subscription_plan_features')) {

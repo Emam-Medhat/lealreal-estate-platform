@@ -51,7 +51,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">المحتوى <span class="text-red-500">*</span></label>
                 <textarea name="content" rows="15" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>{{ $template->content }}</textarea>
-                <p class="text-sm text-gray-500 mt-1">استخدم المتغيرات مثل {{name}}, {{date}}, {{amount}} للإشارة إلى البيانات الديناميكية</p>
+                <p class="text-sm text-gray-500 mt-1">استخدم المتغيرات مثل @{{name}}, @{{date}}, @{{amount}} للإشارة إلى البيانات الديناميكية</p>
             </div>
         </div>
 

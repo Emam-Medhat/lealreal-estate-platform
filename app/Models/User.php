@@ -54,7 +54,7 @@ class User extends Authenticatable
         'username',
         'language',
         'currency',
-                        'terms',
+        'terms',
         'uuid',
         'full_name',
         'account_status',
@@ -64,6 +64,7 @@ class User extends Authenticatable
         'timezone',
         'email_verified_at',
         'phone_verified_at',
+        'is_online',
         'last_login_at',
         'last_login_ip',
         'last_login_device',
@@ -297,6 +298,11 @@ class User extends Authenticatable
         return $this->belongsTo(Developer::class);
     }
 
+    public function ownedDeveloper(): HasOne
+    {
+        return $this->hasOne(Developer::class);
+    }
+
     public function bannedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'banned_by');
@@ -340,6 +346,21 @@ class User extends Authenticatable
     public function commissions(): HasMany
     {
         return $this->hasMany(AgentCommission::class);
+    }
+
+    public function advertisements(): HasMany
+    {
+        return $this->hasMany(Advertisement::class);
+    }
+
+    public function ads(): HasMany
+    {
+        return $this->advertisements();
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(AdCampaign::class);
     }
 
     // TODO: Create Transaction model
@@ -503,4 +524,6 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserProfile::class);
     }
+
+
 }

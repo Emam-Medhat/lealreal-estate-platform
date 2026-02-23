@@ -43,6 +43,16 @@ class AiPricePrediction extends Model
         'accuracy_1y',
         'created_by',
         'updated_by',
+        // New fields requested
+        'time_horizon',
+        'market_data',
+        'property_features',
+        'economic_indicators',
+        'predicted_price',
+        'confidence_interval',
+        'accuracy',
+        'notes',
+        'metadata',
     ];
 
     protected $casts = [
@@ -71,6 +81,14 @@ class AiPricePrediction extends Model
         'accuracy_1y' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        // New casts
+        'market_data' => 'array',
+        'property_features' => 'array',
+        'economic_indicators' => 'array',
+        'confidence_interval' => 'array',
+        'metadata' => 'array',
+        'predicted_price' => 'decimal:2',
+        'accuracy' => 'decimal:2',
     ];
 
     /**

@@ -85,8 +85,30 @@ class MediaLibraryController extends Controller
             $uploadedFiles[] = $mediaFile;
         }
 
-        return redirect()->route('admin.media.index')
+        return redirect()->back()
             ->with('success', 'تم رفع ' . count($uploadedFiles) . ' ملفات بنجاح');
+    }
+
+    public function createFolder(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        MediaFile::create([
+            'filename' => $validated['name'],
+            'original_name' => $validated['name'],
+            'file_path' => 'folders/' . $validated['name'], // Dummy path
+            'path' => 'folders/' . $validated['name'],
+            'type' => 'folder',
+            'mime_type' => 'directory',
+            'file_size' => 0,
+            'size' => 0,
+            'category' => $validated['name'],
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'تم إنشاء المجلد بنجاح');
     }
 
     public function show(MediaFile $mediaFile): View

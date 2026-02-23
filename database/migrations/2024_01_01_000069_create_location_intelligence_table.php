@@ -42,6 +42,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('location_intelligence');
+        Schema::dropIfExists('location_intelligences');
     }
 };

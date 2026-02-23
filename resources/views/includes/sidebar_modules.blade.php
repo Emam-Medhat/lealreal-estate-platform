@@ -209,7 +209,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('ai.predictions') }}" class="nav-link {{ request()->is('ai/predictions') ? 'active' : '' }}">
+                    <a href="{{ route('ai.price-prediction') }}" class="nav-link {{ request()->is('ai/price-prediction') ? 'active' : '' }}">
                         <i class="fas fa-crystal-ball nav-icon"></i>
                         <p>Predictions</p>
                     </a>
