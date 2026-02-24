@@ -241,9 +241,9 @@
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="h-10 w-10 flex-shrink-0">
-                                                 <div class="h-10 w-10 rounded-full avatar-circle flex items-center justify-center font-semibold">
-                                                    {{ strtoupper(substr($provider->name ?? 'A', 0, 1)) }}
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <div class="h-10 w-10 rounded-full avatar-circle flex items-center justify-center font-semibold bg-gray-200">
+                                                    <i class="fas fa-building text-gray-500"></i>
                                                 </div>
                                             </div>
                                             <div class="mr-4">

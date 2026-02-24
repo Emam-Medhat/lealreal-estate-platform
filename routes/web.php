@@ -22,6 +22,9 @@ use App\Http\Controllers\Investor\InvestorController;
 use App\Http\Controllers\Reports\PerformanceReportController;
 use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InquiryController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LocalizationController;
 
 // Currency and Language routes migrated to web_services.php
 
@@ -30,6 +33,9 @@ use Illuminate\Support\Facades\Route;
 | Cart Routes
 |--------------------------------------------------------------------------
 */
+
+Route::post('/inquiries', [InquiryController::class, 'store'])->name('inquiries.store');
+
 
 Route::middleware(['auth'])->prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
@@ -761,6 +767,7 @@ Route::middleware(['auth', 'trackactivity', 'banned', '2fa'])->group(function ()
         Route::get('/{user}/edit', [App\Http\Controllers\Admin\AdminUserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [App\Http\Controllers\Admin\AdminUserController::class, 'update'])->name('update');
         Route::delete('/{user}', [App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('destroy');
+        Route::delete('/bulk', [App\Http\Controllers\Admin\AdminUserController::class, 'bulkDelete'])->name('bulkDelete');
     });
 
     // Properties Management (Admin only)
@@ -2161,6 +2168,12 @@ Route::get('/modern-landing', function () {
 Route::post('/nfts/{nft}/buy', function (Request $request, $nft) {
     return app(\App\Http\Controllers\MetaverseController::class)->buyNft($request, $nft);
 })->middleware('auth');
+
+// Language Switching Routes
+Route::get('/lang/{locale}', [LocalizationController::class, 'setLang'])->name('lang.switch');
+Route::get('/api/current-language', [LocalizationController::class, 'getCurrentLanguage'])->name('language.current');
+Route::get('/api/language-switcher', [LocalizationController::class, 'getLanguageSwitcherData'])->name('language.switcher.data');
+Route::post('/api/language/switch', [LocalizationController::class, 'switchLanguageAjax'])->name('language.switch.ajax');
 
 Route::post('/nfts/{nft}/sell', function (Request $request, $nft) {
     return app(\App\Http\Controllers\MetaverseController::class)->sellNft($request, $nft);

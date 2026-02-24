@@ -109,10 +109,12 @@
                                     <td>{{ $user->id }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            @if($user->avatar)
-                                                <img src="{{ Storage::url($user->avatar) }}" alt="{{ $user->full_name }}" class="img-circle mr-2" style="width: 30px; height: 30px;">
+                                            @if($user->avatar_url)
+                                                <img src="{{ $user->avatar_url }}" alt="{{ $user->full_name }}" class="img-circle mr-2 object-cover" style="width: 30px; height: 30px;">
                                             @else
-                                                <img src="{{ asset('images/default-avatar.png') }}" alt="{{ $user->full_name }}" class="img-circle mr-2" style="width: 30px; height: 30px;">
+                                                <div class="img-circle mr-2 d-flex align-items-center justify-content-center bg-light text-secondary" style="width: 30px; height: 30px;">
+                                                    <i class="fas fa-user small"></i>
+                                                </div>
                                             @endif
                                             {{ $user->full_name }}
                                         </div>

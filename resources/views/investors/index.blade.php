@@ -161,7 +161,13 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full" src="{{ $investor->user->avatar ?? 'https://ui-avatars.com/api/?name=' . urlencode($investor->user->name ?? 'User') . '&color=7F9CF5&background=EBF4FF' }}" alt="{{ $investor->user->name ?? 'Investor' }}">
+                                            @if($investor->user && $investor->user->avatar_url)
+                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ $investor->user->avatar_url }}" alt="{{ $investor->user->name ?? 'Investor' }}">
+                                            @else
+                                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <i class="fas fa-user-tie text-gray-400"></i>
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900">{{ $investor->user->name ?? 'N/A' }}</div>

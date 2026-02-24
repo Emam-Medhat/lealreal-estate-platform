@@ -176,6 +176,7 @@ Route::prefix('api/user')->middleware(['auth:api', 'throttle:60,1'])->group(func
     
     // Notifications API
     Route::get('/notifications', [UserController::class, 'apiNotifications'])->name('api.user.notifications');
+    Route::get('/notifications/count', [UserController::class, 'getNotificationCount'])->name('user.notifications.count');
     Route::put('/notifications/{notification}/read', [UserController::class, 'apiMarkNotificationRead'])->name('api.user.notifications.read');
     Route::put('/notifications/read-all', [UserController::class, 'apiMarkAllNotificationsRead'])->name('api.user.notifications.read.all');
 });

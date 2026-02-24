@@ -31,14 +31,14 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
     {
         return $this->applyFilters($filters)
             ->where('status', 'paid')
-            ->sum('total_amount');
+            ->sum('total');
     }
 
     public function getOutstandingAmount(array $filters = []): float
     {
         return $this->applyFilters($filters)
             ->whereIn('status', ['pending', 'overdue'])
-            ->sum('total_amount');
+            ->sum('total');
     }
 
     public function getOverdueInvoicesList(array $filters = []): Collection
@@ -116,9 +116,9 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             'pending' => $query->where('status', 'pending')->count(),
             'paid' => $query->where('status', 'paid')->count(),
             'overdue' => $query->where('status', 'overdue')->count(),
-            'total_amount' => $query->sum('total_amount'),
-            'paid_amount' => $query->where('status', 'paid')->sum('total_amount'),
-            'outstanding_amount' => $query->whereIn('status', ['pending', 'overdue'])->sum('total_amount'),
+            'total_amount' => $query->sum('total'),
+            'paid_amount' => $query->where('status', 'paid')->sum('total'),
+            'outstanding_amount' => $query->whereIn('status', ['pending', 'overdue'])->sum('total'),
         ];
     }
 
@@ -126,7 +126,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
     {
         return $this->model->whereYear('created_at', $year)
             ->where('status', 'paid')
-            ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as revenue')
+            ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('revenue', 'month')
@@ -137,7 +137,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
     {
         return $this->model->where('property_id', $propertyId)
             ->where('status', 'paid')
-            ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as revenue')
+            ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('revenue', 'month')
@@ -148,7 +148,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
     {
         return $this->model->where('company_id', $companyId)
             ->where('status', 'paid')
-            ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as revenue')
+            ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('revenue', 'month')

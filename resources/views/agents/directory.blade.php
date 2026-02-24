@@ -204,11 +204,11 @@
                             <div class="ad-c-body">
                                 <div class="ad-c-top">
                                     <div style="position:relative;">
-                                        @if($agent->profile && $agent->profile->profile_photo)
-                                            <img src="{{ asset('storage/' . $agent->profile->profile_photo) }}" alt="{{ $agent->user->name }}" class="ad-avatar">
+                                        @if($agent->user->avatar_url)
+                                            <img src="{{ $agent->user->avatar_url }}" alt="{{ $agent->user->name }}" class="ad-avatar">
                                         @else
                                             <div class="ad-avatar" style="display:flex; align-items:center; justify-content:center; background:var(--ink-4); color:var(--white); font-size:32px;">
-                                                {{ substr($agent->user->name, 0, 1) }}
+                                                <i class="fas fa-user"></i>
                                             </div>
                                         @endif
                                         <div class="ad-verified"><i class="fas fa-check"></i></div>

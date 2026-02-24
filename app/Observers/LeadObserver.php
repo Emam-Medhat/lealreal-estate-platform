@@ -64,6 +64,16 @@ class LeadObserver
                 'assigned_to' => $lead->assigned_to
             ]);
 
+            // Notify admins
+            try {
+                $admins = \App\Models\User::whereIn('user_type', ['admin', 'super_admin'])->get();
+                if ($admins->isNotEmpty()) {
+                    Notification::send($admins, new \App\Notifications\NewLeadNotification($lead));
+                }
+            } catch (\Exception $e) {
+                Log::warning('Could not send new lead notification to admins: ' . $e->getMessage());
+            }
+
         } catch (\Exception $e) {
             Log::error('Lead observer created event failed: ' . $e->getMessage(), [
                 'lead_id' => $lead->id,
@@ -328,7 +338,8 @@ class LeadObserver
     {
         try {
             if ($lead->assignedTo) {
-                $lead->assignedTo->notify(new LeadAssignedNotification($lead));
+                $assigner = Auth::user() ?? User::find($lead->created_by) ?? User::find(1); // Fallback to first user
+                $lead->assignedTo->notify(new LeadAssignedNotification($lead, $assigner));
             }
         } catch (\Exception $e) {
             Log::error('Failed to send assignment notification: ' . $e->getMessage(), [

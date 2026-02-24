@@ -84,9 +84,15 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
                                         @if($post->author)
-                                            <img src="{{ $post->author->avatar ?? asset('images/default-avatar.png') }}" 
-                                                 alt="{{ $post->author->name }}" 
-                                                 class="w-8 h-8 rounded-full mr-2">
+                                            @if($post->author->avatar_url)
+                                                <img src="{{ $post->author->avatar_url }}" 
+                                                     alt="{{ $post->author->name }}" 
+                                                     class="w-8 h-8 rounded-full mr-2 object-cover">
+                                            @else
+                                                <div class="w-8 h-8 rounded-full mr-2 bg-gray-200 flex items-center justify-center">
+                                                    <i class="fas fa-user text-gray-500 text-xs"></i>
+                                                </div>
+                                            @endif
                                             <span class="text-sm text-gray-600">{{ $post->author->name }}</span>
                                         @endif
                                     </div>

@@ -10,12 +10,12 @@
                 <div class="flex justify-between items-center">
                     <div class="flex items-center">
                         <div
-                            class="h-20 w-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-3xl font-bold mr-6">
-                            @if($user->profile_photo_path)
-                                <img src="{{ Storage::url($user->profile_photo_path) }}" alt="{{ $user->name }}"
+                            class="h-20 w-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-3xl font-bold mr-6 overflow-hidden">
+                            @if($user->avatar_url)
+                                <img src="{{ $user->avatar_url }}" alt="{{ $user->first_name }}"
                                     class="h-20 w-20 rounded-full object-cover">
                             @else
-                                {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}
+                                <i class="fas fa-user text-white"></i>
                             @endif
                         </div>
                         <div>

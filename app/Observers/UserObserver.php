@@ -77,12 +77,10 @@ class UserObserver
             if (!$user->profile) {
                 UserProfile::create([
                     'user_id' => $user->id,
+                    'first_name' => $user->first_name ?? $user->name ?? 'User',
+                    'last_name' => $user->last_name ?? '',
                     'bio' => null,
                     'avatar' => null,
-                    'avatar_thumbnail' => null,
-                    'cover_image' => null,
-                    'social_links' => [],
-                    'preferences' => []
                 ]);
             }
 
@@ -109,6 +107,34 @@ class UserObserver
                 $this->updateUserAnalytics($user, 'created');
             });
 
+            // Notify admins about new user
+            try {
+                // Find all users who are admins
+                $admins = \App\Models\User::where(function ($query) {
+                    $query->where('user_type', 'admin')
+                        ->orWhere('user_type', 'super_admin')
+                        ->orWhere('account_status', 'active')->where('user_type', 'admin');
+                })->get();
+
+                Log::info('New user registration: Attempting to notify admins', [
+                    'new_user_id' => $user->id,
+                    'admins_found' => $admins->count(),
+                    'admin_ids' => $admins->pluck('id')->toArray()
+                ]);
+
+                if ($admins->count() > 0) {
+                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewUserRegisteredNotification($user));
+                    Log::info('Admin notifications dispatched successfully');
+                } else {
+                    Log::warning('No admin users found to receive registration notification');
+                }
+            } catch (\Exception $e) {
+                Log::error('CRITICAL: Could not send admin notification for new user', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+
         } catch (\Exception $e) {
             Log::error('User observer created event failed: ' . $e->getMessage(), [
                 'user_id' => $user->id,
@@ -125,7 +151,7 @@ class UserObserver
         try {
             // Track important changes before update
             $changes = $user->getDirty();
-            
+
             // Log status changes for post-update processing
             if (isset($changes['account_status'])) {
                 $user->_old_account_status = $user->getOriginal('account_status');
@@ -166,7 +192,7 @@ class UserObserver
             $this->clearUserCaches();
 
             $changes = $user->getDirty();
-            
+
             // Handle account status change
             if (isset($changes['account_status']) && isset($user->_old_account_status)) {
                 $this->handleAccountStatusChange($user, $user->_old_account_status, $user->account_status);
@@ -321,8 +347,10 @@ class UserObserver
         $this->createActivityLog($user, 'status_changed', "Account status changed from {$oldStatus} to {$newStatus}");
 
         // Send notification if account is suspended or reactivated
-        if (in_array($newStatus, ['suspended', 'banned', 'deactivated']) || 
-            in_array($oldStatus, ['suspended', 'banned', 'deactivated']) && $newStatus === 'active') {
+        if (
+            in_array($newStatus, ['suspended', 'banned', 'deactivated']) ||
+            in_array($oldStatus, ['suspended', 'banned', 'deactivated']) && $newStatus === 'active'
+        ) {
             dispatch(function () use ($user, $oldStatus, $newStatus) {
                 $user->notify(new UserAccountStatusChanged($user, $oldStatus, $newStatus));
             });
@@ -438,9 +466,19 @@ class UserObserver
     private function logImportantChanges(User $user, array $changes): void
     {
         $importantFields = [
-            'first_name', 'last_name', 'full_name', 'phone', 'country', 'city',
-            'is_agent', 'is_company', 'is_developer', 'is_investor',
-            'agent_license_number', 'agent_company', 'company_id'
+            'first_name',
+            'last_name',
+            'full_name',
+            'phone',
+            'country',
+            'city',
+            'is_agent',
+            'is_company',
+            'is_developer',
+            'is_investor',
+            'agent_license_number',
+            'agent_company',
+            'company_id'
         ];
 
         foreach ($importantFields as $field) {

@@ -13,20 +13,65 @@ class CartController extends Controller
      */
     public function index()
     {
+        // Try Laravel session first, fallback to regular session
         $cart = session('cart', []);
+        if (empty($cart)) {
+            $cart = $_SESSION['cart'] ?? [];
+        }
+        
         $cartItems = [];
         
         if (!empty($cart)) {
             // Get NFT details for cart items
             foreach ($cart as $id => $item) {
                 if ($item['type'] === 'nft') {
-                    // You can fetch NFT details from database here
+                    // Use sample NFT data for demonstration
+                    $sampleNfts = [
+                        1 => [
+                            'name' => 'Cosmic Ape #2341',
+                            'price' => 2.5,
+                            'image' => 'https://picsum.photos/seed/nft1/400/400.jpg',
+                            'type' => 'Digital Art'
+                        ],
+                        2 => [
+                            'name' => 'Pixel Punk #8888',
+                            'price' => 1.8,
+                            'image' => 'https://picsum.photos/seed/nft2/400/400.jpg',
+                            'type' => 'Collectible'
+                        ],
+                        3 => [
+                            'name' => 'Meta Dragon #4567',
+                            'price' => 3.2,
+                            'image' => 'https://picsum.photos/seed/nft3/400/400.jpg',
+                            'type' => 'Gaming'
+                        ],
+                        4 => [
+                            'name' => 'Crypto Kitty #9999',
+                            'price' => 1.5,
+                            'image' => 'https://picsum.photos/seed/nft4/400/400.jpg',
+                            'type' => 'Pet'
+                        ],
+                        5 => [
+                            'name' => 'Virtual Land #1234',
+                            'price' => 5.0,
+                            'image' => 'https://picsum.photos/seed/nft5/400/400.jpg',
+                            'type' => 'Real Estate'
+                        ]
+                    ];
+                    
+                    $nftData = $sampleNfts[$id] ?? [
+                        'name' => 'NFT #' . $id,
+                        'price' => $item['price'] ?? 1.0,
+                        'image' => 'https://picsum.photos/seed/nft' . $id . '/400/400.jpg',
+                        'type' => 'Digital Asset'
+                    ];
+                    
                     $cartItems[] = [
                         'id' => $id,
                         'type' => 'nft',
-                        'name' => 'NFT #' . $id,
-                        'price' => $item['price'] ?? 0,
-                        'image' => $item['image'] ?? '/placeholder-nft.jpg'
+                        'name' => $nftData['name'],
+                        'price' => $item['price'] ?? $nftData['price'],
+                        'image' => $item['image'] ?? $nftData['image']
                     ];
                 }
             }

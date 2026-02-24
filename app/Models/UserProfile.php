@@ -68,16 +68,13 @@ class UserProfile extends Model
         return $this->date_of_birth ? $this->date_of_birth->age : 0;
     }
 
-    public function getAvatarUrlAttribute(): string
+    public function getAvatarUrlAttribute(): ?string
     {
         if ($this->avatar) {
             return asset('storage/avatars/' . $this->avatar);
         }
         
-        // Default avatar based on gender
-        return $this->gender === 'female' 
-            ? 'https://ui-avatars.com/api/?name=' . urlencode($this->user->first_name) . '&background=ec4899&color=fff'
-            : 'https://ui-avatars.com/api/?name=' . urlencode($this->user->first_name) . '&background=3b82f6&color=fff';
+        return null;
     }
 
     public function getCoverImageUrlAttribute(): string

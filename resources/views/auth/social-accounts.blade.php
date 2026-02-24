@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Social Accounts')
+@section('title', __('auth.social_accounts'))
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -9,19 +9,19 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Social Accounts</h1>
-                    <p class="text-gray-600">Manage your connected social media accounts</p>
+                    <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ __('auth.social_accounts') }}</h1>
+                    <p class="text-gray-600">{{ __('auth.manage_connected_accounts') }}</p>
                 </div>
                 <a href="{{ route('profile.settings') }}" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-arrow-left mr-2"></i>
-                    Back to Settings
+                    {{ __('auth.back_to_settings') }}
                 </a>
             </div>
         </div>
 
         <!-- Connected Accounts -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Connected Accounts</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ __('auth.connected_accounts') }}</h2>
             
             <div class="space-y-4">
                 @forelse ($socialAccounts as $account)
@@ -33,14 +33,14 @@
                             <div>
                                 <h3 class="font-medium text-gray-800">{{ ucfirst($account->provider) }}</h3>
                                 <p class="text-sm text-gray-600">{{ $account->provider_id }}</p>
-                                <p class="text-xs text-gray-500">Connected {{ $account->created_at->diffForHumans() }}</p>
+                                <p class="text-xs text-gray-500">{{ __('common.connected') }} {{ $account->created_at->diffForHumans() }}</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                Connected
+                                {{ __('auth.connected') }}
                             </span>
-                            <form action="{{ route('social.disconnect', $account->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to disconnect this account?')">
+                            <form action="{{ route('social.disconnect', $account->id) }}" method="POST" onsubmit="return confirm('{{ __('auth.disconnect_confirm') }}')">
                                 @csrf
                                 <button type="submit" class="text-red-600 hover:text-red-800">
                                     <i class="fas fa-unlink"></i>
@@ -51,8 +51,8 @@
                 @empty
                     <div class="text-center py-8">
                         <i class="fas fa-link text-4xl text-gray-300 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No connected accounts</h3>
-                        <p class="text-gray-500">Connect your social media accounts for easier login.</p>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ __('auth.no_connected_accounts') }}</h3>
+                        <p class="text-gray-500">{{ __('auth.connect_social_desc') }}</p>
                     </div>
                 @endforelse
             </div>
@@ -60,7 +60,7 @@
 
         <!-- Available Connections -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Connect New Account</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ __('auth.connect_new_account') }}</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @if (!in_array('google', $socialAccounts->pluck('provider')->toArray()))
@@ -70,7 +70,7 @@
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-800">Google</h3>
-                            <p class="text-sm text-gray-600">Connect your Google account</p>
+                            <p class="text-sm text-gray-600">{{ __('auth.connect_provider', ['provider' => 'Google']) }}</p>
                         </div>
                     </a>
                 @endif
@@ -82,7 +82,7 @@
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-800">Facebook</h3>
-                            <p class="text-sm text-gray-600">Connect your Facebook account</p>
+                            <p class="text-sm text-gray-600">{{ __('auth.connect_provider', ['provider' => 'Facebook']) }}</p>
                         </div>
                     </a>
                 @endif
@@ -94,7 +94,7 @@
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-800">Twitter</h3>
-                            <p class="text-sm text-gray-600">Connect your Twitter account</p>
+                            <p class="text-sm text-gray-600">{{ __('auth.connect_provider', ['provider' => 'Twitter']) }}</p>
                         </div>
                     </a>
                 @endif
@@ -106,7 +106,7 @@
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-800">LinkedIn</h3>
-                            <p class="text-sm text-gray-600">Connect your LinkedIn account</p>
+                            <p class="text-sm text-gray-600">{{ __('auth.connect_provider', ['provider' => 'LinkedIn']) }}</p>
                         </div>
                     </a>
                 @endif
@@ -118,7 +118,7 @@
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-800">GitHub</h3>
-                            <p class="text-sm text-gray-600">Connect your GitHub account</p>
+                            <p class="text-sm text-gray-600">{{ __('auth.connect_provider', ['provider' => 'GitHub']) }}</p>
                         </div>
                     </a>
                 @endif
@@ -132,15 +132,15 @@
                     <i class="fas fa-info-circle text-blue-400"></i>
                 </div>
                 <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-800">Security Information</h3>
+                    <h3 class="text-sm font-medium text-blue-800">{{ __('auth.security_info') }}</h3>
                     <div class="mt-2 text-sm text-blue-700">
-                        <p>Connecting social accounts allows you to:</p>
+                        <p>{{ __('auth.social_benefit_title') }}</p>
                         <ul class="list-disc list-inside mt-2 space-y-1">
-                            <li>Log in quickly without password</li>
-                            <li>Keep your account secure with two-factor authentication</li>
-                            <li>Sync your profile information</li>
+                            <li>{{ __('auth.social_benefit_1') }}</li>
+                            <li>{{ __('auth.social_benefit_2') }}</li>
+                            <li>{{ __('auth.social_benefit_3') }}</li>
                         </ul>
-                        <p class="mt-2">You can disconnect any account at any time from this page.</p>
+                        <p class="mt-2">{{ __('auth.disconnect_any_time') }}</p>
                     </div>
                 </div>
             </div>

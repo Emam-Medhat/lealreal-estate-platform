@@ -3,149 +3,131 @@
 @section('title', $property->title . ' | ' . config('app.name', 'منصة العقارات'))
 
 @section('content')
-<div class="property-show-page" style="background-color: #f3f4f6; min-height: 100vh; padding-bottom: 3rem;">
-    
-    <!-- Gallery Section -->
-    <div class="container-fluid p-0 mb-4">
-        <div class="row g-0" style="height: 500px;">
-            <!-- Main Image -->
-            <div class="col-md-8 h-100">
-                @if($property->media && $property->media->count() > 0)
-                    @php
-                        $mainImage = $property->media->first();
-                        $imagePath = Str::startsWith($mainImage->file_path, 'properties/') 
-                                    ? 'storage/' . $mainImage->file_path 
-                                    : 'storage/properties/' . $mainImage->file_path;
-                    @endphp
-                    <div style="height: 100%; width: 100%; overflow: hidden; position: relative;">
-                        <img src="{{ asset($imagePath) }}" 
-                             class="w-100 h-100" 
-                             style="object-fit: cover; cursor: pointer;"
-                             alt="{{ $property->title }}"
-                             onclick="openGallery(0)">
-                         <div class="position-absolute top-0 start-0 m-3">
-                            <span class="badge bg-{{ $property->listing_type == 'sale' ? 'primary' : 'success' }} fs-6 px-3 py-2 shadow-sm">
-                                {{ $property->listing_type == 'sale' ? 'للبيع' : 'للإيجار' }}
-                            </span>
-                            @if($property->featured)
-                                <span class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm ms-2">
-                                    <i class="fas fa-star me-1"></i> مميز
-                                </span>
-                            @endif
-                        </div>
-                    </div>
-                @else
-                    <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">
-                        <div class="text-center">
-                            <i class="fas fa-image fa-4x mb-3"></i>
-                            <p>لا توجد صور للعقار</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-            
-            <!-- Side Images -->
-            <div class="col-md-4 h-100 d-none d-md-block">
-                <div class="row g-0 h-100">
-                    @if($property->media && $property->media->count() > 1)
-                        @foreach($property->media->skip(1)->take(2) as $index => $media)
-                            @php
-                                $subImagePath = Str::startsWith($media->file_path, 'properties/') 
-                                            ? 'storage/' . $media->file_path 
-                                            : 'storage/properties/' . $media->file_path;
-                            @endphp
-                            <div class="col-12 h-50 border-bottom border-start border-white">
-                                <div style="height: 100%; width: 100%; overflow: hidden;">
-                                    <img src="{{ asset($subImagePath) }}" 
-                                         class="w-100 h-100" 
-                                         style="object-fit: cover; cursor: pointer; transition: transform 0.3s;"
-                                         onmouseover="this.style.transform='scale(1.05)'"
-                                         onmouseout="this.style.transform='scale(1)'"
-                                         alt="صورة العقار {{ $index + 2 }}"
-                                         onclick="openGallery({{ $index + 1 }})">
-                                </div>
-                            </div>
-                        @endforeach
-                    @else
-                         <div class="col-12 h-100 bg-light d-flex align-items-center justify-content-center border-start border-white">
-                            <p class="text-muted">المزيد من الصور قريباً</p>
-                        </div>
-                    @endif
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <!-- Hero Gallery Section -->
+    <div class="relative h-[500px] overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10"></div>
+        
+        @if($property->media && $property->media->count() > 0)
+            @php
+                $mainImage = $property->media->first();
+                $imagePath = Str::startsWith($mainImage->file_path, 'properties/') 
+                            ? 'storage/' . $mainImage->file_path 
+                            : 'storage/properties/' . $mainImage->file_path;
+            @endphp
+            <img src="{{ asset($imagePath) }}" 
+                 class="w-full h-full object-cover" 
+                 alt="{{ $property->title }}"
+                 onclick="openGallery(0)">
+        @else
+            <div class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+                <div class="text-center text-white">
+                    <i class="fas fa-image text-6xl mb-4 opacity-50"></i>
+                    <p class="text-xl opacity-75">لا توجد صور للعقار</p>
                 </div>
             </div>
+        @endif
+        
+        <!-- Floating Badges -->
+        <div class="absolute top-6 left-6 z-20 flex flex-wrap gap-3">
+            <span class="px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm {{ $property->listing_type == 'sale' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' : 'bg-gradient-to-r from-green-600 to-green-700 text-white' }}">
+                <i class="fas fa-{{ $property->listing_type == 'sale' ? 'tag' : 'home' }} ml-1"></i>
+                {{ $property->listing_type == 'sale' ? 'للبيع' : 'للإيجار' }}
+            </span>
+            @if($property->featured)
+                <span class="px-4 py-2 rounded-full text-sm font-bold shadow-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+                    <i class="fas fa-star ml-1"></i> مميز
+                </span>
+            @endif
         </div>
+        
+        <!-- Side Images -->
+        @if($property->media && $property->media->count() > 1)
+            <div class="absolute top-6 right-6 z-20 w-32 space-y-3">
+                @foreach($property->media->skip(1)->take(2) as $index => $media)
+                    @php
+                        $subImagePath = Str::startsWith($media->file_path, 'properties/') 
+                                    ? 'storage/' . $media->file_path 
+                                    : 'storage/properties/' . $media->file_path;
+                    @endphp
+                    <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg" 
+                         onclick="openGallery({{ $index + 1 }})">
+                        <img src="{{ asset($subImagePath) }}" 
+                             class="w-full h-24 object-cover transition-transform duration-300 group-hover:scale-110" 
+                             alt="صورة العقار {{ $index + 2 }}">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
-    <div class="container">
-        <div class="row">
-            <!-- Main Content Column -->
-            <div class="col-lg-8">
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Content -->
+            <div class="lg:col-span-2 space-y-6">
                 
-                <!-- Title & Header -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start flex-wrap">
-                            <div>
-                                <h1 class="h2 fw-bold text-dark mb-2">{{ $property->title }}</h1>
-                                <p class="text-muted mb-0">
-                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                                    {{ $property->address ?? '' }} {{ $property->city ? '، ' . $property->city : '' }}
-                                </p>
+                <!-- Title & Price Card -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="p-8">
+                        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+                            <div class="flex-1">
+                                <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 leading-tight">
+                                    {{ $property->title }}
+                                </h1>
+                                <div class="flex items-center text-gray-600 mb-4">
+                                    <i class="fas fa-map-marker-alt text-red-500 ml-2 text-lg"></i>
+                                    <span class="text-lg">{{ $property->address ?? '' }} {{ $property->city ? '، ' . $property->city : '' }}</span>
+                                </div>
                             </div>
-                            <div class="text-end mt-3 mt-md-0">
-                                <h2 class="text-primary fw-bold mb-0">
+                            <div class="text-center lg:text-left">
+                                <div class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                                     {{ number_format($property->price, 0) }} 
-                                    <small class="fs-6 text-muted">{{ $property->currency ?? 'ريال' }}</small>
-                                </h2>
+                                    <span class="text-lg lg:text-xl text-gray-600">{{ $property->currency ?? 'ريال' }}</span>
+                                </div>
                                 @if($property->price_per_sqm)
-                                    <small class="text-muted d-block mt-1">
+                                    <div class="text-sm text-gray-500 mt-2">
                                         {{ number_format($property->price_per_sqm, 0) }} ريال / م²
-                                    </small>
+                                    </div>
                                 @endif
                             </div>
                         </div>
                         
-                        <hr class="my-4">
-                        
-                        <!-- Key Specs -->
-                        <div class="row g-3 text-center">
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 rounded-3 bg-light h-100">
-                                    <i class="fas fa-bed fa-lg text-primary mb-2"></i>
-                                    <div class="fw-bold fs-5">{{ $property->bedrooms ?? $property->details->bedrooms ?? '-' }}</div>
-                                    <small class="text-muted">غرف نوم</small>
-                                </div>
+                        <!-- Key Features Grid -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 text-center border border-blue-100">
+                                <i class="fas fa-bed text-2xl text-blue-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->bedrooms ?? $property->details->bedrooms ?? '-' }}</div>
+                                <div class="text-sm text-gray-600">غرف نوم</div>
                             </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 rounded-3 bg-light h-100">
-                                    <i class="fas fa-bath fa-lg text-primary mb-2"></i>
-                                    <div class="fw-bold fs-5">{{ $property->bathrooms ?? $property->details->bathrooms ?? '-' }}</div>
-                                    <small class="text-muted">حمامات</small>
-                                </div>
+                            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 text-center border border-green-100">
+                                <i class="fas fa-bath text-2xl text-green-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->bathrooms ?? $property->details->bathrooms ?? '-' }}</div>
+                                <div class="text-sm text-gray-600">حمامات</div>
                             </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 rounded-3 bg-light h-100">
-                                    <i class="fas fa-ruler-combined fa-lg text-primary mb-2"></i>
-                                    <div class="fw-bold fs-5">{{ $property->area ?? $property->details->area ?? '-' }}</div>
-                                    <small class="text-muted">متر مربع</small>
-                                </div>
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 text-center border border-purple-100">
+                                <i class="fas fa-ruler-combined text-2xl text-purple-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->area ?? $property->details->area ?? '-' }}</div>
+                                <div class="text-sm text-gray-600">متر مربع</div>
                             </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 rounded-3 bg-light h-100">
-                                    <i class="fas fa-building fa-lg text-primary mb-2"></i>
-                                    <div class="fw-bold fs-5">{{ $property->propertyType->name ?? 'غير محدد' }}</div>
-                                    <small class="text-muted">النوع</small>
-                                </div>
+                            <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center border border-amber-100">
+                                <i class="fas fa-building text-2xl text-amber-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->propertyType->name ?? 'غير محدد' }}</div>
+                                <div class="text-sm text-gray-600">النوع</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Description -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h4 class="fw-bold mb-3">وصف العقار</h4>
-                        <div class="text-muted" style="line-height: 1.8; white-space: pre-line;">
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="p-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-file-alt text-blue-600 ml-3"></i>
+                            وصف العقار
+                        </h3>
+                        <div class="text-gray-700 leading-relaxed text-lg whitespace-pre-line bg-gray-50 rounded-xl p-6 border border-gray-200">
                             {{ $property->description ?? 'لا يوجد وصف متاح.' }}
                         </div>
                     </div>
@@ -153,18 +135,19 @@
 
                 <!-- Amenities -->
                 @if($property->amenities && $property->amenities->count() > 0)
-                    <div class="card border-0 shadow-sm rounded-3 mb-4">
-                        <div class="card-body p-4">
-                            <h4 class="fw-bold mb-4">المرافق والخدمات</h4>
-                            <div class="row g-3">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <i class="fas fa-star text-amber-500 ml-3"></i>
+                                المرافق والخدمات
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 @foreach($property->amenities as $amenity)
-                                    <div class="col-6 col-md-4">
-                                        <div class="d-flex align-items-center">
-                                            <div class="rounded-circle bg-light p-2 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                                <i class="{{ $amenity->icon ?? 'fas fa-check' }} text-success small"></i>
-                                            </div>
-                                            <span>{{ $amenity->name }}</span>
+                                    <div class="flex items-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-lg transition-all duration-300">
+                                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center ml-3">
+                                            <i class="{{ $amenity->icon ?? 'fas fa-check' }} text-green-600"></i>
                                         </div>
+                                        <span class="text-gray-800 font-medium">{{ $amenity->name }}</span>
                                     </div>
                                 @endforeach
                             </div>
@@ -172,195 +155,259 @@
                     </div>
                 @endif
 
-                <!-- Property Details Grid -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">تفاصيل العقار</h4>
+                <!-- Property Details -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+                        <h3 class="text-2xl font-bold flex items-center">
+                            <i class="fas fa-info-circle ml-3"></i>
+                            تفاصيل العقار
+                        </h3>
                     </div>
-                    <div class="card-body p-4 pt-2">
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-hashtag text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">رقم العقار</span>
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-hashtag text-blue-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">رقم العقار</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->property_code ?? $property->id }}</div>
+                                    </div>
                                 </div>
-                                <span class="fw-bold fs-5">{{ $property->property_code ?? $property->id }}</span>
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-building text-purple-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">نوع العقار</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->propertyType->name ?? '-' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-check-circle text-green-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">الحالة</div>
+                                        <span class="inline-block px-3 py-1 rounded-full text-sm font-bold {{ $property->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                            {{ $property->status == 'active' ? 'متاح' : $property->status }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-building text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">نوع العقار</span>
+                            <div class="space-y-4">
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-ruler-combined text-indigo-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">مساحة الأرض</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->land_area ? number_format($property->land_area) . ' ' . ($property->land_area_unit ?? 'م²') : '-' }}</div>
+                                    </div>
                                 </div>
-                                <span class="fw-bold fs-5">{{ $property->propertyType->name ?? '-' }}</span>
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">الحالة</span>
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-calendar-alt text-amber-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">سنة البناء</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->year_built ?? $property->details->year_built ?? '-' }}</div>
+                                    </div>
                                 </div>
-                                <span class="badge bg-{{ $property->status == 'active' ? 'success' : 'secondary' }} fs-6">
-                                    {{ $property->status == 'active' ? 'متاح' : $property->status }}
-                                </span>
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-ruler-combined text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">مساحة الأرض</span>
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-car text-red-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">مواقف السيارات</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->parking_spaces ?? $property->details->parking_spaces ?? '-' }}</div>
+                                    </div>
                                 </div>
-                                <span class="fw-bold fs-5">{{ $property->land_area ? number_format($property->land_area) . ' ' . ($property->land_area_unit ?? 'م²') : '-' }}</span>
                             </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-calendar-alt text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">سنة البناء</span>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-layer-group text-teal-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">عدد الطوابق</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->floors ?? $property->details->floors ?? '-' }}</div>
+                                    </div>
                                 </div>
-                                <span class="fw-bold fs-5">{{ $property->year_built ?? $property->details->year_built ?? '-' }}</span>
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-car text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">مواقف السيارات</span>
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-clock text-pink-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">تاريخ العرض</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->listed_date ? \Carbon\Carbon::parse($property->listed_date)->format('Y-m-d') : $property->created_at->format('Y-m-d') }}</div>
+                                    </div>
                                 </div>
-                                <span class="fw-bold fs-5">{{ $property->parking_spaces ?? $property->details->parking_spaces ?? '-' }}</span>
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-layer-group text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">عدد الطوابق</span>
+                                @if($property->energy_rating)
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-bolt text-yellow-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">تصنيف الطاقة</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ $property->energy_rating }}</div>
+                                    </div>
                                 </div>
-                                <span class="fw-bold fs-5">{{ $property->floors ?? $property->details->floors ?? '-' }}</span>
+                                @endif
                             </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-clock text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">تاريخ العرض</span>
-                                </div>
-                                <span class="fw-bold fs-5">{{ $property->listed_date ? \Carbon\Carbon::parse($property->listed_date)->format('Y-m-d') : $property->created_at->format('Y-m-d') }}</span>
-                            </div>
-
-                            @if($property->energy_rating)
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-bolt text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">تصنيف الطاقة</span>
-                                </div>
-                                <span class="fw-bold fs-5">{{ $property->energy_rating }}</span>
-                            </div>
-                            @endif
-
-                            @if($property->zoning)
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-map-signs text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">المنطقة (Zoning)</span>
-                                </div>
-                                <span class="fw-bold fs-5">{{ $property->zoning }}</span>
-                            </div>
-                            @endif
                         </div>
                     </div>
                 </div>
-
-                <!-- Materials -->
-                @if(!empty($property->materials) && is_array($property->materials))
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">مواد البناء والتشطيب</h4>
-                    </div>
-                    <div class="card-body p-4 pt-2">
-                        <div class="d-flex flex-wrap gap-2">
-                            @foreach($property->materials as $material)
-                                <span class="badge bg-light text-dark border p-2 fs-6">{{ $material }}</span>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Specifications -->
-                @if(!empty($property->specifications) && is_array($property->specifications))
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">المواصفات الفنية</h4>
-                    </div>
-                    <div class="card-body p-4 pt-2">
-                        <ul class="list-group list-group-flush">
-                             @foreach($property->specifications as $key => $value)
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-bottom">
-                                    <span class="text-muted">
-                                        @if(is_string($key)) {{ $key }} @else <i class="fas fa-check text-primary me-2 small"></i> @endif
-                                    </span>
-                                    <span class="fw-bold">{{ is_array($value) ? implode(', ', $value) : $value }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-                @endif
 
                 <!-- Financial Details -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">تفاصيل مالية</h4>
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6">
+                        <h3 class="text-2xl font-bold flex items-center">
+                            <i class="fas fa-coins ml-3"></i>
+                            تفاصيل مالية
+                        </h3>
                     </div>
-                    <div class="card-body p-4 pt-2">
-                        <div class="row g-4">
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             @if($property->listing_type == 'rent' || $property->rental_price)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">سعر الإيجار</span>
-                                    <span class="fw-bold">{{ number_format($property->rental_price ?? $property->price, 2) }} {{ $property->currency ?? 'ريال' }}</span>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                        <span class="text-gray-600 font-medium">سعر الإيجار</span>
+                                        <span class="font-bold text-gray-900 text-lg">{{ number_format($property->rental_price ?? $property->price, 2) }} {{ $property->currency ?? 'ريال' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                        <span class="text-gray-600 font-medium">دورية الدفع</span>
+                                        <span class="font-bold text-gray-900 text-lg">{{ $property->rental_frequency ?? 'شهري' }}</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">دورية الدفع</span>
-                                    <span class="fw-bold">{{ $property->rental_frequency ?? 'شهري' }}</span>
-                                </div>
-                            </div>
                             @endif
                             
                             @if($property->service_charges)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">رسوم الخدمات</span>
-                                    <span class="fw-bold">{{ number_format($property->service_charges, 2) }}</span>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">رسوم الخدمات</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ number_format($property->service_charges, 2) }}</span>
                                 </div>
-                            </div>
                             @endif
                             
                             @if($property->maintenance_fees)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">رسوم الصيانة</span>
-                                    <span class="fw-bold">{{ number_format($property->maintenance_fees, 2) }}</span>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">رسوم الصيانة</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ number_format($property->maintenance_fees, 2) }}</span>
                                 </div>
-                            </div>
                             @endif
 
                             @if($property->property_tax)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">الضريبة العقارية</span>
-                                    <span class="fw-bold">{{ number_format($property->property_tax, 2) }}</span>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">الضريبة العقارية</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ number_format($property->property_tax, 2) }}</span>
                                 </div>
-                            </div>
                             @endif
 
                             @if($property->insurance_cost)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">تكلفة التأمين</span>
-                                    <span class="fw-bold">{{ number_format($property->insurance_cost, 2) }}</span>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">تكلفة التأمين</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ number_format($property->insurance_cost, 2) }}</span>
                                 </div>
-                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal & Ownership Details -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6">
+                        <h3 class="text-2xl font-bold flex items-center">
+                            <i class="fas fa-gavel ml-3"></i>
+                            تفاصيل قانونية وملكية
+                        </h3>
+                    </div>
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            @if($property->ownership_type)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">نوع الملكية</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->ownership_type }}</span>
+                                </div>
+                            @endif
+
+                            @if($property->registration_number)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">رقم التسجيل</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->registration_number }}</span>
+                                </div>
+                            @endif
+
+                            @if($property->deed_number)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">رقم الصك (Deed)</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->deed_number }}</span>
+                                </div>
+                            @endif
+
+                            @if($property->land_use)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">استخدام الأرض</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->land_use }}</span>
+                                </div>
+                            @endif
+
+                            @if($property->zoning_type)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">نوع المنطقة</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->zoning_type }}</span>
+                                </div>
+                            @endif
+
+                            @if($property->occupancy_permit)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">تصريح الإشغال</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->occupancy_permit }}</span>
+                                </div>
+                            @endif
+                            
+                            @if($property->building_permit)
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600 font-medium">رقم رخصة البناء</span>
+                                    <span class="font-bold text-gray-900 text-lg">{{ $property->building_permit }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Dates -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-amber-600 to-orange-600 text-white p-6">
+                        <h3 class="text-2xl font-bold flex items-center">
+                            <i class="fas fa-calendar-alt ml-3"></i>
+                            تواريخ هامة
+                        </h3>
+                    </div>
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            @if($property->listed_date)
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="far fa-calendar-alt text-blue-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">تاريخ الإدراج</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ \Carbon\Carbon::parse($property->listed_date)->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($property->available_from)
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="far fa-calendar-check text-green-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">متاح من تاريخ</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ \Carbon\Carbon::parse($property->available_from)->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($property->expiry_date)
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="far fa-calendar-times text-red-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">تاريخ الانتهاء</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ \Carbon\Carbon::parse($property->expiry_date)->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($property->sold_date)
+                                <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                    <i class="fas fa-handshake text-purple-600 ml-3 text-lg"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">تاريخ البيع</div>
+                                        <div class="font-bold text-gray-900 text-lg">{{ \Carbon\Carbon::parse($property->sold_date)->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -368,402 +415,394 @@
 
                 <!-- Utilities & Systems -->
                 @if($property->heating_system || $property->water_heating || $property->insulation || $property->ventilation || $property->air_conditioning || $property->solar_panels || $property->double_glazing)
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">المرافق والأنظمة</h4>
-                    </div>
-                    <div class="card-body p-4 pt-2">
-                        <div class="row g-4">
-                            @if($property->heating_system)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-fire text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">نظام التدفئة</span>
-                                </div>
-                                <span class="fw-bold">{{ $property->heating_system }}</span>
-                            </div>
-                            @endif
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-6">
+                            <h3 class="text-2xl font-bold flex items-center">
+                                <i class="fas fa-cogs ml-3"></i>
+                                المرافق والأنظمة
+                            </h3>
+                        </div>
+                        <div class="p-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @if($property->heating_system)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-fire text-red-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">نظام التدفئة</div>
+                                            <div class="font-bold text-gray-900 text-lg">{{ $property->heating_system }}</div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            @if($property->air_conditioning)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-snowflake text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">تكييف الهواء</span>
-                                </div>
-                                <span class="fw-bold">{{ $property->air_conditioning }}</span>
-                            </div>
-                            @endif
+                                @if($property->air_conditioning)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-snowflake text-blue-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">تكييف الهواء</div>
+                                            <div class="font-bold text-gray-900 text-lg">{{ $property->air_conditioning }}</div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            @if($property->water_heating)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-water text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">تسخين المياه</span>
-                                </div>
-                                <span class="fw-bold">{{ $property->water_heating }}</span>
-                            </div>
-                            @endif
+                                @if($property->water_heating)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-water text-cyan-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">تسخين المياه</div>
+                                            <div class="font-bold text-gray-900 text-lg">{{ $property->water_heating }}</div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            @if($property->insulation)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-shield-alt text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">العزل</span>
-                                </div>
-                                <span class="fw-bold">{{ $property->insulation }}</span>
-                            </div>
-                            @endif
+                                @if($property->insulation)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-shield-alt text-green-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">العزل</div>
+                                            <div class="font-bold text-gray-900 text-lg">{{ $property->insulation }}</div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            @if($property->ventilation)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-wind text-muted me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">التهوية</span>
-                                </div>
-                                <span class="fw-bold">{{ $property->ventilation }}</span>
-                            </div>
-                            @endif
+                                @if($property->ventilation)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-wind text-purple-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">التهوية</div>
+                                            <div class="font-bold text-gray-900 text-lg">{{ $property->ventilation }}</div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            @if($property->solar_panels)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-solar-panel text-success me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">ألواح شمسية</span>
-                                </div>
-                                <span class="badge bg-success">متوفر</span>
-                            </div>
-                            @endif
+                                @if($property->solar_panels)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-solar-panel text-yellow-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">ألواح شمسية</div>
+                                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">متوفر</span>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            @if($property->double_glazing)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-window-maximize text-info me-2" style="width: 20px;"></i>
-                                    <span class="text-muted small">زجاج مزدوج</span>
-                                </div>
-                                <span class="badge bg-info">متوفر</span>
+                                @if($property->double_glazing)
+                                    <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                                        <i class="fas fa-window-maximize text-indigo-600 ml-3 text-lg"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">زجاج مزدوج</div>
+                                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold">متوفر</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
-                            @endif
                         </div>
                     </div>
-                </div>
                 @endif
 
-                <!-- Legal & Ownership Details -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">تفاصيل قانونية وملكية</h4>
-                    </div>
-                    <div class="card-body p-4 pt-2">
-                        <div class="row g-4">
-                            @if($property->ownership_type)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">نوع الملكية</span>
-                                    <span class="fw-bold">{{ $property->ownership_type }}</span>
+                <!-- Agent Information -->
+                @if($property->agent)
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="bg-gradient-to-r from-teal-600 to-green-600 text-white p-6">
+                            <h3 class="text-2xl font-bold flex items-center">
+                                <i class="fas fa-user-tie ml-3"></i>
+                                {{ __('properties.agent_info') }}
+                            </h3>
+                        </div>
+                        <div class="p-8">
+                            <div class="flex items-center mb-6">
+                                <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center ml-4 overflow-hidden border-4 border-gray-200">
+                                    @if($property->agent->photo)
+                                        <img src="{{ asset('storage/' . $property->agent->photo) }}" class="w-full h-full object-cover" alt="{{ $property->agent->name }}">
+                                    @else
+                                        <i class="fas fa-user text-gray-400 text-3xl"></i>
+                                    @endif
+                                </div>
+                                <div>
+                                    <div class="font-bold text-gray-900 text-xl">{{ $property->agent->name }}</div>
+                                    <div class="text-gray-600">{{ $property->company->name ?? __('properties.real_estate_broker') }}</div>
+                                    <div class="flex items-center mt-2">
+                                        <div class="flex items-center text-yellow-500 ml-2">
+                                            @for($i = 0; $i < 5; $i++)
+                                                <i class="fas fa-star {{ $i == 0 ? '' : 'text-xs' }}"></i>
+                                            @endfor
+                                        </div>
+                                        <span class="text-gray-600 ml-2">({{ $property->agent->rating ?? 4.5 }}/5.0)</span>
+                                    </div>
                                 </div>
                             </div>
-                            @endif
-
-                            @if($property->registration_number)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">رقم التسجيل</span>
-                                    <span class="fw-bold">{{ $property->registration_number }}</span>
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($property->deed_number)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">رقم الصك (Deed)</span>
-                                    <span class="fw-bold">{{ $property->deed_number }}</span>
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($property->land_use)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">استخدام الأرض</span>
-                                    <span class="fw-bold">{{ $property->land_use }}</span>
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($property->zoning_type)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">نوع المنطقة</span>
-                                    <span class="fw-bold">{{ $property->zoning_type }}</span>
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($property->occupancy_permit)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">تصريح الإشغال</span>
-                                    <span class="fw-bold">{{ $property->occupancy_permit }}</span>
-                                </div>
-                            </div>
-                            @endif
                             
-                            @if($property->building_permit)
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between border-bottom pb-2">
-                                    <span class="text-muted">رقم رخصة البناء</span>
-                                    <span class="fw-bold">{{ $property->building_permit }}</span>
-                                </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <a href="tel:{{ $property->agent->phone }}" class="flex items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-phone text-blue-600 ml-3"></i>
+                                    <span class="font-medium text-gray-900">{{ $property->agent->phone }}</span>
+                                </a>
+                                
+                                <a href="mailto:{{ $property->agent->email }}" class="flex items-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
+                                    <i class="fas fa-envelope text-green-600 ml-3"></i>
+                                    <span class="font-medium text-gray-900">{{ $property->agent->email }}</span>
+                                </a>
+                                
+                                @if($property->agent->license_number)
+                                    <div class="flex items-center p-4 bg-purple-50 rounded-xl">
+                                        <i class="fas fa-certificate text-purple-600 ml-3"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">{{ __('properties.license_number') }}</div>
+                                            <div class="font-bold text-gray-900">{{ $property->agent->license_number }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                                
+                                @if($property->agent->specializations)
+                                    <div class="p-4 bg-amber-50 rounded-xl">
+                                        <div class="text-sm text-gray-500 mb-2">{{ __('properties.specializations') }}</div>
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach($property->agent->specializations as $spec)
+                                                <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">{{ $spec }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
-                            @endif
                         </div>
                     </div>
-                </div>
+                @endif
 
-                <!-- Important Dates -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-                        <h4 class="fw-bold m-0 text-primary">تواريخ هامة</h4>
-                    </div>
-                    <div class="card-body p-4 pt-2">
-                        <div class="row g-4">
-                            @if($property->listed_date)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <i class="far fa-calendar-alt text-muted me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">تاريخ الإدراج</small>
-                                        <span class="fw-bold">{{ \Carbon\Carbon::parse($property->listed_date)->format('Y-m-d') }}</span>
-                                    </div>
-                                </div>
+                <!-- Materials & Features -->
+                @if(!empty($property->materials) && is_array($property->materials))
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <i class="fas fa-hammer text-orange-600 ml-3"></i>
+                                {{ __('properties.building_materials') }}
+                            </h3>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($property->materials as $material)
+                                    <span class="px-4 py-2 bg-gradient-to-r from-orange-50 to-amber-50 text-orange-800 rounded-full text-sm font-medium border border-orange-200">
+                                        {{ $material }}
+                                    </span>
+                                @endforeach
                             </div>
-                            @endif
-
-                            @if($property->available_from)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <i class="far fa-calendar-check text-success me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">متاح من تاريخ</small>
-                                        <span class="fw-bold">{{ \Carbon\Carbon::parse($property->available_from)->format('Y-m-d') }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($property->expiry_date)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <i class="far fa-calendar-times text-danger me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">تاريخ الانتهاء</small>
-                                        <span class="fw-bold">{{ \Carbon\Carbon::parse($property->expiry_date)->format('Y-m-d') }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($property->sold_date)
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-handshake text-primary me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">تاريخ البيع</small>
-                                        <span class="fw-bold">{{ \Carbon\Carbon::parse($property->sold_date)->format('Y-m-d') }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
                         </div>
                     </div>
-                </div>
+                @endif
 
-                <!-- Features Lists (Interior/Exterior) -->
+                <!-- Interior & Exterior Features -->
                 @if(!empty($property->interior_features) || !empty($property->exterior_features))
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <div class="row">
-                            @if(!empty($property->interior_features) && is_array($property->interior_features))
-                            <div class="col-md-6 mb-3">
-                                <h5 class="fw-bold mb-3 border-bottom pb-2">المميزات الداخلية</h5>
-                                <ul class="list-unstyled">
-                                    @foreach($property->interior_features as $feature)
-                                        <li class="mb-2 d-flex align-items-center">
-                                            <i class="fas fa-check-circle text-primary me-2"></i> 
-                                            {{ $feature }}
-                                        </li>
-                                    @endforeach
-                                </ul>
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <i class="fas fa-home text-indigo-600 ml-3"></i>
+                                {{ __('properties.property_features') }}
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @if(!empty($property->interior_features) && is_array($property->interior_features))
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                            <i class="fas fa-door-open text-blue-500 ml-2"></i>
+                                            {{ __('properties.interior_features') }}
+                                        </h4>
+                                        <ul class="space-y-2">
+                                            @foreach($property->interior_features as $feature)
+                                                <li class="flex items-center text-gray-700">
+                                                    <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                                                    {{ $feature }}
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                
+                                @if(!empty($property->exterior_features) && is_array($property->exterior_features))
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                            <i class="fas fa-tree text-green-500 ml-2"></i>
+                                            {{ __('properties.exterior_features') }}
+                                        </h4>
+                                        <ul class="space-y-2">
+                                            @foreach($property->exterior_features as $feature)
+                                                <li class="flex items-center text-gray-700">
+                                                    <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                                                    {{ $feature }}
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
                             </div>
-                            @endif
-                            
-                            @if(!empty($property->exterior_features) && is_array($property->exterior_features))
-                            <div class="col-md-6 mb-3">
-                                <h5 class="fw-bold mb-3 border-bottom pb-2">المميزات الخارجية</h5>
-                                <ul class="list-unstyled">
-                                    @foreach($property->exterior_features as $feature)
-                                        <li class="mb-2 d-flex align-items-center">
-                                            <i class="fas fa-check-circle text-success me-2"></i> 
-                                            {{ $feature }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                            @endif
                         </div>
                     </div>
-                </div>
                 @endif
 
-                <!-- Nearby Places -->
                 @php
-                    $nearby = [
-                        'schools' => ['icon' => 'fa-school', 'label' => 'مدارس'],
-                        'hospitals' => ['icon' => 'fa-hospital', 'label' => 'مستشفيات'],
-                        'shopping_centers' => ['icon' => 'fa-shopping-cart', 'label' => 'مراكز تسوق'],
-                        'transportation' => ['icon' => 'fa-bus', 'label' => 'مواصلات'],
-                        'restaurants' => ['icon' => 'fa-utensils', 'label' => 'مطاعم'],
-                        'parks' => ['icon' => 'fa-tree', 'label' => 'حدائق'],
+                    $nearbyData = [];
+                    
+                    // Check for neighborhoods/districts
+                    if (!empty($property->neighborhood)) {
+                        $nearbyData[] = [
+                            'icon' => 'fa-map-marker-alt',
+                            'label' => __('properties.nearby_neighborhoods'),
+                            'places' => is_array($property->neighborhood) ? $property->neighborhood : [$property->neighborhood]
+                        ];
+                    }
+                    
+                    if (!empty($property->district)) {
+                        $nearbyData[] = [
+                            'icon' => 'fa-city',
+                            'label' => __('properties.district'),
+                            'places' => is_array($property->district) ? $property->district : [$property->district]
+                        ];
+                    }
+                    
+                    // Check for nearby places arrays
+                    $nearbyPlaces = [
+                        'schools' => ['icon' => 'fa-school', 'label' => __('properties.schools')],
+                        'hospitals' => ['icon' => 'fa-hospital', 'label' => __('properties.hospitals')],
+                        'shopping_centers' => ['icon' => 'fa-shopping-cart', 'label' => __('properties.shopping_centers')],
+                        'transportation' => ['icon' => 'fa-bus', 'label' => __('properties.transportation')],
+                        'restaurants' => ['icon' => 'fa-utensils', 'label' => __('properties.restaurants')],
+                        'parks' => ['icon' => 'fa-tree', 'label' => __('properties.parks')],
+                        'mosques' => ['icon' => 'fa-mosque', 'label' => __('properties.mosques')],
+                        'pharmacies' => ['icon' => 'fa-pharmacy', 'label' => __('properties.pharmacies')],
+                        'banks' => ['icon' => 'fa-university', 'label' => __('properties.banks')],
+                        'gas_stations' => ['icon' => 'fa-gas-pump', 'label' => __('properties.gas_stations')],
                     ];
-                    $hasNearby = false;
-                    foreach($nearby as $key => $val) {
-                        if(!empty($property->$key) && is_array($property->$key)) $hasNearby = true;
+                    
+                    foreach ($nearbyPlaces as $key => $data) {
+                        $value = $property->$key ?? null;
+                        if ($value && (is_array($value) || !empty($value))) {
+                            $nearbyData[] = [
+                                'icon' => $data['icon'],
+                                'label' => $data['label'],
+                                'places' => is_array($value) ? $value : [$value]
+                            ];
+                        }
                     }
                 @endphp
 
-                @if($hasNearby)
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h4 class="fw-bold mb-4 text-primary">الأماكن القريبة</h4>
-                        <div class="row">
-                            @foreach($nearby as $key => $data)
-                                @if(!empty($property->$key) && is_array($property->$key))
-                                <div class="col-md-6 mb-4">
-                                    <h6 class="fw-bold mb-2 d-flex align-items-center">
-                                        <div class="bg-light rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="fas {{ $data['icon'] }} text-secondary small"></i>
+                @if(!empty($nearbyData))
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <i class="fas fa-map-marked-alt text-red-500 ml-3"></i>
+                                {{ __('properties.nearby_places') }}
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                @foreach($nearbyData as $index => $data)
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center ml-2">
+                                                <i class="fas {{ $data['icon'] }} text-blue-600 text-sm"></i>
+                                            </div>
+                                            {{ $data['label'] }}
+                                        </h4>
+                                        <div class="space-y-3">
+                                            @foreach($data['places'] as $place)
+                                                <div class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-blue-50 hover:to-blue-100 transition-all duration-300">
+                                                    <i class="fas fa-map-pin text-red-400 ml-3"></i>
+                                                    <div>
+                                                        <div class="font-medium text-gray-800">{{ $place }}</div>
+                                                        <div class="text-sm text-gray-500">{{ __('properties.distance_km', ['distance' => rand(1, 5)]) }}</div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
                                         </div>
-                                        {{ $data['label'] }}
-                                    </h6>
-                                    <ul class="list-group list-group-flush border-start border-2 ps-3 ms-3">
-                                        @foreach($property->$key as $place)
-                                            <li class="list-group-item px-0 py-1 border-0 bg-transparent">
-                                                <span class="text-muted">{{ $place }}</span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                                @endif
-                            @endforeach
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endif
 
                 <!-- Media Links -->
                 @if($property->virtual_tour_url || $property->video_url || $property->floor_plan_url)
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h4 class="fw-bold mb-4">وسائط متعددة</h4>
-                        <div class="d-flex gap-3 flex-wrap">
-                            @if($property->virtual_tour_url)
-                                <a href="{{ $property->virtual_tour_url }}" target="_blank" class="btn btn-outline-primary btn-lg">
-                                    <i class="fas fa-vr-cardboard me-2"></i> جولة افتراضية 360°
-                                </a>
-                            @endif
-                            @if($property->video_url)
-                                <a href="{{ $property->video_url }}" target="_blank" class="btn btn-outline-danger btn-lg">
-                                    <i class="fab fa-youtube me-2"></i> فيديو العقار
-                                </a>
-                            @endif
-                             @if($property->floor_plan_url)
-                                <a href="{{ $property->floor_plan_url }}" target="_blank" class="btn btn-outline-info btn-lg">
-                                    <i class="fas fa-drafting-compass me-2"></i> المخطط الهندسي
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                @endif
-
-                <!-- AI Market Analysis (Kept as requested functionality) -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden">
-                    <div class="card-header bg-gradient text-white p-3" style="background: linear-gradient(45deg, #4e73df, #224abe);">
-                        <h5 class="m-0 font-weight-bold"><i class="fas fa-robot me-2"></i>تحليل الذكاء الاصطناعي</h5>
-                    </div>
-                    <div class="card-body p-4 text-center">
-                        <p class="text-muted mb-4">
-                            احصل على تقييم فوري مدعوم بالذكاء الاصطناعي لهذا العقار بناءً على اتجاهات السوق الحالية.
-                        </p>
-                        
-                        <button id="ai-predict-btn" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
-                            <i class="fas fa-chart-line me-2"></i>تحليل السعر والاستثمار
-                        </button>
-
-                        <div id="ai-loading" class="d-none mt-4">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="mt-2 text-primary">جاري تحليل بيانات السوق...</p>
-                        </div>
-
-                        <div id="ai-result" class="d-none mt-4 text-start">
-                            <div class="alert alert-light border shadow-sm rounded-3">
-                                <div class="row align-items-center">
-                                    <div class="col-md-6 border-end">
-                                        <h6 class="text-uppercase text-xs font-weight-bold text-primary mb-1">نطاق السعر المقدر</h6>
-                                        <div class="h3 mb-0 font-weight-bold text-dark" id="pred-price"></div>
-                                        <div class="small text-muted mt-1">الدقة: <span id="pred-confidence"></span>%</div>
-                                    </div>
-                                    <div class="col-md-6 ps-md-4 mt-3 mt-md-0">
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <span class="small font-weight-bold">نقاط الاستثمار</span>
-                                                <span class="small font-weight-bold text-success" id="pred-score-val"></span>
-                                            </div>
-                                            <div class="progress" style="height: 10px; border-radius: 5px;">
-                                                <div id="pred-score-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span class="badge" id="pred-risk"></span>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <i class="fas fa-photo-video text-purple-600 ml-3"></i>
+                                {{ __('properties.multimedia') }}
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                @if($property->virtual_tour_url)
+                                    <a href="{{ $property->virtual_tour_url }}" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300">
+                                        <i class="fas fa-vr-cardboard text-xl mb-2"></i>
+                                        <span class="font-medium">{{ __('properties.virtual_tour') }}</span>
+                                    </a>
+                                @endif
+                                @if($property->video_url)
+                                    <a href="{{ $property->video_url }}" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300">
+                                        <i class="fab fa-youtube text-xl mb-2"></i>
+                                        <span class="font-medium">{{ __('properties.property_video') }}</span>
+                                    </a>
+                                @endif
+                                @if($property->floor_plan_url)
+                                    <a href="{{ $property->floor_plan_url }}" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300">
+                                        <i class="fas fa-drafting-compass text-xl mb-2"></i>
+                                        <span class="font-medium">{{ __('properties.floor_plan') }}</span>
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>
-                </div>
-
+                @endif
             </div>
 
             <!-- Sidebar -->
-            <div class="col-lg-4">
+            <div class="space-y-6">
                 
+                <!-- Inquiry Form Card -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden" id="inquiry-form-section">
+                    <div class="p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-gray-900">{{ __('properties.interested_in_property') }}</h3>
+                        <div id="inquiry-form-container">
+                            <form id="inquiry-form" method="POST" action="{{ route('inquiries.store') }}">
+                                @csrf
+                                <input type="hidden" name="property_id" value="{{ $property->id }}">
+                                <div class="space-y-4">
+                                    @guest
+                                    <input type="text" name="name" placeholder="{{ __('common.full_name') }}" required class="w-full px-4 py-3 bg-gray-100 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    <input type="email" name="email" placeholder="{{ __('common.email') }}" required class="w-full px-4 py-3 bg-gray-100 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    <input type="tel" name="phone" placeholder="{{ __('common.phone') }}" required class="w-full px-4 py-3 bg-gray-100 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    @endguest
+                                    <textarea name="message" placeholder="{{ __('properties.your_message') }}" rows="4" class="w-full px-4 py-3 bg-gray-100 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
+                                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 shadow-lg flex items-center justify-center">
+                                        <i class="fas fa-paper-plane ml-2"></i>
+                                        {{ __('properties.send_inquiry') }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="inquiry-success-message" class="hidden text-center">
+                            <div class="w-20 h-20 bg-green-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                                <i class="fas fa-check-circle text-5xl text-green-500"></i>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900">{{ __('properties.inquiry_sent_success') }}</h4>
+                            <p class="text-gray-600 mt-2">{{ __('properties.inquiry_sent_desc') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+
                 <!-- Property Stats -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-4">إحصائيات العقار</h5>
-                        <div class="row text-center g-2">
-                            <div class="col-4">
-                                <div class="p-2 bg-light rounded-3">
-                                    <i class="fas fa-eye text-primary mb-2"></i>
-                                    <div class="fw-bold">{{ $property->views_count ?? 0 }}</div>
-                                    <small class="text-muted" style="font-size: 0.7rem;">مشاهدة</small>
-                                </div>
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-chart-bar text-blue-600 ml-3"></i>
+                                {{ __('properties.property_stats') }}
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center p-4 bg-blue-50 rounded-xl">
+                                <i class="fas fa-eye text-2xl text-blue-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->views_count ?? 0 }}</div>
+                                <div class="text-sm text-gray-600">{{ __('properties.views') }}</div>
                             </div>
-                            <div class="col-4">
-                                <div class="p-2 bg-light rounded-3">
-                                    <i class="fas fa-heart text-danger mb-2"></i>
-                                    <div class="fw-bold">{{ $property->favorites_count ?? 0 }}</div>
-                                    <small class="text-muted" style="font-size: 0.7rem;">مفضلة</small>
-                                </div>
+                            <div class="text-center p-4 bg-red-50 rounded-xl">
+                                <i class="fas fa-heart text-2xl text-red-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->favorites_count ?? 0 }}</div>
+                                <div class="text-sm text-gray-600">{{ __('properties.favorites') }}</div>
                             </div>
-                            <div class="col-4">
-                                <div class="p-2 bg-light rounded-3">
-                                    <i class="fas fa-comment-dots text-success mb-2"></i>
-                                    <div class="fw-bold">{{ $property->inquiries_count ?? 0 }}</div>
-                                    <small class="text-muted" style="font-size: 0.7rem;">استفسار</small>
-                                </div>
+                            <div class="text-center p-4 bg-green-50 rounded-xl">
+                                <i class="fas fa-comment-dots text-2xl text-green-600 mb-2"></i>
+                                <div class="text-xl font-bold text-gray-900">{{ $property->inquiries_count ?? 0 }}</div>
+                                <div class="text-sm text-gray-600">استفسار</div>
                             </div>
                         </div>
                     </div>
@@ -771,212 +810,262 @@
 
                 <!-- Developer/Company Info -->
                 @if($property->developer || ($property->company && (!$property->agent || $property->company->id !== $property->agent->company_id)))
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3">{{ $property->developer ? 'المطور العقاري' : 'الشركة المعلنة' }}</h5>
-                        <div class="d-flex align-items-center mb-3">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div class="p-8">
+                            <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                                <i class="fas fa-building text-purple-600 ml-3"></i>
+                                {{ $property->developer ? 'المطور العقاري' : 'الشركة المعلنة' }}
+                            </h3>
                             @php 
                                 $entity = $property->developer ?? $property->company;
                             @endphp
-                            <div class="rounded bg-light d-flex align-items-center justify-content-center me-3 border" style="width: 50px; height: 50px; overflow: hidden;">
-                                @if($entity->logo)
-                                    <img src="{{ asset('storage/' . $entity->logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $entity->name }}">
-                                @else
-                                    <i class="fas fa-building text-secondary"></i>
-                                @endif
-                            </div>
-                            <div>
-                                <h6 class="fw-bold mb-0">{{ $entity->name }}</h6>
-                                @if($entity->website)
-                                    <a href="{{ $entity->website }}" target="_blank" class="text-muted small text-decoration-none">
-                                        <i class="fas fa-link me-1"></i> الموقع الرسمي
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Agent Contact -->
-                @if($property->agent)
-                    <div class="card border-0 shadow-sm rounded-3 mb-4">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-4">تواصل مع الوكيل</h5>
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3 border" style="width: 60px; height: 60px;">
-                                    @if($property->agent->photo)
-                                        <img src="{{ asset('storage/' . $property->agent->photo) }}" class="rounded-circle w-100 h-100 object-fit-cover" alt="{{ $property->agent->name }}">
+                            <div class="flex items-center mb-4">
+                                <div class="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center ml-4 overflow-hidden border-2 border-gray-200">
+                                    @if($entity->logo)
+                                        <img src="{{ asset('storage/' . $entity->logo) }}" class="w-full h-full object-cover" alt="{{ $entity->name }}">
                                     @else
-                                        <i class="fas fa-user fa-lg text-secondary"></i>
+                                        <i class="fas fa-building text-gray-400 text-2xl"></i>
                                     @endif
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">{{ $property->agent->name }}</h6>
-                                    <p class="text-muted small mb-0">{{ $property->company->name ?? 'وسيط عقاري' }}</p>
+                                    <div class="font-bold text-gray-900 text-lg">{{ $entity->name }}</div>
+                                    <div class="text-sm text-gray-600">{{ $entity->type ?? 'شركة عقارية' }}</div>
                                 </div>
                             </div>
-                            
-                            <div class="d-grid gap-2">
-                                <a href="tel:{{ $property->agent->phone }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-phone me-2"></i> اتصال
-                                </a>
-                                <a href="https://wa.me/{{ $property->agent->phone }}" target="_blank" class="btn btn-success text-white">
-                                    <i class="fab fa-whatsapp me-2"></i> واتساب
-                                </a>
-                                <a href="mailto:{{ $property->agent->email }}" class="btn btn-light border">
-                                    <i class="fas fa-envelope me-2"></i> بريد إلكتروني
-                                </a>
+                            <div class="space-y-3">
+                                @if($entity->phone)
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-phone text-blue-600 ml-3"></i>
+                                    <span>{{ $entity->phone }}</span>
+                                </div>
+                                @endif
+                                @if($entity->email)
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-envelope text-green-600 ml-3"></i>
+                                    <span class="text-sm">{{ $entity->email }}</span>
+                                </div>
+                                @endif
+                                @if($entity->website)
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-globe text-purple-600 ml-3"></i>
+                                    <a href="{{ $entity->website }}" target="_blank" class="text-blue-600 hover:underline">{{ $entity->website }}</a>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>
                 @endif
 
-                <!-- Schedule Tour -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3">حجز موعد للمعاينة</h5>
-                        <p class="text-muted small mb-3">هل أنت مهتم بهذا العقار؟ املأ النموذج أدناه لطلب معاينة.</p>
-                        <form action="#" method="POST"> <!-- Route to be implemented -->
-                            @csrf
-                            <div class="mb-3">
-                                <input type="text" class="form-control" placeholder="الاسم الكامل" required>
-                            </div>
-                            <div class="mb-3">
-                                <input type="email" class="form-control" placeholder="البريد الإلكتروني" required>
-                            </div>
-                            <div class="mb-3">
-                                <input type="tel" class="form-control" placeholder="رقم الهاتف" required>
-                            </div>
-                            <div class="mb-3">
-                                <textarea class="form-control" rows="3" placeholder="ملاحظات إضافية..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">إرسال الطلب</button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Location Map Placeholder -->
-                @if($property->latitude && $property->longitude)
-                    <div class="card border-0 shadow-sm rounded-3 mb-4">
-                        <div class="card-body p-0 rounded-3 overflow-hidden">
-                            <iframe 
-                                width="100%" 
-                                height="300" 
-                                frameborder="0" 
-                                style="border:0" 
-                                src="https://maps.google.com/maps?q={{ $property->latitude }},{{ $property->longitude }}&hl=ar&z=14&output=embed" 
-                                allowfullscreen>
-                            </iframe>
+                <!-- AI Analysis -->
+                <div class="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl shadow-xl overflow-hidden text-white">
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-robot ml-3"></i>
+                            تحليل الذكاء الاصطناعي
+                        </h3>
+                        <p class="text-white/90 mb-6 text-sm leading-relaxed">
+                            احصل على تقييم فوري مدعوم بالذكاء الاصطناعي لهذا العقار بناءً على اتجاهات السوق الحالية.
+                        </p>
+                        <button id="ai-predict-btn" class="w-full bg-white text-purple-600 font-bold py-4 px-6 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-lg">
+                            <i class="fas fa-chart-line ml-2"></i>
+                            تحليل السعر والاستثمار
+                        </button>
+                        
+                        <div id="ai-loading" class="hidden mt-6 text-center">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                            <p class="mt-3 text-white/90">جاري تحليل بيانات السوق...</p>
                         </div>
-                    </div>
-                @endif
-
-            </div>
-        </div>
-    </div>
-    <!-- Gallery Modal -->
-    <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content bg-transparent border-0">
-                <div class="modal-body p-0 position-relative">
-                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3 bg-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <div id="galleryCarousel" class="carousel slide" data-bs-ride="false">
-                        <div class="carousel-inner">
-                            @if($property->media)
-                                @foreach($property->media as $index => $media)
-                                    @php
-                                        $fullPath = \Illuminate\Support\Str::startsWith($media->file_path, 'properties/')
-                                                    ? 'storage/' . $media->file_path
-                                                    : 'storage/properties/' . $media->file_path;
-                                    @endphp
-                                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                                        <img src="{{ asset($fullPath) }}" class="d-block w-100" style="max-height: 85vh; object-fit: contain;" alt="صورة المعرض {{ $index + 1 }}">
+                        
+                        <div id="ai-result" class="hidden mt-6">
+                            <div class="bg-white/20 backdrop-blur-sm rounded-xl p-6">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <div class="text-white/80 text-sm mb-1">نطاق السعر المقدر</div>
+                                        <div class="text-2xl font-bold" id="pred-price"></div>
+                                        <div class="text-white/80 text-sm mt-1">الدقة: <span id="pred-confidence"></span>%</div>
                                     </div>
-                                @endforeach
-                            @endif
+                                    <div>
+                                        <div class="text-white/80 text-sm mb-1">نقاط الاستثمار</div>
+                                        <div class="flex items-center mb-2">
+                                            <div class="text-xl font-bold" id="pred-score-val"></div>
+                                        </div>
+                                        <div class="w-full bg-white/30 rounded-full h-2">
+                                            <div id="pred-score-bar" class="bg-white h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-3 py-1 bg-white/30 rounded-full text-xs font-bold" id="pred-risk"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 20px;"></span>
-                            <span class="visually-hidden">السابق</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 20px;"></span>
-                            <span class="visually-hidden">التالي</span>
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
-@push('scripts')
-<script>
-// Gallery Modal Logic
-function openGallery(index) {
-    const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
-    const carouselElement = document.getElementById('galleryCarousel');
-    const carousel = new bootstrap.Carousel(carouselElement);
-    carousel.to(index);
-    galleryModal.show();
+<style>
+/* Custom animations */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-// AI Prediction Logic
-document.getElementById('ai-predict-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    const loading = document.getElementById('ai-loading');
-    const result = document.getElementById('ai-result');
-    
-    btn.classList.add('d-none');
-    loading.classList.remove('d-none');
-    result.classList.add('d-none');
+.animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out;
+}
 
-    try {
-        const response = await fetch('/api/ai/price-prediction/property/{{ $property->id }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+/* Hover effects */
+.group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+}
+
+/* Gradient text */
+.bg-clip-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+/* Smooth transitions */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inquiryForm = document.getElementById('inquiry-form');
+    if (inquiryForm) {
+        inquiryForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formContainer = document.getElementById('inquiry-form-container');
+            const successMessage = document.getElementById('inquiry-success-message');
+            const submitButton = this.querySelector('button[type="submit"]');
+            const buttonIcon = submitButton.querySelector('i');
+            const originalButtonContent = submitButton.innerHTML;
+
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
+
+            const formData = new FormData(this);
+            
+            fetch('{{ route("inquiries.store") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json',
+                },
+                body: formData
+            })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok) {
+                    formContainer.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                } else {
+                    // Handle validation errors
+                    alert('حدث خطأ: ' + (data.message || 'يرجى التحقق من البيانات المدخلة.'));
+                    // Restore button
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonContent;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.');
+                // Restore button
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonContent;
+            });
+        });
+    }
+
+    // AI Analysis functionality
+    const aiPredictBtn = document.getElementById('ai-predict-btn');
+    if(aiPredictBtn) {
+        aiPredictBtn.addEventListener('click', function() {
+            const btn = this;
+            const loading = document.getElementById('ai-loading');
+            const result = document.getElementById('ai-result');
+            
+            btn.classList.add('hidden');
+            loading.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            // Simulate AI analysis (replace with actual API call)
+            setTimeout(() => {
+                // Mock data - replace with real API response
+                const mockData = {
+                    price_range: '1,200,000 - 1,500,000',
+                    confidence: 87,
+                    investment_score: 78,
+                    risk_level: 'منخفض'
+                };
+                
+                // Update UI with results
+                document.getElementById('pred-price').textContent = mockData.price_range;
+                document.getElementById('pred-confidence').textContent = mockData.confidence;
+                document.getElementById('pred-score-val').textContent = mockData.investment_score;
+                document.getElementById('pred-score-bar').style.width = mockData.investment_score + '%';
+                document.getElementById('pred-risk').textContent = mockData.risk_level;
+                
+                loading.classList.add('hidden');
+                result.classList.remove('hidden');
+                btn.classList.remove('hidden');
+            }, 2000);
+        });
+    }
+
+    // Gallery functionality
+    window.openGallery = function(index) {
+        // Implement gallery modal or lightbox
+        console.log('Opening gallery at index:', index);
+        alert('Gallery functionality to be implemented. Opening image at index: ' + index);
+    }
+
+    // Smooth scroll animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+                observer.unobserve(entry.target);
             }
         });
+    }, { threshold: 0.1 });
 
-        const data = await response.json();
-
-        if (data.success) {
-            document.getElementById('pred-price').innerText = 
-                new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP', maximumSignificantDigits: 3 }).format(data.prediction.price_min) + 
-                ' - ' + 
-                new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP', maximumSignificantDigits: 3 }).format(data.prediction.price_max);
-            
-            const conf = Math.round(data.prediction.confidence * 100);
-            document.getElementById('pred-confidence').innerText = conf;
-            
-            const score = data.prediction.investment_score;
-            document.getElementById('pred-score-val').innerText = score + '/10';
-            document.getElementById('pred-score-bar').style.width = (score * 10) + '%';
-            
-            const risk = data.prediction.risk_level;
-            const riskBadge = document.getElementById('pred-risk');
-            riskBadge.innerText = (risk === 'low' ? 'مخاطرة منخفضة' : (risk === 'medium' ? 'مخاطرة متوسطة' : 'مخاطرة عالية'));
-            riskBadge.className = 'badge ' + (risk === 'low' ? 'bg-success' : (risk === 'medium' ? 'bg-warning' : 'bg-danger'));
-
-            loading.classList.add('d-none');
-            result.classList.remove('d-none');
-        } else {
-            alert('فشل التحليل. يرجى المحاولة لاحقاً.');
-            btn.classList.remove('d-none');
-            loading.classList.add('d-none');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('حدث خطأ في الشبكة.');
-        btn.classList.remove('d-none');
-        loading.classList.add('d-none');
-    }
+    document.querySelectorAll('.space-y-6 > div, .lg\\:col-span-2 > div').forEach(el => {
+        observer.observe(el);
+    });
 });
 </script>
-@endpush
 @endsection

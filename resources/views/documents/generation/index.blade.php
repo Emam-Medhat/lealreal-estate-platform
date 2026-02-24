@@ -472,8 +472,14 @@
                                                 <span class="badge-modern">{{ $doc->template->name ?? 'N/A' }}</span>
                                             </td>
                                             <td>
-                                                <div class="flex items-center">
-                                                    <img class="avatar-small" src="{{ $doc->createdBy->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode($doc->createdBy->name ?? 'System') }}" alt="Avatar">
+                                                <div class="flex items-center gap-2">
+                                                    @if($doc->createdBy && $doc->createdBy->avatar_url)
+                                                        <img class="avatar-small" src="{{ $doc->createdBy->avatar_url }}" alt="Avatar">
+                                                    @else
+                                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                                            <i class="fas fa-user text-gray-500 text-xs"></i>
+                                                        </div>
+                                                    @endif
                                                     <span class="text-sm text-gray-700">{{ $doc->createdBy->name ?? 'System' }}</span>
                                                 </div>
                                             </td>

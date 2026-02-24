@@ -96,13 +96,13 @@ class UserController extends BaseController
             DB::beginTransaction();
 
             $userData = $request->validated();
-            
+
             // Hash password
             $userData['password'] = Hash::make($userData['password']);
-            
+
             // Generate UUID
             $userData['uuid'] = (string) Str::uuid();
-            
+
             // Create user
             $user = $this->userService->createUser($userData);
 
@@ -128,7 +128,7 @@ class UserController extends BaseController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('User creation failed: ' . $e->getMessage(), [
                 'request_data' => $request->all(),
                 'user_id' => auth()->id()
@@ -226,7 +226,7 @@ class UserController extends BaseController
             DB::beginTransaction();
 
             $userData = $request->validated();
-            
+
             // Hash password if being changed
             if (isset($userData['password'])) {
                 $userData['password'] = Hash::make($userData['password']);
@@ -261,7 +261,7 @@ class UserController extends BaseController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('User update failed: ' . $e->getMessage(), [
                 'user_id' => $id,
                 'request_data' => $request->all(),
@@ -397,13 +397,13 @@ class UserController extends BaseController
 
         try {
             $user = $this->userRepository->findById($id);
-            
+
             if (!$user) {
                 return $this->errorResponse('User not found', 404);
             }
 
             $newStatus = $user->account_status === 'active' ? 'inactive' : 'active';
-            
+
             $user->update(['account_status' => $newStatus]);
 
             // Clear relevant caches
@@ -431,7 +431,7 @@ class UserController extends BaseController
         $this->rateLimit($request, 60, 5);
 
         $limit = min($request->get('limit', 20), 100);
-        
+
         $activity = $this->getCachedData(
             "user_activity_{$id}_{$limit}",
             function () use ($id, $limit) {
@@ -456,7 +456,7 @@ class UserController extends BaseController
 
             // Upload new avatar
             $path = $avatar->store('avatars/' . $user->id, 'public');
-            
+
             // Generate thumbnail
             $this->generateAvatarThumbnail($avatar, $path, $user);
 
@@ -563,4 +563,53 @@ class UserController extends BaseController
             'medium'
         );
     }
+    /**
+     * Get unread notification count
+     */
+    public function getNotificationCount(): JsonResponse
+    {
+        return response()->json([
+            'count' => auth()->user()->unreadNotifications()->count()
+        ]);
+    }
+
+    /**
+     * Mark a specific notification as read
+     */
+    public function markNotificationRead($id): JsonResponse
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllNotificationsRead(): JsonResponse
+    {
+        auth()->user()->unreadNotifications->markAsRead();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Display user notifications
+     */
+    public function notifications(Request $request)
+    {
+        $this->rateLimit($request, 60, 5);
+
+        $user = auth()->user();
+        
+        $notifications = $user->notifications()
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 15));
+
+        $unreadCount = $user->unreadNotifications()->count();
+
+        return view('user.notifications', compact('notifications', 'unreadCount'));
+    }
 }
+

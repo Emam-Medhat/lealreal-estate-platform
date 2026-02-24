@@ -17,18 +17,20 @@ class AgentObserver
         try {
             // Create initial performance record
             $this->createInitialPerformance($agent);
-            
+
             // Send welcome notification
             $this->sendWelcomeNotification($agent);
 
             // Send notification to admins and managers
             try {
-                $admins = \App\Models\User::whereIn('role', ['admin', 'manager'])->get();
-                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AgentCreated($agent));
+                $admins = \App\Models\User::whereIn('role', ['admin', 'manager'])
+                    ->orWhereIn('user_type', ['admin', 'manager'])
+                    ->get();
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewAgentRegisteredNotification($agent));
             } catch (\Exception $e) {
                 \Log::warning('Could not send agent creation notification: ' . $e->getMessage());
             }
-            
+
             Log::info('Agent created with initial setup', [
                 'agent_id' => $agent->id,
                 'agent_name' => $agent->name
@@ -50,10 +52,10 @@ class AgentObserver
         try {
             // Update performance metrics
             $this->updatePerformanceMetrics($agent);
-            
+
             // Log changes
             $this->logAgentChanges($agent);
-            
+
             Log::info('Agent updated', [
                 'agent_id' => $agent->id,
                 'agent_name' => $agent->name
@@ -75,10 +77,10 @@ class AgentObserver
         try {
             // Archive agent data
             $this->archiveAgentData($agent);
-            
+
             // Cancel active commissions
             $this->cancelActiveCommissions($agent);
-            
+
             Log::info('Agent deleted', [
                 'agent_id' => $agent->id,
                 'agent_name' => $agent->name
@@ -121,7 +123,7 @@ class AgentObserver
         // Calculate current month performance
         $currentMonth = now()->month;
         $currentYear = now()->year;
-        
+
         $totalSales = $agent->sales()
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
@@ -206,7 +208,7 @@ class AgentObserver
     private function logAgentChanges(Agent $agent): void
     {
         $changes = $agent->getDirty();
-        
+
         if (!empty($changes)) {
             $agent->activities()->create([
                 'activity_type' => 'agent_update',
@@ -227,7 +229,7 @@ class AgentObserver
     {
         // This would integrate with your archiving system
         // Placeholder implementation
-        
+
         Log::info('Agent data archived', [
             'agent_id' => $agent->id,
             'agent_name' => $agent->name,
@@ -251,7 +253,7 @@ class AgentObserver
                 'cancellation_reason' => 'agent_deleted'
             ]);
         }
-        
+
         Log::info('Active commissions cancelled', [
             'agent_id' => $agent->id,
             'cancelled_count' => $activeCommissions->count()
@@ -304,7 +306,7 @@ class AgentObserver
 
         // Calculate score based on multiple factors
         $score = 0;
-        
+
         // Sales performance (40%)
         if ($totalSales >= 10) {
             $score += 15;
@@ -313,7 +315,7 @@ class AgentObserver
         } elseif ($totalSales >= 1) {
             $score += 5;
         }
-        
+
         // Total revenue (15%)
         if ($totalRevenue >= 100000) {
             $score += 15;
@@ -322,7 +324,7 @@ class AgentObserver
         } elseif ($totalRevenue >= 10000) {
             $score += 5;
         }
-        
+
         // Conversion rate (20%)
         if ($totalLeads > 0) {
             $conversionRate = ($convertedLeads / $totalLeads) * 100;
@@ -336,7 +338,7 @@ class AgentObserver
                 $score += 5;
             }
         }
-        
+
         // Appointment performance (20%)
         if ($totalAppointments > 0) {
             $completionRate = ($completedAppointments / $totalAppointments) * 100;
@@ -350,7 +352,7 @@ class AgentObserver
                 $score += 5;
             }
         }
-        
+
         // Commission performance (10%)
         if ($totalCommissions >= 10000) {
             $score += 10;
@@ -359,7 +361,7 @@ class AgentObserver
         } elseif ($totalCommissions >= 1000) {
             $score += 5;
         }
-        
+
         return min($score, 100);
     }
 

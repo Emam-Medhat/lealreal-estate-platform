@@ -124,12 +124,12 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">نقاط الأداء</h5>
+                    <h5 class="mb-0">{{ __('reports.performance_metrics') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
-                            <span>نقطة الأداء الإجمالية</span>
+                            <span>{{ __('reports.overall_performance_score') }}</span>
                             <span>{{ number_format($overallScore, 1) }}/100</span>
                         </div>
                         <div class="progress">
@@ -138,7 +138,7 @@
                     </div>
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
-                            <span>نقطة الإعلانات</span>
+                            <span>{{ __('reports.listing_score') }}</span>
                             <span>{{ number_format($listingScore, 1) }}/100</span>
                         </div>
                         <div class="progress">
@@ -147,7 +147,7 @@
                     </div>
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
-                            <span>نقطة التسويق</span>
+                            <span>{{ __('reports.marketing_score') }}</span>
                             <span>{{ number_format($marketingScore, 1) }}/100</span>
                         </div>
                         <div class="progress">
@@ -156,7 +156,7 @@
                     </div>
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
-                            <span>نقطة التحويل</span>
+                            <span>{{ __('reports.conversion_score') }}</span>
                             <span>{{ number_format($conversionScore, 1) }}/100</span>
                         </div>
                         <div class="progress">
@@ -197,7 +197,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">العقارات الأكثر مشاهدة</h5>
+                    <h5 class="mb-0">{{ __('reports.top_viewed_properties') }}</h5>
                 </div>
                 <div class="card-body">
                     @if($topViewedProperties->count() > 0)
@@ -210,7 +210,7 @@
                                     </div>
                                     <div>
                                         <span class="badge bg-primary">{{ number_format($property->views_count) }}</span>
-                                        <small class="text-muted">مشاهدة</small>
+                                        <small class="text-muted">{{ __('reports.views') }}</small>
                                     </div>
                                 </div>
                             @endforeach
@@ -227,7 +227,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">العقارات الأكثر استفساراً</h5>
+                    <h5 class="mb-0">{{ __('reports.top_inquired_properties') }}</h5>
                 </div>
                 <div class="card-body">
                     @if($topInquiredProperties->count() > 0)
@@ -240,7 +240,7 @@
                                     </div>
                                     <div>
                                         <span class="badge bg-success">{{ number_format($property->inquiries_count) }}</span>
-                                        <small class="text-muted">استفسار</small>
+                                        <small class="text-muted">{{ __('reports.inquiries') }}</small>
                                     </div>
                                 </div>
                             @endforeach
@@ -261,7 +261,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">الأداء حسب نوع العقار</h5>
+                    <h5 class="mb-0">{{ __('reports.performance_by_type') }}</h5>
                 </div>
                 <div class="card-body">
                     @if($performanceByType->count() > 0)
@@ -279,6 +279,11 @@
                                 </thead>
                                 <tbody>
                                     @foreach($performanceByType as $type)
+                                        @php
+                                            if (is_array($type)) {
+                                                $type = (object) $type;
+                                            }
+                                        @endphp
                                         <tr>
                                             <td>
                                                 <span class="badge bg-secondary">{{ $type->type }}</span>

@@ -59,11 +59,29 @@ class ChatbotController extends Controller
                 $validated['filters'] ?? []
             );
 
+            // Fetch rich property data for the suggested IDs to render cards
+            $suggestedProperties = [];
+            if (!empty($result['suggested_ids'])) {
+                $suggestedProperties = \App\Models\Property::whereIn('id', $result['suggested_ids'])
+                    ->with(['pricing', 'location'])
+                    ->get()
+                    ->map(fn($p) => [
+                        'id' => $p->id,
+                        'title' => $p->title,
+                        'price' => $p->pricing->price ?? 0,
+                        'currency' => $p->pricing->currency ?? 'EGP',
+                        'location' => ($p->location->city ?? '') . ' - ' . ($p->location->district ?? ''),
+                        'image' => $p->main_image ?? asset('assets/images/placeholder.jpg'),
+                        'url' => route('properties.show', $p->id),
+                    ]);
+            }
+
             return response()->json([
                 'success' => $result['success'],
                 'session_id' => $result['session_id'],
                 'reply' => $result['reply'],
                 'suggested_ids' => $result['suggested_ids'],
+                'suggested_properties' => $suggestedProperties,
                 'debug_error' => app()->environment('production') ? null : ($result['error_detail'] ?? null),
             ], $result['success'] ? 200 : 503);
 

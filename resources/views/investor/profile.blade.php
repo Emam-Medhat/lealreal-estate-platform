@@ -29,11 +29,15 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div class="flex items-start space-x-6">
                 <!-- Profile Picture -->
-                <div class="bg-gray-200 rounded-lg w-32 h-32 flex items-center justify-center">
+                <div class="flex-shrink-0">
                     @if($investor->avatar)
                         <img src="{{ $investor->avatar }}" alt="{{ $investor->name }}" class="w-32 h-32 rounded-lg object-cover">
+                    @elseif($investor->user && $investor->user->avatar_url)
+                        <img src="{{ $investor->user->avatar_url }}" alt="{{ $investor->name }}" class="w-32 h-32 rounded-lg object-cover">
                     @else
-                        <i class="fas fa-user text-gray-400 text-4xl"></i>
+                        <div class="bg-gray-200 rounded-lg w-32 h-32 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-400 text-4xl"></i>
+                        </div>
                     @endif
                 </div>
                 

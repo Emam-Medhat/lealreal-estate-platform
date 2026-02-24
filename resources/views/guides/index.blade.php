@@ -86,9 +86,15 @@
                                 <p class="text-gray-600 mb-4">{{ $guide->getFormattedExcerpt(120) }}</p>
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <img src="{{ $guide->author->avatar ?? asset('images/default-avatar.png') }}" 
-                                             alt="{{ $guide->author->name }}" 
-                                             class="w-8 h-8 rounded-full mr-2">
+                                        @if($guide->author && $guide->author->avatar_url)
+                                            <img src="{{ $guide->author->avatar_url }}" 
+                                                 alt="{{ $guide->author->name }}" 
+                                                 class="w-8 h-8 rounded-full mr-2 object-cover">
+                                        @else
+                                            <div class="w-8 h-8 rounded-full mr-2 bg-gray-200 flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-500 text-xs"></i>
+                                            </div>
+                                        @endif
                                         <span class="text-sm text-gray-700">{{ $guide->author->name }}</span>
                                     </div>
                                     <div class="flex items-center space-x-3 text-sm text-gray-500">

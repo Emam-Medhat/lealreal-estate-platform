@@ -369,12 +369,10 @@ class PropertyObserver
     {
         if ($event === 'created') {
             try {
-                // Find all admins to notify
-                $admins = \App\Models\User::where('role', 'admin')
-                    ->orWhere('user_type', 'admin')
-                    ->get();
+                // Find all admins and super admins to notify
+                $admins = \App\Models\User::whereIn('user_type', ['admin', 'super_admin'])->get();
                 
-                if ($admins->count() > 0) {
+                if ($admins->isNotEmpty()) {
                     \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPropertyNotification($property));
                     Log::info("Sent new property notification to {$admins->count()} admins for property {$property->id}");
                 }

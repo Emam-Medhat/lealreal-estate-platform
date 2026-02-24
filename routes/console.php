@@ -118,4 +118,5 @@ app()->booted(function () {
     $schedule = app(Schedule::class);
     $schedule->command('ai:recalc-scores')->hourly();
     $schedule->command('ai:budget-alert')->hourly();
+    $schedule->command('payments:unlock-expired')->everyMinute();
 });

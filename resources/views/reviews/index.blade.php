@@ -164,7 +164,13 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="{{ $review->user->avatar ?? 'images/default-avatar.png' }}" alt="">
+                                        @if($review->user && $review->user->avatar_url)
+                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ $review->user->avatar_url }}" alt="{{ $review->user->name }}">
+                                        @else
+                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-400"></i>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="mr-3">
                                         <p class="text-sm font-medium text-gray-900">{{ $review->user->name }}</p>

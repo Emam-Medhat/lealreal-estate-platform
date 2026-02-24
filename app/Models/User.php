@@ -24,9 +24,9 @@ class User extends Authenticatable
         'status',
         'avatar',
         'profile_image',
-        'bio',
         'location',
         'country',
+        'state',
         'city',
         'address',
         'postal_code',
@@ -59,9 +59,8 @@ class User extends Authenticatable
         'full_name',
         'account_status',
         'registration_ip',
-        'preferred_currency',
-        'preferred_language',
         'timezone',
+        'birth_date',
         'email_verified_at',
         'phone_verified_at',
         'is_online',
@@ -155,6 +154,9 @@ class User extends Authenticatable
         'two_factor_enabled',
         'biometric_enabled',
         'property_preferences',
+        'job_title',
+        'twitter',
+        'whatsapp',
     ];
 
     protected $guarded = ['_token'];
@@ -493,13 +495,25 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute(): ?string
     {
-        // Remove 'avatars/' prefix if it exists in the filename
-        $filename = $this->avatar;
-        if ($filename && str_starts_with($filename, 'avatars/')) {
-            $filename = substr($filename, 8); // Remove 'avatars/' prefix
+        $avatar = $this->avatar ?? $this->profile_image;
+
+        if (!$avatar) {
+            return null;
         }
 
-        return $filename ? asset('storage/avatars/' . $filename) : null;
+        if (str_starts_with($avatar, 'http')) {
+            return $avatar;
+        }
+
+        if (str_starts_with($avatar, 'storage/')) {
+            return asset($avatar);
+        }
+
+        if (str_starts_with($avatar, 'avatars/')) {
+            return asset('storage/' . $avatar);
+        }
+
+        return asset('storage/avatars/' . $avatar);
     }
 
     public function getThumbnailUrlAttribute(): ?string

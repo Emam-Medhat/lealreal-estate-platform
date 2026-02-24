@@ -100,7 +100,6 @@ class PerformanceServiceProvider extends ServiceProvider
     private function registerObservers()
     {
         // Register performance observers
-        \App\Models\User::observe(\App\Observers\UserObserver::class);
         \App\Models\Lead::observe(\App\Observers\LeadObserver::class);
         \App\Models\Property::observe(\App\Observers\PropertyObserver::class);
         \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);

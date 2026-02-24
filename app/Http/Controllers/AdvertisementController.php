@@ -38,7 +38,7 @@ class AdvertisementController extends Controller
             ->get();
         
         $placements = AdPlacement::where('is_active', true)->get();
-        $properties = Property::where('user_id', Auth::id())->get();
+        $properties = Property::where('agent_id', Auth::id())->get();
 
         return view('ads.create', compact('campaigns', 'placements', 'properties'));
     }

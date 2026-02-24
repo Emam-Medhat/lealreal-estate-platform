@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مركز التحكم — Real Estate Admin</title>
+  <title>{{ __('dashboard.control_center') }} — Real Estate Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;600;700;900&display=swap"
@@ -1454,29 +1454,29 @@
         </div>
       </div>
       <nav class="sb-nav">
-        <div class="sb-sec">الرئيسية</div>
-        <a href="{{ route('admin.dashboard') }}" class="sb-link active"><i class="fas fa-th-large"></i>لوحة التحكم</a>
+        <div class="sb-sec">{{ __('dashboard.home') }}</div>
+        <a href="{{ route('admin.dashboard') }}" class="sb-link active"><i class="fas fa-th-large"></i>{{ __('dashboard.dashboard') }}</a>
         <a href="{{ route('admin.performance.dashboard') }}" class="sb-link"><i
-            class="fas fa-chart-line"></i>التحليلات</a>
-        <a href="{{ route('admin.system.logs') }}" class="sb-link"><i class="fas fa-bell"></i>الإشعارات<span
+            class="fas fa-chart-line"></i>{{ __('dashboard.analytics') }}</a>
+        <a href="{{ route('admin.system.logs') }}" class="sb-link"><i class="fas fa-bell"></i>{{ __('dashboard.notifications') }}<span
             class="sb-badge">12</span></a>
-        <div class="sb-sec">الإدارة</div>
-        <a href="{{ route('admin.users.index') }}" class="sb-link"><i class="fas fa-users"></i>المستخدمون</a>
-        <a href="{{ route('admin.properties.index') }}" class="sb-link"><i class="fas fa-city"></i>العقارات</a>
-        <a href="{{ route('admin.companies.index') }}" class="sb-link"><i class="fas fa-briefcase"></i>الشركات</a>
-        <div class="sb-sec">الذكاء الاصطناعي</div>
-    <a href="{{ route('ai.dashboard') }}" class="sb-link"><i class="fas fa-robot"></i>لوحة التحكم الذكية</a>
-    <a href="{{ route('ai.smart-search') }}" class="sb-link"><i class="fas fa-search-plus"></i>البحث الذكي</a>
-    <a href="{{ route('ai.chat') }}" class="sb-link"><i class="fas fa-brain"></i>المستشار العقاري</a>
-    <a href="{{ route('ai.analytics') }}" class="sb-link"><i class="fas fa-chart-pie"></i>تحليلات الأداء</a>
-    <div class="sb-sec">المالية</div>
-    <a href="{{ route('admin.financial.wallets') }}" class="sb-link"><i class="fas fa-wallet"></i>المحافظ</a>
-    <a href="{{ route('admin.financial.invoices') }}" class="sb-link"><i class="fas fa-file-invoice"></i>الفواتير</a>
-    <a href="{{ route('subscriptions.index') }}" class="sb-link"><i class="fas fa-tags"></i>الاشتراكات</a>
-    <div class="sb-sec">النظام</div>
-    <a href="{{ route('admin.settings.index') }}" class="sb-link"><i class="fas fa-cog"></i>الإعدادات</a>
-    <a href="{{ route('admin.settings.maintenance') }}" class="sb-link"><i class="fas fa-tools"></i>الصيانة</a>
-    <a href="{{ route('admin.system.logs') }}" class="sb-link"><i class="fas fa-history"></i>السجلات</a>
+        <div class="sb-sec">{{ __('dashboard.management') }}</div>
+        <a href="{{ route('admin.users.index') }}" class="sb-link"><i class="fas fa-users"></i>{{ __('dashboard.users') }}</a>
+        <a href="{{ route('admin.properties.index') }}" class="sb-link"><i class="fas fa-city"></i>{{ __('dashboard.properties') }}</a>
+        <a href="{{ route('admin.companies.index') }}" class="sb-link"><i class="fas fa-briefcase"></i>{{ __('dashboard.companies') }}</a>
+        <div class="sb-sec">{{ __('dashboard.ai') }}</div>
+    <a href="{{ route('ai.dashboard') }}" class="sb-link"><i class="fas fa-robot"></i>{{ __('dashboard.smart_dashboard') }}</a>
+    <a href="{{ route('ai.smart-search') }}" class="sb-link"><i class="fas fa-search-plus"></i>{{ __('dashboard.smart_search') }}</a>
+    <a href="{{ route('ai.chat') }}" class="sb-link"><i class="fas fa-brain"></i>{{ __('dashboard.property_advisor') }}</a>
+    <a href="{{ route('ai.analytics') }}" class="sb-link"><i class="fas fa-chart-pie"></i>{{ __('dashboard.performance_analytics') }}</a>
+    <div class="sb-sec">{{ __('dashboard.financial') }}</div>
+    <a href="{{ route('admin.financial.wallets') }}" class="sb-link"><i class="fas fa-wallet"></i>{{ __('dashboard.wallets') }}</a>
+    <a href="{{ route('admin.financial.invoices') }}" class="sb-link"><i class="fas fa-file-invoice"></i>{{ __('dashboard.invoices') }}</a>
+    <a href="{{ route('subscriptions.index') }}" class="sb-link"><i class="fas fa-tags"></i>{{ __('dashboard.subscriptions') }}</a>
+    <div class="sb-sec">{{ __('dashboard.system') }}</div>
+    <a href="{{ route('admin.settings.index') }}" class="sb-link"><i class="fas fa-cog"></i>{{ __('dashboard.settings') }}</a>
+    <a href="{{ route('admin.settings.maintenance') }}" class="sb-link"><i class="fas fa-tools"></i>{{ __('dashboard.maintenance') }}</a>
+    <a href="{{ route('admin.system.logs') }}" class="sb-link"><i class="fas fa-history"></i>{{ __('dashboard.logs') }}</a>
   </nav>
   <div class="sb-foot">
     <div class="sb-user">

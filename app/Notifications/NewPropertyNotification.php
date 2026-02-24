@@ -41,11 +41,11 @@ class NewPropertyNotification extends Notification implements ShouldQueue
     {
         return [
             'property_id' => $this->property->id,
-            'title' => $this->property->title,
-            'agent_name' => $this->property->agent ? $this->property->agent->name : 'Unknown Agent',
-            'created_at' => now(),
-            'message' => 'تم إضافة عقار جديد: ' . $this->property->title,
-            'url' => route('admin.properties.show', $this->property->id)
+            'title' => 'عقار جديد أضيف',
+            'message' => 'تمت إضافة عقار جديد بعنوان: ' . $this->property->title,
+            'url' => route('admin.properties.show', $this->property->id),
+            'icon' => 'fa-building',
+            'color' => '#3498db', // Blue color for properties
         ];
     }
 
@@ -55,10 +55,12 @@ class NewPropertyNotification extends Notification implements ShouldQueue
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
-            'property_id' => $this->property->id,
-            'title' => $this->property->title,
-            'message' => 'تم إضافة عقار جديد: ' . $this->property->title,
+            'id' => $this->id,
+            'title' => 'عقار جديد أضيف',
+            'message' => 'تمت إضافة عقار جديد بعنوان: ' . $this->property->title,
             'url' => route('admin.properties.show', $this->property->id),
+            'icon' => 'fa-building',
+            'color' => '#3498db',
             'time' => now()->diffForHumans(),
         ]);
     }

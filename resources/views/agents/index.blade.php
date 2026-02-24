@@ -63,10 +63,10 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3 overflow-hidden">
-                                            @if($agent->profile && $agent->profile->photo)
-                                                <img src="{{ Storage::url($agent->profile->photo) }}" alt="" class="w-full h-full object-cover">
+                                            @if($agent->user->avatar_url)
+                                                <img src="{{ $agent->user->avatar_url }}" alt="{{ $agent->user->name }}" class="w-full h-full object-cover">
                                             @else
-                                                {{ substr($agent->user->name, 0, 1) }}
+                                                <i class="fas fa-user"></i>
                                             @endif
                                         </div>
                                         <div>

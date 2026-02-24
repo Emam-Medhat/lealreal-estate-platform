@@ -41,6 +41,17 @@ class CompanyObserver
                 'name' => $company->name
             ]);
 
+            // Notify admins about new company
+            try {
+                $admins = \App\Models\User::whereIn('user_type', ['admin', 'super_admin'])->get();
+
+                if ($admins->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewCompanyNotification($company));
+                }
+            } catch (\Exception $e) {
+                Log::warning('Could not send admin notification for new company: ' . $e->getMessage());
+            }
+
         } catch (\Exception $e) {
             Log::error('Failed to setup company after creation', ['error' => $e->getMessage()]);
         }

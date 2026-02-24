@@ -203,8 +203,10 @@ class AIController extends Controller
     public function propertyValuation()
     {
         try {
-            // Check if table exists, otherwise use empty collection
-            $valuations = collect();
+            // Check if table exists, otherwise use empty paginated collection
+            $valuations = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage() ? 
+                new \Illuminate\Pagination\LengthAwarePaginator(collect(), 0, 20, \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage()) : 
+                collect();
             $stats = [
                 'total_valuations' => 0,
                 'high_confidence' => 0,
@@ -230,7 +232,7 @@ class AIController extends Controller
             return view('ai.property-valuation', compact('valuations', 'stats'));
         } catch (\Exception $e) {
             return view('ai.property-valuation', [
-                'valuations' => collect(),
+                'valuations' => new \Illuminate\Pagination\LengthAwarePaginator(collect(), 0, 20, 1),
                 'stats' => ['total_valuations' => 0, 'high_confidence' => 0, 'avg_confidence' => 0, 'recent_valuations' => 0],
                 'error' => $e->getMessage()
             ]);

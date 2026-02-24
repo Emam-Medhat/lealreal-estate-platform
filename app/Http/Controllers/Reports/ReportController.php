@@ -54,6 +54,18 @@ class ReportController extends Controller
             'soldProperties' => $summary['sold_properties'] ?? 0,
             'averageDaysOnMarket' => $summary['average_days_on_market'] ?? 0,
             'averageViews' => $summary['average_views'] ?? 0,
+            'averageInquiries' => $summary['average_inquiries'] ?? 0,
+            'viewToInquiryRate' => $summary['view_to_inquiry_rate'] ?? 0,
+            'inquiryToSaleRate' => $summary['inquiry_to_sale_rate'] ?? 0,
+            'overallScore' => $summary['overall_score'] ?? 0,
+            'listingScore' => $summary['listing_score'] ?? 0,
+            'marketingScore' => $summary['marketing_score'] ?? 0,
+            'conversionScore' => $summary['conversion_score'] ?? 0,
+            'topViewedProperties' => $performanceData['top_viewed_properties'] ?? collect([]),
+            'topInquiredProperties' => $performanceData['top_inquired_properties'] ?? collect([]),
+            'performanceByType' => $performanceData['performance_by_type'] ?? collect([]),
+            'performanceByAgent' => $performanceData['performance_by_agent'] ?? collect([]),
+            'monthlyPerformance' => $performanceData['monthly_performance'] ?? collect([]),
             'performanceData' => $performanceData
         ]);
     }

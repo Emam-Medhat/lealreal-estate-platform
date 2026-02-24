@@ -89,7 +89,7 @@ class UserService
     /**
      * Create a new user
      */
-    public function createUser(array $data): User
+    public function createUser(array $data, ?UploadedFile $avatar = null): User
     {
         DB::beginTransaction();
         try {
@@ -115,8 +115,20 @@ class UserService
                 $data['account_status'] = 'active';
             }
 
+            // Filter data to only include valid columns for User model
+            $columns = \Illuminate\Support\Facades\Schema::getColumnListing('users');
+            $userData = array_intersect_key($data, array_flip($columns));
+
+            // Remove protected/system columns
+            unset($userData['id'], $userData['created_at'], $userData['updated_at'], $userData['remember_token']);
+
             // Create user
-            $user = $this->userRepository->create($data);
+            $user = $this->userRepository->create($userData);
+
+            // Handle avatar upload
+            if ($avatar) {
+                $this->handleAvatarUpload($user, $avatar);
+            }
 
             // Create profile
             $profileData = [
@@ -166,6 +178,50 @@ class UserService
     }
 
     /**
+     * Handle avatar upload
+     */
+    protected function handleAvatarUpload(User $user, UploadedFile $avatar): void
+    {
+        try {
+            // Validate file
+            if (!$avatar->isValid()) {
+                Log::error('Invalid avatar file', [
+                    'error' => $avatar->getErrorMessage(),
+                    'user_id' => $user->id
+                ]);
+                return;
+            }
+
+            // Generate unique filename
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $avatar->getClientOriginalExtension();
+
+            // Store file
+            $path = $avatar->storeAs('avatars', $filename, 'public');
+
+            if ($path) {
+                // Update user avatar field
+                $user->update(['avatar' => $path]);
+
+                Log::info('Avatar uploaded successfully', [
+                    'user_id' => $user->id,
+                    'path' => $path,
+                    'filename' => $filename
+                ]);
+            } else {
+                Log::error('Failed to upload avatar', [
+                    'user_id' => $user->id,
+                    'filename' => $filename
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Avatar upload failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Handle setup specific to user roles (Agent, Company, etc.)
      */
     protected function handleRoleSpecificSetup(User $user, array $data): void
@@ -190,6 +246,85 @@ class UserService
             CacheService::forget("user_dashboard_{$userId}");
             CacheService::forget("user_dashboard_stats_{$userId}");
             CacheService::forget("user_profile_{$userId}");
+        }
+    }
+
+    /**
+     * Update user (Admin function)
+     * Handles file uploads, password hashing, and role/status updates.
+     */
+    public function updateUser(int|string $userId, array $data, ?UploadedFile $avatar = null): User
+    {
+        $user = $this->userRepository->findById($userId);
+
+        DB::beginTransaction();
+        try {
+            $oldData = $user->toArray();
+
+            // Handle Password
+            if (!empty($data['password'])) {
+                $data['password'] = Hash::make($data['password']);
+            } else {
+                unset($data['password']);
+            }
+
+            // Handle Avatar Upload
+            if ($avatar) {
+                // Delete old avatar if exists
+                if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                    Storage::disk('public')->delete($user->avatar);
+                }
+
+                $path = $avatar->store('avatars', 'public');
+                $data['avatar'] = $path;
+
+                // Sync with profile_image if column exists (legacy support)
+                $columns = \Illuminate\Support\Facades\Schema::getColumnListing('users');
+                if (in_array('profile_image', $columns)) {
+                    $data['profile_image'] = $path;
+                }
+            }
+
+            // Filter data to only include valid columns for User model
+            $columns = \Illuminate\Support\Facades\Schema::getColumnListing('users');
+            $userData = array_intersect_key($data, array_flip($columns));
+
+            // Remove protected/system columns
+            unset($userData['id'], $userData['created_at'], $userData['updated_at'], $userData['remember_token']);
+
+            // Update User
+            $this->userRepository->update($user->id, $userData);
+
+            // Update Profile (if profile data is present and profile relation exists)
+            if (isset($data['profile']) && is_array($data['profile']) && method_exists($user, 'profile')) {
+                if ($user->profile) {
+                    $user->profile->update($data['profile']);
+                } else {
+                    $user->profile()->create($data['profile']);
+                }
+            }
+
+            DB::commit();
+
+            // Clear caches
+            $this->clearUserCaches($user->id);
+            $this->clearUserCaches(); // Clear list caches
+
+            // Log activity
+            $this->logActivity($user, 'user_updated_by_admin', [
+                'admin_id' => auth()->id(),
+                'changes' => $this->getChanges($oldData, $userData)
+            ]);
+
+            return $user->fresh();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update user', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 

@@ -58,7 +58,6 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         // Register model observers for automatic cache invalidation and logging
-        \App\Models\User::observe(\App\Observers\UserObserver::class);
         \App\Models\Property::observe(\App\Observers\PropertyObserver::class);
         \App\Models\Agent::observe(\App\Observers\AgentObserver::class);
         \App\Models\Developer::observe(\App\Observers\DeveloperObserver::class);

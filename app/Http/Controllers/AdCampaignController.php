@@ -81,7 +81,7 @@ class AdCampaignController extends Controller
 
             DB::commit();
 
-            return redirect()->route('campaigns.show', $campaign->id)
+            return redirect()->route('ads.campaigns.show', $campaign->id)
                 ->with('success', 'تم إنشاء الحملة الإعلانية بنجاح');
 
         } catch (\Exception $e) {
@@ -149,7 +149,7 @@ class AdCampaignController extends Controller
             'end_date' => $request->end_date
         ]);
 
-        return redirect()->route('campaigns.show', $campaign->id)
+        return redirect()->route('ads.campaigns.show', $campaign->id)
             ->with('success', 'تم تحديث الحملة بنجاح');
     }
 
@@ -166,7 +166,7 @@ class AdCampaignController extends Controller
 
         $campaign->delete();
 
-        return redirect()->route('campaigns.index')
+        return redirect()->route('ads.campaigns.index')
             ->with('success', 'تم حذف الحملة بنجاح');
     }
 
@@ -245,7 +245,7 @@ class AdCampaignController extends Controller
             $newTargeting->save();
         }
 
-        return redirect()->route('campaigns.edit', $newCampaign->id)
+        return redirect()->route('ads.campaigns.edit', $newCampaign->id)
             ->with('success', 'تم نسخ الحملة بنجاح');
     }
 

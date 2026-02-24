@@ -89,9 +89,13 @@
                             <!-- User Menu -->
                             <div class="relative">
                                 <button class="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
-                                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-full p-2">
-                                        <i class="fas fa-user text-white text-sm"></i>
-                                    </div>
+                                    @if(auth()->user()->avatar_url)
+                                        <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover">
+                                    @else
+                                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-full p-2 w-8 h-8 flex items-center justify-center">
+                                            <i class="fas fa-user text-white text-sm"></i>
+                                        </div>
+                                    @endif
                                     <span class="text-sm font-medium">{{ auth()->user()->name }}</span>
                                     <i class="fas fa-chevron-down text-xs"></i>
                                 </button>

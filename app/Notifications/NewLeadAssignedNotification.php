@@ -28,7 +28,20 @@ class NewLeadAssignedNotification extends Notification
      */
     public function via($notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', 'broadcast'];
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     */
+    public function toBroadcast($notifiable): \Illuminate\Notifications\Messages\BroadcastMessage
+    {
+        return new \Illuminate\Notifications\Messages\BroadcastMessage([
+            'title' => 'عميل جديد مخصص لك',
+            'message' => "تم تخصيص العميل {$this->lead->title} لك. يرجى التواصل مع العميل في أقرب وقت.",
+            'url' => '#', // Can be updated to lead show route if available
+            'time' => now()->diffForHumans(),
+        ]);
     }
 
     /**

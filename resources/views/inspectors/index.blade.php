@@ -103,7 +103,13 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="{{ $inspector->avatar ?? asset('images/default-avatar.png') }}" alt="">
+                                        @if($inspector->avatar)
+                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ $inspector->avatar }}" alt="{{ $inspector->name }}">
+                                        @else
+                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <i class="fas fa-user-hard-hat text-gray-400"></i>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="mr-4">
                                         <div class="text-sm font-medium text-gray-900">{{ $inspector->name }}</div>

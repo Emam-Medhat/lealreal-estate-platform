@@ -53,9 +53,15 @@
                                     </td>
                                     <td class="py-3 px-4">
                                         <div class="flex items-center">
-                                            <img src="{{ $page->author->avatar ?? asset('images/default-avatar.png') }}" 
-                                                 alt="{{ $page->author->name }}" 
-                                                 class="w-6 h-6 rounded-full mr-2">
+                                            @if($page->author && $page->author->avatar_url)
+                                                <img src="{{ $page->author->avatar_url }}" 
+                                                     alt="{{ $page->author->name }}" 
+                                                     class="w-6 h-6 rounded-full mr-2 object-cover">
+                                            @else
+                                                <div class="w-6 h-6 rounded-full mr-2 bg-gray-200 flex items-center justify-center">
+                                                    <i class="fas fa-user text-gray-500 text-xs"></i>
+                                                </div>
+                                            @endif
                                             <span class="text-sm text-gray-700">{{ $page->author->name }}</span>
                                         </div>
                                     </td>

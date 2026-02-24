@@ -11,6 +11,8 @@ class AdTargeting extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'ad_targeting';
+
     protected $fillable = [
         'advertisement_id',
         'campaign_id',
@@ -493,24 +495,6 @@ class AdTargeting extends Model
         return 0;
     }
 
-    public function getkinTargeting<|code_suffix|>
-        0;
-
-       oS
-       .0;
-
-       zee($criteria)_;_criteria) {
-rer multiplier *= __; //nting reduces reachanska
-    if inreachMult($this->Subjec multiplier *=  X;_targeting-Ting multiplier.
-    }
-
-   <|code_suffix|>
-;($this-> .criteria)ANI multiplier *= .
-   ;($this->device_criteria) multiplier *= 0.7;  targeting reduces reach
-    }
-
-    return floor($totalUsers * $reachMultiplier);
-    }
     public function getTargetingInsights()
     {
         return [
@@ -535,7 +519,7 @@ rer multiplier *= __; //nting reduces reachanska
             'languages' => count($this->language_criteria ?? []),
             'income_levels' => count($this->income_criteria ?? []),
             'education_levels' => count($this->education_criteria ?? []),
-            'custom' =>,
+            'custom' => count($this->custom_criteria ?? []),
             'exclusions' => count($this->exclusion_criteria ?? [])
         ];
     }
@@ -558,16 +542,12 @@ rer multiplier *= __; //nting reduces reachanska
             $recommendations[] = [
                 'type' => 'expand_audience',
                 'priority' => 'high',
-                'message' => 'كفاءة الوصول منخفضة، يمكن توسيع مع蒸馏ة الجم.扩大受众范围',
-zec
-           ',
-                ' action' )
+                'message' => 'كفاءة الوصول منخفضة، يمكن توسيع معايير الجمهور',
+                'action' => 'expand_criteria'
             ];
-oric
-        ];
-        which         }
+        }
 
-       contra         if ($this->targeting_effectiveness < 40) {
+        if ($this->targeting_effectiveness < 40) {
             $recommendations[] = [
                 'type' => 'refine_targeting',
                 'priority' => 'medium',

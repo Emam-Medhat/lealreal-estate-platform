@@ -1,156 +1,305 @@
+{{--
+PREMIUM SITE FOOTER
+Modern Gradient, Micro-animations, and Responsive Layout
+--}}
+
 <style>
-    .bg-gradient-dark {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-}
+    /* ─────────────── FOOTER STYLES ─────────────── */
+    #site-footer {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        position: relative;
+        padding-top: 80px;
+        padding-bottom: 40px;
+        color: #cbd5e1;
+        overflow: hidden;
+        font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+    }
 
-.footer::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #3b82f6 50%, transparent);
-    opacity: 0.35;
-}
+    #site-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.4) 50%, transparent);
+    }
 
-.footer-logo {
-    transition: transform 0.3s ease;
-}
+    /* Shimmer Effect */
+    .footer-shimmer {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(37, 99, 235, 0.03) 0%, transparent 70%);
+        pointer-events: none;
+        animation: footer-shimmer-spin 20s linear infinite;
+    }
 
-.hover-lift:hover {
-    transform: translateY(-4px);
-    color: #60a5fa !important;
-}
+    @keyframes footer-shimmer-spin {
+        from {
+            transform: rotate(0deg);
+        }
 
-.hover-link {
-    position: relative;
-    transition: all 0.28s ease;
-}
+        to {
+            transform: rotate(360deg);
+        }
+    }
 
-.hover-link::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 1.5px;
-    bottom: -4px;
-    left: 0;
-    background-color: #60a5fa;
-    transition: width 0.3s ease;
-}
+    /* Columns */
+    .footer-col-title {
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin-bottom: 25px;
+        position: relative;
+        display: inline-block;
+    }
 
-.hover-link:hover::after {
-    width: 100%;
-}
+    .footer-col-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        right: 0;
+        width: 30px;
+        height: 2px;
+        background: #3b82f6;
+        border-radius: 2px;
+    }
 
-.footer-links a,
-.footer-contact span {
-    transition: padding-left 0.3s ease, color 0.3s ease;
-}
+    /* Links */
+    .footer-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #94a3b8;
+        text-decoration: none;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
 
-.footer-links a:hover {
-    padding-left: 8px;
-    color: #93c5fd !important;
-}
+    .footer-link:hover {
+        color: #ffffff;
+        transform: translateX(-5px);
+    }
 
-input::placeholder {
-    color: rgba(255,255,255,0.5) !important;
-}
+    .footer-link i {
+        font-size: 0.8rem;
+        color: #3b82f6;
+        opacity: 0.7;
+    }
+
+    /* Branding */
+    .footer-brand {
+        margin-bottom: 20px;
+    }
+
+    .footer-brand .logo-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+    }
+
+    .footer-brand i {
+        font-size: 2rem;
+        color: #3b82f6;
+    }
+
+    .footer-brand h2 {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #fff;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    /* Social Icons */
+    .footer-socials {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    .social-btn {
+        width: 42px;
+        height: 42px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .social-btn:hover {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Newsletter */
+    .footer-news-wrap {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 40px;
+    }
+
+    .news-input-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .news-input {
+        flex: 1;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 12px 20px;
+        color: #fff;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    .news-input:focus {
+        border-color: #3b82f6;
+    }
+
+    .news-btn {
+        padding: 12px 25px;
+        background: #3b82f6;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .news-btn:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    /* Bottom Bar */
+    .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 30px;
+        display: flex;
+        flex-direction: column;
+        md-flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .copyright {
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    .bottom-links {
+        display: flex;
+        gap: 20px;
+    }
+
+    .bottom-links a {
+        color: #64748b;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.3s;
+    }
+
+    .bottom-links a:hover {
+        color: #fff;
+    }
 </style>
 
-<footer class="footer bg-gradient-dark text-white pt-5 pb-4 mt-auto">
-    <div class="container">
+<footer id="site-footer">
+    <div class="footer-shimmer"></div>
+
+    <div class="container relative z-10">
         <div class="row gy-5">
-
-            <!-- Company Brand & Description -->
+            <!-- Brand Column -->
             <div class="col-lg-4 col-md-6">
-                <div class="d-flex align-items-center mb-4">
-                    <div class="footer-logo me-3">
-                        <i class="fas fa-building fs-3 text-primary"></i>
-                    </div>
-                    <h4 class="mb-0 fw-bold" style="letter-spacing: -0.5px;">Real Estate Pro</h4>
+                <div class="footer-brand">
+                    <a href="{{ route('home') }}" class="logo-wrap">
+                        <i class="fas fa-building-circle-check"></i>
+                        <h2>عقاري Pro</h2>
+                    </a>
                 </div>
-                
-                <p class="text-white-75 mb-4 lead-sm">
-                    شريكك الموثوق في العثور على العقار المثالي. نقدم حلول عقارية شاملة للمشترين والبائعين والوكلاء بأعلى معايير الجودة والاحترافية.
+                <p class="leading-relaxed mb-4">
+                    نحن نعيد تعريف تجربة البحث عن العقارات في المملكة. منصة ذكية تجمع بين التكنولوجيا المتطورة والخبرة
+                    العقارية العميقة لنقدم لك المسكن الذي تحلم به بضغطة زر.
                 </p>
-
-                <div class="social-icons d-flex gap-3">
-                    <a href="#" class="text-white-75 hover-lift"><i class="fab fa-facebook-f fs-5"></i></a>
-                    <a href="#" class="text-white-75 hover-lift"><i class="fab fa-twitter fs-5"></i></a>
-                    <a href="#" class="text-white-75 hover-lift"><i class="fab fa-instagram fs-5"></i></a>
-                    <a href="#" class="text-white-75 hover-lift"><i class="fab fa-linkedin-in fs-5"></i></a>
-                    <a href="#" class="text-white-75 hover-lift"><i class="fab fa-whatsapp fs-5"></i></a>
+                <div class="footer-socials">
+                    <a href="#" class="social-btn" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-btn" title="Twitter"><i class="fab fa-x-twitter"></i></a>
+                    <a href="#" class="social-btn" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-btn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-btn" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
 
-            <!-- Quick Links -->
-            <div class="col-lg-2 col-md-6">
-                <h6 class="footer-heading mb-4 text-uppercase fw-bold">روابط سريعة</h6>
-                <ul class="list-unstyled footer-links">
-                    <li class="mb-2"><a href="{{ route('home') }}" class="text-white-75 text-decoration-none hover-link">الرئيسية</a></li>
-                    <li class="mb-2"><a href="{{ route('properties.index') }}" class="text-white-75 text-decoration-none hover-link">العقارات</a></li>
-                    <li class="mb-2"><a href="{{ route('agents.directory') }}" class="text-white-75 text-decoration-none hover-link">الوكلاء</a></li>
-                    <li class="mb-2"><a href="{{ route('about') }}" class="text-white-75 text-decoration-none hover-link">من نحن</a></li>
-                    <li class="mb-2"><a href="{{ route('contact') }}" class="text-white-75 text-decoration-none hover-link">اتصل بنا</a></li>
-                </ul>
+            <!-- Quick Access -->
+            <div class="col-lg-2 col-md-4 col-6">
+                <h6 class="footer-col-title">استكشاف</h6>
+                <div class="footer-links">
+                    <a href="{{ route('home') }}" class="footer-link"><i class="fas fa-chevron-left"></i> الرئيسية</a>
+                    <a href="{{ route('properties.index') }}" class="footer-link"><i class="fas fa-chevron-left"></i>
+                        العقارات</a>
+                    <a href="{{ route('agents.directory') }}" class="footer-link"><i class="fas fa-chevron-left"></i>
+                        الوكلاء</a>
+                    <a href="{{ route('projects.index') }}" class="footer-link"><i class="fas fa-chevron-left"></i>
+                        المشاريع</a>
+                </div>
             </div>
 
-            <!-- Services -->
-            <div class="col-lg-3 col-md-6">
-                <h6 class="footer-heading mb-4 text-uppercase fw-bold">خدماتنا</h6>
-                <ul class="list-unstyled footer-links">
-                    <li class="mb-2"><a href="#" class="text-white-75 text-decoration-none hover-link">إدارة العقارات</a></li>
-                    <li class="mb-2"><a href="#" class="text-white-75 text-decoration-none hover-link">الاستشارات الاستثمارية</a></li>
-                    <li class="mb-2"><a href="#" class="text-white-75 text-decoration-none hover-link">تحليل السوق</a></li>
-                    <li class="mb-2"><a href="#" class="text-white-75 text-decoration-none hover-link">الخدمات القانونية</a></li>
-                    <li class="mb-2"><a href="#" class="text-white-75 text-decoration-none hover-link">مساعدة التمويل العقاري</a></li>
-                </ul>
+            <!-- More Links -->
+            <div class="col-lg-2 col-md-4 col-6">
+                <h6 class="footer-col-title">عن المنصة</h6>
+                <div class="footer-links">
+                    <a href="{{ route('about') }}" class="footer-link"><i class="fas fa-chevron-left"></i> من نحن</a>
+                    <a href="{{ route('contact') }}" class="footer-link"><i class="fas fa-chevron-left"></i> اتصل
+                        بنا</a>
+                    <a href="{{ route('news.index') }}" class="footer-link"><i class="fas fa-chevron-left"></i>
+                        الأخبار</a>
+                    <a href="{{ route('ai.chat') }}" class="footer-link"><i class="fas fa-chevron-left"></i> المساعد
+                        الذكي</a>
+                </div>
             </div>
 
-            <!-- Contact & Newsletter -->
-            <div class="col-lg-3 col-md-6">
-                <h6 class="footer-heading mb-4 text-uppercase fw-bold">معلومات التواصل</h6>
-                <ul class="list-unstyled footer-contact">
-                    <li class="mb-3">
-                        <i class="fas fa-map-marker-alt me-3 text-primary"></i>
-                        ١٢٣ شارع الأعمال، المدينة، الدولة ١٢٣٤٥
-                    </li>
-                    <li class="mb-3">
-                        <i class="fas fa-phone-alt me-3 text-primary"></i>
-                        +٩٦٦ ١٢ ٣٤٥ ٦٧٨٩
-                    </li>
-                    <li class="mb-4">
-                        <i class="fas fa-envelope me-3 text-primary"></i>
-                        info@realestatepro.sa
-                    </li>
-                </ul>
-
-                <!-- Simple Newsletter (اختياري - يمكن إزالته) -->
-                <form class="footer-newsletter">
-                    <div class="input-group input-group-sm">
-                        <input type="email" class="form-control bg-dark border-secondary text-white" placeholder="بريدك الإلكتروني" aria-label="Newsletter">
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                    <small class="text-white-50 mt-2 d-block">اشترك للحصول على آخر العروض والنصائح العقارية</small>
-                </form>
+            <!-- Newsletter -->
+            <div class="col-lg-4 col-md-8">
+                <div class="footer-news-wrap">
+                    <h6 class="footer-col-title !mb-2">انضم لنشرتنا البريدية</h6>
+                    <p class="text-sm">كن أول من يعلم عن أحدث الفرص الاستثمارية.</p>
+                    <form class="news-input-group">
+                        <input type="email" class="news-input" placeholder="البريد الإلكتروني..." required>
+                        <button type="submit" class="news-btn">اشترك</button>
+                    </form>
+                </div>
             </div>
-
         </div>
 
         <!-- Bottom Bar -->
-        <div class="border-top border-secondary mt-5 pt-4">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <small class="text-white-75">
-                        © {{ date('Y') }} Real Estate Pro – جميع الحقوق محفوظة
-                    </small>
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <small>
-                        <a href="#" class="text-white-75 me-3 hover-link text-decoration-none">سياسة الخصوصية</a>
-                        <a href="#" class="text-white-75 me-3 hover-link text-decoration-none">شروط الخدمة</a>
-                        <a href="#" class="text-white-75 hover-link text-decoration-none">سياسة الكوكيز</a>
-                    </small>
-                </div>
+        <div class="footer-bottom">
+            <p class="copyright">
+                &copy; {{ date('Y') }} <strong>عقاري Pro</strong>. صنع بشغف لخدمتكم.
+            </p>
+            <div class="bottom-links">
+                <a href="#">سياسة الخصوصية</a>
+                <a href="#">شروط الاستخدام</a>
+                <a href="#">سياسة الكوكيز</a>
             </div>
         </div>
     </div>

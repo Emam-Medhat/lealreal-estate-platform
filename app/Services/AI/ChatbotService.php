@@ -22,6 +22,12 @@ class ChatbotService
 {
     use CallsOpenAI, LogsAiUsage, SanitizesPrompt;
 
+    public function __construct(
+        private readonly SmartSearchService $smartSearch,
+        private readonly FilterTransformer $transformer
+    ) {
+    }
+
     private const SYSTEM_PROMPT = <<<'PROMPT'
 You are a professional real estate advisor for a platform operating in Egypt and the Arab world.
 You speak fluent Arabic and English and adapt to the user's language automatically.
@@ -61,8 +67,15 @@ PROMPT;
         // Load / update conversation history
         $history = $this->loadHistory($sessionId);
 
+        // Extra intent extraction (e.g. "I want a flat for 500")
+        $aiParsed = $this->smartSearch->parse($userMessage);
+        $aiFilters = $this->transformer->transform($aiParsed['raw'] ?? []);
+
+        // Merge AI-extracted filters with manual frontend filters
+        $mergedFilters = array_merge($filters, $aiFilters);
+
         // Build context-aware property snapshot
-        $properties = $this->fetchRelevantProperties($filters);
+        $properties = $this->fetchRelevantProperties($mergedFilters);
 
         // Build full message list
         $systemPrompt = str_replace(

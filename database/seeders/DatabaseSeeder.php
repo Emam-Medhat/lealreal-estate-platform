@@ -61,6 +61,12 @@ class DatabaseSeeder extends Seeder
         // Seed Performance Reports
         $this->seedPerformanceReports();
         
+        // Seed Performance Reports
+        $this->call(PerformanceReportSeeder::class);
+        
+        // Seed Agent Specializations
+        $this->call(AgentSpecializationSeeder::class);
+        
         // Seed Gamification
         $this->call(GamificationSeeder::class);
         

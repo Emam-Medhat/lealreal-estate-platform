@@ -22,7 +22,6 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         
         $this->defaultRelations = [
             'profile:id,user_id,first_name,last_name,bio,avatar',
-            'permissions:id,name,description',
             'company:id,name,logo',
             'subscriptionPlan:id,name,features',
             'devices:id,user_id,device_type,last_used_at',

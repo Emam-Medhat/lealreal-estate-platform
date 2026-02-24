@@ -91,12 +91,12 @@ class AdCampaign extends Model
 
     public function budget()
     {
-        return $this->hasOne(AdBudget::class);
+        return $this->hasOne(AdBudget::class, 'campaign_id');
     }
 
     public function targeting()
     {
-        return $this->hasOne(AdTargeting::class);
+        return $this->hasOne(AdTargeting::class, 'campaign_id');
     }
 
     public function placements()

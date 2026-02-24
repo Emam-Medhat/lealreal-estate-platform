@@ -72,9 +72,15 @@
                                     <p class="text-gray-600 mb-4">{{ $article->getFormattedExcerpt(150) }}</p>
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
-                                            <img src="{{ $article->author->avatar ?? asset('images/default-avatar.png') }}" 
-                                                 alt="{{ $article->author->name }}" 
-                                                 class="w-8 h-8 rounded-full mr-2">
+                                            @if($article->author && $article->author->avatar_url)
+                                                <img src="{{ $article->author->avatar_url }}" 
+                                                     alt="{{ $article->author->name }}" 
+                                                     class="w-8 h-8 rounded-full mr-2 object-cover">
+                                            @else
+                                                <div class="w-8 h-8 rounded-full mr-2 bg-gray-200 flex items-center justify-center">
+                                                    <i class="fas fa-user text-gray-500 text-xs"></i>
+                                                </div>
+                                            @endif
                                             <span class="text-sm text-gray-700">{{ $article->author->name }}</span>
                                         </div>
                                         <div class="flex items-center space-x-4 text-sm text-gray-500">

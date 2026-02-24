@@ -56,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'auctions.php',
                 'content.php',
                 'web_services.php',
+                'payment.php',
             ];
 
             foreach ($routeFiles as $file) {
@@ -69,7 +70,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
             '/lead-analytics/export',
-            'api/ai/*',          // AI AJAX endpoints - these use JSON, not HTML forms
+            'api/ai/*',          // AI AJAX endpoints
+            'webhooks/payment/*', // Payment webhooks
         ]);
 
         $middleware->alias([
@@ -85,6 +87,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'financial.permission' => \App\Http\Middleware\FinancialPermissionMiddleware::class,
             'ai.rate' => \App\Http\Middleware\AiRateLimitMiddleware::class,
+            'localization' => \App\Http\Middleware\LocalizationMiddleware::class,
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\LocalizationMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

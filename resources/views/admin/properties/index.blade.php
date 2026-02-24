@@ -1185,7 +1185,71 @@
 /* ═══════════════════════════════════════════
    PAGINATION
 ═══════════════════════════════════════════ */
-.pm-pag { margin-top: 40px; display: flex; justify-content: center; }
+.pm-pag { 
+  margin-top: 40px; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pm-pag .pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pm-pag .page-item {
+  display: inline-block;
+}
+
+.pm-pag .page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
+  margin: 0 2px;
+}
+
+.pm-pag .page-link:hover {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+.pm-pag .page-item.active .page-link {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--white);
+}
+
+.pm-pag .page-item.disabled .page-link {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pm-pag .pagination-info {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin: 0 16px;
+  white-space: nowrap;
+}
 
 /* ═══════════════════════════════════════════
    RESPONSIVE
@@ -1661,7 +1725,7 @@
 
       {{-- Pagination --}}
       @if ($properties->hasPages())
-        <div class="pm-pag">{{ $properties->links() }}</div>
+        <div class="pm-pag">{{ $properties->links('vendor.pagination.bootstrap-4') }}</div>
       @endif
 
     </main>
