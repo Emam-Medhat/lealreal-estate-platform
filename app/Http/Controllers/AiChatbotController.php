@@ -114,6 +114,7 @@ class AiChatbotController extends Controller
                     'metadata' => ['source' => 'initial'],
                 ]
             ],
+            'message_count' => 1,
             'response_time' => 0,
             'satisfaction_score' => 0,
             'notes' => $validated['notes'],
@@ -230,6 +231,7 @@ class AiChatbotController extends Controller
 
         $conversation->update([
             'messages' => $messages,
+            'message_count' => count($messages),
             'metadata' => array_merge($conversation->metadata, [
                 'last_user_message' => now(),
             ]),
@@ -321,30 +323,32 @@ class AiChatbotController extends Controller
             ->avg('response_time') ?? 0;
     }
 
+    /**
+     * Get the total number of messages across all conversations.
+     * Optimized to use database-level summation instead of loading all models.
+     */
     private function getTotalMessages(): int
     {
-        $conversations = AiChatConversation::all();
-        $totalMessages = 0;
-
-        foreach ($conversations as $conversation) {
-            $totalMessages += count($conversation->messages ?? []);
-        }
-
-        return $totalMessages;
+        return (int) AiChatConversation::sum('message_count');
     }
 
+    /**
+     * Get the overall satisfaction rate from completed conversations.
+     * Optimized to use database-level aggregation for better performance.
+     */
     private function getSatisfactionRate(): float
     {
-        $completed = AiChatConversation::where('status', 'completed')->get();
+        $stats = AiChatConversation::where('status', 'completed')
+            ->selectRaw('COUNT(*) as count, SUM(satisfaction_score) as total_satisfaction')
+            ->first();
         
-        if ($completed->isEmpty()) {
+        if (!$stats || $stats->count === 0) {
             return 0;
         }
 
-        $totalSatisfaction = $completed->sum('satisfaction_score');
-        $maxPossible = $completed->count() * 5;
+        $maxPossible = $stats->count * 5;
 
-        return $maxPossible > 0 ? ($totalSatisfaction / $maxPossible) * 100 : 0;
+        return $maxPossible > 0 ? ($stats->total_satisfaction / $maxPossible) * 100 : 0;
     }
 
     private function getConversationTrends(): array
@@ -426,6 +430,7 @@ class AiChatbotController extends Controller
         // Update conversation
         $conversation->update([
             'messages' => $updatedMessages,
+            'message_count' => count($updatedMessages),
             'response_time' => $conversation->response_time + $processingTime,
             'metadata' => array_merge($conversation->metadata, [
                 'last_ai_response' => now(),
