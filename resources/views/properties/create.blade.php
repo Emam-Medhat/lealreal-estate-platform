@@ -1734,7 +1734,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="upload-area" id="uploadArea">
-                            <input type="file" class="file-input" id="images" name="images[]" multiple accept="image/*">
+                            <input type="file" class="file-input" id="images" name="images[]" multiple accept="image/*" style="pointer-events: none;">
                             <div class="upload-content">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <h4>{{ __('properties.drag_drop_images') }}</h4>
@@ -2675,8 +2675,28 @@
             // Room upload functions
             window.openRoomFileInput = function (roomType) {
                 console.log(' DIRECT CLICK for room:', roomType);
+                
+                // Prevent double opening with flags
+                if (window.roomInputOpening && window.roomInputOpening === roomType) {
+                    console.log('Preventing double open for room:', roomType);
+                    return;
+                }
+                
                 const input = document.querySelector(`input[name="room_images[${roomType}][]"]`);
                 if (input) {
+                    // Set flag to prevent double opening
+                    window.roomInputOpening = roomType;
+                    
+                    // Clear any existing timeout
+                    if (window.roomInputTimeout) {
+                        clearTimeout(window.roomInputTimeout);
+                    }
+                    
+                    // Set timeout to reset flag
+                    window.roomInputTimeout = setTimeout(() => {
+                        window.roomInputOpening = null;
+                    }, 200);
+                    
                     input.click();
                 } else {
                     console.error('Input not found for room:', roomType);
@@ -2743,19 +2763,6 @@
 
                 roomCards.forEach((card, index) => {
                     console.log(`Setting up card ${index}:`, card);
-
-                    card.addEventListener('click', function (e) {
-                        console.log('Room card clicked:', e.target);
-                        const fileInput = this.querySelector('.room-file-input');
-                        console.log('File input found:', fileInput);
-
-                        if (fileInput) {
-                            console.log('Triggering file input click');
-                            fileInput.click();
-                        } else {
-                            console.error('No file input found in card');
-                        }
-                    });
 
                     const fileInput = card.querySelector('.room-file-input');
                     if (fileInput) {
@@ -2830,10 +2837,30 @@
                         e.stopPropagation();
                     }
 
-                    // Click handler for upload area
+                    // Click handler for upload area - Fixed to prevent double opening
                     uploadArea.addEventListener('click', function (e) {
+                        // Prevent event bubbling and double triggering
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Only trigger if not clicking on the input itself
                         if (imagesInput && e.target !== imagesInput) {
-                            imagesInput.click();
+                            // Remove any existing timeout to prevent multiple calls
+                            if (window.imageInputTimeout) {
+                                clearTimeout(window.imageInputTimeout);
+                            }
+                            
+                            // Set new timeout with flag to prevent double opening
+                            window.imageInputTimeout = setTimeout(() => {
+                                if (!window.imageInputOpening) {
+                                    window.imageInputOpening = true;
+                                    imagesInput.click();
+                                    // Reset flag after a short delay
+                                    setTimeout(() => {
+                                        window.imageInputOpening = false;
+                                    }, 100);
+                                }
+                            }, 10);
                         }
                     });
 

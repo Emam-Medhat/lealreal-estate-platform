@@ -1,22 +1,66 @@
 <?php $__env->startSection('title', $property->title . ' | ' . config('app.name', 'منصة العقارات')); ?>
 
 <?php $__env->startSection('content'); ?>
+<!-- Debug Section (Remove in production) -->
+<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+    <h4 class="text-yellow-800 font-bold mb-2">Debug Information:</h4>
+    <div class="text-sm text-yellow-700">
+        <p>Property ID: <?php echo e($property->id); ?></p>
+        <p>Media Count: <?php echo e($property->media ? $property->media->count() : 0); ?></p>
+        <?php if($property->media && $property->media->count() > 0): ?>
+            <p>First Media File Path: <?php echo e($property->media->first()->file_path); ?></p>
+            <?php
+                $mainImage = $property->media->first();
+                if($mainImage->file_path) {
+                    $imagePath = 'storage/' . $mainImage->file_path;
+                } else {
+                    $imagePath = null;
+                }
+            ?>
+            <p>Generated Image Path: <?php echo e($imagePath); ?></p>
+            <p>Full Asset URL: <?php echo e(asset($imagePath)); ?></p>
+            <p>File Exists: @file_exists(public_path($imagePath)) ? 'Yes' : 'No'</p>
+            <p>Storage Link: <?php if(php_uname('s') === 'Windows NT'): ?>
+                <?php echo e(base_path('storage\app\public') . '\\' . str_replace('/', '\\', $mainImage->file_path)); ?>
+
+            <?php else: ?>
+                <?php echo e(base_path('storage/app/public') . '/' . $mainImage->file_path); ?>
+
+            <?php endif; ?></p>
+        <?php endif; ?>
+    </div>
+</div>
+
 <div class="min-h-screen bg-gray-50">
     <!-- Hero Gallery Section -->
     <div class="relative h-[500px] overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-t from-blue-900/50 via-blue-700/20 to-transparent z-10"></div>
-        
+
         <?php if($property->media && $property->media->count() > 0): ?>
             <?php
                 $mainImage = $property->media->first();
-                $imagePath = Str::startsWith($mainImage->file_path, 'properties/') 
-                            ? 'storage/' . $mainImage->file_path 
-                            : 'storage/properties/' . $mainImage->file_path;
+                // إصلاح مسار الصورة - الصور تخزن في properties/{propertyId}/filename
+                if($mainImage->file_path) {
+                    // المسار الصحيح هو storage/properties/{propertyId}/filename
+                    $imagePath = 'storage/' . $mainImage->file_path;
+                } else {
+                    $imagePath = null;
+                }
             ?>
-            <img src="<?php echo e(asset($imagePath)); ?>" 
-                 class="w-full h-full object-cover" 
-                 alt="<?php echo e($property->title); ?>"
-                 onclick="openGallery(0)">
+            <?php if($imagePath): ?>
+                <img src="<?php echo e(asset($imagePath)); ?>"
+                     class="w-full h-full object-cover"
+                     alt="<?php echo e($property->title); ?>"
+                     onclick="openGallery(0)"
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/800x500/e5e7eb/6b7280?text=صورة+غير+متاحة';">
+            <?php else: ?>
+                <div class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+                    <div class="text-center text-white">
+                        <i class="fas fa-exclamation-triangle text-6xl mb-4 opacity-50"></i>
+                        <p class="text-xl opacity-75">مسار الصورة غير صحيح</p>
+                    </div>
+                </div>
+            <?php endif; ?>
         <?php else: ?>
             <div class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
                 <div class="text-center text-white">
@@ -25,7 +69,7 @@
                 </div>
             </div>
         <?php endif; ?>
-        
+
         <!-- Floating Badges -->
         <div class="absolute top-6 left-6 z-20 flex flex-wrap gap-3">
             <span class="px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm <?php echo e($property->listing_type == 'sale' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' : 'bg-gradient-to-r from-green-600 to-green-700 text-white'); ?>">
@@ -39,23 +83,29 @@
                 </span>
             <?php endif; ?>
         </div>
-        
+
         <!-- Side Images -->
         <?php if($property->media && $property->media->count() > 1): ?>
             <div class="absolute top-6 right-6 z-20 w-32 space-y-3">
                 <?php $__currentLoopData = $property->media->skip(1)->take(2); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $media): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <?php
-                        $subImagePath = Str::startsWith($media->file_path, 'properties/') 
-                                    ? 'storage/' . $media->file_path 
-                                    : 'storage/properties/' . $media->file_path;
+                        // إصلاح مسار الصور الجانبية
+                        if($media->file_path) {
+                            $subImagePath = 'storage/' . $media->file_path;
+                        } else {
+                            $subImagePath = null;
+                        }
                     ?>
-                    <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg" 
-                         onclick="openGallery(<?php echo e($index + 1); ?>)">
-                        <img src="<?php echo e(asset($subImagePath)); ?>" 
-                             class="w-full h-24 object-cover transition-transform duration-300 group-hover:scale-110" 
-                             alt="صورة العقار <?php echo e($index + 2); ?>">
-                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                    </div>
+                    <?php if($subImagePath): ?>
+                        <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg"
+                             onclick="openGallery(<?php echo e($index + 1); ?>)">
+                            <img src="<?php echo e(asset($subImagePath)); ?>"
+                                 class="w-full h-24 object-cover transition-transform duration-300 group-hover:scale-110"
+                                 alt="صورة العقار <?php echo e($index + 2); ?>"
+                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/128x96/e5e7eb/6b7280?text=خطأ';">
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+                        </div>
+                    <?php endif; ?>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         <?php endif; ?>
@@ -71,7 +121,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left Content -->
             <div class="lg:col-span-2 space-y-6">
-                
+
                 <!-- Title & Price Card -->
                 <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
                     <div class="p-8">
@@ -96,7 +146,8 @@
                             </div>
                             <div class="text-center lg:text-left">
                                 <div class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                    <?php echo e(number_format($property->price, 0)); ?> 
+                                    <?php echo e(number_format($property->price, 0)); ?>
+
                                     <span class="text-lg lg:text-xl text-gray-600"><?php echo e($property->currency ?? 'ريال'); ?></span>
                                 </div>
                                 <?php if($property->price_per_sqm): ?>
@@ -106,7 +157,7 @@
                                 <?php endif; ?>
                             </div>
                         </div>
-                        
+
                         <!-- Key Features Grid -->
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 text-center border border-blue-100">
@@ -270,7 +321,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-4">
                                 <div class="flex items-center p-4 bg-gray-50 rounded-xl">
                                     <i class="fas fa-ruler-combined text-indigo-600 ml-3 text-lg"></i>
@@ -294,7 +345,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-4">
                                 <div class="flex items-center p-4 bg-gray-50 rounded-xl">
                                     <i class="fas fa-layer-group text-teal-600 ml-3 text-lg"></i>
@@ -346,14 +397,14 @@
                                     </div>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <?php if($property->service_charges): ?>
                                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
                                     <span class="text-gray-600 font-medium">رسوم الخدمات</span>
                                     <span class="font-bold text-gray-900 text-lg"><?php echo e(number_format($property->service_charges, 2)); ?></span>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <?php if($property->maintenance_fees): ?>
                                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
                                     <span class="text-gray-600 font-medium">رسوم الصيانة</span>
@@ -429,7 +480,7 @@
                                     <span class="font-bold text-gray-900 text-lg"><?php echo e($property->occupancy_permit); ?></span>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <?php if($property->building_permit): ?>
                                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
                                     <span class="text-gray-600 font-medium">رقم رخصة البناء</span>
@@ -610,18 +661,18 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <a href="tel:<?php echo e($property->agent->phone); ?>" class="flex items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
                                     <i class="fas fa-phone text-blue-600 ml-3"></i>
                                     <span class="font-medium text-gray-900"><?php echo e($property->agent->phone); ?></span>
                                 </a>
-                                
+
                                 <a href="mailto:<?php echo e($property->agent->email); ?>" class="flex items-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
                                     <i class="fas fa-envelope text-green-600 ml-3"></i>
                                     <span class="font-medium text-gray-900"><?php echo e($property->agent->email); ?></span>
                                 </a>
-                                
+
                                 <?php if($property->agent->license_number): ?>
                                     <div class="flex items-center p-4 bg-purple-50 rounded-xl">
                                         <i class="fas fa-certificate text-purple-600 ml-3"></i>
@@ -631,7 +682,7 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <?php if($property->agent->specializations): ?>
                                     <div class="p-4 bg-amber-50 rounded-xl">
                                         <div class="text-sm text-gray-500 mb-2"><?php echo e(__('properties.specializations')); ?></div>
@@ -696,7 +747,7 @@
                                         </ul>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <?php if(!empty($property->exterior_features) && is_array($property->exterior_features)): ?>
                                     <div>
                                         <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -722,7 +773,7 @@
 
                 <?php
                     $nearbyData = [];
-                    
+
                     // Check for neighborhoods/districts
                     if (!empty($property->neighborhood)) {
                         $nearbyData[] = [
@@ -731,7 +782,7 @@
                             'places' => is_array($property->neighborhood) ? $property->neighborhood : [$property->neighborhood]
                         ];
                     }
-                    
+
                     if (!empty($property->district)) {
                         $nearbyData[] = [
                             'icon' => 'fa-city',
@@ -739,7 +790,7 @@
                             'places' => is_array($property->district) ? $property->district : [$property->district]
                         ];
                     }
-                    
+
                     // Check for nearby places arrays
                     $nearbyPlaces = [
                         'schools' => ['icon' => 'fa-school', 'label' => __('properties.schools')],
@@ -753,7 +804,7 @@
                         'banks' => ['icon' => 'fa-university', 'label' => __('properties.banks')],
                         'gas_stations' => ['icon' => 'fa-gas-pump', 'label' => __('properties.gas_stations')],
                     ];
-                    
+
                     foreach ($nearbyPlaces as $key => $data) {
                         $value = $property->$key ?? null;
                         if ($value && (is_array($value) || !empty($value))) {
@@ -873,7 +924,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Inquiry Form Card -->
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden" id="inquiry-form-section">
                     <div class="p-8">
@@ -945,7 +996,7 @@
                                 <?php echo e($property->developer ? 'المطور العقاري' : 'الشركة المعلنة'); ?>
 
                             </h3>
-                            <?php 
+                            <?php
                                 $entity = $property->developer ?? $property->company;
                             ?>
                             <div class="flex items-center mb-4">
@@ -999,12 +1050,12 @@
                             <i class="fas fa-chart-line ml-2"></i>
                             تحليل السعر والاستثمار
                         </button>
-                        
+
                         <div id="ai-loading" class="hidden mt-6 text-center">
                             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                             <p class="mt-3 text-white/90">جاري تحليل بيانات السوق...</p>
                         </div>
-                        
+
                         <div id="ai-result" class="hidden mt-6">
                             <div class="bg-white/20 backdrop-blur-sm rounded-xl p-6">
                                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -1051,7 +1102,7 @@
     <?php endif; ?>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR8BzU=" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 /* Custom animations */
@@ -1149,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
 
             const formData = new FormData(this);
-            
+
             fetch('<?php echo e(route("inquiries.store")); ?>', {
                 method: 'POST',
                 headers: {
@@ -1188,11 +1239,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this;
             const loading = document.getElementById('ai-loading');
             const result = document.getElementById('ai-result');
-            
+
             btn.classList.add('hidden');
             loading.classList.remove('hidden');
             result.classList.add('hidden');
-            
+
             // Simulate AI analysis (replace with actual API call)
             setTimeout(() => {
                 // Mock data - replace with real API response
@@ -1202,14 +1253,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     investment_score: 78,
                     risk_level: 'منخفض'
                 };
-                
+
                 // Update UI with results
                 document.getElementById('pred-price').textContent = mockData.price_range;
                 document.getElementById('pred-confidence').textContent = mockData.confidence;
                 document.getElementById('pred-score-val').textContent = mockData.investment_score;
                 document.getElementById('pred-score-bar').style.width = mockData.investment_score + '%';
                 document.getElementById('pred-risk').textContent = mockData.risk_level;
-                
+
                 loading.classList.add('hidden');
                 result.classList.remove('hidden');
                 btn.classList.remove('hidden');

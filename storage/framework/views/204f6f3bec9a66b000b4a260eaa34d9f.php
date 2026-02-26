@@ -3,12 +3,12 @@
 <style>
   /* ─────────────── BODY OFFSET ─────────────── */
   body {
-    padding-top: 10px;
+    padding-top: var(--nb-h) !important; /* Use the navbar height variable */
   }
 
   @media(max-width:1024px) {
     body {
-      padding-top: 72px;
+      padding-top: 100px !important; /* Increased for mobile navbar */
     }
   }
 
@@ -27,10 +27,10 @@
     --nb-gray-500: #64748b;
     --nb-gray-700: #334155;
     --nb-gray-900: #0f172a;
-    --nb-h: 130px;
-    --nb-top-h: 36px;
-    --nb-main-h: 66px;
-    --nb-tab-h: 44px;
+    --nb-h: 50px; /* Increased height for better spacing */
+    --nb-top-h: 40px; /* Slightly increased top bar */
+    --nb-main-h: 70px; /* Increased main bar */
+    --nb-tab-h: 40px; /* Tab bar */
 
     --nb-shadow: 0 4px 24px rgba(15, 23, 42, .18), 0 1px 4px rgba(15, 23, 42, .1);
     --nb-glow: 0 0 0 3px rgba(37, 99, 235, .2);

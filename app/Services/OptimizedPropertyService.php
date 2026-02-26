@@ -746,6 +746,8 @@ class OptimizedPropertyService
      */
     public function handleImageUpload($images, int $propertyId): array
     {
+        \Log::info('Starting image upload for property ' . $propertyId);
+        
         // Check if property has any images already to determine featured status
         $hasImages = PropertyMedia::where('property_id', $propertyId)
             ->where('media_type', 'image')
@@ -754,7 +756,10 @@ class OptimizedPropertyService
         $createdMedia = [];
 
         foreach ($images as $index => $image) {
+            \Log::info('Processing image ' . $index . ': ' . $image->getClientOriginalName());
+            
             $path = $image->store('properties/' . $propertyId, 'public');
+            \Log::info('Image stored at: ' . $path);
 
             $media = PropertyMedia::create([
                 'property_id' => $propertyId,
@@ -769,10 +774,12 @@ class OptimizedPropertyService
                 'uploaded_by' => auth()->id() ?? null
             ]);
 
+            \Log::info('Media record created with ID: ' . $media->id);
             $createdMedia[] = $media;
         }
         
         Cache::forget("property_details_{$propertyId}");
+        \Log::info('Image upload completed. Created ' . count($createdMedia) . ' media records.');
         
         return $createdMedia;
     }

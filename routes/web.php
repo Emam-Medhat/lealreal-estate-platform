@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\LocalizationController;
+use App\Http\Controllers\TestImageUploadController;
+use App\Http\Controllers\TestPropertyCreationController;
 
 // Currency and Language routes migrated to web_services.php
 
@@ -302,8 +304,16 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+    Route::delete('/test-image-upload/{media}', [TestImageUploadController::class, 'delete'])->name('test.image.delete');
 
-    // Email Verification Routes
+// Test property creation routes
+Route::get('/test-property-creation', function() {
+    return view('test_property_creation');
+})->name('test.property.create');
+
+Route::post('/test-property-creation', [TestPropertyCreationController::class, 'create'])->name('test.property.create');
+
+// Language Switching Routes
     Route::get('/verify-email', [VerifyEmailController::class, 'show'])->name('verification.notice');
     Route::post('/email/verification-notification', [VerifyEmailController::class, 'resend'])->name('verification.send');
     Route::get('/verify-email/{id}/{hash}', [VerifyEmailController::class, 'verify'])->name('verification.verify')->middleware('signed');

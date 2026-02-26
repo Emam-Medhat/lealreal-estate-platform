@@ -450,12 +450,14 @@ class OptimizedPropertyController extends Controller
 
             // Handle main images
             if ($request->hasFile('images')) {
-                $this->propertyService->handleImageUpload($request->file('images'), $property->id);
+                $uploadedImages = $this->propertyService->handleImageUpload($request->file('images'), $property->id);
+                \Log::info('Images uploaded for property ' . $property->id . ': ' . json_encode($uploadedImages));
             }
 
             // Handle room-specific images
             if ($request->hasFile('room_images')) {
-                $this->propertyService->handleRoomImageUpload($request->file('room_images'), $property->id);
+                $uploadedRoomImages = $this->propertyService->handleRoomImageUpload($request->file('room_images'), $property->id);
+                \Log::info('Room images uploaded for property ' . $property->id . ': ' . json_encode($uploadedRoomImages));
             }
 
             try {
@@ -468,7 +470,7 @@ class OptimizedPropertyController extends Controller
 
             return redirect()
                 ->route('optimized.properties.show', $property)
-                ->with('success', 'Property created successfully!');
+                ->with('success', 'تم إضافة العقار "' . $property->title . '" بنجاح!');
 
         } catch (Exception $e) {
             return back()

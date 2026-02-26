@@ -324,6 +324,9 @@
         <?php echo $__env->make('partials.navbar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <?php endif; ?>
 
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
     <!-- Flash Messages -->
     <?php if(session('success')): ?>
         <div class="bg-green-50 border-l-4 border-green-400 p-4 m-4">
@@ -387,65 +390,57 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Notification System -->
+    <script>
+        // Simple notification system
+        window.showNotification = function(message, type = 'success', duration = 5000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} custom-toast fade-in`;
+            toast.style.margin = '10px';
+
+            const icon = type === 'success' ? 'fa-check-circle' :
+                        type === 'error' ? 'fa-exclamation-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+            toast.innerHTML = `<i class="fas ${icon} ml-2"></i> ${message}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+        };
+
+        // Auto-show flash messages
+        <?php if(session('success')): ?>
+            showNotification('<?php echo e(session('success')); ?>', 'success');
+        <?php endif; ?>
+
+        <?php if(session('error')): ?>
+            showNotification('<?php echo e(session('error')); ?>', 'error');
+        <?php endif; ?>
+    </script>
+
     <!-- AI Chatbot Widget -->
     <?php echo $__env->make('ai.widget', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <?php if(auth()->guard()->check()): ?>
     <?php if(config('intelligence.realtime.enabled')): ?>
-    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/laravel-echo/1.15.0/echo.iife.js"></script>
     <script>
-        (function(){
-            try {
-                window.Pusher = Pusher;
-                window.Echo = new Echo({
-                    broadcaster: 'pusher',
-                    key: '<?php echo e(config('broadcasting.connections.pusher.key')); ?>',
-                    cluster: '<?php echo e(data_get(config('broadcasting.connections.pusher.options'), 'cluster', 'mt1')); ?>',
-                    forceTLS: <?php echo e(data_get(config('broadcasting.connections.pusher.options'), 'useTLS', true) ? 'true' : 'false'); ?>,
-                    authEndpoint: '/broadcasting/auth',
-                    csrfToken: '<?php echo e(csrf_token()); ?>'
-                });
-                const uid = <?php echo e(Auth::id()); ?>;
-                const prefix = '<?php echo e(rtrim(config('intelligence.realtime.channel_prefix', 'alerts.user.'), '.')); ?>.';
-                const ch = window.Echo.private(prefix + uid);
-                ch.listen('.IntelligenceAlertBroadcast', function(payload) {
-                    try {
-                        const title = payload?.data?.title || 'تنبيه جديد';
-                        const badge = document.getElementById('nb-notif-badge');
-                        if (badge) {
-                            let n = parseInt(badge.textContent) || 0;
-                            n = isNaN(n) ? 0 : n + 1;
-                            badge.textContent = (n > 99) ? '99+' : n;
-                            badge.classList.remove('hidden');
-                        }
-                        const cnt = document.getElementById('nb-notif-count');
-                        if (cnt) {
-                            const m = cnt.textContent.match(/(\d+)/);
-                            if (m) {
-                                const v = parseInt(m[1]) + 1;
-                                cnt.textContent = `(${v} unread)`;
-                            }
-                        }
-                        const toast = document.createElement('div');
-                        toast.className = 'alert alert-purple custom-toast fade-in';
-                        toast.style.margin = '10px';
-                        toast.innerHTML = `<strong class="ml-2">تنبيه</strong> ${title}`;
-                        let container = document.getElementById('toast-container');
-                        if (!container) {
-                            container = document.createElement('div');
-                            container.id = 'toast-container';
-                            container.className = 'toast-container';
-                            document.body.appendChild(container);
-                        }
-                        container.appendChild(toast);
-                        setTimeout(()=> toast.remove(), 5000);
-                    } catch (e) {}
-                });
-            } catch (e) {
-                console.error('Echo init failed', e);
-            }
-        })();
+        // Disable Echo/Pusher for now to avoid WebSocket errors
+        console.log('Real-time features temporarily disabled for debugging');
+        // window.Pusher = Pusher;
+        // window.Echo = new Echo({
+        //     broadcaster: 'pusher',
+        //     key: '<?php echo e(config('broadcasting.connections.pusher.key')); ?>',
+        //     cluster: '<?php echo e(data_get(config('broadcasting.connections.pusher.options'), 'cluster', 'mt1')); ?>',
+        //     forceTLS: <?php echo e(data_get(config('broadcasting.connections.pusher.options'), 'useTLS', true) ? 'true' : 'false'); ?>,
+        //     authEndpoint: '/broadcasting/auth',
+        //     csrfToken: '<?php echo e(csrf_token()); ?>'
+        // });
     </script>
     <?php endif; ?>
     <?php endif; ?>
