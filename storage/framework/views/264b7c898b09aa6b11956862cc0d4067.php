@@ -16,59 +16,6 @@
     <!-- Navigation -->
     <nav class="p-4 flex-1 overflow-y-auto">
         <div class="space-y-2">
-            <!-- Advanced Tools -->
-            <div class="nav-section mt-4 pt-4 border-t border-gray-200">
-                <button onclick="toggleSection('advanced-tools')"
-                    class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors text-gray-700 group">
-                    <div class="flex items-center">
-                        <i class="fas fa-tools w-5 ml-3 text-gray-500"></i>
-                        <span class="font-medium">أدوات متقدمة</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="advanced-tools-arrow"></i>
-                </button>
-                <div id="advanced-tools-submenu" class="hidden mt-2 space-y-1 mr-8">
-                    <a href="<?php echo e(route('tools.valuation.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.valuation.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-calculator w-4 ml-2 <?php echo e(request()->routeIs('tools.valuation.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">ما قيمة بيتك؟</span>
-                    </a>
-                    <a href="<?php echo e(route('tools.predictive.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.predictive.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-chart-line w-4 ml-2 <?php echo e(request()->routeIs('tools.predictive.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">توقع الأسعار</span>
-                    </a>
-                    <a href="<?php echo e(route('tools.investment.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.investment.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-coins w-4 ml-2 <?php echo e(request()->routeIs('tools.investment.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">محاكي الاستثمار</span>
-                    </a>
-                    <a href="<?php echo e(route('tools.visual.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.visual.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-image w-4 ml-2 <?php echo e(request()->routeIs('tools.visual.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">بحث بالصورة</span>
-                    </a>
-                    <a href="<?php echo e(route('tools.neighborhood.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.neighborhood.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-map-marked-alt w-4 ml-2 <?php echo e(request()->routeIs('tools.neighborhood.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">نقاط الحي</span>
-                    </a>
-                    <a href="<?php echo e(route('mortgage.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('mortgage.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-handshake w-4 ml-2 <?php echo e(request()->routeIs('mortgage.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">سوق التمويل العقاري</span>
-                    </a>
-                    <a href="<?php echo e(route('contracts.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('contracts.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-file-contract w-4 ml-2 <?php echo e(request()->routeIs('contracts.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">عقود البلوكشين</span>
-                    </a>
-                    <a href="<?php echo e(route('tokenization.index')); ?>"
-                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tokenization.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
-                        <i class="fas fa-cubes w-4 ml-2 <?php echo e(request()->routeIs('tokenization.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
-                        <span class="font-medium">توكنيزيشن العقار</span>
-                    </a>
-                </div>
-            </div>
             <!-- Dashboard -->
             <a href="<?php echo e(route('admin.dashboard')); ?>"
                 class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group <?php echo e(request()->routeIs('admin.dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-700'); ?>">
@@ -141,6 +88,59 @@
                 </div>
             </div>
 
+            <!-- Advanced Tools (moved down) -->
+            <div class="nav-section mt-4 pt-4 border-t border-gray-200">
+                <button onclick="toggleSection('advanced-tools')"
+                    class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors text-gray-700 group">
+                    <div class="flex items-center">
+                        <i class="fas fa-tools w-5 ml-3 text-gray-500"></i>
+                        <span class="font-medium">أدوات متقدمة</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="advanced-tools-arrow"></i>
+                </button>
+                <div id="advanced-tools-submenu" class="hidden mt-2 space-y-1 mr-8">
+                    <a href="<?php echo e(route('tools.valuation.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.valuation.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-calculator w-4 ml-2 <?php echo e(request()->routeIs('tools.valuation.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">ما قيمة بيتك؟</span>
+                    </a>
+                    <a href="<?php echo e(route('tools.predictive.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.predictive.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-chart-line w-4 ml-2 <?php echo e(request()->routeIs('tools.predictive.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">توقع الأسعار</span>
+                    </a>
+                    <a href="<?php echo e(route('tools.investment.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.investment.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-coins w-4 ml-2 <?php echo e(request()->routeIs('tools.investment.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">محاكي الاستثمار</span>
+                    </a>
+                    <a href="<?php echo e(route('tools.visual.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.visual.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-image w-4 ml-2 <?php echo e(request()->routeIs('tools.visual.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">بحث بالصورة</span>
+                    </a>
+                    <a href="<?php echo e(route('tools.neighborhood.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tools.neighborhood.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-map-marked-alt w-4 ml-2 <?php echo e(request()->routeIs('tools.neighborhood.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">نقاط الحي</span>
+                    </a>
+                    <a href="<?php echo e(route('mortgage.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('mortgage.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-handshake w-4 ml-2 <?php echo e(request()->routeIs('mortgage.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">سوق التمويل العقاري</span>
+                    </a>
+                    <a href="<?php echo e(route('contracts.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('contracts.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-file-contract w-4 ml-2 <?php echo e(request()->routeIs('contracts.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">عقود البلوكشين</span>
+                    </a>
+                    <a href="<?php echo e(route('tokenization.index')); ?>"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 <?php echo e(request()->routeIs('tokenization.*') ? 'bg-blue-50 text-blue-600' : ''); ?>">
+                        <i class="fas fa-cubes w-4 ml-2 <?php echo e(request()->routeIs('tokenization.*') ? 'text-blue-600' : 'text-gray-500'); ?>"></i>
+                        <span class="font-medium">توكنيزيشن العقار</span>
+                    </a>
+                </div>
+            </div>
             <!-- Enterprise Section -->
             <div class="nav-section">
                 <button onclick="toggleSection('enterprise')"
