@@ -142,19 +142,19 @@
                         </label>
                     </div>
                     
-                    <div class="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200 hover:bg-orange-100 transition-colors duration-200">
+                    <div class="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition-colors duration-200">
                         <div class="flex items-center space-x-4">
-                            <div class="bg-orange-100 rounded-lg p-2">
-                                <i class="fas fa-calendar text-orange-600"></i>
+                            <div class="bg-red-100 rounded-lg p-2">
+                                <i class="fas fa-shield-alt text-red-600"></i>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-gray-900">إشعارات المعاينات المفتوحة</h3>
-                                <p class="text-sm text-gray-600 mt-1">الحصول على إشعارات حول المعاينات المفتوحة للعقارات المحفوظة</p>
+                                <h3 class="font-semibold text-gray-900">تنبيهات الاحتيال</h3>
+                                <p class="text-sm text-gray-600 mt-1">استلام تنبيهات للعقارات التي تم وسمها كاحتيال</p>
                             </div>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="new_listing_alerts" class="sr-only peer" {{ $preferences->new_listing_alerts ?? false ? 'checked' : '' }}>
-                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
+                            <input type="checkbox" name="fraud_alerts" class="sr-only peer" {{ $preferences->fraud_alerts ?? true ? 'checked' : '' }}>
+                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-600"></div>
                         </label>
                     </div>
                 </div>
@@ -262,6 +262,11 @@ input:focus {
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     const selects = document.querySelectorAll('select');
+    const prefMap = {
+        'property_alerts': 'new_properties',
+        'price_drop_alerts': 'price_changes',
+        'fraud_alerts': 'fraud_alerts'
+    };
     
     // Add change listeners to all form elements
     [...checkboxes, ...selects].forEach(element => {
@@ -274,6 +279,24 @@ document.addEventListener('DOMContentLoaded', function() {
             window.saveTimeout = setTimeout(() => {
                 autoSave();
             }, 1000);
+            
+            // If this is an alerts toggle, push to intelligence prefs API
+            if (prefMap[this.name] !== undefined) {
+                const payload = {};
+                Object.keys(prefMap).forEach(n => {
+                    const el = document.querySelector(`input[name="${n}"]`);
+                    if (el) payload[prefMap[n]] = !!el.checked;
+                });
+                fetch('/api/intelligence/alerts/preferences', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                }).then(()=>{}).catch(()=>{});
+            }
         });
     });
 });

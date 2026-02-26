@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminAgentController;
 use App\Http\Controllers\Admin\AdminPropertyController;
 use App\Http\Controllers\Admin\AdminCompanyController;
 use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\FraudDashboardController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Content\BlogController;
 use App\Http\Controllers\Content\PageController;
@@ -25,10 +26,10 @@ use Illuminate\Support\Facades\Route;
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
+
     // Dashboard
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
-    
+
     // Users Management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->name('index');
@@ -38,8 +39,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
         Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
+        Route::post('/{user}/restrict', [AdminUserController::class, 'restrict'])->name('restrict');
+        Route::post('/bulk-delete', [AdminUserController::class, 'bulkDelete'])->name('bulk-delete');
     });
-    
+
     // Agents Management
     Route::prefix('agents')->name('agents.')->group(function () {
         Route::get('/', [AdminAgentController::class, 'index'])->name('index');
@@ -50,7 +53,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/{agent}', [AdminAgentController::class, 'update'])->name('update');
         Route::delete('/{agent}', [AdminAgentController::class, 'destroy'])->name('destroy');
     });
-    
+
     // Properties Management
     Route::prefix('properties')->name('properties.')->group(function () {
         Route::get('/', [AdminPropertyController::class, 'index'])->name('index');
@@ -61,7 +64,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/{property}', [AdminPropertyController::class, 'update'])->name('update');
         Route::delete('/{property}', [AdminPropertyController::class, 'destroy'])->name('destroy');
     });
-    
+
     // Companies Management
     Route::prefix('companies')->name('companies.')->group(function () {
         Route::get('/', [AdminCompanyController::class, 'index'])->name('index');
@@ -72,11 +75,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/{company}', [AdminCompanyController::class, 'update'])->name('update');
         Route::delete('/{company}', [AdminCompanyController::class, 'destroy'])->name('destroy');
     });
-    
+
     // Content Management
     Route::prefix('content')->name('content.')->group(function () {
         Route::get('/dashboard', [ContentController::class, 'dashboard'])->name('dashboard');
-        
+
         // Blog Posts
         Route::prefix('blog')->name('blog.')->group(function () {
             Route::get('/posts', [BlogController::class, 'index'])->name('posts.index');
@@ -87,7 +90,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::put('/posts/{post}', [BlogController::class, 'update'])->name('posts.update');
             Route::delete('/posts/{post}', [BlogController::class, 'destroy'])->name('posts.destroy');
         });
-        
+
         // Pages
         Route::prefix('pages')->name('pages.')->group(function () {
             Route::get('/', [PageController::class, 'index'])->name('index');
@@ -98,7 +101,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::put('/{page}', [PageController::class, 'update'])->name('update');
             Route::delete('/{page}', [PageController::class, 'destroy'])->name('destroy');
         });
-        
+
         // News
         Route::prefix('news')->name('news.')->group(function () {
             Route::get('/', [NewsController::class, 'index'])->name('index');
@@ -109,7 +112,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::put('/{news}', [NewsController::class, 'update'])->name('update');
             Route::delete('/{news}', [NewsController::class, 'destroy'])->name('destroy');
         });
-        
+
         // Guides
         Route::prefix('guides')->name('guides.')->group(function () {
             Route::get('/', [GuideController::class, 'index'])->name('index');
@@ -120,7 +123,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::put('/{guide}', [GuideController::class, 'update'])->name('update');
             Route::delete('/{guide}', [GuideController::class, 'destroy'])->name('destroy');
         });
-        
+
         // FAQs
         Route::prefix('faqs')->name('faqs.')->group(function () {
             Route::get('/', [FaqController::class, 'index'])->name('index');
@@ -131,7 +134,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::put('/{faq}', [FaqController::class, 'update'])->name('update');
             Route::delete('/{faq}', [FaqController::class, 'destroy'])->name('destroy');
         });
-        
+
         // Media
         Route::prefix('media')->name('media.')->group(function () {
             Route::get('/', [MediaLibraryController::class, 'index'])->name('index');
@@ -139,7 +142,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::get('/{media}/preview', [MediaLibraryController::class, 'preview'])->name('preview');
             Route::delete('/{media}', [MediaLibraryController::class, 'destroy'])->name('destroy');
         });
-        
+
         // Widgets
         Route::prefix('widgets')->name('widgets.')->group(function () {
             Route::get('/', [WidgetController::class, 'index'])->name('index');
@@ -151,7 +154,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::delete('/{widget}', [WidgetController::class, 'destroy'])->name('destroy');
         });
     });
-    
+
     // Menus
     Route::prefix('menus')->name('menus.')->group(function () {
         Route::get('/', [MenuController::class, 'index'])->name('index');
@@ -161,7 +164,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{menu}/edit', [MenuController::class, 'edit'])->name('edit');
         Route::put('/{menu}', [MenuController::class, 'update'])->name('update');
         Route::delete('/{menu}', [MenuController::class, 'destroy'])->name('destroy');
-        
+
         // Menu Builder Routes
         Route::get('/{menu}/builder', [MenuController::class, 'builder'])->name('builder');
         Route::post('/{menu}/add-item', [MenuController::class, 'addItem'])->name('add_item');
@@ -169,7 +172,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/menu-items/{menuItem}', [MenuController::class, 'updateItem'])->name('update_item');
         Route::post('/{menu}/reorder-items', [MenuController::class, 'reorderItems'])->name('reorder_items');
     });
-    
+
     // Financial Management
     Route::prefix('financial')->name('financial.')->group(function () {
         Route::get('/dashboard', [FinancialController::class, 'dashboard'])->name('dashboard');
@@ -188,7 +191,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/reports', [FinancialController::class, 'reports'])->name('reports');
         Route::get('/analytics', [FinancialController::class, 'analytics'])->name('analytics');
     });
-    
+
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
@@ -201,7 +204,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/custom', [ReportController::class, 'custom'])->name('custom');
         Route::get('/scheduled', [ReportController::class, 'scheduled'])->name('scheduled');
     });
-    
+
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [AdminSettingsController::class, 'index'])->name('index');
@@ -214,7 +217,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/backup', [AdminSettingsController::class, 'index'])->defaults('tab', 'backup')->name('backup');
         Route::get('/maintenance', [AdminSettingsController::class, 'index'])->defaults('tab', 'maintenance')->name('maintenance');
     });
-    
+
     // SEO Management
     Route::prefix('seo')->name('seo.')->group(function () {
         Route::get('/', [SeoController::class, 'index'])->name('index');
@@ -233,7 +236,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/robots', [SeoController::class, 'storeRobots'])->name('robots.store');
         Route::put('/robots', [SeoController::class, 'updateRobots'])->name('robots.update');
     });
-    
+
     // Performance Management
     Route::prefix('performance')->name('performance.')->group(function () {
         Route::get('/', [PerformanceController::class, 'index'])->name('dashboard');
@@ -262,5 +265,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/backup/download/{filename}', [SystemController::class, 'downloadBackup'])->name('backup.download');
         Route::delete('/backup/{filename}', [SystemController::class, 'deleteBackup'])->name('backup.destroy');
         Route::get('/updates', [SystemController::class, 'updates'])->name('updates');
+    });
+
+    // Fraud Detection & AI Security
+    Route::prefix('fraud')->name('fraud.')->group(function () {
+        Route::get('/dashboard', [FraudDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/duplicates', [FraudDashboardController::class, 'duplicates'])->name('duplicates');
+        Route::get('/properties/{id}', [FraudDashboardController::class, 'propertyDetail'])->name('property-detail');
+        Route::get('/high-risk-users', [FraudDashboardController::class, 'highRiskUsers'])->name('high-risk-users');
+        Route::get('/stats', [FraudDashboardController::class, 'getStats'])->name('stats');
+        Route::get('/chart-data', [FraudDashboardController::class, 'chartData'])->name('chart-data');
+
+        // Actions
+        Route::post('/analyze/property/{id}', [FraudDashboardController::class, 'analyzeProperty'])->name('analyze.property');
+        Route::patch('/properties/{id}/status', [FraudDashboardController::class, 'updatePropertyStatus'])->name('properties.status');
+        Route::patch('/duplicates/{id}/review', [FraudDashboardController::class, 'reviewDuplicate'])->name('duplicates.review');
+        Route::patch('/alerts/{id}/resolve', [FraudDashboardController::class, 'resolveAlert'])->name('alerts.resolve');
+        Route::patch('/users/{id}/lift-restriction', [FraudDashboardController::class, 'liftUserRestriction'])->name('users.lift-restriction');
     });
 });

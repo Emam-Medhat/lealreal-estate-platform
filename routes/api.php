@@ -5,6 +5,10 @@ use App\Http\Controllers\Api\LeadApiController;
 use App\Http\Controllers\Api\PropertyApiController;
 use App\Http\Controllers\RealTimeDashboardController;
 use App\Http\Controllers\Currency\CurrencyController;
+use App\Http\Controllers\Api\Intelligence\MapLayerController as IntelligenceMapLayerController;
+use App\Http\Controllers\Api\Intelligence\PricingController as IntelligencePricingController;
+use App\Http\Controllers\Api\Intelligence\RecommendationController as IntelligenceRecommendationController;
+use App\Http\Controllers\Intelligence\PropertyIntelligenceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +77,19 @@ Route::prefix('api/v1')->middleware(['api', 'auth:api'])->group(function () {
 // IoT Device Routes (Device Authentication)
 Route::prefix('api/v1/iot')->middleware(['api'])->group(function () {
     Route::post('ingest', [\App\Http\Controllers\Api\IotIngestionController::class, 'ingest']);
+});
+
+// Intelligence API
+Route::prefix('api/v1/intelligence')->middleware(['api', 'auth:api'])->group(function () {
+    // Map layers
+    Route::get('layers/price-heatmap', [IntelligenceMapLayerController::class, 'priceHeatmap']);
+    Route::get('layers/demand-density', [IntelligenceMapLayerController::class, 'demandDensity']);
+    // Pricing
+    Route::get('pricing/property/{id}', [IntelligencePricingController::class, 'predictForProperty']);
+    // Recommendations
+    Route::get('recommendations/feed', [IntelligenceRecommendationController::class, 'feed']);
+    // Trigger pipeline for a property
+    Route::post('properties/{id}/run', [PropertyIntelligenceController::class, 'run']);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

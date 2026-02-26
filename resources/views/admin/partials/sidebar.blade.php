@@ -88,6 +88,59 @@
                 </div>
             </div>
 
+            <!-- Advanced Tools (moved down) -->
+            <div class="nav-section mt-4 pt-4 border-t border-gray-200">
+                <button onclick="toggleSection('advanced-tools')"
+                    class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors text-gray-700 group">
+                    <div class="flex items-center">
+                        <i class="fas fa-tools w-5 ml-3 text-gray-500"></i>
+                        <span class="font-medium">أدوات متقدمة</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="advanced-tools-arrow"></i>
+                </button>
+                <div id="advanced-tools-submenu" class="hidden mt-2 space-y-1 mr-8">
+                    <a href="{{ route('tools.valuation.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('tools.valuation.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-calculator w-4 ml-2 {{ request()->routeIs('tools.valuation.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">ما قيمة بيتك؟</span>
+                    </a>
+                    <a href="{{ route('tools.predictive.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('tools.predictive.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-chart-line w-4 ml-2 {{ request()->routeIs('tools.predictive.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">توقع الأسعار</span>
+                    </a>
+                    <a href="{{ route('tools.investment.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('tools.investment.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-coins w-4 ml-2 {{ request()->routeIs('tools.investment.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">محاكي الاستثمار</span>
+                    </a>
+                    <a href="{{ route('tools.visual.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('tools.visual.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-image w-4 ml-2 {{ request()->routeIs('tools.visual.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">بحث بالصورة</span>
+                    </a>
+                    <a href="{{ route('tools.neighborhood.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('tools.neighborhood.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-map-marked-alt w-4 ml-2 {{ request()->routeIs('tools.neighborhood.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">نقاط الحي</span>
+                    </a>
+                    <a href="{{ route('mortgage.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('mortgage.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-handshake w-4 ml-2 {{ request()->routeIs('mortgage.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">سوق التمويل العقاري</span>
+                    </a>
+                    <a href="{{ route('contracts.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('contracts.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-file-contract w-4 ml-2 {{ request()->routeIs('contracts.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">عقود البلوكشين</span>
+                    </a>
+                    <a href="{{ route('tokenization.index') }}"
+                       class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('tokenization.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-cubes w-4 ml-2 {{ request()->routeIs('tokenization.*') ? 'text-blue-600' : 'text-gray-500' }}"></i>
+                        <span class="font-medium">توكنيزيشن العقار</span>
+                    </a>
+                </div>
+            </div>
             <!-- Enterprise Section -->
             <div class="nav-section">
                 <button onclick="toggleSection('enterprise')"
@@ -546,62 +599,265 @@
                     <i class="fas fa-chevron-down text-gray-400 transition-transform" id="ai-arrow"></i>
                 </button>
                 <div id="ai-submenu" class="hidden mt-2 space-y-1 mr-8">
+                    <a href="{{ route('admin.intelligence.index') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.intelligence.index') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-brain w-4 ml-2"></i>
+                        ذكاء العقار (لوحة)
+                    </a>
                     <a href="{{ route('ai.dashboard') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-tachometer-alt w-4 ml-2"></i>
                         لوحة التحكم
-                    المركزية
+                        المركزية
                     </a>
-                    <a href="{{ route('ai.smart-search') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.smart-search') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-search-plus w-4 ml-2"></i>
                         البحث الذكي (NL)
                     </a>
-                    <a href="{{ route('ai.chat') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.chat') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-comments-alt w-4 ml-2"></i>
                         المستشار العقاري
                     </a>
-                    <a href="{{ route('ai.valuation.dashboard') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.valuation.dashboard') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-home w-4 ml-2"></i>
                         تقييم العقارات الآلي
                     </a>
-                    <a href="{{ route('ai.price-prediction') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.price-prediction') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-chart-line w-4 ml-2"></i>
                         توقع أسعار السوق
                     </a>
-                    <a href="{{ route('ai.images') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.images') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-magic w-4 ml-2"></i>
                         تحليل الصور والعيوب
                     </a>
-                    <a href="{{ route('ai.descriptions') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.descriptions') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-pen w-4 ml-2"></i>
                         مولد الوصف الذكي
                     </a>
-                    <a href="{{ route('ai.fraud-detection') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
-                        <i class="fas fa-user-secret w-4 ml-2"></i>
-                        كشف الاحتيال والمخاطر
+                    <a href="{{ route('admin.fraud.dashboard') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.fraud.dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-shield-alt w-4 ml-2"></i>
+                        لوحة كشف الاحتيال
                     </a>
-                    <a href="{{ route('ai.virtual-reality') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('admin.fraud.duplicates') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.fraud.duplicates') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-copy w-4 ml-2"></i>
+                        مراجعة التكرارات
+                    </a>
+                    <a href="{{ route('admin.fraud.high-risk-users') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.fraud.high-risk-users') ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i class="fas fa-user-secret w-4 ml-2"></i>
+                        المستخدمين عاليي المخاطر
+                    </a>
+                    <a href="{{ route('ai.virtual-reality') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-vr-cardboard w-4 ml-2"></i>
                         الواقع الافتراضي (VR)
                     </a>
-                    <a href="{{ route('ai.virtual-staging') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.virtual-staging') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-couch w-4 ml-2"></i>
                         التأثيث الافتراضي
                     </a>
-                    <a href="{{ route('ai.investment-advisor') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.investment-advisor') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-hand-holding-usd w-4 ml-2"></i>
                         مساعد الاستثمار
                     </a>
-                    <a href="{{ route('ai.market-insights') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.market-insights') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-poll w-4 ml-2"></i>
                         رؤى واحصائيات السوق
                     </a>
-                    <a href="{{ route('ai.analytics') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                    <a href="{{ route('ai.analytics') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
                         <i class="fas fa-microscope w-4 ml-2"></i>
                         تحليلات أداء النماذج
                     </a>
+                    <a href="{{ url('/api/intelligence/layers/price-heatmap') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-layer-group w-4 ml-2"></i>
+                        طبقة حرارة الأسعار (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/layers/demand-density') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-fire-alt w-4 ml-2"></i>
+                        كثافة الطلب (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/recommendations/feed') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-user-astronaut w-4 ml-2"></i>
+                        توصيات شخصية (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/alerts') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-bell w-4 ml-2"></i>
+                        تنبيهات الذكاء (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/layers/growth-zones') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-chart-area w-4 ml-2"></i>
+                        مناطق النمو (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/layers/schools') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-school w-4 ml-2"></i>
+                        قرب المدارس (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/layers/transport') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-bus w-4 ml-2"></i>
+                        الوصول للنقل (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/layers/crime') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-exclamation-triangle w-4 ml-2"></i>
+                        مؤشر الجريمة (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/analytics/overview') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-chart-line w-4 ml-2"></i>
+                        تحليلات السوق (API)
+                    </a>
+                    <a href="{{ url('/api/intelligence/admin/map-dashboard') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-map w-4 ml-2"></i>
+                        لوحة الخريطة (API)
+                    </a>
+                    <div class="px-2 pt-3 text-xs text-gray-500">نسخة v1</div>
+                    <a href="{{ url('/api/v1/intelligence/layers/price-heatmap') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-layer-group w-4 ml-2"></i>
+                        طبقة حرارة الأسعار v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/layers/demand-density') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-fire-alt w-4 ml-2"></i>
+                        كثافة الطلب v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/layers/growth-zones') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-chart-area w-4 ml-2"></i>
+                        مناطق النمو v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/layers/schools') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-school w-4 ml-2"></i>
+                        قرب المدارس v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/layers/transport') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-bus w-4 ml-2"></i>
+                        الوصول للنقل v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/layers/crime') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-exclamation-triangle w-4 ml-2"></i>
+                        مؤشر الجريمة v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/analytics/overview') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-chart-line w-4 ml-2"></i>
+                        تحليلات السوق v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/recommendations/feed') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-user-astronaut w-4 ml-2"></i>
+                        توصيات شخصية v1
+                    </a>
+                    <a href="{{ url('/api/v1/intelligence/admin/map-dashboard') }}" target="_blank"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600">
+                        <i class="fas fa-map w-4 ml-2"></i>
+                        لوحة الخريطة v1
+                    </a>
+                    <div class="p-2">
+                        <div class="text-xs text-gray-500 mb-1">توقع سعر لعقار</div>
+                        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                            <input id="intell-pricing-id" type="number" min="1"
+                                class="w-24 px-2 py-1 border rounded text-sm" placeholder="ID">
+                            <button type="button" onclick="openPricingPrediction()"
+                                class="px-3 py-1 bg-blue-50 text-blue-700 rounded text-sm hover:bg-blue-100">
+                                فتح
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-2">
+                        <div class="text-xs text-gray-500 mb-1">توقع سعر لعقار (v1)</div>
+                        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                            <input id="intell-pricing-id-v1" type="number" min="1"
+                                class="w-24 px-2 py-1 border rounded text-sm" placeholder="ID">
+                            <button type="button" onclick="openPricingPredictionV1()"
+                                class="px-3 py-1 bg-blue-50 text-blue-700 rounded text-sm hover:bg-blue-100">
+                                فتح
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-2">
+                        <div class="text-xs text-gray-500 mb-1">تشغيل البايبلاين لعقار</div>
+                        <form id="intell-run-form" method="POST" target="_blank"
+                            onsubmit="return runPropertyPipeline()">
+                            @csrf
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                <input id="intell-run-id" type="number" min="1"
+                                    class="w-24 px-2 py-1 border rounded text-sm" placeholder="ID">
+                                <button type="submit"
+                                    class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded text-sm hover:bg-emerald-100">
+                                    تشغيل
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="p-2">
+                        <div class="text-xs text-gray-500 mb-1">تشغيل البايبلاين لعقار (v1)</div>
+                        <form id="intell-run-form-v1" method="POST" target="_blank"
+                            onsubmit="return runPropertyPipelineV1()">
+                            @csrf
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                <input id="intell-run-id-v1" type="number" min="1"
+                                    class="w-24 px-2 py-1 border rounded text-sm" placeholder="ID">
+                                <button type="submit"
+                                    class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded text-sm hover:bg-emerald-100">
+                                    تشغيل
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
+            <script>
+                function openPricingPrediction() {
+                    var id = document.getElementById('intell-pricing-id')?.value;
+                    if (!id) return;
+                    var url = '/api/intelligence/pricing/property/' + encodeURIComponent(id);
+                    window.open(url, '_blank');
+                }
+                function openPricingPredictionV1() {
+                    var id = document.getElementById('intell-pricing-id-v1')?.value;
+                    if (!id) return;
+                    var url = '/api/v1/intelligence/pricing/property/' + encodeURIComponent(id);
+                    window.open(url, '_blank');
+                }
+                function runPropertyPipeline() {
+                    var id = document.getElementById('intell-run-id')?.value;
+                    if (!id) return false;
+                    var form = document.getElementById('intell-run-form');
+                    form.action = '/api/intelligence/properties/' + encodeURIComponent(id) + '/run';
+                    return true;
+                }
+                function runPropertyPipelineV1() {
+                    var id = document.getElementById('intell-run-id-v1')?.value;
+                    if (!id) return false;
+                    var form = document.getElementById('intell-run-form-v1');
+                    form.action = '/api/v1/intelligence/properties/' + encodeURIComponent(id) + '/run';
+                    return true;
+                }
+            </script>
 
             <!-- Advanced Analytics Section -->
             <div class="nav-section">
@@ -1535,6 +1791,35 @@
                 </div>
             </div>
 
+            <!-- AI & Fraud Prevention -->
+            <div class="nav-section">
+                <button onclick="toggleSection('ai-fraud')"
+                    class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors text-gray-700 group">
+                    <div class="flex items-center">
+                        <i class="fas fa-robot w-5 ml-3 text-red-500"></i>
+                        <span class="font-medium">الذكاء الاصطناعي والأمان</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="ai-fraud-arrow"></i>
+                </button>
+                <div id="ai-fraud-submenu" class="hidden mt-2 space-y-1 mr-8">
+                    <a href="{{ route('admin.fraud.dashboard') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.fraud.dashboard') ? 'bg-red-50 text-red-600' : '' }}">
+                        <i class="fas fa-shield-virus w-4 ml-2"></i>
+                        لوحة كشف الاحتيال
+                    </a>
+                    <a href="{{ route('admin.fraud.duplicates') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.fraud.duplicates') ? 'bg-red-50 text-red-600' : '' }}">
+                        <i class="fas fa-copy w-4 ml-2"></i>
+                        مراجعة المكررات
+                    </a>
+                    <a href="{{ route('admin.fraud.high-risk-users') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-sm text-gray-600 {{ request()->routeIs('admin.fraud.high-risk-users') ? 'bg-red-50 text-red-600' : '' }}">
+                        <i class="fas fa-user-secret w-4 ml-2"></i>
+                        مستخدمون عالي المخاطر
+                    </a>
+                </div>
+            </div>
+
             <!-- System Management Section -->
             <div class="nav-section">
                 <button onclick="toggleSection('system')"
@@ -1647,6 +1932,8 @@
 
         if (currentRoute.includes('/users')) {
             toggleSection('users');
+        } else if (currentRoute.includes('/tools') || currentRoute.includes('/mortgage') || currentRoute.includes('/contracts') || currentRoute.includes('/tokenization')) {
+            toggleSection('advanced-tools');
         } else if (currentRoute.includes('/properties')) {
             toggleSection('properties');
         } else if (currentRoute.includes('/seo')) {
@@ -1683,6 +1970,8 @@
             toggleSection('ai');
         } else if (currentRoute.includes('/enterprise')) {
             toggleSection('global-services');
+        } else if (currentRoute.includes('/fraud')) {
+            toggleSection('ai-fraud');
         } else if (currentRoute.includes('/modules')) {
             toggleSection('global-services');
         }

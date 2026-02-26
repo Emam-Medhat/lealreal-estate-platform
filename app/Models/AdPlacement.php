@@ -145,7 +145,10 @@ class AdPlacement extends Model
 
     public function getDimensionsAttribute()
     {
-        return "{$this->width}x{$this->height}";
+        if ($this->width && $this->height) {
+            return "{$this->width}x{$this->height}";
+        }
+        return 'غير محدد';
     }
 
     public function getIsAvailableAttribute()

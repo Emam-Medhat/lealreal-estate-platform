@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Agent;
-use App\Models\Agent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -131,7 +130,7 @@ class GenerateAgentMonthlyReport implements ShouldQueue
                 'name' => $agent->name,
                 'id' => $agent->id,
                 'email' => $agent->email,
-                'license_number' => $agent->license_number
+                'license_number' => $agent->license_number,
             'company_id' => $agent->company_id,
                 'company_name' => $agent->company ? $agent->company->name : null
             ],

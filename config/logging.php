@@ -72,6 +72,14 @@ return [
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
         ],
+        
+        'intelligence' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/intelligence.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
 
         'slack' => [
             'driver' => 'slack',

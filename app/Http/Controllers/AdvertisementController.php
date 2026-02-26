@@ -45,24 +45,40 @@ class AdvertisementController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'campaign_id' => 'required|exists:ad_campaigns,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|max:1000',
-            'type' => 'required|in:banner,native,video,popup',
-            'image' => 'required_if:type,banner,native|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'video_url' => 'required_if:type,video|url|max:500',
-            'target_url' => 'required|url|max:500',
-            'placements' => 'required|array',
-            'placements.*' => 'exists:ad_placements,id',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after:start_date',
-            'daily_budget' => 'required|numeric|min:1',
-            'target_audience' => 'nullable|array',
-            'target_locations' => 'nullable|array',
-            'target_age_range' => 'nullable|array',
-            'target_interests' => 'nullable|array'
+        // Debug: Log all incoming data
+        \Log::info('=== AD STORE REQUEST ===', [
+            'all_data' => $request->all(),
+            'has_image' => $request->hasFile('image'),
+            'placements' => $request->placements,
+            'type' => $request->type,
         ]);
+
+        try {
+            $request->validate([
+                'campaign_id' => 'required|exists:ad_campaigns,id',
+                'title' => 'required|string|max:255',
+                'description' => 'required|string|max:1000',
+                'type' => 'required|in:banner,native,video,popup',
+                'image' => 'required_if:type,banner,native|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'video_url' => 'required_if:type,video|url|max:500',
+                'target_url' => 'required|url|max:500',
+                'placements' => 'required|array',
+                'placements.*' => 'exists:ad_placements,id',
+                'start_date' => 'required|date|after_or_equal:today',
+                'end_date' => 'required|date|after:start_date',
+                'daily_budget' => 'required|numeric|min:1',
+                'target_audience' => 'nullable|array',
+                'target_locations' => 'nullable|array',
+                'target_age_range' => 'nullable|array',
+                'target_interests' => 'nullable|array'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('=== VALIDATION FAILED ===', [
+                'errors' => $e->errors(),
+                'failed' => $e->validator->failed()
+            ]);
+            throw $e;
+        }
 
         DB::beginTransaction();
         

@@ -8,6 +8,13 @@ use App\Http\Controllers\Blockchain\BlockchainController;
 use App\Http\Controllers\Enterprise\EnterpriseController;
 use App\Http\Controllers\AI\AIController;
 use App\Http\Controllers\AI\ChatbotController;
+use App\Http\Controllers\Api\Intelligence\MapLayerController as IntelligenceMapLayerController;
+use App\Http\Controllers\Api\Intelligence\PricingController as IntelligencePricingController;
+use App\Http\Controllers\Api\Intelligence\RecommendationController as IntelligenceRecommendationController;
+use App\Http\Controllers\Api\Intelligence\AnalyticsController as IntelligenceAnalyticsController;
+use App\Http\Controllers\Api\Intelligence\AlertsController as IntelligenceAlertsController;
+use App\Http\Controllers\Intelligence\PropertyIntelligenceController;
+use App\Http\Controllers\Api\Intelligence\MapDashboardController as IntelligenceMapDashboardController;
 
 // Currency Routes
 Route::prefix('api/currency')->name('currency.')->group(function () {
@@ -79,6 +86,46 @@ Route::prefix('api/ai')->name('ai.')->group(function () {
     Route::post('/optimize-pricing', [AIController::class, 'optimizePricing'])->name('optimize_pricing');
     Route::post('/generate-report', [AIController::class, 'generateMarketReport'])->name('generate_report');
     Route::post('/chat', [ChatbotController::class, 'chat'])->name('chat');
+});
+
+// Intelligence Routes
+Route::prefix('api/intelligence')->group(function () {
+    // Map layers
+    Route::get('/layers/price-heatmap', [IntelligenceMapLayerController::class, 'priceHeatmap']);
+    Route::get('/layers/demand-density', [IntelligenceMapLayerController::class, 'demandDensity']);
+    Route::get('/layers/growth-zones', [IntelligenceMapLayerController::class, 'growthZones']);
+    Route::get('/layers/schools', [IntelligenceMapLayerController::class, 'schoolProximity']);
+    Route::get('/layers/transport', [IntelligenceMapLayerController::class, 'transportAccess']);
+    Route::get('/layers/crime', [IntelligenceMapLayerController::class, 'crimeIndex']);
+    Route::get('/alerts', [IntelligenceAlertsController::class, 'index'])->middleware('auth');
+    Route::post('/alerts/{id}/read', [IntelligenceAlertsController::class, 'markRead'])->middleware('auth');
+    Route::post('/alerts/preferences', [IntelligenceAlertsController::class, 'savePreferences'])->middleware('auth');
+    // Analytics
+    Route::get('/analytics/overview', [IntelligenceAnalyticsController::class, 'overview']);
+    // Map dashboard bundle
+    Route::get('/admin/map-dashboard', [IntelligenceMapDashboardController::class, 'overview']);
+    // Pricing
+    Route::get('/pricing/property/{id}', [IntelligencePricingController::class, 'predictForProperty']);
+    // Recommendations
+    Route::get('/recommendations/feed', [IntelligenceRecommendationController::class, 'feed']);
+    // Trigger pipeline for property
+    Route::post('/properties/{id}/run', [PropertyIntelligenceController::class, 'run']);
+});
+
+// Versioned Intelligence Routes (v1)
+Route::prefix('api/v1/intelligence')->group(function () {
+    Route::get('/layers/price-heatmap', [IntelligenceMapLayerController::class, 'priceHeatmap']);
+    Route::get('/layers/demand-density', [IntelligenceMapLayerController::class, 'demandDensity']);
+    Route::get('/layers/growth-zones', [IntelligenceMapLayerController::class, 'growthZones']);
+    Route::get('/layers/schools', [IntelligenceMapLayerController::class, 'schoolProximity']);
+    Route::get('/layers/transport', [IntelligenceMapLayerController::class, 'transportAccess']);
+    Route::get('/layers/crime', [IntelligenceMapLayerController::class, 'crimeIndex']);
+    Route::get('/analytics/overview', [IntelligenceAnalyticsController::class, 'overview']);
+    Route::get('/pricing/property/{id}', [IntelligencePricingController::class, 'predictForProperty']);
+    Route::get('/recommendations/feed', [IntelligenceRecommendationController::class, 'feed']);
+    Route::post('/properties/{id}/run', [PropertyIntelligenceController::class, 'run']);
+    Route::get('/admin/map-dashboard', [IntelligenceMapDashboardController::class, 'overview']);
+    Route::post('/alerts/preferences', [IntelligenceAlertsController::class, 'savePreferences'])->middleware('auth');
 });
 
 // Web Routes for Views

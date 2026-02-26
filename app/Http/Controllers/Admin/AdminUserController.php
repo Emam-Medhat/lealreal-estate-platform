@@ -182,8 +182,6 @@ class AdminUserController extends Controller
             'birth_date' => 'nullable|date|before:today',
             'postal_code' => 'nullable|string|max:20',
             'national_id' => 'nullable|string|max:255', // Kept for compatibility if used elsewhere, but primarily use id_document_number
-            'id_document_number' => 'nullable|string|max:255',
-            'job_title' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
             'twitter' => 'nullable|string|max:255',
             'id_document_type' => 'nullable|in:passport,national_id,driving_license',
@@ -240,7 +238,7 @@ class AdminUserController extends Controller
     {
         try {
             $userIds = explode(',', $request->input('user_ids'));
-            
+
             // Validate that user IDs are provided
             if (empty($userIds) || empty($request->input('user_ids'))) {
                 return redirect()->route('admin.users.index')
@@ -256,7 +254,7 @@ class AdminUserController extends Controller
 
             // Convert to integers and filter valid IDs
             $userIds = array_filter(array_map('intval', $userIds));
-            
+
             $deletedCount = 0;
             foreach ($userIds as $userId) {
                 try {
@@ -279,6 +277,32 @@ class AdminUserController extends Controller
             \Log::error('Bulk delete failed: ' . $e->getMessage());
             return redirect()->route('admin.users.index')
                 ->with('error', 'حدث خطأ أثناء محاولة حذف المستخدمين');
+        }
+    }
+
+    /**
+     * Restrict user account.
+     */
+    public function restrict(Request $request, $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            $user->update([
+                'is_restricted' => true,
+                'restriction_reason' => $request->get('reason', 'Suspicious activity detected by AI Fraud system'),
+                'account_status' => 'suspended'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User restricted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to restrict user'
+            ], 500);
         }
     }
 }

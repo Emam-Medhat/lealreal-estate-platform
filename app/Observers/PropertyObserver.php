@@ -5,6 +5,10 @@ namespace App\Observers;
 use App\Models\Property;
 use App\Models\PropertyAnalytic;
 use App\Services\CacheService;
+use App\Jobs\Fraud\AnalyzePropertyFraudJob;
+use App\Jobs\ComputeInvestmentScores;
+use App\Jobs\PredictPropertyPricing;
+use App\Jobs\RunFraudDetection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -56,6 +60,27 @@ class PropertyObserver
 
         // Send notifications to admins and managers
         $this->sendPropertyNotifications($property, 'created');
+
+        // Trigger AI Fraud Analysis
+        AnalyzePropertyFraudJob::dispatch($property->id, auth()->id(), request()->ip());
+        ComputeInvestmentScores::dispatch([$property->id], [
+            $property->id => [
+                'historical_trend' => 3.0,
+                'rental_avg' => 3000,
+                'listing_velocity' => 45,
+                'search_frequency' => 50,
+                'neighborhood_growth' => 2.0,
+            ],
+        ]);
+        PredictPropertyPricing::dispatch([$property->id]);
+        RunFraudDetection::dispatch([$property->id], [
+            $property->id => [
+                'pricing_stats' => [
+                    'mean' => $property->price,
+                    'std' => max(1, $property->price * 0.1),
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -91,6 +116,27 @@ class PropertyObserver
         if (class_exists('\App\Events\PropertyUpdated')) {
             event(new \App\Events\PropertyUpdated($property));
         }
+
+        // Trigger AI Fraud Analysis on update (price, address, title changes)
+        AnalyzePropertyFraudJob::dispatch($property->id, auth()->id(), request()->ip());
+        ComputeInvestmentScores::dispatch([$property->id], [
+            $property->id => [
+                'historical_trend' => 3.0,
+                'rental_avg' => 3000,
+                'listing_velocity' => 45,
+                'search_frequency' => 50,
+                'neighborhood_growth' => 2.0,
+            ],
+        ]);
+        PredictPropertyPricing::dispatch([$property->id]);
+        RunFraudDetection::dispatch([$property->id], [
+            $property->id => [
+                'pricing_stats' => [
+                    'mean' => $property->price,
+                    'std' => max(1, $property->price * 0.1),
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -371,7 +417,7 @@ class PropertyObserver
             try {
                 // Find all admins and super admins to notify
                 $admins = \App\Models\User::whereIn('user_type', ['admin', 'super_admin'])->get();
-                
+
                 if ($admins->isNotEmpty()) {
                     \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPropertyNotification($property));
                     Log::info("Sent new property notification to {$admins->count()} admins for property {$property->id}");

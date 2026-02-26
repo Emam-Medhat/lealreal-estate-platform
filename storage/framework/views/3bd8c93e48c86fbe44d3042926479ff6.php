@@ -28,6 +28,16 @@
 
         <form method="POST" action="<?php echo e(route('ads.store')); ?>" enctype="multipart/form-data" class="space-y-8">
             <?php echo csrf_field(); ?>
+            <?php if($errors->any()): ?>
+                <div class="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4">
+                    <div class="font-semibold mb-2">يوجد أخطاء يجب تعديلها قبل الإرسال:</div>
+                    <ul class="list-disc pr-6 space-y-1">
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($error); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
 
             <!-- Basic Information -->
             <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
@@ -47,12 +57,22 @@
                                     id="campaign_id" name="campaign_id" required>
                                 <option value="">اختر حملة</option>
                                 <?php $__currentLoopData = $campaigns; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $campaign): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($campaign->id); ?>"><?php echo e($campaign->name); ?></option>
+                                    <option value="<?php echo e($campaign->id); ?>" <?php echo e(old('campaign_id') == $campaign->id ? 'selected' : ''); ?>><?php echo e($campaign->name); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <i class="fas fa-bullhorn absolute right-4 top-4 text-slate-400"></i>
                             <i class="fas fa-chevron-down absolute left-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['campaign_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
 
                     <!-- Ad Type -->
@@ -61,14 +81,24 @@
                         <div class="relative">
                             <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pl-12"
                                     id="type" name="type" required onchange="toggleAdTypeFields()">
-                                <option value="banner">بانر</option>
-                                <option value="native">أصلي</option>
-                                <option value="video">فيديو</option>
-                                <option value="popup">نافذة منبثقة</option>
+                                <option value="banner" <?php echo e(old('type', 'banner') === 'banner' ? 'selected' : ''); ?>>بانر</option>
+                                <option value="native" <?php echo e(old('type') === 'native' ? 'selected' : ''); ?>>أصلي</option>
+                                <option value="video" <?php echo e(old('type') === 'video' ? 'selected' : ''); ?>>فيديو</option>
+                                <option value="popup" <?php echo e(old('type') === 'popup' ? 'selected' : ''); ?>>نافذة منبثقة</option>
                             </select>
                             <i class="fas fa-ad absolute right-4 top-4 text-slate-400"></i>
                             <i class="fas fa-chevron-down absolute left-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['type'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
 
                     <!-- Title -->
@@ -80,6 +110,16 @@
                                    placeholder="أدخل عنواناً جذاباً للإعلان">
                             <i class="fas fa-heading absolute right-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['title'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
 
                     <!-- Description -->
@@ -93,6 +133,16 @@
                                 <span id="char-count">0</span>/500
                             </div>
                         </div>
+                        <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
             </div>
@@ -156,6 +206,16 @@
                                id="banner_image" name="image" accept="image/*" onchange="previewImage(this, 'banner-preview')">
                         <p class="text-sm text-slate-500 mt-1">الصيغ المسموحة: JPG, PNG, GIF (الحد الأقصى: 2MB)</p>
                         <div id="banner-preview" class="mt-4"></div>
+                        <?php $__errorArgs = ['image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
             </div>
@@ -257,6 +317,16 @@
                         <input type="file" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
                                id="popup_image" name="image" accept="image/*" onchange="previewImage(this, 'popup-preview')">
                         <div id="popup-preview" class="mt-4"></div>
+                        <?php $__errorArgs = ['image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     <div>
                         <label for="popup_size" class="block text-sm font-semibold text-slate-700 mb-2">حجم النافذة</label>
@@ -291,6 +361,16 @@
                                    id="start_date" name="start_date" required value="<?php echo e(old('start_date', now()->format('Y-m-d'))); ?>">
                             <i class="fas fa-calendar-plus absolute right-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['start_date'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     <div>
                         <label for="end_date" class="block text-sm font-semibold text-slate-700 mb-2">تاريخ الانتهاء *</label>
@@ -299,6 +379,16 @@
                                    id="end_date" name="end_date" required value="<?php echo e(old('end_date', now()->addDays(30)->format('Y-m-d'))); ?>">
                             <i class="fas fa-calendar-times absolute right-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['end_date'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     <div>
                         <label for="daily_budget" class="block text-sm font-semibold text-slate-700 mb-2">الميزانية اليومية *</label>
@@ -308,6 +398,16 @@
                             <span class="absolute right-4 top-3.5 text-slate-500 font-medium">ريال</span>
                             <i class="fas fa-coins absolute left-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['daily_budget'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     <div>
                         <label for="total_budget" class="block text-sm font-semibold text-slate-700 mb-2">الميزانية الإجمالية</label>
@@ -335,14 +435,34 @@
                         <label for="placements" class="block text-sm font-semibold text-slate-700 mb-2">مواضع الإعلان *</label>
                         <div class="relative">
                             <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 pl-12"
-                                    id="placements" name="placements[]" multiple required>
+                                    id="placements" name="placements[]" multiple required size="4">
                                 <?php $__currentLoopData = $placements; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $placement): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($placement->id); ?>"><?php echo e($placement->name); ?> (<?php echo e($placement->dimensions); ?>)</option>
+                                    <option value="<?php echo e($placement->id); ?>" <?php echo e(collect(old('placements', []))->contains($placement->id) ? 'selected' : ''); ?>><?php echo e($placement->name); ?> (<?php echo e($placement->dimensions); ?>)</option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <i class="fas fa-map-marker-alt absolute right-4 top-4 text-slate-400"></i>
                         </div>
-                        <p class="text-sm text-slate-500 mt-1">اختر جميع المواضع المناسبة</p>
+                        <p class="text-sm text-slate-500 mt-1">اختر جميع المواضع المناسبة (Ctrl+Click لاختيار متعدد)</p>
+                        <?php $__errorArgs = ['placements'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <?php $__errorArgs = ['placements.*'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     <div>
                         <label for="target_url" class="block text-sm font-semibold text-slate-700 mb-2">الرابط المستهدف *</label>
@@ -351,6 +471,16 @@
                                    id="target_url" name="target_url" required value="<?php echo e(old('target_url')); ?>" placeholder="https://example.com">
                             <i class="fas fa-link absolute right-4 top-4 text-slate-400"></i>
                         </div>
+                        <?php $__errorArgs = ['target_url'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-2 text-sm text-red-600"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
             </div>
@@ -396,20 +526,29 @@
 function toggleAdTypeFields() {
     const type = document.getElementById('type').value;
     const fields = ['banner-fields', 'video-fields', 'native-fields', 'popup-fields'];
+    const imageInputs = document.querySelectorAll('input[name="image"]');
     
     fields.forEach(field => {
         const el = document.getElementById(field);
         el.classList.add('hidden');
     });
     
+    imageInputs.forEach(inp => inp.removeAttribute('required'));
+    
     if (type === 'banner') {
         document.getElementById('banner-fields').classList.remove('hidden');
+        const bannerInput = document.getElementById('banner_image');
+        if (bannerInput) bannerInput.setAttribute('required', 'required');
     } else if (type === 'video') {
         document.getElementById('video-fields').classList.remove('hidden');
     } else if (type === 'native') {
         document.getElementById('native-fields').classList.remove('hidden');
+        const nativeInput = document.getElementById('native_image');
+        if (nativeInput) nativeInput.setAttribute('required', 'required');
     } else if (type === 'popup') {
         document.getElementById('popup-fields').classList.remove('hidden');
+        const popupInput = document.getElementById('popup_image');
+        if (popupInput) popupInput.setAttribute('required', 'required');
     }
 }
 
@@ -461,6 +600,92 @@ function clearImage(previewId, element) {
 document.addEventListener('DOMContentLoaded', function() {
     const description = document.getElementById('description');
     const charCount = document.getElementById('char-count');
+    const form = document.querySelector('form');
+    const placements = document.getElementById('placements');
+    
+    toggleAdTypeFields();
+    
+    console.log('=== DEBUG START ===');
+    console.log('Form found:', !!form);
+    console.log('Form action:', form?.action);
+    console.log('CSRF token:', document.querySelector('input[name="_token"]')?.value?.substring(0, 20) + '...');
+    console.log('Placements element:', placements);
+    console.log('Placements options count:', placements?.options?.length);
+    
+    // Debug placements field
+    if (placements) {
+        placements.addEventListener('click', function() {
+            console.log('Placements field clicked');
+        });
+        
+        placements.addEventListener('change', function() {
+            console.log('Placements changed');
+            const selected = Array.from(this.selectedOptions).map(opt => ({value: opt.value, text: opt.text}));
+            console.log('Selected placements:', selected);
+        });
+        
+        placements.addEventListener('focus', function() {
+            console.log('Placements focused');
+        });
+    }
+    
+    // Check if button click is working
+    const submitBtn = form?.querySelector('button[type="submit"]');
+    console.log('Submit button found:', !!submitBtn);
+    
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            console.log('Submit button CLICKED!');
+            console.log('Button name:', this.name);
+            console.log('Button value:', this.value);
+            console.log('Selected placements before submit:', Array.from(placements.selectedOptions).map(opt => opt.value));
+        });
+    }
+    
+    // Debug form submission
+    form.addEventListener('submit', function(e) {
+        console.log('=== FORM SUBMIT EVENT FIRED ===');
+        
+        console.log('Placements element found:', !!placements);
+        console.log('Placements options count:', placements?.options?.length);
+        console.log('Selected options count:', placements?.selectedOptions?.length);
+        
+        const selectedOptions = placements ? Array.from(placements.selectedOptions).map(opt => ({value: opt.value, text: opt.text})) : [];
+        console.log('Selected placements:', selectedOptions);
+        
+        // Log all form fields
+        const formData = new FormData(form);
+        console.log('=== FORM DATA ===');
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}:`, value);
+        }
+        
+        // Validate required fields
+        const errors = [];
+        if (!formData.get('campaign_id')) errors.push('الحملة الإعلانية مطلوبة');
+        if (!formData.get('title')) errors.push('عنوان الإعلان مطلوب');
+        if (!formData.get('description')) errors.push('وصف الإعلان مطلوب');
+        if (!formData.get('target_url')) errors.push('الرابط المستهدف مطلوب');
+        if (selectedOptions.length === 0) errors.push('موضع الإعلان مطلوب');
+        
+        if (errors.length > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.error('=== VALIDATION ERRORS ===', errors);
+            alert('أخطاء:\n' + errors.join('\n'));
+            return false;
+        }
+        
+        console.log('=== VALIDATION PASSED - SUBMITTING ===');
+    });
+    
+    // Catch any JavaScript errors
+    window.addEventListener('error', function(e) {
+        console.error('=== JAVASCRIPT ERROR ===');
+        console.error('Message:', e.message);
+        console.error('File:', e.filename);
+        console.error('Line:', e.lineno);
+    });
     
     if (description && charCount) {
         description.addEventListener('input', function() {

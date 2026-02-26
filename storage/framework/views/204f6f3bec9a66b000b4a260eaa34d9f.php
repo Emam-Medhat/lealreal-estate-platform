@@ -3,7 +3,7 @@
 <style>
   /* ─────────────── BODY OFFSET ─────────────── */
   body {
-    padding-top: 130px;
+    padding-top: 10px;
   }
 
   @media(max-width:1024px) {
@@ -1891,7 +1891,6 @@
         Register</a>
     <?php endif; ?>
   </div>
-
 </div>
 
 
@@ -2208,6 +2207,7 @@
     <?php endif; ?>
   </div>
 </div>
+<br><br><br><br>
 
 <script>
   // ── State ──

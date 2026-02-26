@@ -7,7 +7,7 @@ Top bar (context info) + Main bar (logo + search + actions)
 <style>
   /* ─────────────── BODY OFFSET ─────────────── */
   body {
-    padding-top: 130px;
+    padding-top: 10px;
   }
 
   @media(max-width:1024px) {
@@ -1892,7 +1892,6 @@ Top bar (context info) + Main bar (logo + search + actions)
         Register</a>
     @endguest
   </div>
-
 </div>{{-- /nb-root --}}
 
 {{-- ════ MEGA MENUS ════ --}}
@@ -2209,6 +2208,7 @@ Top bar (context info) + Main bar (logo + search + actions)
     @endauth
   </div>
 </div>
+<br><br><br><br>
 
 <script>
   // ── State ──

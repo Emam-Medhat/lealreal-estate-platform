@@ -17,6 +17,14 @@ use App\Services\AI\PricePredictionService;
 use App\Services\AI\ChatbotService;
 use App\Services\AI\ImageAnalysisService;
 use App\Services\AI\FilterTransformer;
+// Fraud Detection Services
+use App\Services\ImageHashService;
+use App\Services\PriceAnomalyService;
+use App\Services\DuplicateDetectionService;
+use App\Services\AddressValidationService;
+use App\Services\FakeAccountDetectionService;
+use App\Services\PropertyFraudDetectionService;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,9 +40,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Register optimized services
         $this->app->bind(\App\Services\OptimizedPropertyService::class, function ($app) {
-            return new \App\Services\OptimizedPropertyService(
-                $app->make(\App\Repositories\Contracts\PropertyRepositoryInterface::class)
-            );
+            return new \App\Services\OptimizedPropertyService();
         });
 
         // ── AI Services (singletons for DI container) ──────────────────
@@ -44,6 +50,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ChatbotService::class);
         $this->app->singleton(ImageAnalysisService::class);
         $this->app->singleton(FilterTransformer::class);
+
+        // Fraud Detection Pipeline
+        $this->app->singleton(ImageHashService::class);
+        $this->app->singleton(PriceAnomalyService::class);
+        $this->app->singleton(DuplicateDetectionService::class);
+        $this->app->singleton(AddressValidationService::class);
+        $this->app->singleton(FakeAccountDetectionService::class);
+        $this->app->singleton(PropertyFraudDetectionService::class);
     }
 
     /**
@@ -59,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Register model observers for automatic cache invalidation and logging
         \App\Models\Property::observe(\App\Observers\PropertyObserver::class);
+        \App\Models\PropertyMedia::observe(\App\Observers\PropertyMediaObserver::class);
         \App\Models\Agent::observe(\App\Observers\AgentObserver::class);
         \App\Models\Developer::observe(\App\Observers\DeveloperObserver::class);
         \App\Models\AgentTask::observe(\App\Observers\AgentTaskObserver::class);

@@ -45,6 +45,23 @@ Route::middleware(['auth'])->prefix('cart')->name('cart.')->group(function () {
     Route::get('/count', [CartController::class, 'count'])->name('count');
 });
 
+// Mortgage Marketplace
+Route::prefix('mortgage')->name('mortgage.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Mortgage\MortgageMarketplaceController::class, 'index'])->name('index');
+    Route::post('/apply', [\App\Http\Controllers\Mortgage\MortgageMarketplaceController::class, 'apply'])->name('apply');
+});
+
+// Blockchain Contracts
+Route::prefix('contracts')->name('contracts.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Blockchain\ContractController::class, 'index'])->name('index');
+    Route::post('/generate', [\App\Http\Controllers\Blockchain\ContractController::class, 'generate'])->name('generate');
+});
+
+// Tokenization
+Route::prefix('tokenization')->name('tokenization.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Blockchain\TokenizationController::class, 'index'])->name('index');
+    Route::post('/tokenize', [\App\Http\Controllers\Blockchain\TokenizationController::class, 'tokenize'])->name('tokenize');
+});
 /*
 |--------------------------------------------------------------------------
 | Gamification Routes
@@ -242,6 +259,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/seo-test', function () {
         return 'Direct SEO route works!';
     })->name('seo.test');
+    
+    // Intelligence Dashboard
+    Route::get('/intelligence', [\App\Http\Controllers\Admin\IntelligenceAdminController::class, 'index'])
+        ->name('intelligence.index');
 });
 
 // Include content routes
@@ -2091,6 +2112,20 @@ Route::prefix('admin/errors')->name('admin.errors.')->middleware('auth')->group(
     Route::post('/resolve/{id}', [SystemErrorLogController::class, 'resolve'])->name('resolve');
     Route::post('/clear', [SystemErrorLogController::class, 'clear'])->name('clear');
     Route::get('/scan', [SystemErrorLogController::class, 'scanRoutes'])->name('scan');
+});
+
+// Public Valuation Tool
+Route::prefix('tools')->name('tools.')->group(function () {
+    Route::get('/valuation', [\App\Http\Controllers\Tools\ValuationController::class, 'index'])->name('valuation.index');
+    Route::post('/valuation/evaluate', [\App\Http\Controllers\Tools\ValuationController::class, 'evaluate'])->name('valuation.evaluate');
+    Route::get('/predictive-pricing', [\App\Http\Controllers\Tools\PredictivePricingController::class, 'index'])->name('predictive.index');
+    Route::post('/predictive-pricing/predict', [\App\Http\Controllers\Tools\PredictivePricingController::class, 'predict'])->name('predictive.predict');
+    Route::get('/investment-simulator', [\App\Http\Controllers\Tools\InvestmentSimulatorController::class, 'index'])->name('investment.index');
+    Route::post('/investment-simulator/simulate', [\App\Http\Controllers\Tools\InvestmentSimulatorController::class, 'simulate'])->name('investment.simulate');
+    Route::get('/visual-search', [\App\Http\Controllers\Tools\VisualSearchController::class, 'index'])->name('visual.index');
+    Route::post('/visual-search/search', [\App\Http\Controllers\Tools\VisualSearchController::class, 'search'])->name('visual.search');
+    Route::get('/neighborhood-score', [\App\Http\Controllers\Tools\NeighborhoodScoreController::class, 'index'])->name('neighborhood.index');
+    Route::post('/neighborhood-score/calculate', [\App\Http\Controllers\Tools\NeighborhoodScoreController::class, 'calculate'])->name('neighborhood.calculate');
 });
 
 // Orders routes

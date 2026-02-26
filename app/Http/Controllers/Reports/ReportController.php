@@ -152,6 +152,35 @@ class ReportController extends Controller
         ));
     }
 
+    public function clientAnalytics(Request $request)
+    {
+        $totals = [
+            'users' => \App\Models\User::count(),
+            'inquiries' => (int) \App\Models\Property::sum('inquiries_count'),
+            'favorites' => (int) \App\Models\Property::sum('favorites_count'),
+            'views' => (int) \App\Models\Property::sum('views_count'),
+        ];
+
+        $topCities = \App\Models\Property::select('city', \DB::raw('SUM(inquiries_count) as total_inquiries'))
+            ->whereNotNull('city')
+            ->groupBy('city')
+            ->orderByDesc('total_inquiries')
+            ->limit(10)
+            ->get();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'totals' => $totals,
+                'top_cities' => $topCities,
+            ]);
+        }
+
+        return view('reports.client_analytics', [
+            'totals' => $totals,
+            'topCities' => $topCities,
+        ]);
+    }
+
     public function index(Request $request)
     {
         try {

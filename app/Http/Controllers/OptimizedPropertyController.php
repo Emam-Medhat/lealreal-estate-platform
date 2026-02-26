@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewPropertyNotification;
 
 class OptimizedPropertyController extends Controller
 {
@@ -454,6 +456,14 @@ class OptimizedPropertyController extends Controller
             // Handle room-specific images
             if ($request->hasFile('room_images')) {
                 $this->propertyService->handleRoomImageUpload($request->file('room_images'), $property->id);
+            }
+
+            try {
+                if (Auth::check()) {
+                    Auth::user()->notify(new NewPropertyNotification($property));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Notify current user failed: ' . $e->getMessage());
             }
 
             return redirect()

@@ -3,10 +3,10 @@
 @section('title', $property->title . ' | ' . config('app.name', 'منصة العقارات'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+<div class="min-h-screen bg-gray-50">
     <!-- Hero Gallery Section -->
     <div class="relative h-[500px] overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-blue-900/50 via-blue-700/20 to-transparent z-10"></div>
         
         @if($property->media && $property->media->count() > 0)
             @php
@@ -64,12 +64,17 @@
 
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center text-sm text-gray-600 mb-6">
+            <a href="{{ route('optimized.properties.index') }}" class="text-blue-600">العقارات</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-800">{{ $property->title }}</span>
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left Content -->
             <div class="lg:col-span-2 space-y-6">
                 
                 <!-- Title & Price Card -->
-                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
                     <div class="p-8">
                         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
                             <div class="flex-1">
@@ -80,9 +85,17 @@
                                     <i class="fas fa-map-marker-alt text-red-500 ml-2 text-lg"></i>
                                     <span class="text-lg">{{ $property->address ?? '' }} {{ $property->city ? '، ' . $property->city : '' }}</span>
                                 </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-heart ml-2 text-red-500"></i> حفظ
+                                    </button>
+                                    <button class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-share-alt ml-2 text-blue-500"></i> مشاركة
+                                    </button>
+                                </div>
                             </div>
                             <div class="text-center lg:text-left">
-                                <div class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                <div class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                     {{ number_format($property->price, 0) }} 
                                     <span class="text-lg lg:text-xl text-gray-600">{{ $property->currency ?? 'ريال' }}</span>
                                 </div>
@@ -121,7 +134,7 @@
                 </div>
 
                 <!-- Description -->
-                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
                     <div class="p-8">
                         <h3 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
                             <i class="fas fa-file-alt text-blue-600 ml-3"></i>
@@ -154,6 +167,71 @@
                         </div>
                     </div>
                 @endif
+
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-brain text-gray-700 ml-3"></i>
+                            ذكاء العقار
+                        </h3>
+                    </div>
+                    <div class="p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border rounded-lg p-4">
+                            <div class="text-sm text-gray-500 mb-1">درجة الاستثمار</div>
+                            <div class="text-2xl font-bold">{{ $property->investment_score ?? '-' }}/10</div>
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <div class="text-sm text-gray-500 mb-1">السعر المتوقع</div>
+                            <div class="text-2xl font-bold">{{ $property->predicted_price ? number_format($property->predicted_price, 0) : '-' }}</div>
+                            @if($property->overpriced_flag)
+                                <div class="mt-1 text-xs text-red-600">سعر أعلى من المتوقع</div>
+                            @endif
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <div class="text-sm text-gray-500 mb-1">الثقة</div>
+                            <div class="text-2xl font-bold">{{ $property->confidence_score ? number_format($property->confidence_score, 0) . '%' : '-' }}</div>
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <div class="text-sm text-gray-500 mb-1">درجة الاحتيال</div>
+                            <div class="text-2xl font-bold">{{ $property->fraud_score ?? 0 }}</div>
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <div class="text-sm text-gray-500 mb-1">مستوى الثقة</div>
+                            <div class="text-2xl font-bold">{{ strtoupper($property->trust_level ?? '-') }}</div>
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <div class="text-sm text-gray-500 mb-1">العائد المتوقع</div>
+                            <div class="text-2xl font-bold">{{ $property->expected_appreciation ? number_format($property->expected_appreciation, 1) . '%' : '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                @if($property->latitude && $property->longitude)
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6">
+                        <h3 class="text-2xl font-bold flex items-center">
+                            <i class="fas fa-map ml-3"></i>
+                            موقع العقار
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="property-map" class="w-full h-80 rounded-xl border"></div>
+                    </div>
+                </div>
+                @endif
+
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                    <div class="p-6 flex items-center justify-between">
+                        <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-user-astronaut text-purple-600 ml-3"></i>
+                            توصيات لك
+                        </h3>
+                        <button id="load-recos" class="px-3 py-2 text-sm rounded bg-purple-50 text-purple-700 hover:bg-purple-100">
+                            تحديث
+                        </button>
+                    </div>
+                    <div id="reco-list" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
 
                 <!-- Property Details -->
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -746,7 +824,42 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-6 lg:sticky lg:top-6 h-fit">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                    <div class="p-6">
+                        <div class="text-xl font-bold text-gray-900 mb-4">ملخص سريع</div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500">النوع</div>
+                                <div class="font-bold text-gray-900">{{ $property->propertyType->name ?? '-' }}</div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500">المساحة</div>
+                                <div class="font-bold text-gray-900">{{ $property->area ?? '-' }} {{ $property->area_unit ?? 'م²' }}</div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500">غرف</div>
+                                <div class="font-bold text-gray-900">{{ $property->bedrooms ?? $property->details->bedrooms ?? '-' }}</div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500">حمامات</div>
+                                <div class="font-bold text-gray-900">{{ $property->bathrooms ?? $property->details->bathrooms ?? '-' }}</div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg col-span-2">
+                                <div class="text-xs text-gray-500">رقم العقار</div>
+                                <div class="font-bold text-gray-900">{{ $property->property_code ?? $property->id }}</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <a href="tel:{{ $property->agent->phone ?? '' }}" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg text-center font-semibold hover:bg-blue-700 transition">
+                                اتصال
+                            </a>
+                            <button class="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                                احجز زيارة
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Inquiry Form Card -->
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden" id="inquiry-form-section">
@@ -906,6 +1019,24 @@
     </div>
 </div>
 
+<div class="container mx-auto px-4 pb-12">
+    @if(!empty($similarProperties) && count($similarProperties) > 0)
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="p-6 flex items-center justify-between">
+            <h3 class="text-2xl font-bold text-gray-900">عقارات مشابهة</h3>
+            <a href="{{ route('optimized.properties.index') }}" class="text-blue-600 text-sm">عرض الكل</a>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach($similarProperties as $sProperty)
+                @include('properties.partials.card', ['property' => $sProperty])
+            @endforeach
+        </div>
+    </div>
+    @endif
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR8BzU=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 /* Custom animations */
 @keyframes fade-in-up {
@@ -958,10 +1089,34 @@
 }
 </style>
 @endsection
-
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    @if($property->latitude && $property->longitude)
+    const pm = L.map('property-map').setView([{{ $property->latitude }}, {{ $property->longitude }}], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(pm);
+    L.marker([{{ $property->latitude }}, {{ $property->longitude }}]).addTo(pm).bindPopup(`{{ $property->title }}`);
+    @endif
+    async function loadRecos() {
+        try {
+            const res = await fetch('/api/intelligence/recommendations/feed');
+            if (!res.ok) return;
+            const json = await res.json();
+            const list = document.getElementById('reco-list');
+            list.innerHTML = '';
+            (json.feed || []).slice(0, 6).forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'border rounded-xl p-4 flex items-center justify-between';
+                el.innerHTML = `<div class="text-sm">#${item.property_id}</div><div class="text-xs text-slate-600">Match ${item.match}%</div><a href="/properties/${item.property_id}" class="text-blue-600 text-sm">عرض</a>`;
+                list.appendChild(el);
+            });
+        } catch (e) {}
+    }
+    const btn = document.getElementById('load-recos');
+    if (btn) {
+        btn.addEventListener('click', loadRecos);
+        loadRecos();
+    }
     const inquiryForm = document.getElementById('inquiry-form');
     if (inquiryForm) {
         inquiryForm.addEventListener('submit', function(e) {
@@ -1065,6 +1220,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('.space-y-6 > div, .lg\\:col-span-2 > div').forEach(el => {
         observer.observe(el);
+    });
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', function(e) {
+            const id = this.getAttribute('href').slice(1);
+            const target = document.getElementById(id);
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
     });
 });
 </script>

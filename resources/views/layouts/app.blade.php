@@ -356,6 +356,30 @@
         @yield('content')
     </main>
 
+    @if (session('success') || session('error'))
+        <script>
+            (function(){
+                try {
+                    var msg = {!! json_encode(session('success') ?? session('error')) !!};
+                    var type = {!! json_encode(session()->has('success') ? 'success' : 'error') !!};
+                    var container = document.getElementById('toast-container');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.id = 'toast-container';
+                        container.className = 'toast-container';
+                        document.body.appendChild(container);
+                    }
+                    var toast = document.createElement('div');
+                    toast.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-danger') + ' custom-toast fade-in';
+                    toast.style.margin = '10px';
+                    toast.innerHTML = (type === 'success' ? '<i class="fas fa-check-circle ml-2"></i>' : '<i class="fas fa-exclamation-circle ml-2"></i>') + msg;
+                    container.appendChild(toast);
+                    setTimeout(function(){ toast.remove(); }, 5000);
+                } catch (e) {}
+            })();
+        </script>
+    @endif
+
     <!-- Footer -->
     @include('components.footer')
 
@@ -365,6 +389,66 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- AI Chatbot Widget -->
     @include('ai.widget')
+
+    @auth
+    @if(config('intelligence.realtime.enabled'))
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/laravel-echo/1.15.0/echo.iife.js"></script>
+    <script>
+        (function(){
+            try {
+                window.Pusher = Pusher;
+                window.Echo = new Echo({
+                    broadcaster: 'pusher',
+                    key: '{{ config('broadcasting.connections.pusher.key') }}',
+                    cluster: '{{ data_get(config('broadcasting.connections.pusher.options'), 'cluster', 'mt1') }}',
+                    forceTLS: {{ data_get(config('broadcasting.connections.pusher.options'), 'useTLS', true) ? 'true' : 'false' }},
+                    authEndpoint: '/broadcasting/auth',
+                    csrfToken: '{{ csrf_token() }}'
+                });
+                const uid = {{ Auth::id() }};
+                const prefix = '{{ rtrim(config('intelligence.realtime.channel_prefix', 'alerts.user.'), '.') }}.';
+                const ch = window.Echo.private(prefix + uid);
+                ch.listen('.IntelligenceAlertBroadcast', function(payload) {
+                    try {
+                        const title = payload?.data?.title || 'تنبيه جديد';
+                        const badge = document.getElementById('nb-notif-badge');
+                        if (badge) {
+                            let n = parseInt(badge.textContent) || 0;
+                            n = isNaN(n) ? 0 : n + 1;
+                            badge.textContent = (n > 99) ? '99+' : n;
+                            badge.classList.remove('hidden');
+                        }
+                        const cnt = document.getElementById('nb-notif-count');
+                        if (cnt) {
+                            const m = cnt.textContent.match(/(\d+)/);
+                            if (m) {
+                                const v = parseInt(m[1]) + 1;
+                                cnt.textContent = `(${v} unread)`;
+                            }
+                        }
+                        const toast = document.createElement('div');
+                        toast.className = 'alert alert-purple custom-toast fade-in';
+                        toast.style.margin = '10px';
+                        toast.innerHTML = `<strong class="ml-2">تنبيه</strong> ${title}`;
+                        let container = document.getElementById('toast-container');
+                        if (!container) {
+                            container = document.createElement('div');
+                            container.id = 'toast-container';
+                            container.className = 'toast-container';
+                            document.body.appendChild(container);
+                        }
+                        container.appendChild(toast);
+                        setTimeout(()=> toast.remove(), 5000);
+                    } catch (e) {}
+                });
+            } catch (e) {
+                console.error('Echo init failed', e);
+            }
+        })();
+    </script>
+    @endif
+    @endauth
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @yield('scripts')

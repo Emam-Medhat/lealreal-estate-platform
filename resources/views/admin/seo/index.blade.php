@@ -1,40 +1,58 @@
 @extends('admin.layouts.admin')
 
-@section('title', 'SEO Management')
+@section('title', 'إدارة تحسين محركات البحث')
 
 @section('content')
 <div class="container-fluid">
+    @include('partials.navbar')
+    <div style="height: 130px"></div>
+    <style>
+        .seo-hero{background:linear-gradient(135deg,#06b6d4,#3b82f6,#8b5cf6);color:#fff;border-radius:16px}
+        .seo-action-btn{background:#fff;color:#0ea5e9;border:0;box-shadow:0 8px 24px rgba(14,165,233,.2)}
+        .seo-kpi{border:0;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#f8fafc,#eef2ff);border-left:6px solid #3b82f6}
+        .seo-kpi.warning{border-left-color:#f59e0b;background:linear-gradient(180deg,#fff7ed,#fffbeb)}
+        .seo-kpi.info{border-left-color:#06b6d4}
+        .seo-kpi.success{border-left-color:#10b981}
+        .seo-card{border:0;border-radius:16px;overflow:hidden}
+        .seo-card .card-header{background:linear-gradient(90deg,#10b981,#06b6d4);color:#fff;border:0}
+        .badge-pill{border-radius:999px}
+        .thead-light{background:linear-gradient(90deg,#eef2ff,#f1f5f9)}
+        .progress{background:#e5e7eb}
+        .btn-gradient{background:linear-gradient(90deg,#3b82f6,#8b5cf6);color:#fff;border:0}
+    </style>
     <!-- Page Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-search text-primary mr-2"></i>SEO Management
-            </h1>
-            <p class="text-muted mb-0 mt-1">Manage SEO settings and metadata</p>
-        </div>
-        <div>
-            <a href="{{ route('admin.seo.generate-sitemap') }}" class="btn btn-success shadow-sm mr-2">
-                <i class="fas fa-sitemap fa-sm text-white-50"></i> Generate Sitemap
-            </a>
-            <a href="{{ route('admin.seo.create') }}" class="btn btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50"></i> Add SEO Meta
-            </a>
+    <div class="card border-0 shadow-sm mb-4 seo-hero">
+        <div class="card-body d-sm-flex align-items-center justify-content-between">
+            <div>
+                <h1 class="h3 mb-0 text-white">
+                    <i class="fas fa-search mr-2"></i>إدارة تحسين محركات البحث
+                </h1>
+                <p class="text-white-50 mb-0 mt-2">إدارة إعدادات السيو والوسوم الوصفية لموقعك</p>
+            </div>
+            <div>
+                <a href="{{ route('admin.seo.generate-sitemap') }}" class="btn seo-action-btn shadow-sm mr-2">
+                    <i class="fas fa-sitemap fa-sm"></i> توليد خريطة الموقع
+                </a>
+                <a href="{{ route('admin.seo.create') }}" class="btn seo-action-btn shadow-sm">
+                    <i class="fas fa-plus fa-sm"></i> إضافة وسم ميتا
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- SEO Overview Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-3">
+            <div class="card seo-kpi shadow h-100 py-3">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                <i class="fas fa-chart-line mr-1"></i>Optimized Pages
+                                <i class="fas fa-chart-line mr-1"></i>الصفحات المُحسّنة
                             </div>
                             <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $stats['optimized_pages'] ?? 0 }}</div>
                             <div class="text-xs text-success">
-                                <i class="fas fa-arrow-up mr-1"></i>{{ $stats['optimization_score'] ?? 0 }}% score
+                                <i class="fas fa-arrow-up mr-1"></i>{{ $stats['optimization_score'] ?? 0 }}% تقييم
                             </div>
                         </div>
                         <div class="col-auto">
@@ -48,16 +66,16 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-3">
+            <div class="card seo-kpi warning shadow h-100 py-3">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>Issues Found
+                                <i class="fas fa-exclamation-triangle mr-1"></i>المشاكل المكتشفة
                             </div>
                             <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $stats['issues'] ?? 0 }}</div>
                             <div class="text-xs text-danger">
-                                <i class="fas fa-arrow-down mr-1"></i>{{ $stats['critical_issues'] ?? 0 }} critical
+                                <i class="fas fa-arrow-down mr-1"></i>{{ $stats['critical_issues'] ?? 0 }} حرجة
                             </div>
                         </div>
                         <div class="col-auto">
@@ -71,16 +89,16 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-3">
+            <div class="card seo-kpi info shadow h-100 py-3">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                <i class="fas fa-key mr-1"></i>Keywords
+                                <i class="fas fa-key mr-1"></i>الكلمات المفتاحية
                             </div>
                             <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $stats['keywords'] ?? 0 }}</div>
                             <div class="text-xs text-info">
-                                <i class="fas fa-star mr-1"></i>{{ $stats['top_keyword'] ?? 'N/A' }}
+                                <i class="fas fa-star mr-1"></i>{{ $stats['top_keyword'] ?? 'غير متوفر' }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -94,16 +112,16 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-3">
+            <div class="card seo-kpi success shadow h-100 py-3">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                <i class="fas fa-tachometer-alt mr-1"></i>Page Speed
+                                <i class="fas fa-tachometer-alt mr-1"></i>سرعة الصفحة
                             </div>
                             <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $stats['page_speed'] ?? 0 }}</div>
                             <div class="text-xs text-success">
-                                <i class="fas fa-check mr-1"></i>avg score
+                                <i class="fas fa-check mr-1"></i>متوسط التقييم
                             </div>
                         </div>
                         <div class="col-auto">
@@ -121,26 +139,26 @@
     <div class="row mb-4">
         <!-- SEO Analysis -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow border-left-primary">
+            <div class="card shadow seo-card rounded-lg">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-search mr-2"></i>SEO Analysis
+                        <i class="fas fa-search mr-2"></i>تحليل السيو
                     </h6>
                     <div class="badge badge-primary">Live</div>
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
                         <label for="analyze-url" class="form-label font-weight-bold">
-                            <i class="fas fa-link mr-1"></i>Analyze URL
+                            <i class="fas fa-link mr-1"></i>تحليل رابط
                         </label>
                         <div class="input-group input-group-lg">
                             <input type="url" id="analyze-url" placeholder="https://example.com/page" 
                                 class="form-control border-primary">
-                            <button onclick="analyzeUrl()" class="btn btn-primary">
-                                <i class="fas fa-search mr-1"></i>Analyze
+                            <button onclick="analyzeUrl()" class="btn btn-gradient">
+                                <i class="fas fa-search mr-1"></i>تحليل
                             </button>
                         </div>
-                        <small class="text-muted">Enter a URL to analyze its SEO performance</small>
+                        <small class="text-muted">أدخل رابطًا لتحليل أداء السيو الخاص به</small>
                     </div>
                     
                     <div id="analysis-results" class="alert alert-info" style="display: none;">
@@ -200,26 +218,26 @@
 
         <!-- Keyword Research -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow border-left-success">
+            <div class="card shadow seo-card rounded-lg">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-success">
-                        <i class="fas fa-key mr-2"></i>Keyword Research
+                        <i class="fas fa-key mr-2"></i>بحث الكلمات المفتاحية
                     </h6>
                     <div class="badge badge-success">Beta</div>
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
                         <label for="seed-keyword" class="form-label font-weight-bold">
-                            <i class="fas fa-search mr-1"></i>Seed Keyword
+                            <i class="fas fa-search mr-1"></i>الكلمة الرئيسية
                         </label>
                         <div class="input-group input-group-lg">
-                            <input type="text" id="seed-keyword" placeholder="Enter main keyword..." 
+                            <input type="text" id="seed-keyword" placeholder="اكتب الكلمة الرئيسية..." 
                                 class="form-control border-success">
-                            <button onclick="researchKeywords()" class="btn btn-success">
-                                <i class="fas fa-search mr-1"></i>Research
+                            <button onclick="researchKeywords()" class="btn btn-gradient">
+                                <i class="fas fa-search mr-1"></i>بحث
                             </button>
                         </div>
-                        <small class="text-muted">Discover related keywords and search volumes</small>
+                        <small class="text-muted">اكتشف الكلمات المرتبطة وأحجام البحث</small>
                     </div>
                     
                     <div id="keyword-results" style="display: none;">
@@ -259,26 +277,26 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover table-striped" id="dataTable" width="100%" cellspacing="0">
+                <table class="table table-hover table-striped table-borderless" id="dataTable" width="100%" cellspacing="0">
                     <thead class="thead-light">
                         <tr>
                             <th class="border-top-0">
-                                <i class="fas fa-file-alt mr-1"></i>Page
+                                <i class="fas fa-file-alt mr-1"></i>الصفحة
                             </th>
                             <th class="border-top-0">
-                                <i class="fas fa-heading mr-1"></i>Title
+                                <i class="fas fa-heading mr-1"></i>العنوان
                             </th>
                             <th class="border-top-0">
-                                <i class="fas fa-align-left mr-1"></i>Description
+                                <i class="fas fa-align-left mr-1"></i>الوصف
                             </th>
                             <th class="border-top-0">
-                                <i class="fas fa-key mr-1"></i>Keywords
+                                <i class="fas fa-key mr-1"></i>الكلمات
                             </th>
                             <th class="border-top-0 text-center">
-                                <i class="fas fa-chart-line mr-1"></i>Score
+                                <i class="fas fa-chart-line mr-1"></i>التقييم
                             </th>
                             <th class="border-top-0 text-center">
-                                <i class="fas fa-cogs mr-1"></i>Actions
+                                <i class="fas fa-cogs mr-1"></i>الإجراءات
                             </th>
                         </tr>
                     </thead>
@@ -308,7 +326,7 @@
                                         <div class="d-flex flex-wrap gap-1">
                                             @foreach(explode(',', $meta->meta_keywords) as $keyword)
                                                 @if(trim($keyword))
-                                                    <span class="badge badge-info mr-1 mb-1">{{ trim($keyword) }}</span>
+                                                    <span class="badge badge-pill badge-info mr-1 mb-1">{{ trim($keyword) }}</span>
                                                 @endif
                                             @endforeach
                                         </div>
@@ -318,7 +336,7 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="d-inline-flex align-items-center">
-                                        <div class="progress" style="height: 8px; width: 60px;">
+                                        <div class="progress" style="height: 8px; width: 80px;">
                                             <div class="progress-bar 
                                                 {{ ($meta->seo_score ?? 0) >= 80 ? 'bg-success' : 
                                                    (($meta->seo_score ?? 0) >= 60 ? 'bg-warning' : 'bg-danger') }}"
@@ -337,13 +355,13 @@
                                     <div class="btn-group btn-group-sm">
                                         <a href="{{ route('admin.seo.show', ['seoMeta' => $meta->id]) }}" 
                                            class="btn btn-info btn-sm" 
-                                           title="View Details"
+                                           title="عرض التفاصيل"
                                            data-toggle="tooltip">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <a href="{{ route('admin.seo.edit', ['seoMeta' => $meta->id]) }}" 
                                            class="btn btn-warning btn-sm" 
-                                           title="Edit"
+                                           title="تعديل"
                                            data-toggle="tooltip">
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -354,9 +372,9 @@
                                             @method('DELETE')
                                             <button type="submit" 
                                                     class="btn btn-danger btn-sm" 
-                                                    title="Delete"
+                                                    title="حذف"
                                                     data-toggle="tooltip"
-                                                    onclick="return confirm('Are you sure you want to delete this SEO meta data?')">
+                                                    onclick="return confirm('هل أنت متأكد من حذف بيانات الميتا هذه؟')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -368,10 +386,10 @@
                                 <td colspan="6" class="text-center py-8">
                                     <div class="text-center">
                                         <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
-                                        <h5 class="text-muted">No SEO metadata found</h5>
-                                        <p class="text-muted mb-4">Start by adding SEO meta data to your pages</p>
+                                        <h5 class="text-muted">لا توجد بيانات سيو</h5>
+                                        <p class="text-muted mb-4">ابدأ بإضافة بيانات الميتا إلى صفحاتك</p>
                                         <a href="{{ route('admin.seo.create') }}" class="btn btn-primary">
-                                            <i class="fas fa-plus mr-1"></i>Add SEO Meta
+                                            <i class="fas fa-plus mr-1"></i>إضافة وسم ميتا
                                         </a>
                                     </div>
                                 </td>
@@ -387,8 +405,8 @@
                     <div>
                         <small class="text-muted">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Showing {{ $seoMetas->firstItem() ?? 0 }} to {{ $seoMetas->lastItem() ?? 0 }} 
-                            of {{ $seoMetas->total() ?? 0 }} entries
+                            عرض {{ $seoMetas->firstItem() ?? 0 }} إلى {{ $seoMetas->lastItem() ?? 0 }} 
+                            من أصل {{ $seoMetas->total() ?? 0 }} سجل
                         </small>
                     </div>
                     <div>
@@ -404,7 +422,7 @@
 function analyzeUrl() {
     const url = document.getElementById('analyze-url').value;
     if (!url) {
-        alert('Please enter a URL to analyze');
+        alert('يرجى إدخال رابط للتحليل');
         return;
     }
 
@@ -419,21 +437,21 @@ function analyzeUrl() {
     .then(response => response.json())
     .then(data => {
         document.getElementById('analysis-results').style.display = 'block';
-        document.getElementById('title-length').textContent = (data.title || '').length + ' chars';
-        document.getElementById('meta-description').textContent = data.description ? 'Present' : 'Missing';
-        document.getElementById('h1-tags').textContent = (data.h1_count || 0) + ' found';
+        document.getElementById('title-length').textContent = (data.title || '').length + ' حرف';
+        document.getElementById('meta-description').textContent = data.description ? 'موجودة' : 'مفقودة';
+        document.getElementById('h1-tags').textContent = (data.h1_count || 0) + ' موجود';
         document.getElementById('image-alt').textContent = (data.image_alt_count || 0) + '/' + (data.total_images || 0);
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error analyzing URL');
+        alert('حدث خطأ أثناء التحليل');
     });
 }
 
 function researchKeywords() {
     const keyword = document.getElementById('seed-keyword').value;
     if (!keyword) {
-        alert('Please enter a keyword');
+        alert('يرجى إدخال كلمة رئيسية');
         return;
     }
 
@@ -454,7 +472,7 @@ function researchKeywords() {
                 <div class="font-weight-bold">${k.keyword}</div>
                 <small class="text-muted">Volume: ${k.volume} | Difficulty: ${k.difficulty}</small>
             </div>
-            <button class="btn btn-sm btn-outline-primary">Use</button>
+            <button class="btn btn-sm btn-outline-primary">استخدام</button>
         </div>
     `).join('');
     

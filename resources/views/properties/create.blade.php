@@ -1187,14 +1187,14 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="parking" class="form-label">{{ __('properties.parking_spaces') }}</label>
+                                    <label for="parking_spaces" class="form-label">{{ __('properties.parking_spaces') }}</label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-car"></i>
-                                        <input type="number" class="form-control @error('parking') is-invalid @enderror"
-                                            id="parking" name="parking" value="{{ old('parking') }}" min="0"
+                                        <input type="number" class="form-control @error('parking_spaces') is-invalid @enderror"
+                                            id="parking_spaces" name="parking_spaces" value="{{ old('parking_spaces') }}" min="0"
                                             placeholder="0">
                                     </div>
-                                    @error('parking')
+                                    @error('parking_spaces')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -1216,8 +1216,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="area" class="form-label">
-                                        {{ __('properties.living_area') }} ({{ __('properties.sqm') }}) <span
-                                            class="required">*</span>
+                                        {{ __('properties.living_area') }} <span class="required">*</span>
                                     </label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-ruler-combined"></i>
@@ -1226,6 +1225,28 @@
                                             placeholder="100">
                                     </div>
                                     @error('area')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="area_unit" class="form-label">
+                                        {{ __('properties.area_unit') }} <span class="required">*</span>
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-ruler"></i>
+                                        <select class="form-select @error('area_unit') is-invalid @enderror"
+                                            id="area_unit" name="area_unit" required>
+                                            <option value="sq_m" {{ old('area_unit') == 'sq_m' ? 'selected' : '' }}>
+                                                {{ __('properties.sqm') }}
+                                            </option>
+                                            <option value="sq_ft" {{ old('area_unit') == 'sq_ft' ? 'selected' : '' }}>
+                                                {{ __('properties.sqft') }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    @error('area_unit')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -1241,6 +1262,32 @@
                                             placeholder="0">
                                     </div>
                                     @error('land_area')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="land_area_unit" class="form-label">{{ __('properties.land_area_unit') }}</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-ruler"></i>
+                                        <select class="form-select @error('land_area_unit') is-invalid @enderror"
+                                            id="land_area_unit" name="land_area_unit">
+                                            <option value="sq_m" {{ old('land_area_unit') == 'sq_m' ? 'selected' : '' }}>
+                                                {{ __('properties.sqm') }}
+                                            </option>
+                                            <option value="sq_ft" {{ old('land_area_unit') == 'sq_ft' ? 'selected' : '' }}>
+                                                {{ __('properties.sqft') }}
+                                            </option>
+                                            <option value="acre" {{ old('land_area_unit') == 'acre' ? 'selected' : '' }}>
+                                                {{ __('properties.acre') }}
+                                            </option>
+                                            <option value="hectare" {{ old('land_area_unit') == 'hectare' ? 'selected' : '' }}>
+                                                {{ __('properties.hectare') }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    @error('land_area_unit')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -2575,8 +2622,7 @@
                     error: 'fa-times-circle',
                     info: 'fa-info-circle'
                 }[type] || 'fa-info-circle';
-
-                toast.innerHTML = `
+                  toast.innerHTML = `
                                                         <i class="fas ${icon}"></i>
                                                         <span>${message}</span>
                                                     `;
