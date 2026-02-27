@@ -2,20 +2,18 @@
 
 namespace App\Observers;
 
+use App\Jobs\SendVerificationEmail;
+use App\Jobs\SendWelcomeEmail;
 use App\Models\User;
 use App\Models\UserActivityLog;
 use App\Models\UserProfile;
-use App\Services\CacheService;
-use App\Services\NotificationService;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use App\Jobs\SendVerificationEmail;
-use App\Jobs\SendWelcomeEmail;
-use App\Jobs\SendPasswordResetEmail;
 use App\Notifications\UserAccountStatusChanged;
 use App\Notifications\UserKycStatusChanged;
 use App\Notifications\UserRoleChanged;
+use App\Services\CacheService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserObserver
 {
@@ -31,7 +29,7 @@ class UserObserver
             }
 
             // Generate UUID if not set
-            if (!$user->uuid) {
+            if (! $user->uuid) {
                 $user->uuid = (string) \Illuminate\Support\Str::uuid();
             }
 
@@ -57,9 +55,9 @@ class UserObserver
             $user->login_count = $user->login_count ?? 0;
 
         } catch (\Exception $e) {
-            Log::error('User observer creating event failed: ' . $e->getMessage(), [
+            Log::error('User observer creating event failed: '.$e->getMessage(), [
                 'user_id' => $user->id ?? null,
-                'email' => $user->email ?? null
+                'email' => $user->email ?? null,
             ]);
         }
     }
@@ -74,7 +72,7 @@ class UserObserver
             $this->clearUserCaches();
 
             // Create user profile if not exists
-            if (!$user->profile) {
+            if (! $user->profile) {
                 UserProfile::create([
                     'user_id' => $user->id,
                     'first_name' => $user->first_name ?? $user->name ?? 'User',
@@ -99,7 +97,7 @@ class UserObserver
                 'uuid' => $user->uuid,
                 'email' => $user->email,
                 'user_type' => $user->user_type,
-                'account_status' => $user->account_status
+                'account_status' => $user->account_status,
             ]);
 
             // Update analytics asynchronously
@@ -119,7 +117,7 @@ class UserObserver
                 Log::info('New user registration: Attempting to notify admins', [
                     'new_user_id' => $user->id,
                     'admins_found' => $admins->count(),
-                    'admin_ids' => $admins->pluck('id')->toArray()
+                    'admin_ids' => $admins->pluck('id')->toArray(),
                 ]);
 
                 if ($admins->count() > 0) {
@@ -131,14 +129,14 @@ class UserObserver
             } catch (\Exception $e) {
                 Log::error('CRITICAL: Could not send admin notification for new user', [
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
 
         } catch (\Exception $e) {
-            Log::error('User observer created event failed: ' . $e->getMessage(), [
+            Log::error('User observer created event failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -175,9 +173,9 @@ class UserObserver
             }
 
         } catch (\Exception $e) {
-            Log::error('User observer updating event failed: ' . $e->getMessage(), [
+            Log::error('User observer updating event failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -234,13 +232,13 @@ class UserObserver
             Log::info('User updated successfully', [
                 'user_id' => $user->id,
                 'changes' => array_keys($changes),
-                'updated_by' => auth()->id()
+                'updated_by' => auth()->id(),
             ]);
 
         } catch (\Exception $e) {
-            Log::error('User observer updated event failed: ' . $e->getMessage(), [
+            Log::error('User observer updated event failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -261,7 +259,7 @@ class UserObserver
             Log::info('User deleted', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'deleted_by' => auth()->id()
+                'deleted_by' => auth()->id(),
             ]);
 
             // Update analytics asynchronously
@@ -270,9 +268,9 @@ class UserObserver
             });
 
         } catch (\Exception $e) {
-            Log::error('User observer deleted event failed: ' . $e->getMessage(), [
+            Log::error('User observer deleted event failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -293,7 +291,7 @@ class UserObserver
             Log::info('User restored', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'restored_by' => auth()->id()
+                'restored_by' => auth()->id(),
             ]);
 
             // Update analytics asynchronously
@@ -302,9 +300,9 @@ class UserObserver
             });
 
         } catch (\Exception $e) {
-            Log::error('User observer restored event failed: ' . $e->getMessage(), [
+            Log::error('User observer restored event failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -322,7 +320,7 @@ class UserObserver
             Log::warning('User force deleted', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'deleted_by' => auth()->id()
+                'deleted_by' => auth()->id(),
             ]);
 
             // Update analytics asynchronously
@@ -331,9 +329,9 @@ class UserObserver
             });
 
         } catch (\Exception $e) {
-            Log::error('User observer force deleted event failed: ' . $e->getMessage(), [
+            Log::error('User observer force deleted event failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -438,7 +436,7 @@ class UserObserver
         dispatch(function () use ($user, $oldEmail, $newEmail) {
             $this->sendSecurityNotification($user, 'email_changed', [
                 'old_email' => $oldEmail,
-                'new_email' => $newEmail
+                'new_email' => $newEmail,
             ]);
         });
     }
@@ -455,7 +453,7 @@ class UserObserver
         dispatch(function () use ($user, $oldPhone, $newPhone) {
             $this->sendSecurityNotification($user, 'phone_changed', [
                 'old_phone' => $oldPhone,
-                'new_phone' => $newPhone
+                'new_phone' => $newPhone,
             ]);
         });
     }
@@ -478,7 +476,7 @@ class UserObserver
             'is_investor',
             'agent_license_number',
             'agent_company',
-            'company_id'
+            'company_id',
         ];
 
         foreach ($importantFields as $field) {
@@ -503,9 +501,9 @@ class UserObserver
                 'created_by' => auth()->id(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to create user activity log: ' . $e->getMessage(), [
+            Log::error('Failed to create user activity log: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'action' => $action
+                'action' => $action,
             ]);
         }
     }
@@ -516,18 +514,20 @@ class UserObserver
     private function updateUserAnalytics(User $user, string $event, array $data = []): void
     {
         try {
-            // Update user statistics
-            \App\Models\UserAnalytics::updateOrCreate(
-                ['user_id' => $user->id, 'date' => now()->toDateString()],
-                [
-                    'total_users' => \DB::raw('total_users + 1'),
-                    'active_users' => $user->account_status === 'active' ? \DB::raw('active_users + 1') : 'active_users',
-                    'kyc_verified_users' => $user->kyc_status === 'verified' ? \DB::raw('kyc_verified_users + 1') : 'kyc_verified_users',
-                    'updated_at' => now()
-                ]
-            );
+            if (class_exists('\App\Models\UserAnalytics')) {
+                // Update user statistics
+                \App\Models\UserAnalytics::updateOrCreate(
+                    ['user_id' => $user->id, 'date' => now()->toDateString()],
+                    [
+                        'total_users' => \DB::raw('total_users + 1'),
+                        'active_users' => $user->account_status === 'active' ? \DB::raw('active_users + 1') : 'active_users',
+                        'kyc_verified_users' => $user->kyc_status === 'verified' ? \DB::raw('kyc_verified_users + 1') : 'kyc_verified_users',
+                        'updated_at' => now(),
+                    ]
+                );
+            }
         } catch (\Exception $e) {
-            Log::error('Failed to update user analytics: ' . $e->getMessage());
+            Log::error('Failed to update user analytics: '.$e->getMessage());
         }
     }
 
@@ -537,15 +537,17 @@ class UserObserver
     private function updateAccountStatusAnalytics(User $user, string $oldStatus, string $newStatus): void
     {
         try {
-            \App\Models\UserStatusAnalytics::create([
-                'user_id' => $user->id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'changed_at' => now(),
-                'changed_by' => auth()->id(),
-            ]);
+            if (class_exists('\App\Models\UserStatusAnalytics')) {
+                \App\Models\UserStatusAnalytics::create([
+                    'user_id' => $user->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'changed_at' => now(),
+                    'changed_by' => auth()->id(),
+                ]);
+            }
         } catch (\Exception $e) {
-            Log::error('Failed to update account status analytics: ' . $e->getMessage());
+            Log::error('Failed to update account status analytics: '.$e->getMessage());
         }
     }
 
@@ -555,15 +557,17 @@ class UserObserver
     private function updateUserRoleAnalytics(User $user, string $oldType, string $newType): void
     {
         try {
-            \App\Models\UserRoleAnalytics::create([
-                'user_id' => $user->id,
-                'old_role' => $oldType,
-                'new_role' => $newType,
-                'changed_at' => now(),
-                'changed_by' => auth()->id(),
-            ]);
+            if (class_exists('\App\Models\UserRoleAnalytics')) {
+                \App\Models\UserRoleAnalytics::create([
+                    'user_id' => $user->id,
+                    'old_role' => $oldType,
+                    'new_role' => $newType,
+                    'changed_at' => now(),
+                    'changed_by' => auth()->id(),
+                ]);
+            }
         } catch (\Exception $e) {
-            Log::error('Failed to update user role analytics: ' . $e->getMessage());
+            Log::error('Failed to update user role analytics: '.$e->getMessage());
         }
     }
 
@@ -573,15 +577,17 @@ class UserObserver
     private function updateKycStatusAnalytics(User $user, string $oldStatus, string $newStatus): void
     {
         try {
-            \App\Models\UserKycAnalytics::create([
-                'user_id' => $user->id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'changed_at' => now(),
-                'changed_by' => auth()->id(),
-            ]);
+            if (class_exists('\App\Models\UserKycAnalytics')) {
+                \App\Models\UserKycAnalytics::create([
+                    'user_id' => $user->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'changed_at' => now(),
+                    'changed_by' => auth()->id(),
+                ]);
+            }
         } catch (\Exception $e) {
-            Log::error('Failed to update KYC status analytics: ' . $e->getMessage());
+            Log::error('Failed to update KYC status analytics: '.$e->getMessage());
         }
     }
 
@@ -593,7 +599,7 @@ class UserObserver
         try {
             $user->sessions()->where('id', '!=', session()->getId())->delete();
         } catch (\Exception $e) {
-            Log::error('Failed to invalidate user sessions: ' . $e->getMessage());
+            Log::error('Failed to invalidate user sessions: '.$e->getMessage());
         }
     }
 
@@ -606,10 +612,10 @@ class UserObserver
             // Implementation would depend on your notification system
             Log::info("Security notification sent: {$type}", [
                 'user_id' => $user->id,
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send security notification: ' . $e->getMessage());
+            Log::error('Failed to send security notification: '.$e->getMessage());
         }
     }
 
@@ -626,7 +632,7 @@ class UserObserver
                 'active_users',
                 'recent_users',
                 'user_types_stats',
-                'kyc_stats'
+                'kyc_stats',
             ];
 
             foreach ($cacheKeys as $key) {
@@ -639,7 +645,7 @@ class UserObserver
             }
 
         } catch (\Exception $e) {
-            Log::error('Failed to clear user caches: ' . $e->getMessage());
+            Log::error('Failed to clear user caches: '.$e->getMessage());
         }
     }
 }
