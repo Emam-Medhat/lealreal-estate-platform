@@ -516,16 +516,18 @@ class UserObserver
     private function updateUserAnalytics(User $user, string $event, array $data = []): void
     {
         try {
-            // Update user statistics
-            \App\Models\UserAnalytics::updateOrCreate(
-                ['user_id' => $user->id, 'date' => now()->toDateString()],
-                [
-                    'total_users' => \DB::raw('total_users + 1'),
-                    'active_users' => $user->account_status === 'active' ? \DB::raw('active_users + 1') : 'active_users',
-                    'kyc_verified_users' => $user->kyc_status === 'verified' ? \DB::raw('kyc_verified_users + 1') : 'kyc_verified_users',
-                    'updated_at' => now()
-                ]
-            );
+            if (class_exists('\App\Models\UserAnalytics')) {
+                // Update user statistics
+                \App\Models\UserAnalytics::updateOrCreate(
+                    ['user_id' => $user->id, 'date' => now()->toDateString()],
+                    [
+                        'total_users' => \DB::raw('total_users + 1'),
+                        'active_users' => $user->account_status === 'active' ? \DB::raw('active_users + 1') : 'active_users',
+                        'kyc_verified_users' => $user->kyc_status === 'verified' ? \DB::raw('kyc_verified_users + 1') : 'kyc_verified_users',
+                        'updated_at' => now()
+                    ]
+                );
+            }
         } catch (\Exception $e) {
             Log::error('Failed to update user analytics: ' . $e->getMessage());
         }

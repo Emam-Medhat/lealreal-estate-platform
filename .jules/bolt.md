@@ -1,0 +1,3 @@
+## 2026-02-28 - Dashboard Performance Optimization
+**Learning:** Using `whereDate()` in Laravel prevents the database from utilizing indexes on timestamp columns because it wraps the column in a function (e.g., `DATE(created_at)`). This is a common performance anti-pattern. Additionally, composite indexes on `(user_id, created_at)` are essential for user-specific activity and notification queries.
+**Action:** Always prefer `where('created_at', '>=', $date)` over `whereDate('created_at', $date)` for indexed columns. Ensure dashboard-related tables have composite indexes covering `user_id` and the primary filter/sort columns like `created_at` or `is_read`.
