@@ -1,0 +1,3 @@
+## 2026-03-01 - [Optimized Dashboard Queries and Added Critical Indexes]
+**Learning:** Standard Laravel `whereDate()` can be a performance anti-pattern on large datasets as it prevents the database from utilizing indexes on timestamp columns (e.g., `created_at`). Consolidating multiple count queries into a single query using database-level conditional aggregations (e.g., `COUNT(CASE WHEN ... END)`) significantly reduces the number of database roundtrips.
+**Action:** Always prefer range comparisons like `where('created_at', '>=', $date)` over `whereDate()` for indexed columns. Use `selectRaw` to consolidate multiple counts or metrics into a single query when possible.

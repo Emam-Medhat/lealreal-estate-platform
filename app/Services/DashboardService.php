@@ -27,9 +27,10 @@ class DashboardService
         return Cache::remember($cacheKey, 300, function () use ($user) {
             $today = Carbon::today();
             
+            // Optimization: Use where('created_at', '>=', $today) instead of whereDate() to leverage indexes
             // Stats from Activity Logs
             $activityStats = UserActivityLog::where('user_id', $user->id)
-                ->whereDate('created_at', $today)
+                ->where('created_at', '>=', $today)
                 ->selectRaw("
                     COUNT(CASE WHEN action = 'property_view' THEN 1 END) as views_today,
                     COUNT(CASE WHEN action = 'search' THEN 1 END) as searches_today
@@ -41,6 +42,14 @@ class DashboardService
                 ->where('action', 'search')
                 ->count();
 
+            // Optimization: Consolidate Favorite counts
+            $favoriteStats = UserFavorite::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN created_at >= ? THEN 1 END) as saved_today
+                ", [$today])
+                ->first();
+
             // Recent Activity
             $recentActivity = UserActivityLog::where('user_id', $user->id)
                 ->latest()
@@ -49,7 +58,7 @@ class DashboardService
                 ->map(function ($activity) {
                     return [
                         'icon' => $this->getActivityIcon($activity->action),
-                        'message' => $activity->details ?? 'Activity logged', // Changed description to details
+                        'message' => $activity->details ?? 'Activity logged',
                         'time' => $activity->created_at->diffForHumans(),
                     ];
                 });
@@ -70,7 +79,15 @@ class DashboardService
                 ];
             });
 
+            // Optimization: Consolidate notification counts and list into fewer queries
             // Notifications
+            $notificationStats = UserNotification::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN is_read = 0 THEN 1 END) as unread
+                ")
+                ->first();
+
             $unreadNotifications = UserNotification::where('user_id', $user->id)
                 ->where('is_read', false)
                 ->latest()
@@ -106,16 +123,12 @@ class DashboardService
             return [
                 'properties_viewed' => $user->properties_views_count ?? 0,
                 'properties_viewed_today' => $activityStats->views_today ?? 0,
-                'saved_properties' => UserFavorite::where('user_id', $user->id)->count(),
-                'saved_today' => UserFavorite::where('user_id', $user->id)
-                    ->whereDate('created_at', $today)
-                    ->count(),
+                'saved_properties' => $favoriteStats->total ?? 0,
+                'saved_today' => $favoriteStats->saved_today ?? 0,
                 'searches' => $totalSearches,
                 'searches_today' => $activityStats->searches_today ?? 0,
-                'notifications' => UserNotification::where('user_id', $user->id)->count(),
-                'unread_notifications' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
+                'notifications' => $notificationStats->total ?? 0,
+                'unread_notifications' => $notificationStats->unread ?? 0,
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
                 'recent_activity' => $recentActivity,
                 'recently_saved' => $recentlySaved,
