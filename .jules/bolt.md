@@ -1,0 +1,3 @@
+## 2026-03-02 - [Dashboard Indexing and Query Optimization]
+**Learning:** Using `whereDate()` in Laravel prevents the database from using indexes on the timestamp column because it wraps the column in a `DATE()` function. Range comparisons (e.g., `where('created_at', '>=', $date)`) allow index utilization. Additionally, consolidating multiple `count()` queries into a single query with conditional aggregation (`COUNT(CASE WHEN...)`) significantly reduces database round-trips.
+**Action:** Always prefer range comparisons for date filters on indexed columns and look for opportunities to consolidate simple count queries into a single database call.

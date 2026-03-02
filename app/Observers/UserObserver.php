@@ -515,6 +515,10 @@ class UserObserver
      */
     private function updateUserAnalytics(User $user, string $event, array $data = []): void
     {
+        if (!class_exists(\App\Models\UserAnalytics::class)) {
+            return;
+        }
+
         try {
             // Update user statistics
             \App\Models\UserAnalytics::updateOrCreate(
@@ -536,6 +540,10 @@ class UserObserver
      */
     private function updateAccountStatusAnalytics(User $user, string $oldStatus, string $newStatus): void
     {
+        if (!class_exists(\App\Models\UserStatusAnalytics::class)) {
+            return;
+        }
+
         try {
             \App\Models\UserStatusAnalytics::create([
                 'user_id' => $user->id,
@@ -554,6 +562,10 @@ class UserObserver
      */
     private function updateUserRoleAnalytics(User $user, string $oldType, string $newType): void
     {
+        if (!class_exists(\App\Models\UserRoleAnalytics::class)) {
+            return;
+        }
+
         try {
             \App\Models\UserRoleAnalytics::create([
                 'user_id' => $user->id,
@@ -572,6 +584,10 @@ class UserObserver
      */
     private function updateKycStatusAnalytics(User $user, string $oldStatus, string $newStatus): void
     {
+        if (!class_exists(\App\Models\UserKycAnalytics::class)) {
+            return;
+        }
+
         try {
             \App\Models\UserKycAnalytics::create([
                 'user_id' => $user->id,
