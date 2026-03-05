@@ -517,7 +517,7 @@ class UserObserver
     {
         try {
             // Update user statistics
-            \App\Models\UserAnalytics::updateOrCreate(
+            if (class_exists("\\App\\Models\\UserAnalytics")) \App\Models\UserAnalytics::updateOrCreate(
                 ['user_id' => $user->id, 'date' => now()->toDateString()],
                 [
                     'total_users' => \DB::raw('total_users + 1'),
@@ -537,7 +537,7 @@ class UserObserver
     private function updateAccountStatusAnalytics(User $user, string $oldStatus, string $newStatus): void
     {
         try {
-            \App\Models\UserStatusAnalytics::create([
+            if (class_exists("\\App\\Models\\UserStatusAnalytics")) \App\Models\UserStatusAnalytics::create([
                 'user_id' => $user->id,
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
@@ -555,7 +555,7 @@ class UserObserver
     private function updateUserRoleAnalytics(User $user, string $oldType, string $newType): void
     {
         try {
-            \App\Models\UserRoleAnalytics::create([
+            if (class_exists("\\App\\Models\\UserRoleAnalytics")) \App\Models\UserRoleAnalytics::create([
                 'user_id' => $user->id,
                 'old_role' => $oldType,
                 'new_role' => $newType,
@@ -573,7 +573,7 @@ class UserObserver
     private function updateKycStatusAnalytics(User $user, string $oldStatus, string $newStatus): void
     {
         try {
-            \App\Models\UserKycAnalytics::create([
+            if (class_exists("\\App\\Models\\UserKycAnalytics")) \App\Models\UserKycAnalytics::create([
                 'user_id' => $user->id,
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,

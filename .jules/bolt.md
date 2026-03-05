@@ -1,0 +1,3 @@
+## 2026-03-05 - Dashboard Service Database Optimization
+**Learning:** Consolidated multiple redundant database `count()` calls in `DashboardService.php` into single `selectRaw` queries using conditional aggregation, reducing database round-trips from four to two for key dashboard metrics. Also fixed an N+1 query issue by eager loading `favoritable.media` for polymorphic favorites, as the `Property::main_image` accessor was triggering secondary queries. Replaced `whereDate()` with range comparisons (`>=`) to ensure the database utilizes indexes on `created_at` columns.
+**Action:** Always check for N+1 issues when models have image/media accessors, and prefer single-query conditional aggregation for multiple counts on the same table.

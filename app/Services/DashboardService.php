@@ -29,7 +29,7 @@ class DashboardService
             
             // Stats from Activity Logs
             $activityStats = UserActivityLog::where('user_id', $user->id)
-                ->whereDate('created_at', $today)
+                ->where('created_at', '>=', $today)
                 ->selectRaw("
                     COUNT(CASE WHEN action = 'property_view' THEN 1 END) as views_today,
                     COUNT(CASE WHEN action = 'search' THEN 1 END) as searches_today
@@ -56,7 +56,7 @@ class DashboardService
 
             // Recently Saved Properties (Eager Loading)
             $favoriteProperties = UserFavorite::where('user_id', $user->id)
-                ->with(['favoritable']) // Ensure favoritable is loaded
+                ->with(['favoritable.media']) // Eager load media to prevent N+1 in Property::getMainImageAttribute
                 ->latest()
                 ->limit(6)
                 ->get();
@@ -102,20 +102,32 @@ class DashboardService
                 ->limit(5)
                 ->get();
 
+            // User Favorites Stats
+            $favoriteStats = UserFavorite::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN created_at >= ? THEN 1 END) as today
+                ", [$today])
+                ->first();
+
+            // User Notifications Stats
+            $notificationStats = UserNotification::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN is_read = ? THEN 1 END) as unread
+                ", [false])
+                ->first();
+
             // Aggregated Statistics
             return [
                 'properties_viewed' => $user->properties_views_count ?? 0,
                 'properties_viewed_today' => $activityStats->views_today ?? 0,
-                'saved_properties' => UserFavorite::where('user_id', $user->id)->count(),
-                'saved_today' => UserFavorite::where('user_id', $user->id)
-                    ->whereDate('created_at', $today)
-                    ->count(),
+                'saved_properties' => $favoriteStats->total ?? 0,
+                'saved_today' => $favoriteStats->today ?? 0,
                 'searches' => $totalSearches,
                 'searches_today' => $activityStats->searches_today ?? 0,
-                'notifications' => UserNotification::where('user_id', $user->id)->count(),
-                'unread_notifications' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
+                'notifications' => $notificationStats->total ?? 0,
+                'unread_notifications' => $notificationStats->unread ?? 0,
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
                 'recent_activity' => $recentActivity,
                 'recently_saved' => $recentlySaved,
