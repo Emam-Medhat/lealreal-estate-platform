@@ -330,6 +330,16 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\UserActivityLog::class);
     }
 
+    public function comparisons(): HasMany
+    {
+        return $this->hasMany(UserComparison::class);
+    }
+
+    public function userNotifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
     public function agent(): HasOne
     {
         return $this->hasOne(Agent::class);
