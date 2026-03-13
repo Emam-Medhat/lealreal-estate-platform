@@ -2,34 +2,31 @@
 
 namespace App\Services;
 
+use App\Models\Property;
 use App\Models\User;
 use App\Models\UserActivityLog;
-use App\Models\UserFavorite;
 use App\Models\UserComparison;
+use App\Models\UserFavorite;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
-use App\Models\Property;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardService
 {
     /**
      * Get user dashboard statistics and data with caching.
-     *
-     * @param User $user
-     * @return array
      */
     public function getUserDashboardData(User $user): array
     {
         $cacheKey = "user_dashboard_data_{$user->id}";
-        
+
         return Cache::remember($cacheKey, 300, function () use ($user) {
             $today = Carbon::today();
-            
+
             // Stats from Activity Logs
             $activityStats = UserActivityLog::where('user_id', $user->id)
-                ->whereDate('created_at', $today)
+                ->where('created_at', '>=', $today)
                 ->selectRaw("
                     COUNT(CASE WHEN action = 'property_view' THEN 1 END) as views_today,
                     COUNT(CASE WHEN action = 'search' THEN 1 END) as searches_today
@@ -56,13 +53,14 @@ class DashboardService
 
             // Recently Saved Properties (Eager Loading)
             $favoriteProperties = UserFavorite::where('user_id', $user->id)
-                ->with(['favoritable']) // Ensure favoritable is loaded
+                ->with(['favoritable.media']) // Ensure favoritable and its media are loaded to avoid N+1 in main_image accessor
                 ->latest()
                 ->limit(6)
                 ->get();
 
             $recentlySaved = $favoriteProperties->map(function ($favorite) {
                 $property = $favorite->favoritable;
+
                 return [
                     'title' => $property->title ?? 'Unknown Property',
                     'price' => $property->price ?? 0,
@@ -102,20 +100,32 @@ class DashboardService
                 ->limit(5)
                 ->get();
 
+            // Consolidated Favorite Stats
+            $favoriteStats = UserFavorite::where('user_id', $user->id)
+                ->selectRaw('
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN created_at >= ? THEN 1 END) as today
+                ', [$today])
+                ->first();
+
+            // Consolidated Notification Stats
+            $notificationStats = UserNotification::where('user_id', $user->id)
+                ->selectRaw('
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN is_read = ? THEN 1 END) as unread
+                ', [false])
+                ->first();
+
             // Aggregated Statistics
             return [
                 'properties_viewed' => $user->properties_views_count ?? 0,
                 'properties_viewed_today' => $activityStats->views_today ?? 0,
-                'saved_properties' => UserFavorite::where('user_id', $user->id)->count(),
-                'saved_today' => UserFavorite::where('user_id', $user->id)
-                    ->whereDate('created_at', $today)
-                    ->count(),
+                'saved_properties' => $favoriteStats->total ?? 0,
+                'saved_today' => $favoriteStats->today ?? 0,
                 'searches' => $totalSearches,
                 'searches_today' => $activityStats->searches_today ?? 0,
-                'notifications' => UserNotification::where('user_id', $user->id)->count(),
-                'unread_notifications' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
+                'notifications' => $notificationStats->total ?? 0,
+                'unread_notifications' => $notificationStats->unread ?? 0,
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
                 'recent_activity' => $recentActivity,
                 'recently_saved' => $recentlySaved,
@@ -133,9 +143,6 @@ class DashboardService
 
     /**
      * Get quick stats for the user.
-     *
-     * @param User $user
-     * @return array
      */
     public function getQuickStats(User $user): array
     {
@@ -143,7 +150,7 @@ class DashboardService
 
         return Cache::remember($cacheKey, 60, function () use ($user) {
             $wallet = UserWallet::where('user_id', $user->id)->first();
-            
+
             return [
                 'favorites_count' => UserFavorite::where('user_id', $user->id)->count(),
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
@@ -160,9 +167,6 @@ class DashboardService
 
     /**
      * Get activity icon based on action.
-     *
-     * @param string $action
-     * @return string
      */
     private function getActivityIcon(string $action): string
     {
