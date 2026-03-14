@@ -1,0 +1,3 @@
+## 2026-03-14 - Optimized Dashboard Statistics Queries
+**Learning:** Using `whereDate` on indexed timestamp columns can prevent index utilization in some database engines. Consolidated count queries using conditional aggregation significantly reduces database round-trips. Eager loading nested polymorphic relations (e.g., `favoritable.media`) is crucial to avoid N+1 issues when accessors (like `Property::main_image`) perform secondary queries.
+**Action:** Always prefer range comparisons (>=, <=) over `whereDate` for indexed columns. Use `selectRaw` with conditional aggregation for multiple counts on the same table.
