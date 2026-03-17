@@ -12,6 +12,8 @@ class UserComparison extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'items',
+        'is_active',
         'description',
         'category',
         'criteria',
@@ -29,6 +31,7 @@ class UserComparison extends Model
     ];
 
     protected $casts = [
+        'items' => 'json',
         'criteria' => 'json',
         'weights' => 'json',
         'scores' => 'json',

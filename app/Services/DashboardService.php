@@ -27,9 +27,10 @@ class DashboardService
         return Cache::remember($cacheKey, 300, function () use ($user) {
             $today = Carbon::today();
             
-            // Stats from Activity Logs
+            // Consolidate activity and favorite stats into fewer queries
+            // Use range comparison instead of whereDate for better index utilization
             $activityStats = UserActivityLog::where('user_id', $user->id)
-                ->whereDate('created_at', $today)
+                ->where('created_at', '>=', $today)
                 ->selectRaw("
                     COUNT(CASE WHEN action = 'property_view' THEN 1 END) as views_today,
                     COUNT(CASE WHEN action = 'search' THEN 1 END) as searches_today
@@ -41,6 +42,21 @@ class DashboardService
                 ->where('action', 'search')
                 ->count();
 
+            // Consolidate Favorite and Notification counts
+            $favoriteStats = UserFavorite::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total_favorites,
+                    COUNT(CASE WHEN created_at >= ? THEN 1 END) as saved_today
+                ", [$today])
+                ->first();
+
+            $notificationStats = UserNotification::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total_notifications,
+                    COUNT(CASE WHEN is_read = ? THEN 1 END) as unread_count
+                ", [false])
+                ->first();
+
             // Recent Activity
             $recentActivity = UserActivityLog::where('user_id', $user->id)
                 ->latest()
@@ -49,14 +65,14 @@ class DashboardService
                 ->map(function ($activity) {
                     return [
                         'icon' => $this->getActivityIcon($activity->action),
-                        'message' => $activity->details ?? 'Activity logged', // Changed description to details
+                        'message' => $activity->details ?? 'Activity logged',
                         'time' => $activity->created_at->diffForHumans(),
                     ];
                 });
 
-            // Recently Saved Properties (Eager Loading)
+            // Recently Saved Properties (Nested Eager Loading for Media)
             $favoriteProperties = UserFavorite::where('user_id', $user->id)
-                ->with(['favoritable']) // Ensure favoritable is loaded
+                ->with(['favoritable.media']) // Eager load media to prevent N+1 in main_image accessor
                 ->latest()
                 ->limit(6)
                 ->get();
@@ -86,7 +102,6 @@ class DashboardService
 
             // Comparisons
             $comparisons = UserComparison::where('user_id', $user->id)
-                ->with('properties')
                 ->latest()
                 ->limit(3)
                 ->get();
@@ -106,16 +121,12 @@ class DashboardService
             return [
                 'properties_viewed' => $user->properties_views_count ?? 0,
                 'properties_viewed_today' => $activityStats->views_today ?? 0,
-                'saved_properties' => UserFavorite::where('user_id', $user->id)->count(),
-                'saved_today' => UserFavorite::where('user_id', $user->id)
-                    ->whereDate('created_at', $today)
-                    ->count(),
+                'saved_properties' => (int) $favoriteStats->total_favorites,
+                'saved_today' => (int) $favoriteStats->saved_today,
                 'searches' => $totalSearches,
                 'searches_today' => $activityStats->searches_today ?? 0,
-                'notifications' => UserNotification::where('user_id', $user->id)->count(),
-                'unread_notifications' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
+                'notifications' => (int) $notificationStats->total_notifications,
+                'unread_notifications' => (int) $notificationStats->unread_count,
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
                 'recent_activity' => $recentActivity,
                 'recently_saved' => $recentlySaved,
@@ -144,6 +155,7 @@ class DashboardService
         return Cache::remember($cacheKey, 60, function () use ($user) {
             $wallet = UserWallet::where('user_id', $user->id)->first();
             
+            // Consolidate multiple counts into single queries where possible
             return [
                 'favorites_count' => UserFavorite::where('user_id', $user->id)->count(),
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),

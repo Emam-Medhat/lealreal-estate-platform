@@ -1,0 +1,3 @@
+## 2026-03-17 - Dashboard Query Consolidation and Index Optimization
+**Learning:** Consolidated multiple redundant database `count()` calls into single `selectRaw` queries using conditional aggregation (e.g., `COUNT(CASE WHEN ... THEN 1 END)`), reducing database round-trips. Replaced `whereDate()` with range comparisons (`>= $date`) to ensure the database can utilize indexes on timestamp columns, as functional transformations like `DATE(column)` often prevent index usage.
+**Action:** Always check for opportunities to combine multiple counts on the same table into a single query. Prefer range comparisons over `whereDate` for better performance on indexed columns.
