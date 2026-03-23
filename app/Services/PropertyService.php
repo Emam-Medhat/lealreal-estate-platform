@@ -210,20 +210,30 @@ class PropertyService
             $query->where('status', $filters['status']);
         }
 
-        $totalProperties = $query->count();
-        $availableProperties = $query->where('status', 'available')->count();
-        $soldProperties = $query->where('status', 'sold')->count();
-        $rentedProperties = $query->where('status', 'rented')->count();
-        $totalValue = $query->sum('price');
-        $averagePrice = $query->avg('price');
+        /**
+         * ⚡ Bolt: Optimized to use a single database query with conditional aggregation.
+         * This reduces the number of database roundtrips from 6 down to 1.
+         * Also fixed status 'available' to 'active' to match database schema.
+         */
+        $stats = $query->selectRaw("
+            COUNT(*) as total_properties,
+            COUNT(CASE WHEN status = 'active' THEN 1 END) as available_properties,
+            COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold_properties,
+            COUNT(CASE WHEN status = 'rented' THEN 1 END) as rented_properties,
+            COALESCE(SUM(price), 0) as total_value,
+            COALESCE(AVG(price), 0) as average_price
+        ")->first();
+
+        $totalProperties = (int) $stats->total_properties;
+        $availableProperties = (int) $stats->available_properties;
 
         return [
             'total_properties' => $totalProperties,
             'available_properties' => $availableProperties,
-            'sold_properties' => $soldProperties,
-            'rented_properties' => $rentedProperties,
-            'total_value' => $totalValue,
-            'average_price' => $averagePrice,
+            'sold_properties' => (int) $stats->sold_properties,
+            'rented_properties' => (int) $stats->rented_properties,
+            'total_value' => (float) $stats->total_value,
+            'average_price' => (float) $stats->average_price,
             'availability_rate' => $totalProperties > 0 ? ($availableProperties / $totalProperties) * 100 : 0,
         ];
     }
@@ -233,7 +243,8 @@ class PropertyService
      */
     public function getAvailableProperties(array $filters = []): Collection
     {
-        $query = Property::where('status', 'available');
+        /** ⚡ Bolt: Corrected 'available' status to 'active' according to database schema */
+        $query = Property::where('status', 'active');
 
         // Apply filters
         if (isset($filters['company_id'])) {
@@ -350,7 +361,8 @@ class PropertyService
     {
         return Property::where('id', '!=', $property->id)
                      ->where('type', $property->type)
-                     ->where('status', 'available')
+                     /** ⚡ Bolt: Corrected 'available' status to 'active' according to database schema */
+                     ->where('status', 'active')
                      ->whereBetween('price', [
                          $property->price * 0.8,
                          $property->price * 1.2
