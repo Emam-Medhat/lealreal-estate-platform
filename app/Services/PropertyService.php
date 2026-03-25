@@ -188,6 +188,9 @@ class PropertyService
 
     /**
      * Get property statistics
+     *
+     * Refactored to use conditional aggregation, reducing database queries from 6 to 1.
+     * Also fixes the 'available' vs 'active' status bug and prevents stacked filters.
      */
     public function getPropertyStatistics(array $filters = []): array
     {
@@ -210,20 +213,26 @@ class PropertyService
             $query->where('status', $filters['status']);
         }
 
-        $totalProperties = $query->count();
-        $availableProperties = $query->where('status', 'available')->count();
-        $soldProperties = $query->where('status', 'sold')->count();
-        $rentedProperties = $query->where('status', 'rented')->count();
-        $totalValue = $query->sum('price');
-        $averagePrice = $query->avg('price');
+        // Use conditional aggregation to get all stats in a single query
+        $stats = $query->selectRaw("
+            COUNT(*) as total_properties,
+            COUNT(CASE WHEN status = 'active' THEN 1 END) as available_properties,
+            COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold_properties,
+            COUNT(CASE WHEN status = 'rented' THEN 1 END) as rented_properties,
+            SUM(price) as total_value,
+            AVG(price) as average_price
+        ")->first();
+
+        $totalProperties = (int) ($stats->total_properties ?? 0);
+        $availableProperties = (int) ($stats->available_properties ?? 0);
 
         return [
             'total_properties' => $totalProperties,
             'available_properties' => $availableProperties,
-            'sold_properties' => $soldProperties,
-            'rented_properties' => $rentedProperties,
-            'total_value' => $totalValue,
-            'average_price' => $averagePrice,
+            'sold_properties' => (int) ($stats->sold_properties ?? 0),
+            'rented_properties' => (int) ($stats->rented_properties ?? 0),
+            'total_value' => (float) ($stats->total_value ?? 0),
+            'average_price' => (float) ($stats->average_price ?? 0),
             'availability_rate' => $totalProperties > 0 ? ($availableProperties / $totalProperties) * 100 : 0,
         ];
     }
@@ -233,7 +242,7 @@ class PropertyService
      */
     public function getAvailableProperties(array $filters = []): Collection
     {
-        $query = Property::where('status', 'available');
+        $query = Property::where('status', 'active');
 
         // Apply filters
         if (isset($filters['company_id'])) {
@@ -350,7 +359,7 @@ class PropertyService
     {
         return Property::where('id', '!=', $property->id)
                      ->where('type', $property->type)
-                     ->where('status', 'available')
+                     ->where('status', 'active')
                      ->whereBetween('price', [
                          $property->price * 0.8,
                          $property->price * 1.2
