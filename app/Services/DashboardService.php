@@ -2,44 +2,37 @@
 
 namespace App\Services;
 
+use App\Models\Property;
 use App\Models\User;
 use App\Models\UserActivityLog;
-use App\Models\UserFavorite;
 use App\Models\UserComparison;
+use App\Models\UserFavorite;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
-use App\Models\Property;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
     /**
      * Get user dashboard statistics and data with caching.
-     *
-     * @param User $user
-     * @return array
      */
     public function getUserDashboardData(User $user): array
     {
         $cacheKey = "user_dashboard_data_{$user->id}";
-        
+
         return Cache::remember($cacheKey, 300, function () use ($user) {
             $today = Carbon::today();
-            
-            // Stats from Activity Logs
-            $activityStats = UserActivityLog::where('user_id', $user->id)
-                ->whereDate('created_at', $today)
-                ->selectRaw("
-                    COUNT(CASE WHEN action = 'property_view' THEN 1 END) as views_today,
-                    COUNT(CASE WHEN action = 'search' THEN 1 END) as searches_today
-                ")
-                ->first();
 
-            // Total Stats
-            $totalSearches = UserActivityLog::where('user_id', $user->id)
-                ->where('action', 'search')
-                ->count();
+            // Performance: Consolidate UserActivityLog counts to reduce database round-trips
+            $activityStats = UserActivityLog::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(CASE WHEN action = 'property_view' AND created_at >= ? THEN 1 END) as views_today,
+                    COUNT(CASE WHEN action = 'search' AND created_at >= ? THEN 1 END) as searches_today,
+                    COUNT(CASE WHEN action = 'search' THEN 1 END) as total_searches
+                ", [$today, $today])
+                ->first();
 
             // Recent Activity
             $recentActivity = UserActivityLog::where('user_id', $user->id)
@@ -49,20 +42,29 @@ class DashboardService
                 ->map(function ($activity) {
                     return [
                         'icon' => $this->getActivityIcon($activity->action),
-                        'message' => $activity->details ?? 'Activity logged', // Changed description to details
+                        'message' => $activity->details ?? 'Activity logged',
                         'time' => $activity->created_at->diffForHumans(),
                     ];
                 });
 
-            // Recently Saved Properties (Eager Loading)
+            // Performance: Eager load 'favoritable.media' to prevent N+1 queries when accessing 'main_image' accessor
             $favoriteProperties = UserFavorite::where('user_id', $user->id)
-                ->with(['favoritable']) // Ensure favoritable is loaded
+                ->with(['favoritable.media'])
                 ->latest()
                 ->limit(6)
                 ->get();
 
+            // Performance: Consolidate UserFavorite counts
+            $favoriteStats = UserFavorite::where('user_id', $user->id)
+                ->selectRaw('
+                    COUNT(*) as total_saved,
+                    COUNT(CASE WHEN created_at >= ? THEN 1 END) as saved_today
+                ', [$today])
+                ->first();
+
             $recentlySaved = $favoriteProperties->map(function ($favorite) {
                 $property = $favorite->favoritable;
+
                 return [
                     'title' => $property->title ?? 'Unknown Property',
                     'price' => $property->price ?? 0,
@@ -70,7 +72,15 @@ class DashboardService
                 ];
             });
 
-            // Notifications
+            // Performance: Consolidate UserNotification counts
+            $notificationStats = UserNotification::where('user_id', $user->id)
+                ->selectRaw('
+                    COUNT(*) as total_notifications,
+                    COUNT(CASE WHEN is_read = ? THEN 1 END) as unread_notifications
+                ', [false])
+                ->first();
+
+            // Fetch recent unread notifications
             $unreadNotifications = UserNotification::where('user_id', $user->id)
                 ->where('is_read', false)
                 ->latest()
@@ -84,9 +94,9 @@ class DashboardService
                 ];
             });
 
-            // Comparisons
+            // Comparisons - Performance: Fixed relationship name 'properties' to 'comparableItems'
             $comparisons = UserComparison::where('user_id', $user->id)
-                ->with('properties')
+                ->with('comparableItems')
                 ->latest()
                 ->limit(3)
                 ->get();
@@ -106,16 +116,12 @@ class DashboardService
             return [
                 'properties_viewed' => $user->properties_views_count ?? 0,
                 'properties_viewed_today' => $activityStats->views_today ?? 0,
-                'saved_properties' => UserFavorite::where('user_id', $user->id)->count(),
-                'saved_today' => UserFavorite::where('user_id', $user->id)
-                    ->whereDate('created_at', $today)
-                    ->count(),
-                'searches' => $totalSearches,
+                'saved_properties' => $favoriteStats->total_saved ?? 0,
+                'saved_today' => $favoriteStats->saved_today ?? 0,
+                'searches' => $activityStats->total_searches ?? 0,
                 'searches_today' => $activityStats->searches_today ?? 0,
-                'notifications' => UserNotification::where('user_id', $user->id)->count(),
-                'unread_notifications' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
+                'notifications' => $notificationStats->total_notifications ?? 0,
+                'unread_notifications' => $notificationStats->unread_notifications ?? 0,
                 'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
                 'recent_activity' => $recentActivity,
                 'recently_saved' => $recentlySaved,
@@ -133,9 +139,6 @@ class DashboardService
 
     /**
      * Get quick stats for the user.
-     *
-     * @param User $user
-     * @return array
      */
     public function getQuickStats(User $user): array
     {
@@ -143,16 +146,23 @@ class DashboardService
 
         return Cache::remember($cacheKey, 60, function () use ($user) {
             $wallet = UserWallet::where('user_id', $user->id)->first();
-            
+
+            // Performance: Consolidate multiple count queries into a single data structure
+            $stats = DB::table('users')
+                ->where('users.id', $user->id)
+                ->select([
+                    DB::raw("(SELECT COUNT(*) FROM user_favorites WHERE user_id = {$user->id}) as favorites_count"),
+                    DB::raw("(SELECT COUNT(*) FROM user_comparisons WHERE user_id = {$user->id}) as comparisons_count"),
+                    DB::raw("(SELECT COUNT(*) FROM user_notifications WHERE user_id = {$user->id} AND is_read = 0) as notifications_count"),
+                    DB::raw("(SELECT COUNT(*) FROM properties p JOIN agents a ON p.agent_id = a.id WHERE a.user_id = {$user->id}) as properties_count"),
+                ])
+                ->first();
+
             return [
-                'favorites_count' => UserFavorite::where('user_id', $user->id)->count(),
-                'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
-                'properties_count' => Property::whereHas('agent', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })->count(),
-                'notifications_count' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
+                'favorites_count' => (int) ($stats->favorites_count ?? 0),
+                'comparisons_count' => (int) ($stats->comparisons_count ?? 0),
+                'properties_count' => (int) ($stats->properties_count ?? 0),
+                'notifications_count' => (int) ($stats->notifications_count ?? 0),
                 'wallet_balance' => $wallet->balance ?? 0,
             ];
         });
@@ -160,9 +170,6 @@ class DashboardService
 
     /**
      * Get activity icon based on action.
-     *
-     * @param string $action
-     * @return string
      */
     private function getActivityIcon(string $action): string
     {
