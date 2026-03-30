@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class UserComparison extends Model
 {
     protected $fillable = [
         'user_id',
         'name',
+        'items',
+        'is_active',
         'description',
         'category',
         'criteria',
@@ -25,10 +26,12 @@ class UserComparison extends Model
         'metadata',
         'expires_at',
         'shared_with',
-        'comparison_type'
+        'comparison_type',
     ];
 
     protected $casts = [
+        'items' => 'json',
+        'is_active' => 'boolean',
         'criteria' => 'json',
         'weights' => 'json',
         'scores' => 'json',
@@ -38,13 +41,13 @@ class UserComparison extends Model
         'shared_with' => 'json',
         'is_public' => 'boolean',
         'is_template' => 'boolean',
-        'expires_at' => 'datetime'
+        'expires_at' => 'datetime',
     ];
 
     protected $dates = [
         'expires_at',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     public function user(): BelongsTo
@@ -57,8 +60,8 @@ class UserComparison extends Model
         // Using a generic model reference since Property model may not exist yet
         // This will be updated when Property model is implemented
         return $this->belongsToMany('App\Models\Property', 'comparison_items')
-                    ->withPivot(['score', 'rank', 'notes', 'custom_data'])
-                    ->withTimestamps();
+            ->withPivot(['score', 'rank', 'notes', 'custom_data'])
+            ->withTimestamps();
     }
 
     public function scopeByCategory($query, $category)
@@ -80,7 +83,7 @@ class UserComparison extends Model
     {
         return $query->where(function ($q) {
             $q->whereNull('expires_at')
-              ->orWhere('expires_at', '>', now());
+                ->orWhere('expires_at', '>', now());
         });
     }
 
@@ -98,8 +101,9 @@ class UserComparison extends Model
     {
         $result = $this->comparableItems()->attach($item, [
             'score' => $score,
-            'notes' => $notes
+            'notes' => $notes,
         ]);
+
         return true; // attach() returns void, so we return true for success
     }
 
@@ -111,14 +115,14 @@ class UserComparison extends Model
     public function updateItemScore($item, $score): bool
     {
         return $this->comparableItems()->updateExistingPivot($item, [
-            'score' => $score
+            'score' => $score,
         ]);
     }
 
     public function updateItemNotes($item, $notes): bool
     {
         return $this->comparableItems()->updateExistingPivot($item, [
-            'notes' => $notes
+            'notes' => $notes,
         ]);
     }
 
@@ -136,7 +140,7 @@ class UserComparison extends Model
             foreach ($criteria as $criterion => $config) {
                 $weight = $weights[$criterion] ?? 1;
                 $itemScore = $this->calculateCriterionScore($item, $criterion, $config);
-                
+
                 $totalScore += $itemScore * $weight;
                 $maxScore += $config['max_score'] * $weight;
             }
@@ -169,7 +173,7 @@ class UserComparison extends Model
     private function getItemValue($item, $criterion): float
     {
         // Extract value from item based on criterion
-        $method = 'get' . ucfirst($criterion) . 'Value';
+        $method = 'get'.ucfirst($criterion).'Value';
         if (method_exists($item, $method)) {
             return $item->$method();
         }
@@ -182,13 +186,14 @@ class UserComparison extends Model
     {
         $scores = $this->scores ?? [];
         arsort($scores);
-        
+
         return array_keys($scores);
     }
 
     public function getWinner()
     {
         $ranking = $this->getRanking();
+
         return $ranking ? 'App\Models\Property'::find($ranking[0]) : null;
     }
 
@@ -206,17 +211,19 @@ class UserComparison extends Model
     {
         return $this->update([
             'is_template' => true,
-            'template_name' => $templateName
+            'template_name' => $templateName,
         ]);
     }
 
     public function shareWithUser($userId): bool
     {
         $sharedWith = $this->shared_with ?? [];
-        if (!in_array($userId, $sharedWith)) {
+        if (! in_array($userId, $sharedWith)) {
             $sharedWith[] = $userId;
+
             return $this->update(['shared_with' => $sharedWith]);
         }
+
         return true;
     }
 
@@ -226,8 +233,10 @@ class UserComparison extends Model
         $key = array_search($userId, $sharedWith);
         if ($key !== false) {
             unset($sharedWith[$key]);
+
             return $this->update(['shared_with' => array_values($sharedWith)]);
         }
+
         return true;
     }
 

@@ -1,0 +1,3 @@
+## 2025-03-30 - Dashboard Query Consolidation
+**Learning:** Consolidating multiple `count()` calls into a single query using `selectRaw` with conditional aggregation (`COUNT(CASE WHEN ... THEN 1 END)`) significantly reduces database round-trips in high-density views like dashboards. Additionally, when dealing with polymorphic relationships (like `UserFavorite`), eager loading nested relationships (e.g., `favoritable.media`) is essential if the target model's accessors perform their own database queries.
+**Action:** Identify methods with multiple `count()` or `where()` calls on the same model and use `selectRaw` to fetch all metrics in one trip. Use range comparisons (`>=`) instead of `whereDate()` to better utilize indexes.
