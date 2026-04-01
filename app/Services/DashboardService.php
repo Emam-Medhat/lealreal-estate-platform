@@ -25,21 +25,18 @@ class DashboardService
         $cacheKey = "user_dashboard_data_{$user->id}";
         
         return Cache::remember($cacheKey, 300, function () use ($user) {
-            $today = Carbon::today();
+            $today = Carbon::today()->toDateTimeString();
             
-            // Stats from Activity Logs
+            // Stats from Activity Logs: Combining daily counts into one query
+            // We keep the where condition for the user to use the user_id index
+            // We use parameterized queries to avoid string interpolation in selectRaw
             $activityStats = UserActivityLog::where('user_id', $user->id)
-                ->whereDate('created_at', $today)
                 ->selectRaw("
-                    COUNT(CASE WHEN action = 'property_view' THEN 1 END) as views_today,
-                    COUNT(CASE WHEN action = 'search' THEN 1 END) as searches_today
-                ")
+                    COUNT(CASE WHEN action = 'property_view' AND created_at >= ? THEN 1 END) as views_today,
+                    COUNT(CASE WHEN action = 'search' AND created_at >= ? THEN 1 END) as searches_today,
+                    COUNT(CASE WHEN action = 'search' THEN 1 END) as total_searches
+                ", [$today, $today])
                 ->first();
-
-            // Total Stats
-            $totalSearches = UserActivityLog::where('user_id', $user->id)
-                ->where('action', 'search')
-                ->count();
 
             // Recent Activity
             $recentActivity = UserActivityLog::where('user_id', $user->id)
@@ -49,14 +46,14 @@ class DashboardService
                 ->map(function ($activity) {
                     return [
                         'icon' => $this->getActivityIcon($activity->action),
-                        'message' => $activity->details ?? 'Activity logged', // Changed description to details
+                        'message' => $activity->details ?? 'Activity logged',
                         'time' => $activity->created_at->diffForHumans(),
                     ];
                 });
 
-            // Recently Saved Properties (Eager Loading)
+            // Recently Saved Properties (Eager Loading with nested media to avoid N+1)
             $favoriteProperties = UserFavorite::where('user_id', $user->id)
-                ->with(['favoritable']) // Ensure favoritable is loaded
+                ->with(['favoritable.media'])
                 ->latest()
                 ->limit(6)
                 ->get();
@@ -70,7 +67,14 @@ class DashboardService
                 ];
             });
 
-            // Notifications
+            // Notifications: Combining counts using conditional aggregation
+            $notificationsStats = UserNotification::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total_notifications,
+                    COUNT(CASE WHEN is_read = 0 THEN 1 END) as unread_count
+                ")
+                ->first();
+
             $unreadNotifications = UserNotification::where('user_id', $user->id)
                 ->where('is_read', false)
                 ->latest()
@@ -84,15 +88,27 @@ class DashboardService
                 ];
             });
 
-            // Comparisons
+            // Comparisons: Memory confirms relationship is comparableItems
+            // but we'll stick to properties if that was original code's intention
+            // for backward compatibility, except we verified comparableItems exists
+            // in the model and properties does not.
             $comparisons = UserComparison::where('user_id', $user->id)
-                ->with('properties')
+                ->with('comparableItems')
                 ->latest()
                 ->limit(3)
                 ->get();
 
-            // Wallet
+            // Wallet and Comparison counts
             $wallet = UserWallet::where('user_id', $user->id)->first();
+            $comparisonsCount = UserComparison::where('user_id', $user->id)->count();
+
+            // User Favorites counts: Consolidated using conditional aggregation
+            $favoriteStats = UserFavorite::where('user_id', $user->id)
+                ->selectRaw("
+                    COUNT(*) as total_favorites,
+                    COUNT(CASE WHEN created_at >= ? THEN 1 END) as saved_today
+                ", [$today])
+                ->first();
 
             // User Properties (if agent)
             $userProperties = Property::whereHas('agent', function ($query) use ($user) {
@@ -106,17 +122,13 @@ class DashboardService
             return [
                 'properties_viewed' => $user->properties_views_count ?? 0,
                 'properties_viewed_today' => $activityStats->views_today ?? 0,
-                'saved_properties' => UserFavorite::where('user_id', $user->id)->count(),
-                'saved_today' => UserFavorite::where('user_id', $user->id)
-                    ->whereDate('created_at', $today)
-                    ->count(),
-                'searches' => $totalSearches,
+                'saved_properties' => $favoriteStats->total_favorites ?? 0,
+                'saved_today' => $favoriteStats->saved_today ?? 0,
+                'searches' => $activityStats->total_searches ?? 0,
                 'searches_today' => $activityStats->searches_today ?? 0,
-                'notifications' => UserNotification::where('user_id', $user->id)->count(),
-                'unread_notifications' => UserNotification::where('user_id', $user->id)
-                    ->where('is_read', false)
-                    ->count(),
-                'comparisons_count' => UserComparison::where('user_id', $user->id)->count(),
+                'notifications' => $notificationsStats->total_notifications ?? 0,
+                'unread_notifications' => $notificationsStats->unread_count ?? 0,
+                'comparisons_count' => $comparisonsCount,
                 'recent_activity' => $recentActivity,
                 'recently_saved' => $recentlySaved,
                 'latest_notifications' => $latestNotifications,
