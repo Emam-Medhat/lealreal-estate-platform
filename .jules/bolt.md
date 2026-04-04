@@ -1,0 +1,3 @@
+## 2025-05-15 - Optimizing Property Statistics with Conditional Aggregation
+**Learning:** Laravel Query Builder methods like `where()` modify the instance in-place. Stacking multiple `where()` calls on a shared variable for consecutive counts results in incorrect, overlapping filters (e.g., `WHERE status='active' AND status='sold'`).
+**Action:** Use `selectRaw` with conditional aggregation (`COUNT(CASE WHEN ... THEN 1 END)`) to consolidate multiple count/sum queries into a single database round-trip while avoiding query state pollution. Always verify schema-specific status values (e.g., 'active' vs 'available') to ensure query accuracy.
