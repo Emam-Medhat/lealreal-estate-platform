@@ -103,6 +103,11 @@ class Agent extends Model
         return $this->hasMany(AgentPerformance::class);
     }
 
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Property::class)->where('status', 'sold');
+    }
+
     public function certifications(): BelongsToMany
     {
         return $this->belongsToMany(AgentCertification::class, 'agent_certification_pivot')
