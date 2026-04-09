@@ -1,0 +1,449 @@
+@extends('admin.layouts.admin')
+
+@section('title', 'تقارير الضرائب')
+
+@section('content')
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white flex items-center">
+                            <i class="fas fa-chart-bar ml-3"></i>
+                            تقارير الضرائب
+                        </h1>
+                        <p class="text-blue-100 mt-2">عرض وتحليل تقارير الضرائب والامتثال الضريبي</p>
+                    </div>
+                    
+                    <div class="flex space-x-reverse space-x-3">
+                        <a href="{{ route('taxes.index') }}" 
+                           class="bg-white text-blue-600 px-6 py-3 rounded-xl hover:bg-blue-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold">
+                            <i class="fas fa-arrow-left ml-2"></i>
+                            العودة
+                        </a>
+                        <button class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors duration-200 font-medium">
+                            <i class="fas fa-download ml-2"></i>
+                            تصدير تقرير
+                        </button>
+                        <button class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-medium">
+                            <i class="fas fa-file-pdf ml-2"></i>
+                            إنشاء PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Taxes -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium mb-1">إجمالي الضرائب</p>
+                        <p class="text-3xl font-bold">{{ $totalTaxes }}</p>
+                        <p class="text-blue-100 text-xs mt-2">
+                            <i class="fas fa-calculator ml-1"></i>
+                            جميع الأنواع
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <i class="fas fa-calculator text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Taxes -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm font-medium mb-1">الضرائب النشطة</p>
+                        <p class="text-3xl font-bold">{{ $activeTaxes }}</p>
+                        <p class="text-green-100 text-xs mt-2">
+                            <i class="fas fa-check-circle ml-1"></i>
+                            حالياً نشطة
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inactive Taxes -->
+            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-yellow-100 text-sm font-medium mb-1">الضرائب غير النشطة</p>
+                        <p class="text-3xl font-bold">{{ $inactiveTaxes }}</p>
+                        <p class="text-yellow-100 text-xs mt-2">
+                            <i class="fas fa-pause-circle ml-1"></i>
+                            غير نشطة
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <i class="fas fa-pause-circle text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Property Taxes -->
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium mb-1">ضرائب العقارات</p>
+                        <p class="text-3xl font-bold">{{ $propertyTaxes }}</p>
+                        <p class="text-purple-100 text-xs mt-2">
+                            <i class="fas fa-home ml-1"></i>
+                            عقارية فقط
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <i class="fas fa-home text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Reports Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <a href="{{ route('taxes.reports.analytics') }}" 
+               class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">التحليلات</h3>
+                        <p class="text-sm text-gray-600 mt-1">عرض رسوم بيانية وتحليلات متقدمة</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-lg p-3 group-hover:bg-blue-200 transition-colors">
+                        <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ route('taxes.reports.summary') }}" 
+               class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">ملخص</h3>
+                        <p class="text-sm text-gray-600 mt-1">ملخص شامل للضرائب والإيرادات</p>
+                    </div>
+                    <div class="bg-green-100 rounded-lg p-3 group-hover:bg-green-200 transition-colors">
+                        <i class="fas fa-file-alt text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ route('taxes.reports.compliance') }}" 
+               class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">الامتثال</h3>
+                        <p class="text-sm text-gray-600 mt-1">تقارير الامتثال الضريبي</p>
+                    </div>
+                    <div class="bg-purple-100 rounded-lg p-3 group-hover:bg-purple-200 transition-colors">
+                        <i class="fas fa-shield-alt text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ route('taxes.reports.trends') }}" 
+               class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">الاتجاهات</h3>
+                        <p class="text-sm text-gray-600 mt-1">اتجاهات الضرائب وتحليلها</p>
+                    </div>
+                    <div class="bg-orange-100 rounded-lg p-3 group-hover:bg-orange-200 transition-colors">
+                        <i class="fas fa-chart-area text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <form method="GET" action="{{ route('taxes.reports.index') }}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <input type="text" name="search" placeholder="بحث عن ضريبة..." 
+                               value="{{ request('search') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    </div>
+                    <div>
+                        <select name="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <option value="">جميع الأنواع</option>
+                            <option value="property" {{ request('type') == 'property' ? 'selected' : '' }}>ضريبة العقارات</option>
+                            <option value="income" {{ request('type') == 'income' ? 'selected' : '' }}>ضريبة الدخل</option>
+                            <option value="capital_gains" {{ request('type') == 'capital_gains' ? 'selected' : '' }}>ضريبة الأرباح الرأسمالية</option>
+                            <option value="vat" {{ request('type') == 'vat' ? 'selected' : '' }}>ضريبة القيمة المضافة</option>
+                            <option value="stamp_duty" {{ request('type') == 'stamp_duty' ? 'selected' : '' }}>ضريبة الطابع</option>
+                            <option value="municipality" {{ request('type') == 'municipality' ? 'selected' : '' }}>ضريبة البلدية</option>
+                            <option value="other" {{ request('type') == 'other' ? 'selected' : '' }}>أخرى</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select name="is_active" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <option value="">جميع الحالات</option>
+                            <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>نشطة</option>
+                            <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>غير نشطة</option>
+                        </select>
+                    </div>
+                    <div class="flex space-x-reverse space-x-2">
+                        <input type="date" name="date_from" 
+                               value="{{ request('date_from') }}"
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                               placeholder="من تاريخ">
+                        <input type="date" name="date_to" 
+                               value="{{ request('date_to') }}"
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                               placeholder="إلى تاريخ">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            <i class="fas fa-search ml-2"></i>
+                            بحث
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Taxes Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-list text-blue-600 ml-2"></i>
+                    قائمة الضرائب
+                    <span class="mr-auto text-sm text-gray-500">{{ $taxes->total() }} ضريبة</span>
+                </h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                @if($taxes->count() > 0)
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الرقم</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الاسم</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">النوع</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">النسبة</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاريخ السريان</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($taxes as $tax)
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $tax->id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ $tax->name }}</div>
+                                    <div class="text-sm text-gray-500">{{ $tax->description }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        @if($tax->type == 'vat') bg-blue-100 text-blue-800
+                                        @elseif($tax->type == 'income') bg-green-100 text-green-800
+                                        @elseif($tax->type == 'property') bg-purple-100 text-purple-800
+                                        @elseif($tax->type == 'capital_gains') bg-orange-100 text-orange-800
+                                        @elseif($tax->type == 'stamp_duty') bg-red-100 text-red-800
+                                        @elseif($tax->type == 'municipality') bg-yellow-100 text-yellow-800
+                                        @else bg-gray-100 text-gray-800
+                                        @endif">
+                                        @if($tax->type == 'vat') ضريبة القيمة المضافة
+                                        @elseif($tax->type == 'income') ضريبة الدخل
+                                        @elseif($tax->type == 'property') ضريبة العقارات
+                                        @elseif($tax->type == 'capital_gains') ضريبة الأرباح الرأسمالية
+                                        @elseif($tax->type == 'stamp_duty') ضريبة الطابع
+                                        @elseif($tax->type == 'municipality') ضريبة البلدية
+                                        @else {{ $tax->type }}
+                                        @endif
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($tax->rate, 2) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        @if($tax->is_active) bg-green-100 text-green-800
+                                        @else bg-red-100 text-red-800
+                                        @endif">
+                                        @if($tax->is_active) نشط @else غير نشط @endif
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $tax->effective_date }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-left">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 transition-colors" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 transition-colors" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <div class="px-6 py-4 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-700">
+                                عرض {{ $taxes->firstItem() }} إلى {{ $taxes->lastItem() }} من {{ $taxes->total() }} نتيجة
+                            </div>
+                            {{ $taxes->links() }}
+                        </div>
+                    </div>
+                @else
+                    <div class="text-center py-12">
+                        <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-chart-bar text-gray-400 text-3xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">لا توجد ضرائب</h3>
+                        <p class="text-gray-500 mb-6">لم يتم العثور على أي ضرائب تطابق معايير البحث</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Export and Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-download text-blue-600 ml-2"></i>
+                    التصدير والإجراءات
+                </h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-md font-medium text-gray-700 mb-3">تصدير البيانات</h4>
+                    <div class="space-y-3">
+                        <button class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                            <i class="fas fa-file-excel ml-2"></i>
+                            تصدير Excel
+                        </button>
+                        <button class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            <i class="fas fa-file-pdf ml-2"></i>
+                            تصدير PDF
+                        </button>
+                        <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            <i class="fas fa-file-csv ml-2"></i>
+                            تصدير CSV
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-md font-medium text-gray-700 mb-3">تقارير مخصص</h4>
+                    <div class="space-y-3">
+                        <button class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                            <i class="fas fa-magic ml-2"></i>
+                            إنشاء تقرير مخصص
+                        </button>
+                        <button class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                            <i class="fas fa-clock ml-2"></i>
+                            جدولة التقرير
+                        </button>
+                        <button class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                            <i class="fas fa-cog ml-2"></i>
+                            إعدادات التقارير
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in');
+            }
+        });
+    });
+
+    document.querySelectorAll('.bg-white').forEach(el => {
+        observer.observe(el);
+    });
+
+    // Export functionality
+    const exportButtons = document.querySelectorAll('button[class*="bg-"][class*="text-white"]');
+    exportButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const buttonText = this.textContent.trim();
+            if (buttonText.includes('Excel')) {
+                // Handle Excel export
+                console.log('Exporting to Excel...');
+            } else if (buttonText.includes('PDF')) {
+                // Handle PDF export
+                console.log('Exporting to PDF...');
+            } else if (buttonText.includes('CSV')) {
+                // Handle CSV export
+                console.log('Exporting to CSV...');
+            }
+        });
+    });
+});
+</script>
+
+@push('styles')
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Custom scrollbar */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Pagination styling */
+.pagination {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.pagination .page-item .page-link {
+    border: none;
+    color: #6b7280;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #2563eb;
+    color: white;
+}
+
+.pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+</style>
+@endpush

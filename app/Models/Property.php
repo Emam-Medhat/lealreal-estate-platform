@@ -1,0 +1,519 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Str;
+
+use App\Models\Nft;
+
+class Property extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        // Basic Information
+        'agent_id',
+        'company_id',
+        'owner_id',
+        'developer_id',
+        'manager_id',
+        'user_id',
+        'property_type_id',
+        'title',
+        'slug',
+        'property_code',
+        'description',
+        'property_type',
+        'listing_type',
+        'facade_image',
+        'status',
+        
+        // Property Details
+        'bedrooms',
+        'bathrooms',
+        'area',
+        'area_unit',
+        'floors',
+        'year_built',
+        'parking_spaces',
+        'land_area',
+        'land_area_unit',
+        'price',
+        'price_per_sqm',
+        'original_price',
+        'rental_price',
+        'rental_frequency',
+        
+        // Location Information
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
+        'latitude',
+        'longitude',
+        'google_maps_embed',
+        'map_embed',
+        
+        // Property Features
+        'featured',
+        'premium',
+        'views_count',
+        'favorites_count',
+        'inquiries_count',
+        'specifications',
+        'materials',
+        'interior_features',
+        'exterior_features',
+        'nearby_places',
+        'schools',
+        'hospitals',
+        'shopping_centers',
+        'restaurants',
+        'transportation',
+        'universities',
+        'metro_stations',
+        'parks',
+        'cinemas',
+        'gyms',
+        
+        // Financial Information
+        'purchase_price',
+        'rental_price',
+        'service_charges',
+        'maintenance_fees',
+        'property_tax',
+        'tax_year',
+        'insurance_cost',
+        
+        // Status and Dates
+        'listed_date',
+        'sold_date',
+        'rental_start_date',
+        'rental_end_date',
+        'expiry_date',
+        'available_from',
+        
+        // Media
+        'main_image',
+        'images',
+        'virtual_tour_url',
+        'video_url',
+        'floor_plan_url',
+        
+        // Legal Information
+        'deed_number',
+        'plot_number',
+        'ownership_certificate',
+        'building_permit',
+        'business_license',
+        'zoning_certificate',
+        
+        // Metadata
+        'metadata',
+        'created_by',
+        'updated_by',
+        'occupancy_permit',
+        'energy_rating',
+        'solar_panels',
+        'heating_system',
+        'water_heating',
+        'insulation',
+        'ventilation',
+        'double_glazing',
+        'air_conditioning',
+        'virtual_tour_url',
+        'price',
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
+        'latitude',
+        'longitude',
+        'currency',
+        
+        // Additional Required Fields
+        'ownership_type',
+        'registration_number',
+        'zoning',
+        'zoning_type',
+        'land_use',
+        'investment_score',
+        'roi_percentage',
+        'risk_score',
+        'liquidity_score',
+        'demand_score',
+        'expected_appreciation',
+        'predicted_price',
+        'appreciation_forecast',
+        'confidence_score',
+        'overpriced_flag',
+        'fraud_score',
+        'fraud_flags',
+        'fraud_risk_level',
+        'restricted_at',
+        'requires_manual_review',
+        'trust_index',
+        'trust_level',
+    ];
+
+    protected $casts = [
+        'area' => 'decimal:2',
+        'land_area' => 'decimal:2',
+        'price' => 'decimal:2',
+        'price_per_sqm' => 'decimal:2',
+        'original_price' => 'decimal:2',
+        'rental_price' => 'decimal:2',
+        'purchase_price' => 'decimal:2',
+        'service_charges' => 'decimal:2',
+        'maintenance_fees' => 'decimal:2',
+        'property_tax' => 'decimal:2',
+        'insurance_cost' => 'decimal:2',
+        'featured' => 'boolean',
+        'premium' => 'boolean',
+        'solar_panels' => 'boolean',
+        'double_glazing' => 'boolean',
+        // 'air_conditioning' => 'boolean', // Changed to string in migration
+        'views_count' => 'integer',
+        'favorites_count' => 'integer',
+        'inquiries_count' => 'integer',
+        'specifications' => 'array',
+        'materials' => 'array',
+        'interior_features' => 'array',
+        'exterior_features' => 'array',
+        'nearby_places' => 'array',
+        'schools' => 'array',
+        'hospitals' => 'array',
+        'shopping_centers' => 'array',
+        'restaurants' => 'array',
+        'transportation' => 'array',
+        'universities' => 'array',
+        'metro_stations' => 'array',
+        'parks' => 'array',
+        'cinemas' => 'array',
+        'gyms' => 'array',
+        'images' => 'array',
+        'metadata' => 'json',
+        'listed_date' => 'datetime',
+        'sold_date' => 'datetime',
+        'rental_start_date' => 'datetime',
+        'rental_end_date' => 'datetime',
+        'expiry_date' => 'datetime',
+        'available_from' => 'datetime',
+        'investment_score' => 'decimal:2',
+        'roi_percentage' => 'decimal:2',
+        'risk_score' => 'decimal:2',
+        'liquidity_score' => 'decimal:2',
+        'demand_score' => 'decimal:2',
+        'expected_appreciation' => 'decimal:2',
+        'predicted_price' => 'decimal:2',
+        'appreciation_forecast' => 'array',
+        'confidence_score' => 'decimal:2',
+        'overpriced_flag' => 'boolean',
+        'fraud_score' => 'integer',
+        'fraud_flags' => 'array',
+        'restricted_at' => 'datetime',
+        'requires_manual_review' => 'boolean',
+        'trust_index' => 'decimal:2',
+    ];
+
+    public function agent(): BelongsTo
+    {
+        return $this->belongsTo(Agent::class, 'agent_id');
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'owner_id');
+    }
+
+    public function developer(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'developer_id');
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(Agent::class, 'manager_id');
+    }
+
+    // Analytics Relationships
+    public function analytics(): HasMany
+    {
+        return $this->hasMany(PropertyAnalytic::class);
+    }
+
+    // Financial Relationships
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function ownershipHistory(): HasMany
+    {
+        return $this->hasMany(PropertyOwnership::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(PropertyTransaction::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(AgentCommission::class);
+    }
+
+    // Document Relationships
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    public function propertyDocuments(): HasMany
+    {
+        return $this->hasMany(PropertyDocument::class);
+    }
+
+
+
+    public function legalDocuments(): HasMany
+    {
+        return $this->hasMany(Document::class)->where('type', 'legal');
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(PropertyMedia::class);
+    }
+
+    public function nfts(): HasMany
+    {
+        return $this->hasMany(Nft::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(PropertyMedia::class)->where('media_type', 'image');
+    }
+
+    public function favoritedBy(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(User::class, 'favoritable', 'user_favorites');
+    }
+
+    public function propertyType(): BelongsTo
+    {
+        return $this->belongsTo(PropertyType::class, 'property_type', 'id');
+    }
+
+    public function location(): HasOne
+    {
+        return $this->hasOne(PropertyLocation::class);
+    }
+
+    public function details(): HasOne
+    {
+        return $this->hasOne(PropertyDetail::class);
+    }
+
+    public function pricing(): HasOne
+    {
+        return $this->hasOne(PropertyPrice::class);
+    }
+
+    public function price(): HasOne
+    {
+        return $this->pricing();
+    }
+
+    public function propertyAmenities(): BelongsToMany
+    {
+        return $this->belongsToMany(PropertyAmenity::class, 'property_amenity_property');
+    }
+
+    public function amenities(): BelongsToMany
+    {
+        return $this->propertyAmenities();
+    }
+
+    public function features(): BelongsToMany
+    {
+        return $this->belongsToMany(PropertyFeature::class, 'property_feature_property');
+    }
+
+    public function floorPlans(): HasMany
+    {
+        return $this->hasMany(PropertyFloorPlan::class);
+    }
+
+    public function virtualTours(): HasMany
+    {
+        return $this->hasMany(PropertyVirtualTour::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('featured', true);
+    }
+
+    public function scopePremium($query)
+    {
+        return $query->where('premium', true);
+    }
+
+    public function scopeForSale($query)
+    {
+        return $query->where('listing_type', 'sale');
+    }
+
+    public function scopeForRent($query)
+    {
+        return $query->where('listing_type', 'rent');
+    }
+
+    public function scopeByAgent($query, $agentId)
+    {
+        return $query->where('agent_id', $agentId);
+    }
+
+    public function scopeByCity($query, $city)
+    {
+        return $query->where('city', $city);
+    }
+
+    public function scopeByPropertyType($query, $type)
+    {
+        return $query->where('property_type', $type);
+    }
+
+    public function scopePriceRange($query, $min, $max)
+    {
+        return $query->whereBetween('price', [$min, $max]);
+    }
+
+    public function scopeAreaRange($query, $min, $max)
+    {
+        return $query->whereBetween('area', [$min, $max]);
+    }
+
+    // Helper Methods
+    public function getFormattedPriceAttribute(): string
+    {
+        return number_format($this->price, 2) . ' ' . $this->currency;
+    }
+
+    public function getFormattedAreaAttribute(): string
+    {
+        return number_format($this->area, 2) . ' ' . $this->area_unit;
+    }
+
+    public function getFullAddressAttribute(): string
+    {
+        $parts = array_filter([
+            $this->address,
+            $this->city,
+            $this->state,
+            $this->country,
+            $this->postal_code
+        ]);
+        return implode(', ', $parts);
+    }
+
+    public function getMainImageAttribute(): ?string
+    {
+        // Prioritize the dedicated facade_image column
+        if (!empty($this->facade_image)) {
+            return asset('storage/' . $this->facade_image);
+        }
+
+        if ($this->relationLoaded('media')) {
+            $mainImage = $this->media->where('media_type', 'image')->where('is_primary', true)->first();
+            if ($mainImage) {
+                return asset('storage/properties/' . $mainImage->file_path);
+            }
+
+            $firstImage = $this->media->where('media_type', 'image')->first();
+            if ($firstImage) {
+                return asset('storage/properties/' . $firstImage->file_path);
+            }
+            return null;
+        }
+
+        $mainImage = $this->images()->where('is_primary', true)->first();
+        if ($mainImage) {
+            return asset('storage/properties/' . $mainImage->file_path);
+        }
+
+        $firstImage = $this->images()->first();
+        if ($firstImage) {
+            return asset('storage/properties/' . $firstImage->file_path);
+        }
+
+        return null;
+    }
+
+    public function incrementViews(): void
+    {
+        try {
+            $this->increment('views_count');
+        } catch (\Exception $e) {
+            // Fallback: update directly if increment fails
+            $this->views_count = ($this->views_count ?? 0) + 1;
+            $this->save();
+        }
+    }
+
+    public function incrementInquiries(): void
+    {
+        $this->increment('inquiries_count');
+    }
+
+    public function incrementFavorites(): void
+    {
+        $this->increment('favorites_count');
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function getDaysOnMarketAttribute(): int
+    {
+        if (!$this->created_at) {
+            return 0;
+        }
+
+        return $this->created_at->diffInDays(now());
+    }
+}

@@ -1,0 +1,17 @@
+/* Bootstrap only */
+
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+@import "tailwindcss";
+
+@source "../views/**/*.blade.php";
+@source "../js/**/*.js";
+
+.card {
+    border-radius: 0.5rem;
+}
+
+[dir="rtl"] .ms-3 {
+    margin-left: 0 !important;
+    margin-right: 1rem !important;
+}

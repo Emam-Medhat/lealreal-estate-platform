@@ -1,0 +1,115 @@
+{
+    "categories": [
+        {
+            "id": "core",
+            "name": "Core Platform & Governance",
+            "icon": "fa-shield-halved",
+            "color": "#0D6EFD",
+            "modules": [
+                { "name": "Auth & Identity (IAM)", "description": "SSO, MFA, and social logins.", "features": ["OAuth2", "OpenID", "Biometric"], "icon": "fa-id-card-clip", "route": "admin.users.index" },
+                { "name": "RBAC", "description": "Granular permissions and roles.", "features": ["Custom Roles", "ABAC", "Audit"], "icon": "fa-user-lock", "route": "admin.users.index" },
+                { "name": "Tenant Management", "description": "Multi-tenancy and subscription control.", "features": ["Isolation", "Domains", "Quotas"], "icon": "fa-building-shield", "route": "enterprise.accounts" },
+                { "name": "System Audit Logs", "description": "Immutable administrative action logs.", "features": ["Traceability", "Hashing"], "icon": "fa-clock-rotate-left", "route": "admin.system.logs" },
+                { "name": "Localization", "description": "Multi-language and currency engine.", "features": ["RTL Support", "i18n"], "icon": "fa-language", "route": "admin.settings.index" },
+                { "name": "API Gateway", "description": "Rate limiting and documentation.", "features": ["Swagger", "Key Rotation"], "icon": "fa-cloud-arrow-up", "route": "admin.settings.index" }
+            ]
+        },
+        {
+            "id": "financial",
+            "name": "Financial & Investments",
+            "icon": "fa-money-bill-trend-up",
+            "color": "#198754",
+            "modules": [
+                { "name": "General Ledger", "description": "Core accounting and P&L.", "features": ["Journal", "Balance Sheet"], "icon": "fa-book-bookmark", "route": "admin.financial.dashboard" },
+                { "name": "ROI Calculator", "description": "Advanced investment return analysis.", "features": ["Scenarios", "Comparison"], "icon": "fa-calculator", "route": "financial.roi.index" },
+                { "name": "Cash Flow Analysis", "description": "Monthly and yearly projection models.", "features": ["Sensitivity", "Projections"], "icon": "fa-chart-area", "route": "financial.cash_flow.index" },
+                { "name": "Cap Rate Calculator", "description": "Market and income-based valuation.", "features": ["Market Analysis", "Scenarios"], "icon": "fa-percent", "route": "financial.cap_rate.index" },
+                { "name": "Portfolio Analysis", "description": "Diversification and risk metrics.", "features": ["Risk Analysis", "Optimization"], "icon": "fa-briefcase", "route": "financial.portfolio.index" },
+                { "name": "Tax & Compliance", "description": "Tax benefit and VAT calculation.", "features": ["Depreciation", "Optimization"], "icon": "fa-scale-balanced", "route": "financial.tax_benefits.index" },
+                { "name": "Billing & Subscriptions", "description": "Recurring payments and invoices.", "features": ["Pro-rata", "Coupons"], "icon": "fa-file-invoice-dollar", "route": "enterprise.billing" }
+            ]
+        },
+        {
+            "id": "ai",
+            "name": "AI & Intelligence",
+            "icon": "fa-brain",
+            "color": "#0DCAF0",
+            "modules": [
+                { "name": "Smart NL Search", "description": "AI search understanding natural intent.", "features": ["Vector Search", "NLP"], "icon": "fa-wand-magic-sparkles", "route": "ai.smart-search" },
+                { "name": "AI Chatbot", "description": "Intelligent real estate assistant.", "features": ["Contextual", "Support"], "icon": "fa-comments", "route": "ai.chat" },
+                { "name": "Price Prediction", "description": "Deep learning market forecasting.", "features": ["Regression", "Market Cycles"], "icon": "fa-eye", "route": "ai.price-prediction" },
+                { "name": "Image Analysis", "description": "Automated defect and object detection.", "features": ["CNN Models", "Auto-tagging"], "icon": "fa-palette", "route": "ai.images" },
+                { "name": "Fraud Detection", "description": "Anomaly detection in logs/transactions.", "features": ["Risk Scoring", "Bot Mitigation"], "icon": "fa-user-secret", "route": "admin.fraud.dashboard" },
+                { "name": "Virtual Staging", "description": "AI-powered room furnishing.", "features": ["Generative AI", "Auto-layout"], "icon": "fa-couch", "route": "ai.virtual-staging" },
+                { "name": "Valuation (AVM)", "description": "Automated property valuation model.", "features": ["Comparative", "Residual"], "icon": "fa-house-circle-check", "route": "ai.property-valuation" }
+            ]
+        },
+        {
+            "id": "blockchain",
+            "name": "Web3 & Blockchain",
+            "icon": "fa-cubes",
+            "color": "#6610F2",
+            "modules": [
+                { "name": "Crypto Wallets", "description": "Secure non-custodial wallet management.", "features": ["Multi-sig", "Recovery"], "icon": "fa-wallet", "route": "blockchain.wallets.index" },
+                { "name": "Smart Contracts", "description": "On-chain lease and sales automation.", "features": ["ERC-721", "Odoo Sync"], "icon": "fa-file-contract", "route": "blockchain.smartcontracts.index" },
+                { "name": "Tokenization (RWA)", "description": "Fractional property ownership.", "features": ["Asset Backed", "KYC"], "icon": "fa-link", "route": "blockchain.nfts.index" },
+                { "name": "DeFi Lending", "description": "Decentralized property loans.", "features": ["Collateral", "Lending"], "icon": "fa-hand-holding-dollar", "route": "blockchain.defi.lending" },
+                { "name": "DAO Governance", "description": "Community-led platform decision making.", "features": ["Voting", "Proposals"], "icon": "fa-users-rectangle", "route": "blockchain.dao.index" }
+            ]
+        },
+        {
+            "id": "properties",
+            "name": "Real Estate Operations",
+            "icon": "fa-home",
+            "color": "#20C997",
+            "modules": [
+                { "name": "Property Manager", "description": "Core listings and status management.", "features": ["Bulk Update", "Multi-media"], "icon": "fa-city", "route": "admin.properties.index" },
+                { "name": "Project Dashboard", "description": "Development lifecycle and milestones.", "features": ["Gantt", "Resources"], "icon": "fa-diagram-project", "route": "projects.index" },
+                { "name": "Auctions Hub", "description": "Live and timed property bidding.", "features": ["Real-time", "Escrow"], "icon": "fa-gavel", "route": "messages.auctions.index" },
+                { "name": "Inventory (WMS)", "description": "Asset and fixture tracking.", "features": ["Barcode", "Suppliers"], "icon": "fa-boxes-stacked", "route": "inventory.index" },
+                { "name": "Maintenance (CMMS)", "description": "Ticketing and work order management.", "features": ["SLA", "Field App"], "icon": "fa-wrench", "route": "maintenance.workorders.index" }
+            ]
+        },
+        {
+            "id": "advanced",
+            "name": "Advanced Technologies",
+            "icon": "fa-microchip",
+            "color": "#FD7E14",
+            "modules": [
+                { "name": "IoT Ingestion", "description": "Real-time sensor and smart home data.", "features": ["Telemetry", "Events"], "icon": "fa-tower-broadcast", "route": null },
+                { "name": "Geospatial Analysis", "description": "Map-based intelligence and heatmaps.", "features": ["Satellite", "GIS"], "icon": "fa-map-location-dot", "route": "blockchain.geospatial.analysis" },
+                { "name": "Metaverse View", "description": "3D virtual world property viewer.", "features": ["VR Ready", "Interactive"], "icon": "fa-vr-cardboard", "route": "blockchain.metaverse.properties" },
+                { "name": "Performance Engine", "description": "Caching and query optimization hub.", "features": ["Redis", "SQL Audit"], "icon": "fa-bolt", "route": "admin.performance.dashboard" },
+                { "name": "Big Data Lake", "description": "Unstructured data storage and parsing.", "features": ["Spark", "Hadoop"], "icon": "fa-database", "route": null }
+            ]
+        },
+        {
+            "id": "growth",
+            "name": "Marketing & Growth",
+            "icon": "fa-arrow-trend-up",
+            "color": "#D63384",
+            "modules": [
+                { "name": "CRM & Leads", "description": "Full sales funnel and pipeline.", "features": ["Pipeline", "Scoring"], "icon": "fa-funnel-dollar", "route": "leads.dashboard" },
+                { "name": "SEO Manager", "description": "Search engine visibility and content.", "features": ["Sitemaps", "Keywords"], "icon": "fa-magnifying-glass-chart", "route": "admin.seo.index" },
+                { "name": "Email Builder", "description": "Visual marketing and drip campaigns.", "features": ["Automation", "Templates"], "icon": "fa-envelope-open-text", "route": null },
+                { "name": "Affiliate Portal", "description": "Commission and partner tracking.", "features": ["Referrals", "Payouts"], "icon": "fa-handshake", "route": null }
+            ]
+        },
+        {
+            "id": "operations",
+            "name": "System Operations & Utils",
+            "icon": "fa-gears",
+            "color": "#6C757D",
+            "modules": [
+                { "name": "Knowledge Base", "description": "Help center and documentation.", "features": ["Articles", "FAQs"], "icon": "fa-book", "route": "admin.guides.index" },
+                { "name": "Workflow Automation", "description": "Logic triggers and tasks.", "features": ["Triggers", "Actions"], "icon": "fa-project-diagram", "route": "admin.system.dashboard" },
+                { "name": "Audit & Compliance", "description": "Traceability and GDPR.", "features": ["Logs", "Policies"], "icon": "fa-clipboard-check", "route": "admin.system.logs" },
+                { "name": "Import/Export Hub", "description": "Bulk data migration.", "features": ["CSV", "Excel"], "icon": "fa-file-import", "route": "lead-import.index" },
+                { "name": "Job Scheduler", "description": "Queue and cron management.", "features": ["Queues", "Cron"], "icon": "fa-clock", "route": "admin.system.queue" },
+                { "name": "Voice & SMS Gateway", "description": "Telephony and messaging.", "features": ["Twilio", "Logs"], "icon": "fa-phone-volume", "route": "messages.chat" },
+                { "name": "E-Signature Hub", "description": "Legal document signing.", "features": ["Templates", "Notary"], "icon": "fa-signature", "route": "esignatures.index" },
+                { "name": "Feedback System", "description": "Surveys and NPS tracking.", "features": ["Surveys", "Reviews"], "icon": "fa-comments", "route": "surveys.index" }
+            ]
+        }
+    ]
+}

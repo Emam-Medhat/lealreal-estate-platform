@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    image: php:8.2-cli
+    container_name: laravel_app
+    restart: always
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    ports:
+      - "8000:8000"
+    # التعديل الأساسي هنا لحل مشكلة could not find driver
+    entrypoint: >
+      sh -c "docker-php-ext-install pdo_mysql && 
+             php artisan serve --host=0.0.0.0 --port=8000"
+
+  db:
+    image: mysql:8
+    container_name: laravel_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
