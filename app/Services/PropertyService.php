@@ -2,17 +2,15 @@
 
 namespace App\Services;
 
-use App\Models\Property;
-use App\Models\Client;
 use App\Models\Agent;
+use App\Models\Client;
 use App\Models\Company;
+use App\Models\Property;
 use App\Models\PropertyOwnership;
 use App\Models\PropertyTransaction;
-use App\Models\AgentCommission;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class PropertyService
 {
@@ -175,7 +173,7 @@ class PropertyService
             Log::info('Property ownership transferred', [
                 'property_id' => $property->id,
                 'from_owner' => $oldOwnerId,
-                'to_owner' => $newOwnerId
+                'to_owner' => $newOwnerId,
             ]);
 
             return true;
@@ -187,7 +185,8 @@ class PropertyService
     }
 
     /**
-     * Get property statistics
+     * Get property statistics with optimized single query and conditional aggregation.
+     * Reduced queries from 6 to 1.
      */
     public function getPropertyStatistics(array $filters = []): array
     {
@@ -204,27 +203,35 @@ class PropertyService
             $query->where('owner_id', $filters['owner_id']);
         }
         if (isset($filters['type'])) {
-            $query->where('type', $filters['type']);
+            // Fix: Map 'type' to the correct database column 'property_type'
+            $query->where('property_type', $filters['type']);
         }
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        $totalProperties = $query->count();
-        $availableProperties = $query->where('status', 'available')->count();
-        $soldProperties = $query->where('status', 'sold')->count();
-        $rentedProperties = $query->where('status', 'rented')->count();
-        $totalValue = $query->sum('price');
-        $averagePrice = $query->avg('price');
+        // Optimization: Use conditional aggregation to fetch all stats in a single database round-trip.
+        // Also corrected 'available' status to 'active' to match schema.
+        $stats = $query->selectRaw("
+            COUNT(*) as total,
+            COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+            COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold,
+            COUNT(CASE WHEN status = 'rented' THEN 1 END) as rented,
+            SUM(price) as total_val,
+            AVG(price) as avg_price
+        ")->first();
+
+        $totalCount = (int) ($stats->total ?? 0);
+        $activeCount = (int) ($stats->active ?? 0);
 
         return [
-            'total_properties' => $totalProperties,
-            'available_properties' => $availableProperties,
-            'sold_properties' => $soldProperties,
-            'rented_properties' => $rentedProperties,
-            'total_value' => $totalValue,
-            'average_price' => $averagePrice,
-            'availability_rate' => $totalProperties > 0 ? ($availableProperties / $totalProperties) * 100 : 0,
+            'total_properties' => $totalCount,
+            'available_properties' => $activeCount,
+            'sold_properties' => (int) ($stats->sold ?? 0),
+            'rented_properties' => (int) ($stats->rented ?? 0),
+            'total_value' => (float) ($stats->total_val ?? 0),
+            'average_price' => (float) ($stats->avg_price ?? 0),
+            'availability_rate' => $totalCount > 0 ? ($activeCount / $totalCount) * 100 : 0,
         ];
     }
 
@@ -259,8 +266,8 @@ class PropertyService
         }
 
         return $query->with(['owner', 'agent', 'company'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -269,9 +276,9 @@ class PropertyService
     public function getOwnershipHistory(Property $property): Collection
     {
         return $property->ownershipHistory()
-                      ->with(['previousOwner', 'newOwner', 'agent'])
-                      ->orderBy('transfer_date', 'desc')
-                      ->get();
+            ->with(['previousOwner', 'newOwner', 'agent'])
+            ->orderBy('transfer_date', 'desc')
+            ->get();
     }
 
     /**
@@ -280,9 +287,9 @@ class PropertyService
     public function getPropertyTransactions(Property $property): Collection
     {
         return $property->transactions()
-                      ->with(['client', 'agent', 'company'])
-                      ->orderBy('created_at', 'desc')
-                      ->get();
+            ->with(['client', 'agent', 'company'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -291,9 +298,9 @@ class PropertyService
     public function getPropertyCommissions(Property $property): Collection
     {
         return $property->commissions()
-                      ->with(['agent'])
-                      ->orderBy('created_at', 'desc')
-                      ->get();
+            ->with(['agent'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -349,19 +356,19 @@ class PropertyService
     public function getSimilarProperties(Property $property, int $limit = 5): Collection
     {
         return Property::where('id', '!=', $property->id)
-                     ->where('type', $property->type)
-                     ->where('status', 'available')
-                     ->whereBetween('price', [
-                         $property->price * 0.8,
-                         $property->price * 1.2
-                     ])
-                     ->whereBetween('area', [
-                         $property->area * 0.8,
-                         $property->area * 1.2
-                     ])
-                     ->limit($limit)
-                     ->with(['owner', 'agent'])
-                     ->get();
+            ->where('type', $property->type)
+            ->where('status', 'available')
+            ->whereBetween('price', [
+                $property->price * 0.8,
+                $property->price * 1.2,
+            ])
+            ->whereBetween('area', [
+                $property->area * 0.8,
+                $property->area * 1.2,
+            ])
+            ->limit($limit)
+            ->with(['owner', 'agent'])
+            ->get();
     }
 
     /**
@@ -376,10 +383,10 @@ class PropertyService
             $searchTerm = $criteria['search'];
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('title', 'like', "%{$searchTerm}%")
-                  ->orWhere('description', 'like', "%{$searchTerm}%")
-                  ->orWhere('address', 'like', "%{$searchTerm}%")
-                  ->orWhere('city', 'like', "%{$searchTerm}%")
-                  ->orWhere('state', 'like', "%{$searchTerm}%");
+                    ->orWhere('description', 'like', "%{$searchTerm}%")
+                    ->orWhere('address', 'like', "%{$searchTerm}%")
+                    ->orWhere('city', 'like', "%{$searchTerm}%")
+                    ->orWhere('state', 'like', "%{$searchTerm}%");
             });
         }
 
@@ -442,8 +449,8 @@ class PropertyService
         }
 
         return $query->with(['owner', 'agent', 'company'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -481,7 +488,7 @@ class PropertyService
         return [
             'properties' => $properties,
             'summary' => $this->getPropertyStatistics($filters),
-            'filters' => $filters
+            'filters' => $filters,
         ];
     }
 
@@ -491,9 +498,9 @@ class PropertyService
     public function getAgentPortfolio(Agent $agent): Collection
     {
         return $agent->properties()
-                    ->with(['owner', 'company'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+            ->with(['owner', 'company'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -502,9 +509,9 @@ class PropertyService
     public function getOwnerPortfolio(Client $owner): Collection
     {
         return $owner->ownedProperties()
-                    ->with(['agent', 'company'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+            ->with(['agent', 'company'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -513,8 +520,8 @@ class PropertyService
     public function getCompanyPortfolio(Company $company): Collection
     {
         return $company->properties()
-                    ->with(['owner', 'agent'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+            ->with(['owner', 'agent'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }
