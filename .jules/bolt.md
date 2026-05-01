@@ -1,0 +1,3 @@
+## 2026-05-01 - Optimizing Multi-Aggregate Statistics Queries
+**Learning:** Chaining multiple `where()` and `count()` calls on a single Laravel Query Builder instance modifies it in-place, leading to "stacked" filters and incorrect results (e.g., `WHERE status='A' AND status='B'`). Also, performing multiple aggregate queries (`count`, `sum`, `avg`) causes redundant database round-trips.
+**Action:** Use conditional aggregation (`COUNT(CASE WHEN...)`) within a single `selectRaw()` call to fetch all required statistics in a single database query. Always be cautious of in-place Query Builder modifications when reusing queries for multiple counts.
