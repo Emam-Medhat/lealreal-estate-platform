@@ -18,32 +18,55 @@ class AgentAnalyticsService
     {
         $cacheKey = 'agent_overview_stats_' . $agent->id;
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
-            $currentMonth = now()->month;
-            $currentYear = now()->year;
-            
+            $startOfMonth = now()->startOfMonth();
+
+            // Consolidate property stats into a single query
+            $propertyStats = $agent->properties()
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+                    COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold,
+                    SUM(CASE WHEN status = 'sold' AND updated_at >= ? THEN price ELSE 0 END) as monthly_sales
+                ", [$startOfMonth])
+                ->first();
+
+            // Consolidate lead stats
+            $leadStats = $agent->leads()
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN status = 'converted' THEN 1 END) as converted
+                ")
+                ->first();
+
+            // Consolidate appointment stats
+            $appointmentStats = $agent->appointments()
+                ->selectRaw("
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
+                ")
+                ->first();
+
+            // Commission stats
+            $commissionStats = $agent->commissions()
+                ->selectRaw("
+                    SUM(amount) as total,
+                    SUM(CASE WHEN commission_date >= ? THEN amount ELSE 0 END) as monthly
+                ", [$startOfMonth])
+                ->first();
+
             return [
-                'total_properties' => $agent->properties()->count(),
-                'active_properties' => $agent->properties()->where('status', 'active')->count(),
-                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-                'total_leads' => $agent->leads()->count(),
-                'converted_leads' => $agent->leads()->where('status', 'converted')->count(),
-                'total_appointments' => $agent->appointments()->count(),
-                'completed_appointments' => $agent->appointments()->where('status', 'completed')->count(),
-                'total_commissions' => $agent->commissions()->sum('amount'),
-                'this_month_sales' => $agent->properties()->where('status', 'sold')
-                    ->whereMonth('updated_at', $currentMonth)
-                    ->whereYear('updated_at', $currentYear)
-                    ->with('price')
-                    ->get()
-                    ->sum(function ($property) {
-                        return $property->price?->price ?? 0;
-                    }),
-                'this_month_commissions' => $agent->commissions()
-                    ->whereMonth('commission_date', $currentMonth)
-                    ->whereYear('commission_date', $currentYear)
-                    ->sum('amount'),
-                'conversion_rate' => $this->calculateConversionRate($agent),
-                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
+                'total_properties' => (int)($propertyStats->total ?? 0),
+                'active_properties' => (int)($propertyStats->active ?? 0),
+                'sold_properties' => (int)($propertyStats->sold ?? 0),
+                'total_leads' => (int)($leadStats->total ?? 0),
+                'converted_leads' => (int)($leadStats->converted ?? 0),
+                'total_appointments' => (int)($appointmentStats->total ?? 0),
+                'completed_appointments' => (int)($appointmentStats->completed ?? 0),
+                'total_commissions' => (float)($commissionStats->total ?? 0),
+                'this_month_sales' => (float)($propertyStats->monthly_sales ?? 0),
+                'this_month_commissions' => (float)($commissionStats->monthly ?? 0),
+                'conversion_rate' => $leadStats->total > 0 ? round(($leadStats->converted / $leadStats->total) * 100, 2) : 0,
+                'average_rating' => (float)($agent->reviews()->avg('rating') ?? 0),
             ];
         });
     }
@@ -52,52 +75,86 @@ class AgentAnalyticsService
     {
         $cacheKey = 'agent_performance_trends_' . $agent->id;
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
-            // Last 12 months data
-            $months = collect(range(11, 0))->map(function ($month) {
-                return now()->subMonths($month);
-            });
+            $twelveMonthsAgo = now()->subMonths(11)->startOfMonth();
+            $driver = \DB::connection()->getDriverName();
 
-            $salesTrend = $months->map(function ($date) use ($agent) {
-                return [
-                    'month' => $date->format('Y-m'),
-                    'sales' => $agent->properties()->where('status', 'sold')
-                        ->whereMonth('updated_at', $date->month)
-                        ->whereYear('updated_at', $date->year)
-                        ->with('price')
-                        ->get()
-                        ->sum(function ($property) {
-                            return $property->price?->price ?? 0;
-                        }),
-                    'properties_sold' => $agent->properties()->where('status', 'sold')
-                        ->whereMonth('updated_at', $date->month)
-                        ->whereYear('updated_at', $date->year)
-                        ->count(),
-                ];
-            });
+            // Database-agnostic month formatting
+            $monthFormat = $driver === 'sqlite'
+                ? "strftime('%Y-%m', updated_at)"
+                : "DATE_FORMAT(updated_at, '%Y-%m')";
 
-            $commissionTrend = $months->map(function ($date) use ($agent) {
-                return [
-                    'month' => $date->format('Y-m'),
-                    'commissions' => $agent->commissions()
-                        ->whereMonth('commission_date', $date->month)
-                        ->whereYear('commission_date', $date->year)
-                        ->sum('amount'),
-                ];
-            });
+            $commissionMonthFormat = $driver === 'sqlite'
+                ? "strftime('%Y-%m', commission_date)"
+                : "DATE_FORMAT(commission_date, '%Y-%m')";
 
-            $leadTrend = $months->map(function ($date) use ($agent) {
-                return [
-                    'month' => $date->format('Y-m'),
-                    'leads' => $agent->leads()
-                        ->whereMonth('created_at', $date->month)
-                        ->whereYear('created_at', $date->year)
-                        ->count(),
-                    'converted' => $agent->leads()->where('status', 'converted')
-                        ->whereMonth('updated_at', $date->month)
-                        ->whereYear('updated_at', $date->year)
-                        ->count(),
+            $leadMonthFormat = $driver === 'sqlite'
+                ? "strftime('%Y-%m', created_at)"
+                : "DATE_FORMAT(created_at, '%Y-%m')";
+
+            // Sales Trend: Grouped by month
+            $salesTrendData = $agent->properties()
+                ->where('status', 'sold')
+                ->where('updated_at', '>=', $twelveMonthsAgo)
+                ->selectRaw("
+                    {$monthFormat} as month,
+                    SUM(price) as sales,
+                    COUNT(*) as properties_sold
+                ")
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->keyBy('month');
+
+            // Commission Trend: Grouped by month
+            $commissionTrendData = $agent->commissions()
+                ->where('commission_date', '>=', $twelveMonthsAgo)
+                ->selectRaw("
+                    {$commissionMonthFormat} as month,
+                    SUM(amount) as commissions
+                ")
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->keyBy('month');
+
+            // Lead Trend: Grouped by month
+            $leadTrendData = $agent->leads()
+                ->where('created_at', '>=', $twelveMonthsAgo)
+                ->selectRaw("
+                    {$leadMonthFormat} as month,
+                    COUNT(*) as leads,
+                    COUNT(CASE WHEN status = 'converted' THEN 1 END) as converted
+                ")
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->keyBy('month');
+
+            // Fill in missing months to ensure a continuous 12-month trend
+            $salesTrend = [];
+            $commissionTrend = [];
+            $leadTrend = [];
+
+            for ($i = 11; $i >= 0; $i--) {
+                $month = now()->subMonths($i)->format('Y-m');
+
+                $salesTrend[] = [
+                    'month' => $month,
+                    'sales' => (float)($salesTrendData->get($month)->sales ?? 0),
+                    'properties_sold' => (int)($salesTrendData->get($month)->properties_sold ?? 0),
                 ];
-            });
+
+                $commissionTrend[] = [
+                    'month' => $month,
+                    'commissions' => (float)($commissionTrendData->get($month)->commissions ?? 0),
+                ];
+
+                $leadTrend[] = [
+                    'month' => $month,
+                    'leads' => (int)($leadTrendData->get($month)->leads ?? 0),
+                    'converted' => (int)($leadTrendData->get($month)->converted ?? 0),
+                ];
+            }
 
             return [
                 'sales_trend' => $salesTrend,
@@ -260,60 +317,44 @@ class AgentAnalyticsService
 
     private function getPropertyPriceRanges($properties): array
     {
-        $ranges = [
-            '0-100k' => 0,
-            '100k-250k' => 0,
-            '250k-500k' => 0,
-            '500k-1m' => 0,
-            '1m+' => 0,
+        $results = (clone $properties)
+            ->selectRaw("
+                COUNT(CASE WHEN price < 100000 THEN 1 END) as range1,
+                COUNT(CASE WHEN price >= 100000 AND price < 250000 THEN 1 END) as range2,
+                COUNT(CASE WHEN price >= 250000 AND price < 500000 THEN 1 END) as range3,
+                COUNT(CASE WHEN price >= 500000 AND price < 1000000 THEN 1 END) as range4,
+                COUNT(CASE WHEN price >= 1000000 THEN 1 END) as range5
+            ")
+            ->first();
+
+        return [
+            '0-100k' => (int)($results->range1 ?? 0),
+            '100k-250k' => (int)($results->range2 ?? 0),
+            '250k-500k' => (int)($results->range3 ?? 0),
+            '500k-1m' => (int)($results->range4 ?? 0),
+            '1m+' => (int)($results->range5 ?? 0),
         ];
-
-        $properties->with('price')->get()->each(function ($property) use (&$ranges) {
-            $price = $property->price?->price ?? 0;
-            
-            if ($price < 100000) {
-                $ranges['0-100k']++;
-            } elseif ($price < 250000) {
-                $ranges['100k-250k']++;
-            } elseif ($price < 500000) {
-                $ranges['250k-500k']++;
-            } elseif ($price < 1000000) {
-                $ranges['500k-1m']++;
-            } else {
-                $ranges['1m+']++;
-            }
-        });
-
-        return $ranges;
     }
 
     private function getLeadBudgetRanges($leads): array
     {
-        $ranges = [
-            '0-100k' => 0,
-            '100k-250k' => 0,
-            '250k-500k' => 0,
-            '500k-1m' => 0,
-            '1m+' => 0,
+        $results = (clone $leads)
+            ->selectRaw("
+                COUNT(CASE WHEN budget_max < 100000 THEN 1 END) as range1,
+                COUNT(CASE WHEN budget_max >= 100000 AND budget_max < 250000 THEN 1 END) as range2,
+                COUNT(CASE WHEN budget_max >= 250000 AND budget_max < 500000 THEN 1 END) as range3,
+                COUNT(CASE WHEN budget_max >= 500000 AND budget_max < 1000000 THEN 1 END) as range4,
+                COUNT(CASE WHEN budget_max >= 1000000 THEN 1 END) as range5
+            ")
+            ->first();
+
+        return [
+            '0-100k' => (int)($results->range1 ?? 0),
+            '100k-250k' => (int)($results->range2 ?? 0),
+            '250k-500k' => (int)($results->range3 ?? 0),
+            '500k-1m' => (int)($results->range4 ?? 0),
+            '1m+' => (int)($results->range5 ?? 0),
         ];
-
-        $leads->get()->each(function ($lead) use (&$ranges) {
-            $budget = $lead->budget_max ?? 0;
-            
-            if ($budget < 100000) {
-                $ranges['0-100k']++;
-            } elseif ($budget < 250000) {
-                $ranges['100k-250k']++;
-            } elseif ($budget < 500000) {
-                $ranges['250k-500k']++;
-            } elseif ($budget < 1000000) {
-                $ranges['500k-1m']++;
-            } else {
-                $ranges['1m+']++;
-            }
-        });
-
-        return $ranges;
     }
 
     public function getDateRange(string $period): array
