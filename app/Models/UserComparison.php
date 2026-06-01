@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use App\Models\Property;
 
 class UserComparison extends Model
 {
@@ -54,9 +55,7 @@ class UserComparison extends Model
 
     public function comparableItems(): BelongsToMany
     {
-        // Using a generic model reference since Property model may not exist yet
-        // This will be updated when Property model is implemented
-        return $this->belongsToMany('App\Models\Property', 'comparison_items')
+        return $this->belongsToMany(Property::class, 'comparison_items', 'user_comparison_id', 'property_id')
                     ->withPivot(['score', 'rank', 'notes', 'custom_data'])
                     ->withTimestamps();
     }
