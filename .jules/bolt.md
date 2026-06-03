@@ -1,0 +1,3 @@
+## 2025-06-03 - Conditional Aggregation for Performance
+**Learning:** Consolidating multiple count/sum/avg queries into a single query using conditional aggregation (`selectRaw` with `COUNT(CASE WHEN...)`) significantly reduces database roundtrips. Additionally, in Laravel, methods like `where()` modify the Query Builder instance in-place. Reusing a shared builder instance for multiple counts results in stacked `where` clauses (e.g., `WHERE status='active' AND status='sold'`), leading to incorrect zero results.
+**Action:** Always use conditional aggregation or `clone $query` when performing multiple distinct aggregations on a base query. Verify database schema (enum values and column names) before assuming standard naming like 'available' or 'type'.
