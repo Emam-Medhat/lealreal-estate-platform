@@ -1,0 +1,3 @@
+## 2025-05-15 - [Property Statistics Optimization]
+**Learning:** Laravel Eloquent Builder objects are mutable. Chaining multiple `where()` calls on the same builder instance (e.g., for consecutive counts) results in stacked filters (e.g., `WHERE status='active' AND status='sold'`), leading to incorrect results.
+**Action:** Use conditional aggregation (`selectRaw` with `COUNT(CASE WHEN...)`) to perform multiple distinct counts in a single database query, which is both more efficient and avoids the stacking issue. Also, always verify database schema column names (e.g., `property_type` vs `type`) and status strings (e.g., `active` vs `available`) against the Model's scopes and schema.
