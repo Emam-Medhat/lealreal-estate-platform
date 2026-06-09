@@ -1,0 +1,3 @@
+## 2026-06-09 - [Property Statistics Query Consolidation]
+**Learning:** Chaining multiple `where()` calls on a shared Laravel Query Builder instance results in stacked filters (e.g., `WHERE status='active' AND status='sold'`), leading to zero results for subsequent counts. Additionally, using individual count queries for dashboard metrics is an anti-pattern when conditional aggregation can fetch everything in one go.
+**Action:** Use `selectRaw` with `COUNT(CASE WHEN status = '...' THEN 1 END)` to consolidate multiple status-based counts into a single database query. Always clone the query builder if it must be reused for different filters, or better, use conditional aggregation for better performance.
