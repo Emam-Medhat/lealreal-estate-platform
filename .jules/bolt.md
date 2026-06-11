@@ -1,0 +1,3 @@
+## 2026-06-11 - Optimized Property Statistics
+**Learning:** The previous implementation of `getPropertyStatistics` was highly inefficient, executing 6 separate database queries. It also suffered from a Query Builder reuse bug where `where` clauses were stacked on a shared instance, and used an incorrect 'available' status string that didn't match the database enum ('active').
+**Action:** Use conditional aggregation (e.g., `COUNT(CASE WHEN...)`) to consolidate multiple counts and sums into a single query. Always use `clone` when performing multiple operations on a base query builder instance, and verify database schema enums before assuming status strings.
