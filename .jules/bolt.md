@@ -1,0 +1,3 @@
+## 2025-05-14 - [Laravel Query Builder Mutation & Conditional Aggregation]
+**Learning:** Laravel's Query Builder is mutable; calling `where()` on an existing query instance modifies it in place. Sequential count/sum calls with different `where` clauses on the same instance leads to incorrect (zeroed) results as they become cumulative. Using `selectRaw` with conditional aggregation (`COUNT(CASE WHEN...)`) allows calculating multiple metrics in a single database pass while avoiding mutation issues.
+**Action:** Consolidate multiple counts/sums on the same model into a single `selectRaw` query with conditional aggregation for better performance and correctness.
