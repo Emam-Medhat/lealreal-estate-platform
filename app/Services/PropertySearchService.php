@@ -95,8 +95,20 @@ class PropertySearchService
      */
     public function nearbySearch(float $lat, float $lng, int $radius = 10)
     {
-        // Haversine formula
-        return Property::active()
+        // Optimization: Add bounding box filter to leverage database indexes
+        // 1 degree of latitude is approximately 111.045 km
+        $latDelta = $radius / 111.045;
+        $lngDelta = $radius / (111.045 * abs(cos(deg2rad($lat))));
+
+        $minLat = $lat - $latDelta;
+        $maxLat = $lat + $latDelta;
+        $minLng = $lng - $lngDelta;
+        $maxLng = $lng + $lngDelta;
+
+        // Haversine formula with bounding box pre-filter
+        $query = Property::active()
+            ->whereBetween('latitude', [$minLat, $maxLat])
+            ->whereBetween('longitude', [$minLng, $maxLng])
             ->select('properties.*')
             ->selectRaw(
                 '( 6371 * acos( cos( radians(?) ) *
@@ -106,8 +118,22 @@ class PropertySearchService
                   sin( radians( latitude ) ) )
                 ) AS distance',
                 [$lat, $lng, $lat]
-            )
-            ->having('distance', '<', $radius)
+            );
+
+        // SQLite doesn't always support HAVING on non-aggregate columns in all configurations
+        // or might have issues with trigonometric functions if not loaded.
+        // However, we verified trigonometric functions are available in this environment.
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return $query->get()
+                ->filter(function ($property) use ($radius) {
+                    return $property->distance < $radius;
+                })
+                ->sortBy('distance')
+                ->take(20)
+                ->values();
+        }
+
+        return $query->having('distance', '<', $radius)
             ->orderBy('distance')
             ->limit(20)
             ->get();
