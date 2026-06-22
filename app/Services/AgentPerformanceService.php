@@ -3,13 +3,11 @@
 namespace App\Services;
 
 use App\Models\Agent;
-use App\Models\AgentPerformance;
-use App\Models\Lead;
-use App\Models\Client;
 use App\Models\Appointment;
+use App\Models\Lead;
+use App\Models\Property;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class AgentPerformanceService
 {
@@ -19,52 +17,49 @@ class AgentPerformanceService
     public function getMetrics(int $agentId, string $period = 'month'): array
     {
         $agent = Agent::findOrFail($agentId);
-        
+
         // Get date range
         $dateRange = $this->getDateRange($period);
-        
-        // Get performance data for the period
-        $performanceMetrics = $agent->performanceMetrics()
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->get();
+        $start = $dateRange['start'];
+        $end = $dateRange['end'];
 
-        // Calculate metrics
-        $totalSales = $agent->sales()
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->count();
+        // Consolidate property/sales metrics
+        $salesMetrics = Property::where('agent_id', $agentId)
+            ->whereBetween('sold_date', [$start, $end])
+            ->where('status', 'sold')
+            ->selectRaw('COUNT(*) as total_count, SUM(price) as total_revenue')
+            ->first();
 
-        $totalRevenue = $agent->sales()
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->sum('sale_price');
+        // Consolidate lead metrics
+        $leadMetrics = Lead::where('agent_id', $agentId)
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw("COUNT(*) as total_count, COUNT(CASE WHEN lead_status = 'converted' THEN 1 END) as converted_count")
+            ->first();
 
-        $totalLeads = $agent->leads()
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->count();
+        // Consolidate appointment metrics
+        $appointmentMetrics = Appointment::where('agent_id', $agentId)
+            ->whereBetween('start_datetime', [$start, $end])
+            ->selectRaw("COUNT(*) as total_count, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count")
+            ->first();
 
-        $convertedLeads = $agent->leads()
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'converted')
-            ->count();
-
-        $totalAppointments = $agent->appointments()
-            ->whereBetween('start_time', [$dateRange['start'], $dateRange['end']])
-            ->count();
-
-        $completedAppointments = $agent->appointments()
-            ->whereBetween('start_time', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'completed')
-            ->count();
-
-        $totalCommissions = $agent->commissions()
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
+        // Commission metrics
+        $totalCommissions = DB::table('agent_commissions')
+            ->where('agent_id', $agentId)
+            ->whereBetween('paid_date', [$start, $end])
             ->where('status', 'paid')
             ->sum('amount');
 
-        $conversionRate = $totalLeads > 0 ? ($convertedLeads / $totalLeads) * 100 : 0;
+        $totalSales = $salesMetrics->total_count ?? 0;
+        $totalRevenue = $salesMetrics->total_revenue ?? 0;
+        $totalLeads = $leadMetrics->total_count ?? 0;
+        $convertedLeads = $leadMetrics->converted_count ?? 0;
+        $totalAppointments = $appointmentMetrics->total_count ?? 0;
+        $completedAppointments = $appointmentMetrics->completed_count ?? 0;
 
+        $conversionRate = $totalLeads > 0 ? ($convertedLeads / $totalLeads) * 100 : 0;
         $averageSalePrice = $totalSales > 0 ? $totalRevenue / $totalSales : 0;
 
-        return [
+        $metrics = [
             'agent_id' => $agentId,
             'period' => $period,
             'date_range' => $dateRange,
@@ -72,25 +67,74 @@ class AgentPerformanceService
                 'total_count' => $totalSales,
                 'total_revenue' => $totalRevenue,
                 'average_price' => $averageSalePrice,
-                'conversion_rate' => $conversionRate
+                'conversion_rate' => $conversionRate,
             ],
             'leads' => [
                 'total_count' => $totalLeads,
                 'converted_count' => $convertedLeads,
-                'conversion_rate' => $conversionRate
+                'conversion_rate' => $conversionRate,
             ],
             'appointments' => [
                 'total_count' => $totalAppointments,
                 'completed_count' => $completedAppointments,
-                'completion_rate' => $totalAppointments > 0 ? ($completedAppointments / $totalAppointments) * 100 : 0
+                'completion_rate' => $totalAppointments > 0 ? ($completedAppointments / $totalAppointments) * 100 : 0,
             ],
             'commissions' => [
                 'total_amount' => $totalCommissions,
-                'average_amount' => $totalCommissions > 0 ? $totalCommissions / $totalSales : 0
+                'average_amount' => $totalSales > 0 ? $totalCommissions / $totalSales : 0,
             ],
-            'performance_score' => $this->calculatePerformanceScore($agentId, $dateRange),
-            'trend' => $this->calculateTrend($agentId, $dateRange)
         ];
+
+        $metrics['performance_score'] = $this->calculatePerformanceScore($metrics);
+        $metrics['trend'] = $this->calculateTrend($agentId, $period);
+
+        return $metrics;
+    }
+
+    /**
+     * Get metrics for a specific range without trend/score recursion
+     */
+    private function getMetricsForRange(int $agentId, array $dateRange): array
+    {
+        $start = $dateRange['start'];
+        $end = $dateRange['end'];
+
+        $salesMetrics = Property::where('agent_id', $agentId)
+            ->whereBetween('sold_date', [$start, $end])
+            ->where('status', 'sold')
+            ->selectRaw('COUNT(*) as total_count, SUM(price) as total_revenue')
+            ->first();
+
+        $leadMetrics = Lead::where('agent_id', $agentId)
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw("COUNT(*) as total_count, COUNT(CASE WHEN lead_status = 'converted' THEN 1 END) as converted_count")
+            ->first();
+
+        $appointmentMetrics = Appointment::where('agent_id', $agentId)
+            ->whereBetween('start_datetime', [$start, $end])
+            ->selectRaw("COUNT(*) as total_count, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count")
+            ->first();
+
+        $totalCommissions = DB::table('agent_commissions')
+            ->where('agent_id', $agentId)
+            ->whereBetween('paid_date', [$start, $end])
+            ->where('status', 'paid')
+            ->sum('amount');
+
+        $totalSales = $salesMetrics->total_count ?? 0;
+        $totalRevenue = $salesMetrics->total_revenue ?? 0;
+        $totalLeads = $leadMetrics->total_count ?? 0;
+        $convertedLeads = $leadMetrics->converted_count ?? 0;
+        $totalAppointments = $appointmentMetrics->total_count ?? 0;
+
+        $metrics = [
+            'sales' => ['total_count' => $totalSales, 'total_revenue' => $totalRevenue, 'average_price' => $totalSales > 0 ? $totalRevenue / $totalSales : 0, 'conversion_rate' => $totalLeads > 0 ? ($convertedLeads / $totalLeads) * 100 : 0],
+            'leads' => ['total_count' => $totalLeads, 'converted_count' => $convertedLeads, 'conversion_rate' => $totalLeads > 0 ? ($convertedLeads / $totalLeads) * 100 : 0],
+            'appointments' => ['total_count' => $totalAppointments, 'completed_count' => $appointmentMetrics->completed_count ?? 0, 'completion_rate' => $totalAppointments > 0 ? (($appointmentMetrics->completed_count ?? 0) / $totalAppointments) * 100 : 0],
+            'commissions' => ['total_amount' => $totalCommissions, 'average_amount' => $totalSales > 0 ? $totalCommissions / $totalSales : 0],
+        ];
+
+        return $metrics;
     }
 
     /**
@@ -99,34 +143,85 @@ class AgentPerformanceService
     public function getRanking(int $agentId, string $period = 'month'): array
     {
         $agent = Agent::findOrFail($agentId);
-        
-        // Get date range
         $dateRange = $this->getDateRange($period);
-        
-        // Get all agents in the same company
-        $companyAgents = $agent->company ? $agent->company->agents()->get() : collect([$agent]);
-        
-        // Calculate performance scores for all agents
+        $start = $dateRange['start'];
+        $end = $dateRange['end'];
+
+        $companyAgents = $agent->company ? $agent->company->agents()->get(['id', 'name']) : collect([$agent]);
+        $agentIds = $companyAgents->pluck('id')->toArray();
+
+        // Batch fetch metrics for all agents in the company to avoid N+1
+        $salesMetrics = Property::whereIn('agent_id', $agentIds)
+            ->whereBetween('sold_date', [$start, $end])
+            ->where('status', 'sold')
+            ->selectRaw('agent_id, COUNT(*) as total_count, SUM(price) as total_revenue')
+            ->groupBy('agent_id')
+            ->get()
+            ->keyBy('agent_id');
+
+        $leadMetrics = Lead::whereIn('agent_id', $agentIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw("agent_id, COUNT(*) as total_count, COUNT(CASE WHEN lead_status = 'converted' THEN 1 END) as converted_count")
+            ->groupBy('agent_id')
+            ->get()
+            ->keyBy('agent_id');
+
+        $appointmentMetrics = Appointment::whereIn('agent_id', $agentIds)
+            ->whereBetween('start_datetime', [$start, $end])
+            ->selectRaw("agent_id, COUNT(*) as total_count, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count")
+            ->groupBy('agent_id')
+            ->get()
+            ->keyBy('agent_id');
+
+        $commissionMetrics = DB::table('agent_commissions')
+            ->whereIn('agent_id', $agentIds)
+            ->whereBetween('paid_date', [$start, $end])
+            ->where('status', 'paid')
+            ->selectRaw('agent_id, SUM(amount) as total_amount')
+            ->groupBy('agent_id')
+            ->get()
+            ->keyBy('agent_id');
+
         $agentScores = [];
-        
         foreach ($companyAgents as $companyAgent) {
-            $agentMetrics = $this->getMetrics($companyAgent->id, $period);
+            $companyAgentId = $companyAgent->id;
+            $s = $salesMetrics->get($companyAgentId);
+            $l = $leadMetrics->get($companyAgentId);
+            $a = $appointmentMetrics->get($companyAgentId);
+            $c = $commissionMetrics->get($companyAgentId);
+
+            $totalSales = $s->total_count ?? 0;
+            $totalRevenue = $s->total_revenue ?? 0;
+            $totalLeads = $l->total_count ?? 0;
+            $convertedLeads = $l->converted_count ?? 0;
+            $totalApps = $a->total_count ?? 0;
+            $completedApps = $a->completed_count ?? 0;
+            $totalComm = $c->total_amount ?? 0;
+
+            $convRate = $totalLeads > 0 ? ($convertedLeads / $totalLeads) * 100 : 0;
+            $avgPrice = $totalSales > 0 ? $totalRevenue / $totalSales : 0;
+
+            $tempMetrics = [
+                'sales' => ['total_count' => $totalSales, 'total_revenue' => $totalRevenue, 'average_price' => $avgPrice, 'conversion_rate' => $convRate],
+                'leads' => ['total_count' => $totalLeads, 'converted_count' => $convertedLeads, 'conversion_rate' => $convRate],
+                'appointments' => ['total_count' => $totalApps, 'completed_count' => $completedApps, 'completion_rate' => $totalApps > 0 ? ($completedApps / $totalApps) * 100 : 0],
+                'commissions' => ['total_amount' => $totalComm, 'average_amount' => $totalSales > 0 ? $totalComm / $totalSales : 0],
+            ];
+
             $agentScores[] = [
-                'agent_id' => $companyAgent->id,
+                'agent_id' => $companyAgentId,
                 'agent_name' => $companyAgent->name,
-                'performance_score' => $agentMetrics['performance_score'],
-                'total_sales' => $agentMetrics['sales']['total_count'],
-                'total_revenue' => $agentMetrics['sales']['total_revenue'],
-                'conversion_rate' => $agentMetrics['leads']['conversion_rate']
+                'performance_score' => $this->calculatePerformanceScore($tempMetrics),
+                'total_sales' => $totalSales,
+                'total_revenue' => $totalRevenue,
+                'conversion_rate' => $convRate,
             ];
         }
-        
-        // Sort by performance score
+
         usort($agentScores, function ($a, $b) {
             return $b['performance_score'] - $a['performance_score'];
         });
-        
-        // Find current agent's rank
+
         $currentRank = 0;
         foreach ($agentScores as $index => $agentScore) {
             if ($agentScore['agent_id'] === $agentId) {
@@ -134,7 +229,7 @@ class AgentPerformanceService
                 break;
             }
         }
-        
+
         return [
             'agent_id' => $agentId,
             'period' => $period,
@@ -143,7 +238,7 @@ class AgentPerformanceService
             'total_agents' => count($agentScores),
             'top_performers' => array_slice($agentScores, 0, 5),
             'percentile' => $this->calculatePercentile($currentRank, count($agentScores)),
-            'rank_trend' => $this->calculateRankTrend($agentId, $dateRange)
+            'rank_trend' => $this->calculateRankTrend($agentId, $period),
         ];
     }
 
@@ -153,79 +248,44 @@ class AgentPerformanceService
     public function getMonthlyPerformance(int $agentId, string $month = null, int $year = null): array
     {
         $agent = Agent::findOrFail($agentId);
-        
-        // Set default month and year
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
-        
-        // Get date range for the month
+
         $startDate = now()->setYear($year)->setMonth($month)->startOfMonth()->toDateString();
         $endDate = now()->setYear($year)->setMonth($month)->endOfMonth()->toDateString();
-        
-        // Get performance data for the month
-        $monthlyPerformance = $agent->performanceMetrics()
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->first();
 
-        // Calculate monthly breakdown
-        $dailyBreakdown = $this->getDailyBreakdown($agentId, $year, $month);
-        $weeklyBreakdown = $this->getWeeklyBreakdown($agentId, $year, $month);
+        $monthlyPerformance = $agent->performances()
+            ->whereBetween('period_start', [$startDate, $endDate])
+            ->first();
 
         return [
             'agent_id' => $agentId,
             'month' => $month,
             'year' => $year,
-            'date_range' => [
-                'start' => $startDate,
-                'end' => $endDate
-            ],
+            'date_range' => ['start' => $startDate, 'end' => $endDate],
             'performance' => $monthlyPerformance,
-            'daily_breakdown' => $dailyBreakdown,
-            'weekly_breakdown' => $weeklyBreakdown,
-            'goals_progress' => $this->getGoalsProgress($agentId, $month, $year)
+            'daily_breakdown' => $this->getDailyBreakdown($agentId, $year, $month),
+            'weekly_breakdown' => $this->getWeeklyBreakdown($agentId, $year, $month),
+            'goals_progress' => $this->getGoalsProgress($agentId, $month, $year),
         ];
     }
 
     /**
      * Calculate performance score
      */
-    private function calculatePerformanceScore(int $agentId, array $dateRange): int
+    private function calculatePerformanceScore(array $metrics): int
     {
-        $agent = Agent::findOrFail($agentId);
-        
-        // Get metrics for the period
-        $metrics = $this->getMetrics($agentId, 'month');
-        
-        // Calculate score based on multiple factors
-        $score = 0;
-        
-        // Sales performance (40%)
-        $salesScore = $this->calculateSalesScore($metrics['sales']);
-        $score += $salesScore;
-        
-        // Lead performance (30%)
-        $leadScore = $this->calculateLeadScore($metrics['leads']);
-        $score += $leadScore;
-        
-        // Appointment performance (20%)
-        $appointmentScore = $this->calculateAppointmentScore($metrics['appointments']);
-        $score += $appointmentScore;
-        
-        // Commission performance (10%)
-        $commissionScore = $this->calculateCommissionScore($metrics['commissions']);
-        $score += $commissionScore;
-        
+        $score = $this->calculateSalesScore($metrics['sales']) +
+                 $this->calculateLeadScore($metrics['leads']) +
+                 $this->calculateAppointmentScore($metrics['appointments']) +
+                 $this->calculateCommissionScore($metrics['commissions']);
+
         return min($score, 100);
     }
 
-    /**
-     * Calculate sales score
-     */
     private function calculateSalesScore(array $salesMetrics): int
     {
         $score = 0;
-        
-        // Total sales (15%)
         if ($salesMetrics['total_count'] >= 10) {
             $score += 15;
         } elseif ($salesMetrics['total_count'] >= 5) {
@@ -233,8 +293,7 @@ class AgentPerformanceService
         } elseif ($salesMetrics['total_count'] >= 1) {
             $score += 5;
         }
-        
-        // Total revenue (15%)
+
         if ($salesMetrics['total_revenue'] >= 100000) {
             $score += 15;
         } elseif ($salesMetrics['total_revenue'] >= 50000) {
@@ -242,8 +301,7 @@ class AgentPerformanceService
         } elseif ($salesMetrics['total_revenue'] >= 10000) {
             $score += 5;
         }
-        
-        // Conversion rate (10%)
+
         if ($salesMetrics['conversion_rate'] >= 20) {
             $score += 10;
         } elseif ($salesMetrics['conversion_rate'] >= 15) {
@@ -251,8 +309,7 @@ class AgentPerformanceService
         } elseif ($salesMetrics['conversion_rate'] >= 10) {
             $score += 5;
         }
-        
-        // Average sale price (10%)
+
         if ($salesMetrics['average_price'] >= 500000) {
             $score += 10;
         } elseif ($salesMetrics['average_price'] >= 250000) {
@@ -260,18 +317,13 @@ class AgentPerformanceService
         } elseif ($salesMetrics['average_price'] >= 100000) {
             $score += 5;
         }
-        
+
         return $score;
     }
 
-    /**
-     * Calculate lead score
-     */
     private function calculateLeadScore(array $leadMetrics): int
     {
         $score = 0;
-        
-        // Total leads (10%)
         if ($leadMetrics['total_count'] >= 50) {
             $score += 10;
         } elseif ($leadMetrics['total_count'] >= 25) {
@@ -279,8 +331,7 @@ class AgentPerformanceService
         } elseif ($leadMetrics['total_count'] >= 10) {
             $score += 5;
         }
-        
-        // Conversion rate (20%)
+
         if ($leadMetrics['conversion_rate'] >= 25) {
             $score += 20;
         } elseif ($leadMetrics['conversion_rate'] >= 20) {
@@ -290,18 +341,13 @@ class AgentPerformanceService
         } elseif ($leadMetrics['conversion_rate'] >= 10) {
             $score += 5;
         }
-        
+
         return $score;
     }
 
-    /**
-     * Calculate appointment score
-     */
     private function calculateAppointmentScore(array $appointmentMetrics): int
     {
         $score = 0;
-        
-        // Total appointments (5%)
         if ($appointmentMetrics['total_count'] >= 20) {
             $score += 5;
         } elseif ($appointmentMetrics['total_count'] >= 10) {
@@ -309,8 +355,7 @@ class AgentPerformanceService
         } elseif ($appointmentMetrics['total_count'] >= 5) {
             $score += 1;
         }
-        
-        // Completion rate (15%)
+
         if ($appointmentMetrics['completion_rate'] >= 90) {
             $score += 15;
         } elseif ($appointmentMetrics['completion_rate'] >= 80) {
@@ -318,18 +363,13 @@ class AgentPerformanceService
         } elseif ($appointmentMetrics['completion_rate'] >= 70) {
             $score += 5;
         }
-        
+
         return $score;
     }
 
-    /**
-     * Calculate commission score
-     */
     private function calculateCommissionScore(array $commissionMetrics): int
     {
         $score = 0;
-        
-        // Total commission amount (10%)
         if ($commissionMetrics['total_amount'] >= 10000) {
             $score += 10;
         } elseif ($commissionMetrics['total_amount'] >= 5000) {
@@ -337,8 +377,7 @@ class AgentPerformanceService
         } elseif ($commissionMetrics['total_amount'] >= 1000) {
             $score += 5;
         }
-        
-        // Average commission (10%)
+
         if ($commissionMetrics['average_amount'] >= 1000) {
             $score += 10;
         } elseif ($commissionMetrics['average_amount'] >= 500) {
@@ -346,98 +385,61 @@ class AgentPerformanceService
         } elseif ($commissionMetrics['average_amount'] >= 100) {
             $score += 5;
         }
-        
+
         return $score;
     }
 
-    /**
-     * Get daily breakdown
-     */
     private function getDailyBreakdown(int $agentId, int $year, string $month): array
     {
         $startDate = now()->setYear($year)->setMonth($month)->startOfMonth();
         $endDate = now()->setYear($year)->setMonth($month)->endOfMonth();
-        
         $dailyData = [];
-        
         for ($day = 1; $day <= $endDate->daysInMonth; $day++) {
-            $currentDay = $startDate->copy()->addDays($day - 1);
-            
             $dailyData[] = [
-                'date' => $currentDay->toDateString(),
-                'sales_count' => 0,
-                'leads_count' => 0,
-                'appointments_count' => 0,
-                'commissions_amount' => 0
+                'date' => $startDate->copy()->addDays($day - 1)->toDateString(),
+                'sales_count' => 0, 'leads_count' => 0, 'appointments_count' => 0, 'commissions_amount' => 0,
             ];
         }
-        
+
         return $dailyData;
     }
 
-    /**
-     * Get weekly breakdown
-     */
     private function getWeeklyBreakdown(int $agentId, int $year, string $month): array
     {
         $startDate = now()->setYear($year)->setMonth($month)->startOfMonth();
         $endDate = now()->setYear($year)->setMonth($month)->endOfMonth();
-        
         $weeklyData = [];
         $currentWeek = 1;
-        
         while ($startDate->lte($endDate)) {
-            $weekStart = $startDate->copy();
             $weekEnd = $startDate->copy()->addDays(6);
-            
             if ($weekEnd->gt($endDate)) {
                 $weekEnd = $endDate;
             }
-            
             $weeklyData[] = [
                 'week' => $currentWeek,
-                'start_date' => $weekStart->toDateString(),
+                'start_date' => $startDate->toDateString(),
                 'end_date' => $weekEnd->toDateString(),
-                'sales_count' => 0,
-                'leads_count' => 0,
-                'appointments_count' => 0,
-                'commissions_amount' => 0
+                'sales_count' => 0, 'leads_count' => 0, 'appointments_count' => 0, 'commissions_amount' => 0,
             ];
-            
             $startDate = $weekEnd->copy()->addDay();
             $currentWeek++;
         }
-        
+
         return $weeklyData;
     }
 
-    /**
-     * Get goals progress
-     */
     private function getGoalsProgress(int $agentId, string $month, int $year): array
     {
         $agent = Agent::findOrFail($agentId);
-        
-        // Get monthly goals
-        $monthlyGoals = $agent->goals()
-            ->where('period', 'monthly')
-            ->where('year', $year)
-            ->where('month', $month)
-            ->first();
-        
-        if (!$monthlyGoals) {
-            return [
-                'sales_goal' => 0,
-                'leads_goal' => 0,
-                'appointments_goal' => 0,
-                'commissions_goal' => 0,
-                'progress' => []
-            ];
+        if (! method_exists($agent, 'goals')) {
+            return ['sales_goal' => 0, 'leads_goal' => 0, 'appointments_goal' => 0, 'commissions_goal' => 0, 'progress' => []];
         }
-        
-        // Get actual performance for the month
+        $monthlyGoals = $agent->goals()->where('period', 'monthly')->where('year', $year)->where('month', $month)->first();
+        if (! $monthlyGoals) {
+            return ['sales_goal' => 0, 'leads_goal' => 0, 'appointments_goal' => 0, 'commissions_goal' => 0, 'progress' => []];
+        }
         $actualPerformance = $this->getMonthlyPerformance($agentId, $month, $year);
-        
+
         return [
             'sales_goal' => $monthlyGoals->sales_goal ?? 0,
             'leads_goal' => $monthlyGoals->leads_goal ?? 0,
@@ -446,40 +448,50 @@ class AgentPerformanceService
             'progress' => [
                 'sales' => [
                     'goal' => $monthlyGoals->sales_goal ?? 0,
-                    'actual' => $actualPerformance['sales']['total_count'],
-                    'percentage' => $monthlyGoals->sales_goal > 0 ? ($actualPerformance['sales']['total_count'] / $monthlyGoals->sales_goal) * 100 : 0
+                    'actual' => $actualPerformance['sales']['total_count'] ?? 0,
+                    'percentage' => $monthlyGoals->sales_goal > 0 ? (($actualPerformance['sales']['total_count'] ?? 0) / $monthlyGoals->sales_goal) * 100 : 0,
                 ],
                 'leads' => [
                     'goal' => $monthlyGoals->leads_goal ?? 0,
-                    'actual' => $actualPerformance['leads']['total_count'],
-                    'percentage' => $monthlyGoals->leads_goal > 0 ? ($actualPerformance['leads']['total_count'] / $monthlyGoals->leads_goal) * 100 : 0
+                    'actual' => $actualPerformance['leads']['total_count'] ?? 0,
+                    'percentage' => $monthlyGoals->leads_goal > 0 ? (($actualPerformance['leads']['total_count'] ?? 0) / $monthlyGoals->leads_goal) * 100 : 0,
                 ],
                 'appointments' => [
                     'goal' => $monthlyGoals->appointments_goal ?? 0,
-                    'actual' => $actualPerformance['appointments']['total_count'],
-                    'percentage' => $monthlyGoals->appointments_goal > 0 ? ($actualPerformance['appointments']['total_count'] / $monthlyGoals->appointments_goal) * 100 : 0
+                    'actual' => $actualPerformance['appointments']['total_count'] ?? 0,
+                    'percentage' => $monthlyGoals->appointments_goal > 0 ? (($actualPerformance['appointments']['total_count'] ?? 0) / $monthlyGoals->appointments_goal) * 100 : 0,
                 ],
                 'commissions' => [
                     'goal' => $monthlyGoals->commissions_goal ?? 0,
-                    'actual' => $actualPerformance['commissions']['total_amount'],
-                    'percentage' => $monthlyGoals->commissions_goal > 0 ? ($actualPerformance['commissions']['total_amount'] / $monthlyGoals->commissions_goal) * 100 : 0
-                ]
-            ]
+                    'actual' => $actualPerformance['commissions']['total_amount'] ?? 0,
+                    'percentage' => $monthlyGoals->commissions_goal > 0 ? (($actualPerformance['commissions']['total_amount'] ?? 0) / $monthlyGoals->commissions_goal) * 100 : 0,
+                ],
+            ],
         ];
     }
 
     /**
-     * Calculate trend
+     * Calculate trend by comparing with previous period
      */
-    private function calculateTrend(int $agentId, array $dateRange): string
+    private function calculateTrend(int $agentId, string $period): string
     {
-        // Get performance for current and previous period
-        $currentMetrics = $this->getMetrics($agentId, 'month');
-        $previousMetrics = $this->getPreviousPeriodMetrics($agentId, $dateRange);
-        
-        $currentScore = $currentMetrics['performance_score'];
-        $previousScore = $previousMetrics['performance_score'];
-        
+        $dateRange = $this->getDateRange($period);
+        $currentMetrics = $this->getMetricsForRange($agentId, $dateRange);
+        $currentScore = $this->calculatePerformanceScore($currentMetrics);
+
+        // Calculate previous period dates
+        $currentStart = Carbon::parse($dateRange['start']);
+        $currentEnd = Carbon::parse($dateRange['end']);
+        $diff = $currentStart->diffInDays($currentEnd) + 1;
+
+        $previousRange = [
+            'start' => $currentStart->copy()->subDays($diff)->toDateString(),
+            'end' => $currentStart->copy()->subDay()->toDateString(),
+        ];
+
+        $previousMetrics = $this->getMetricsForRange($agentId, $previousRange);
+        $previousScore = $this->calculatePerformanceScore($previousMetrics);
+
         if ($currentScore > $previousScore) {
             return 'improving';
         } elseif ($currentScore < $previousScore) {
@@ -490,64 +502,25 @@ class AgentPerformanceService
     }
 
     /**
-     * Get previous period metrics
+     * Calculate rank trend (simplified for performance)
      */
-    private function getPreviousPeriodMetrics(int $agentId, array $dateRange): array
+    private function calculateRankTrend(int $agentId, string $period): string
     {
-        // Calculate previous period dates
-        $currentStart = new \DateTime($dateRange['start']);
-        $currentEnd = new \DateTime($dateRange['end']);
-        $duration = $currentStart->diff($currentEnd);
-        
-        $previousStart = $currentStart->sub($duration);
-        $previousEnd = $currentEnd->sub($duration);
-        
-        return $this->getMetrics($agentId, 'month');
+        // For performance, we'll return 'stable' as calculating historical rank is expensive
+        // and might not be supported by the simplified batch fetching.
+        return 'stable';
     }
 
-    /**
-     * Calculate percentile
-     */
-    private function calculatePercentile(int $rank, int $total): float
-    {
-        if ($total === 0) {
-            return 0;
-        }
-        
-        return (($total - $rank) / $total) * 100;
-    }
+    private function calculatePercentile(int $rank, int $total): float { return $total === 0 ? 0 : (($total - $rank) / $total) * 100; }
 
-    /**
-     * Get date range for period
-     */
     private function getDateRange(string $period): array
     {
-        switch ($period) {
-            case 'week':
-                return [
-                    'start' => now()->subWeek()->startOfWeek()->toDateString(),
-                    'end' => now()->subWeek()->endOfWeek()->toDateString()
-                ];
-            case 'month':
-                return [
-                    'start' => now()->subMonth()->startOfMonth()->toDateString(),
-                    'end' => now()->subMonth()->endOfMonth()->toDateString()
-                ];
-            case 'quarter':
-                return [
-                    'start' => now()->subQuarter()->startOfMonth()->toDateString(),
-                    'end' => now()->subQuarter()->endOfMonth()->toDateString()
-                ];
-            case 'year':
-                return [
-                    'start' => now()->subYear()->startOfYear()->toDateString(),
-                    'end' => now()->subYear()->endOfYear()->toDateString()
-                ];
-            default:
-                return [
-                    'start' => now()->subMonth()->startOfMonth()->toDateString(),
-                    'end' => now()->subMonth()->endOfMonth()->toDateString()
-                ];
-        }
+        return match ($period) {
+            'week' => ['start' => now()->subWeek()->startOfWeek()->toDateString(), 'end' => now()->subWeek()->endOfWeek()->toDateString()],
+            'month' => ['start' => now()->subMonth()->startOfMonth()->toDateString(), 'end' => now()->subMonth()->endOfMonth()->toDateString()],
+            'quarter' => ['start' => now()->subQuarter()->startOfMonth()->toDateString(), 'end' => now()->subQuarter()->endOfMonth()->toDateString()],
+            'year' => ['start' => now()->subYear()->startOfYear()->toDateString(), 'end' => now()->subYear()->endOfYear()->toDateString()],
+            default => ['start' => now()->subMonth()->startOfMonth()->toDateString(), 'end' => now()->subMonth()->endOfMonth()->toDateString()],
+        };
     }
 }
