@@ -91,12 +91,23 @@ class PropertySearchService
      * @param float $lat
      * @param float $lng
      * @param int $radius in km
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Database\Eloquent\Collection|\Illuminate\Support\Collection
      */
     public function nearbySearch(float $lat, float $lng, int $radius = 10)
     {
-        // Haversine formula
-        return Property::active()
+        // Calculate bounding box for pre-filtering (leveraging idx_properties_lat_lng)
+        // 1 degree of latitude is approximately 111km
+        $latDelta = $radius / 111;
+        $cosLat = cos(deg2rad($lat));
+        $lngDelta = $cosLat > 0.000001 ? $radius / (111 * $cosLat) : 0.1; // Fallback for poles
+
+        $minLat = $lat - $latDelta;
+        $maxLat = $lat + $latDelta;
+        $minLng = $lng - $lngDelta;
+        $maxLng = $lng + $lngDelta;
+
+        // Haversine formula with bounding box pre-filter
+        $query = Property::active()
             ->select('properties.*')
             ->selectRaw(
                 '( 6371 * acos( cos( radians(?) ) *
@@ -107,7 +118,19 @@ class PropertySearchService
                 ) AS distance',
                 [$lat, $lng, $lat]
             )
-            ->having('distance', '<', $radius)
+            ->whereBetween('latitude', [$minLat, $maxLat])
+            ->whereBetween('longitude', [$minLng, $maxLng]);
+
+        // SQLite has limitations with HAVING on non-aggregate queries in some environments
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return $query->get()
+                ->filter(fn($property) => $property->distance < $radius)
+                ->sortBy('distance')
+                ->take(20)
+                ->values();
+        }
+
+        return $query->having('distance', '<', $radius)
             ->orderBy('distance')
             ->limit(20)
             ->get();
