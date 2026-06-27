@@ -1,0 +1,3 @@
+## 2025-05-15 - [Property Statistics Optimization]
+**Learning:** Found a major performance bottleneck in `PropertyService::getPropertyStatistics` where 6 separate queries were used for basic aggregations. Additionally, discovered a critical bug where Eloquent query filters were being stacked on the same builder instance, leading to incorrect zero-counts for subsequent statistics. Also identified schema mismatches where the code used 'type' and 'available' instead of the actual migration's 'property_type' and 'active'.
+**Action:** Use conditional aggregation (`selectRaw` with `COUNT(CASE WHEN...)`) to consolidate multiple counts, sums, and averages into a single database query. Always verify column names and enum values against migrations to ensure accuracy.
