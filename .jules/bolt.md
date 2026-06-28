@@ -1,0 +1,3 @@
+## 2026-06-28 - Property Statistics Optimization
+**Learning:** Multiple database queries for counts and aggregates can be consolidated into a single query using conditional aggregation (`COUNT(CASE WHEN...)`), significantly reducing database roundtrips. Additionally, in Laravel, Eloquent Query Builders are mutable; reusing the same instance for multiple counts results in additive `where` clauses, which can lead to incorrect zero-counts if not handled carefully (e.g., by cloning the query or using conditional aggregation).
+**Action:** Always prefer conditional aggregation for multi-metric statistical queries to minimize database overhead and avoid common Query Builder mutation bugs.
