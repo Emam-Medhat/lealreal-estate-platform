@@ -188,6 +188,9 @@ class PropertyService
 
     /**
      * Get property statistics
+     *
+     * Optimization: Uses conditional aggregation to fetch all stats in a single query (6 -> 1).
+     * Fix: Corrected 'available' status to 'active' and 'type' column to 'property_type' to match schema.
      */
     public function getPropertyStatistics(array $filters = []): array
     {
@@ -204,27 +207,32 @@ class PropertyService
             $query->where('owner_id', $filters['owner_id']);
         }
         if (isset($filters['type'])) {
-            $query->where('type', $filters['type']);
+            $query->where('property_type', $filters['type']);
         }
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        $totalProperties = $query->count();
-        $availableProperties = $query->where('status', 'available')->count();
-        $soldProperties = $query->where('status', 'sold')->count();
-        $rentedProperties = $query->where('status', 'rented')->count();
-        $totalValue = $query->sum('price');
-        $averagePrice = $query->avg('price');
+        $stats = $query->selectRaw("
+            COUNT(*) as total_properties,
+            COUNT(CASE WHEN status = 'active' THEN 1 END) as available_properties,
+            COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold_properties,
+            COUNT(CASE WHEN status = 'rented' THEN 1 END) as rented_properties,
+            SUM(price) as total_value,
+            AVG(price) as average_price
+        ")->first();
+
+        $total = (int) ($stats->total_properties ?? 0);
+        $available = (int) ($stats->available_properties ?? 0);
 
         return [
-            'total_properties' => $totalProperties,
-            'available_properties' => $availableProperties,
-            'sold_properties' => $soldProperties,
-            'rented_properties' => $rentedProperties,
-            'total_value' => $totalValue,
-            'average_price' => $averagePrice,
-            'availability_rate' => $totalProperties > 0 ? ($availableProperties / $totalProperties) * 100 : 0,
+            'total_properties' => $total,
+            'available_properties' => $available,
+            'sold_properties' => (int) ($stats->sold_properties ?? 0),
+            'rented_properties' => (int) ($stats->rented_properties ?? 0),
+            'total_value' => (float) ($stats->total_value ?? 0),
+            'average_price' => $stats->average_price !== null ? (float) $stats->average_price : null,
+            'availability_rate' => $total > 0 ? ($available / $total) * 100 : 0,
         ];
     }
 
@@ -233,7 +241,7 @@ class PropertyService
      */
     public function getAvailableProperties(array $filters = []): Collection
     {
-        $query = Property::where('status', 'available');
+        $query = Property::where('status', 'active');
 
         // Apply filters
         if (isset($filters['company_id'])) {
@@ -243,7 +251,7 @@ class PropertyService
             $query->where('agent_id', $filters['agent_id']);
         }
         if (isset($filters['type'])) {
-            $query->where('type', $filters['type']);
+            $query->where('property_type', $filters['type']);
         }
         if (isset($filters['min_price'])) {
             $query->where('price', '>=', $filters['min_price']);
@@ -349,8 +357,8 @@ class PropertyService
     public function getSimilarProperties(Property $property, int $limit = 5): Collection
     {
         return Property::where('id', '!=', $property->id)
-                     ->where('type', $property->type)
-                     ->where('status', 'available')
+                     ->where('property_type', $property->property_type)
+                     ->where('status', 'active')
                      ->whereBetween('price', [
                          $property->price * 0.8,
                          $property->price * 1.2
@@ -385,7 +393,7 @@ class PropertyService
 
         // Apply filters
         if (isset($criteria['type'])) {
-            $query->where('type', $criteria['type']);
+            $query->where('property_type', $criteria['type']);
         }
         if (isset($criteria['status'])) {
             $query->where('status', $criteria['status']);
