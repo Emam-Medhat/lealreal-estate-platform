@@ -1,0 +1,3 @@
+## 2025-05-14 - [Property statistics optimization]
+**Learning:** Found that `PropertyService::getPropertyStatistics` was performing 6 separate database queries (counts, sum, avg) and suffered from a query builder state mutation bug where subsequent counts were affected by previous filters. Also discovered a schema mismatch where the code used 'available' and 'type' instead of 'active' and 'property_type'.
+**Action:** Used conditional aggregation (`selectRaw` with `CASE WHEN`) to consolidate 6 queries into 1, reducing database load and fixing the mutation bug while also correcting schema field names.
