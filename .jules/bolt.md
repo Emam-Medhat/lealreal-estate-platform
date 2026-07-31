@@ -1,0 +1,5 @@
+# Bolt Performance Journal
+
+## 2026-07-31 - Property Statistics N+1 Query Builder Mutation and Schema Mismatch
+**Learning:** Chaining constraints directly on a shared Query Builder instance in Eloquent mutates the builder mutably, leading to cumulative/stacked query filters and incorrect stats (e.g. counting sold properties with an active status filter already applied). In addition, using non-existent schema status values (like 'available' instead of 'active') and column names (like 'type' instead of 'property_type') results in failed or empty datasets. Consolidating separate count, sum, and average queries into a single selectRaw query with conditional aggregation is not only extremely performant but completely avoids mutable builder mutation bugs.
+**Action:** Always use conditional aggregation (`selectRaw("COUNT(*)... SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END)")`) on the base query instead of executing multiple separate subqueries on a mutable query builder, and verify the model's actual migration schema before referencing columns or status enum values.
