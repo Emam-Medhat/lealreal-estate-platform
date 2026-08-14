@@ -5,15 +5,12 @@ namespace App\Services;
 use App\Models\Developer;
 use App\Models\UserActivityLog;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
 
 class DeveloperDashboardService
 {
     /**
      * Get recent projects for a developer.
      *
-     * @param Developer $developer
-     * @param int $limit
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getRecentProjects(Developer $developer, int $limit = 5)
@@ -31,8 +28,6 @@ class DeveloperDashboardService
     /**
      * Get upcoming milestones for a developer.
      *
-     * @param Developer $developer
-     * @param int $limit
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getUpcomingMilestones(Developer $developer, int $limit = 5)
@@ -58,8 +53,6 @@ class DeveloperDashboardService
     /**
      * Get recent activities for a user.
      *
-     * @param int $userId
-     * @param int $limit
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getRecentActivities(int $userId, int $limit = 10)
@@ -76,44 +69,53 @@ class DeveloperDashboardService
 
     /**
      * Get quick stats for a developer with caching.
-     *
-     * @param Developer $developer
-     * @return array
      */
     public function getQuickStats(Developer $developer): array
     {
         $cacheKey = "developer_quick_stats_{$developer->id}";
 
         return Cache::remember($cacheKey, 600, function () use ($developer) {
-            $projects = $developer->projects();
-            
+            // Bolt Optimization: Consolidate 8+ sequential/stacked queries into 2 efficient database aggregations.
+            // Using selectRaw with conditional SUM/COUNT avoids query builder mutation bugs and reduces N+1 overhead.
+            $now = now();
+            $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+            $monthDateFormat = $driver === 'sqlite'
+                ? "strftime('%Y-%m', created_at)"
+                : "DATE_FORMAT(created_at, '%Y-%m')";
+
+            $stats = $developer->projects()
+                ->selectRaw("
+                    COUNT(*) as total_projects,
+                    COUNT(CASE WHEN status = 'under_construction' THEN 1 END) as active_projects,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_projects,
+                    COALESCE(SUM(total_units), 0) as total_units,
+                    COALESCE(SUM(sold_units), 0) as sold_units,
+                    COALESCE(SUM(total_investment), 0) as total_revenue,
+                    COALESCE(SUM(CASE WHEN {$monthDateFormat} = ? THEN total_investment ELSE 0 END), 0) as this_month_revenue
+                ", [$now->format('Y-m')])
+                ->first();
+
+            $ongoingPhases = $developer->projects()
+                ->whereHas('phases', function ($query) {
+                    $query->where('status', 'in_progress');
+                })
+                ->count();
+
             return [
-                'total_projects' => $projects->count(),
-                'active_projects' => $projects->where('status', 'active')->count(),
-                'completed_projects' => $projects->where('status', 'completed')->count(),
-                'total_units' => $projects->withCount('units')->get()->sum('units_count'),
-                'sold_units' => $projects->withCount(['units' => function ($query) {
-                    $query->where('status', 'sold');
-                }])->get()->sum('units_count'),
-                'total_revenue' => $projects->sum('total_value'),
-                'ongoing_phases' => $projects
-                    ->whereHas('phases', function ($query) {
-                        $query->where('status', 'in_progress');
-                    })
-                    ->count(),
-                'this_month_revenue' => $projects
-                    ->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)
-                    ->sum('total_value'),
+                'total_projects' => (int) ($stats->total_projects ?? 0),
+                'active_projects' => (int) ($stats->active_projects ?? 0),
+                'completed_projects' => (int) ($stats->completed_projects ?? 0),
+                'total_units' => (int) ($stats->total_units ?? 0),
+                'sold_units' => (int) ($stats->sold_units ?? 0),
+                'total_revenue' => (float) ($stats->total_revenue ?? 0),
+                'ongoing_phases' => $ongoingPhases,
+                'this_month_revenue' => (float) ($stats->this_month_revenue ?? 0),
             ];
         });
     }
 
     /**
      * Get project progress for a developer with caching.
-     *
-     * @param Developer $developer
-     * @return array
      */
     public function getProjectProgress(Developer $developer): array
     {
@@ -129,7 +131,7 @@ class DeveloperDashboardService
                     $totalPhases = $project->phases->count();
                     $completedPhases = $project->phases->where('status', 'completed')->count();
                     $inProgressPhases = $project->phases->where('status', 'in_progress')->count();
-                    
+
                     return [
                         'id' => $project->id,
                         'name' => $project->name,
@@ -137,7 +139,7 @@ class DeveloperDashboardService
                         'total_phases' => $totalPhases,
                         'completed_phases' => $completedPhases,
                         'in_progress_phases' => $inProgressPhases,
-                        'progress_percentage' => $totalPhases > 0 
+                        'progress_percentage' => $totalPhases > 0
                             ? round(($completedPhases / $totalPhases) * 100, 2)
                             : 0,
                         'current_phase' => $project->phases
@@ -151,9 +153,6 @@ class DeveloperDashboardService
 
     /**
      * Get financial overview for a developer with caching.
-     *
-     * @param Developer $developer
-     * @return array
      */
     public function getFinancialOverview(Developer $developer): array
     {
@@ -161,7 +160,7 @@ class DeveloperDashboardService
 
         return Cache::remember($cacheKey, 1800, function () use ($developer) {
             $projects = $developer->projects()->get();
-            
+
             return [
                 'total_project_value' => $projects->sum('total_value'),
                 'total_investment' => $projects->sum('total_investment'),
@@ -185,9 +184,6 @@ class DeveloperDashboardService
 
     /**
      * Get unit sales stats for a developer with caching.
-     *
-     * @param Developer $developer
-     * @return array
      */
     public function getUnitSalesStats(Developer $developer): array
     {
@@ -215,9 +211,6 @@ class DeveloperDashboardService
 
     /**
      * Get construction updates for a developer with caching.
-     *
-     * @param Developer $developer
-     * @return array
      */
     public function getConstructionUpdates(Developer $developer): array
     {
@@ -241,9 +234,6 @@ class DeveloperDashboardService
 
     /**
      * Get upcoming deadlines for a developer with caching.
-     *
-     * @param Developer $developer
-     * @return array
      */
     public function getUpcomingDeadlines(Developer $developer): array
     {
@@ -282,10 +272,6 @@ class DeveloperDashboardService
 
     /**
      * Get recent activities for a user
-     *
-     * @param int $userId
-     * @param int $limit
-     * @return array
      */
     public function getRecentActivitiesV2(int $userId, int $limit = 10): array
     {
