@@ -1,0 +1,3 @@
+## 2026-08-14 - Developer Dashboard Query Consolidation & Builder Mutation Fix
+**Learning:** Sequential calls on relation builder instances (e.g. `$developer->projects()->count()`, `$developer->projects()->where()->count()`) mutate the underlying query builder, resulting in stacked `WHERE` clauses and 8+ database queries. Consolidating into `selectRaw` with conditional aggregation (`COUNT(CASE WHEN ...)` and `SUM(...)`) reduces total queries to 2 and prevents filter leakage.
+**Action:** Always check database driver via `DB::connection()->getDriverName()` when using SQL date functions in `selectRaw` for cross-database portability (MySQL `DATE_FORMAT` vs SQLite `strftime`).
