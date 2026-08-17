@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::table('properties', function (Blueprint $table) {
             // Add missing columns only if they don't exist
+            if (!Schema::hasColumn('properties', 'company_id')) {
+                $table->foreignId('company_id')->nullable()->after('agent_id');
+            }
+            if (!Schema::hasColumn('properties', 'assigned_agent_id')) {
+                $table->foreignId('assigned_agent_id')->nullable()->after('agent_id');
+            }
             if (!Schema::hasColumn('properties', 'currency')) {
                 $table->string('currency', 10)->nullable()->default('SAR')->after('price');
             }

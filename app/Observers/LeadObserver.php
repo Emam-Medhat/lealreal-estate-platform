@@ -338,7 +338,7 @@ class LeadObserver
     {
         try {
             if ($lead->assignedTo) {
-                $assigner = Auth::user() ?? User::find($lead->created_by) ?? User::find(1); // Fallback to first user
+                $assigner = Auth::user() ?? \App\Models\User::find($lead->created_by) ?? \App\Models\User::find(1); // Fallback to first user
                 $lead->assignedTo->notify(new LeadAssignedNotification($lead, $assigner));
             }
         } catch (\Exception $e) {

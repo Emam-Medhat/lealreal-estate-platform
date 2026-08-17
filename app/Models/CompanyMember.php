@@ -55,7 +55,7 @@ class CompanyMember extends Model
 
     public function tasks()
     {
-        return $this->hasMany(Task::class, 'assigned_to', 'user_id');
+        return $this->hasMany(AgentTask::class, 'assigned_to', 'user_id');
     }
 
     public function appointments()
