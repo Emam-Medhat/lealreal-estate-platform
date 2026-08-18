@@ -3,13 +3,7 @@
 namespace App\Services;
 
 use App\Models\Company;
-use App\Models\CompanyMember;
-use App\Models\CompanyBranch;
 use App\Models\Property;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class CompanyPortfolioService
 {
@@ -18,17 +12,14 @@ class CompanyPortfolioService
      */
     public function getPortfolioValue(int $companyId): array
     {
-        $company = Company::findOrFail($companyId);
+        Company::findOrFail($companyId);
 
-        // Get all properties for the company
-        $properties = Property::where('company_id', $companyId)
-            ->with(['images', 'documents'])
-            ->get();
+        // Get properties for the company without unnecessary eager loading (e.g., images, documents)
+        $properties = Property::where('company_id', $companyId)->get();
 
         $totalProperties = $properties->count();
         $totalValue = 0;
         $totalArea = 0;
-        $averagePricePerSqm = 0;
 
         $propertyTypes = [];
         $statusBreakdown = [
@@ -38,18 +29,21 @@ class CompanyPortfolioService
             'pending' => 0,
             'off_market' => 0,
             'under_contract' => 0,
-            'valuation_updated' => 0
+            'valuation_updated' => 0,
         ];
 
         foreach ($properties as $property) {
             $propertyValue = $this->calculatePropertyValue($property);
             $totalValue += $propertyValue;
-            $totalArea += $property['area'] ?? 0;
+            $totalArea += $property->area ?? 0;
 
-            if (isset($propertyTypes[$property->type])) {
-                $propertyTypes[$property->type]++;
-            } else {
-                $propertyTypes[$property->type] = 1;
+            $type = $property->property_type ?? $property->type;
+            if ($type) {
+                if (isset($propertyTypes[$type])) {
+                    $propertyTypes[$type]++;
+                } else {
+                    $propertyTypes[$type] = 1;
+                }
             }
 
             if ($property->status === 'sold') {
@@ -76,7 +70,7 @@ class CompanyPortfolioService
             'average_price_per_sqm' => $averagePricePerSqm,
             'property_types' => $propertyTypes,
             'status_breakdown' => $statusBreakdown,
-            'portfolio_growth' => $this->calculatePortfolioGrowth($companyId, $totalValue)
+            'portfolio_growth' => $this->calculatePortfolioGrowth($companyId, $totalValue),
         ];
     }
 
@@ -85,30 +79,31 @@ class CompanyPortfolioService
      */
     public function getPortfolioPerformance(int $companyId, string $period = 'year'): array
     {
-        $company = Company::findOrFail($companyId);
+        Company::findOrFail($companyId);
 
         // Get date range
         $dateRange = $this->getDateRange($period);
 
-        // Get properties for the period
+        // Get properties for the period using database aggregation
         $properties = Property::where('company_id', $companyId)
             ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->get(['id', 'type', 'price', 'status', 'created_at']);
+            ->get(['id', 'property_type', 'price', 'status', 'created_at']);
 
         $currentProperties = $properties->where('status', 'active')->count();
-        $soldProperties = $properties->where('status', 'sold')
-            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
-            ->get();
 
-        $previousProperties = Property::where('company_id', $companyId)
-            ->whereBetween('created_at', [
-                now()->subYear()->startOfYear()->subYear(),
-                now()->subYear()->endOfYear()
-            ])
-            ->get();
+        // Calculate previous period performance using SQL aggregate query
+        $previousPeriodStart = now()->subYear()->startOfYear()->subYear();
+        $previousPeriodEnd = now()->subYear()->endOfYear();
 
-        $currentValue = $properties->sum('price');
-        $previousValue = $previousProperties->sum('price');
+        $previousStats = Property::where('company_id', $companyId)
+            ->whereBetween('created_at', [$previousPeriodStart, $previousPeriodEnd])
+            ->selectRaw('COUNT(*) as total_count, COALESCE(SUM(price), 0) as total_price')
+            ->first();
+
+        $previousValue = (float) ($previousStats->total_price ?? 0);
+        $previousCount = (int) ($previousStats->total_count ?? 0);
+
+        $currentValue = (float) $properties->sum('price');
 
         return [
             'period' => $period,
@@ -116,13 +111,13 @@ class CompanyPortfolioService
             'current_portfolio' => [
                 'total_properties' => $currentProperties,
                 'total_value' => $currentValue,
-                'average_price' => $currentProperties > 0 ? $currentValue / $currentProperties : 0
+                'average_price' => $currentProperties > 0 ? $currentValue / $currentProperties : 0,
             ],
             'portfolio_growth' => [
                 'value_growth' => $currentValue - $previousValue,
                 'value_growth_percentage' => $previousValue > 0 ? (($currentValue - $previousValue) / $previousValue) * 100 : 0,
-                'property_count_growth' => $currentProperties - count($previousProperties)
-            ]
+                'property_count_growth' => $currentProperties - $previousCount,
+            ],
         ];
     }
 
@@ -131,7 +126,7 @@ class CompanyPortfolioService
      */
     private function calculatePropertyValue($property): float
     {
-        $baseValue = $property->price ?? 0;
+        $baseValue = (float) ($property->price ?? 0);
 
         // Add value for features
         if ($property->has_parking) {
@@ -188,47 +183,49 @@ class CompanyPortfolioService
             case 'week':
                 return [
                     'start' => $now->subWeek()->startOfWeek()->toDateString(),
-                    'end' => $now->endOfWeek()->toDateString()
+                    'end' => $now->endOfWeek()->toDateString(),
                 ];
             case 'month':
                 return [
                     'start' => $now->subMonth()->startOfMonth()->toDateString(),
-                    'end' => $now->endOfMonth()->toDateString()
+                    'end' => $now->endOfMonth()->toDateString(),
                 ];
             case 'quarter':
                 return [
                     'start' => $now->subQuarter()->startOfMonth()->toDateString(),
-                    'end' => $now->endOfQuarter()->toDateString()
+                    'end' => $now->endOfQuarter()->toDateString(),
                 ];
             case 'year':
                 return [
                     'start' => $now->subYear()->startOfYear()->toDateString(),
-                    'end' => $now->endOfYear()->toDateString()
+                    'end' => $now->endOfYear()->toDateString(),
                 ];
             default:
                 return [
                     'start' => $now->subMonth()->startOfMonth()->toDateString(),
-                    'end' => $now()->endOfMonth()->toDateString()
+                    'end' => $now()->endOfMonth()->toDateString(),
                 ];
         }
     }
 
     /**
-     * Calculate portfolio growth
+     * Calculate portfolio growth using database aggregate query
      */
     private function calculatePortfolioGrowth(int $companyId, float $currentValue): array
     {
-        // Get previous period data
+        // Get previous period aggregate data directly from DB
         $previousPeriod = now()->subYear()->startOfYear();
-        $previousProperties = Property::where('company_id', $companyId)
+        $previousStats = Property::where('company_id', $companyId)
             ->where('created_at', '<', $previousPeriod)
-            ->get();
+            ->selectRaw('COUNT(*) as total_count, COALESCE(SUM(price), 0) as total_price')
+            ->first();
 
-        $previousValue = $previousProperties->sum('price');
-        $previousCount = $previousProperties->count();
+        $previousValue = (float) ($previousStats->total_price ?? 0);
+        $previousCount = (int) ($previousStats->total_count ?? 0);
 
         $valueGrowth = $previousValue > 0 ? (($currentValue - $previousValue) / $previousValue) * 100 : 0;
-        $countGrowth = $previousCount > 0 ? (($currentProperties - $previousCount) / $previousCount) * 100 : 0;
+        $currentCount = Property::where('company_id', $companyId)->count();
+        $countGrowth = $previousCount > 0 ? (($currentCount - $previousCount) / $previousCount) * 100 : 0;
 
         return [
             'value_growth' => $valueGrowth,
@@ -236,8 +233,8 @@ class CompanyPortfolioService
             'count_growth' => $countGrowth,
             'current_value' => $currentValue,
             'previous_value' => $previousValue,
-            'current_count' => Property::where('company_id', $companyId)->count(),
-            'previous_count' => $previousCount
+            'current_count' => $currentCount,
+            'previous_count' => $previousCount,
         ];
     }
 }
