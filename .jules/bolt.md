@@ -1,0 +1,3 @@
+## 2026-08-19 - Consolidated Subqueries for Cross-Table Event Revenue Calculations
+**Learning:** Performing multiple individual query calls (`count()` and `avg()`) across multiple event tables (impressions, clicks, conversions) creates avoidable N query bottlenecks. Subselect queries combined in a single `DB::query()->selectRaw(...)` along with grouped averages reduce total query count from 6 to 2 while keeping SQL clean and readable.
+**Action:** When computing multi-model analytics or financial aggregations, combine `AVG` lookups via `groupBy()` and consolidate independent `COUNT` subqueries into a single scalar subselect query.
