@@ -2,16 +2,15 @@
 
 namespace App\Repositories\Eloquent;
 
-use App\Repositories\Contracts\AdAnalyticsRepositoryInterface;
-use App\Models\Advertisement;
 use App\Models\AdCampaign;
-use App\Models\AdPlacement;
 use App\Models\AdClick;
-use App\Models\AdImpression;
 use App\Models\AdConversion;
+use App\Models\AdImpression;
+use App\Models\Advertisement;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\Contracts\AdAnalyticsRepositoryInterface;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AdAnalyticsRepository implements AdAnalyticsRepositoryInterface
 {
@@ -35,7 +34,7 @@ class AdAnalyticsRepository implements AdAnalyticsRepositoryInterface
             'total_clicks' => $queryClicks->count(),
             'total_conversions' => $queryConversions->count(),
             'total_revenue' => $this->calculateRevenue($startDate),
-            'active_advertisers' => User::whereHas('ads')->count()
+            'active_advertisers' => User::whereHas('ads')->count(),
         ];
     }
 
@@ -81,44 +80,55 @@ class AdAnalyticsRepository implements AdAnalyticsRepositoryInterface
 
     public function calculateRevenue(?\DateTime $startDate = null): float
     {
-        $cpmRevenue = $this->calculateModelRevenue('cpm', $startDate);
-        $cpcRevenue = $this->calculateModelRevenue('cpc', $startDate);
-        $cpaRevenue = $this->calculateModelRevenue('cpa', $startDate);
+        // Optimization: Fetch average base price for each pricing model in a single query (1 query instead of 3)
+        $avgPrices = DB::table('ad_placements')
+            ->selectRaw('pricing_model, AVG(base_price) as avg_price')
+            ->whereIn('pricing_model', ['cpm', 'cpc', 'cpa'])
+            ->groupBy('pricing_model')
+            ->pluck('avg_price', 'pricing_model');
 
-        return (float) ($cpmRevenue + $cpcRevenue + $cpaRevenue);
-    }
+        $cpmAvgPrice = (float) ($avgPrices->get('cpm') ?? 0);
+        $cpcAvgPrice = (float) ($avgPrices->get('cpc') ?? 0);
+        $cpaAvgPrice = (float) ($avgPrices->get('cpa') ?? 0);
 
-    protected function calculateModelRevenue(string $model, ?\DateTime $startDate = null): float
-    {
-        $tableMap = [
-            'cpm' => 'ad_impressions',
-            'cpc' => 'ad_clicks',
-            'cpa' => 'ad_conversions'
-        ];
-
-        $dateColumnMap = [
-            'cpm' => 'viewed_at',
-            'cpc' => 'clicked_at',
-            'cpa' => 'converted_at'
-        ];
-
-        $table = $tableMap[$model];
-        $dateColumn = $dateColumnMap[$model];
-
-        $query = DB::table($table)
-            ->join('advertisements', "{$table}.advertisement_id", '=', 'advertisements.id')
+        // Optimization: Fetch event counts for CPM, CPC, and CPA in a single scalar subselect query (1 query instead of 3)
+        $cpmQuery = DB::table('ad_impressions')
+            ->join('advertisements', 'ad_impressions.advertisement_id', '=', 'advertisements.id')
             ->join('ad_placement_advertisement', 'advertisements.id', '=', 'ad_placement_advertisement.advertisement_id')
             ->join('ad_placements', 'ad_placement_advertisement.ad_placement_id', '=', 'ad_placements.id')
-            ->where('ad_placements.pricing_model', $model);
+            ->where('ad_placements.pricing_model', 'cpm')
+            ->when($startDate, fn ($q) => $q->where('ad_impressions.viewed_at', '>=', $startDate));
 
-        if ($startDate) {
-            $query->where("{$table}.{$dateColumn}", '>=', $startDate);
-        }
+        $cpcQuery = DB::table('ad_clicks')
+            ->join('advertisements', 'ad_clicks.advertisement_id', '=', 'advertisements.id')
+            ->join('ad_placement_advertisement', 'advertisements.id', '=', 'ad_placement_advertisement.advertisement_id')
+            ->join('ad_placements', 'ad_placement_advertisement.ad_placement_id', '=', 'ad_placements.id')
+            ->where('ad_placements.pricing_model', 'cpc')
+            ->when($startDate, fn ($q) => $q->where('ad_clicks.clicked_at', '>=', $startDate));
 
-        $count = $query->count();
-        $avgPrice = AdPlacement::where('pricing_model', $model)->avg('base_price') ?? 0;
+        $cpaQuery = DB::table('ad_conversions')
+            ->join('advertisements', 'ad_conversions.advertisement_id', '=', 'advertisements.id')
+            ->join('ad_placement_advertisement', 'advertisements.id', '=', 'ad_placement_advertisement.advertisement_id')
+            ->join('ad_placements', 'ad_placement_advertisement.ad_placement_id', '=', 'ad_placements.id')
+            ->where('ad_placements.pricing_model', 'cpa')
+            ->when($startDate, fn ($q) => $q->where('ad_conversions.converted_at', '>=', $startDate));
 
-        return $model === 'cpm' ? ($count / 1000) * $avgPrice : $count * $avgPrice;
+        $counts = DB::query()->selectRaw(
+            "({$cpmQuery->selectRaw('COUNT(*)')->toSql()}) as cpm_count, ".
+            "({$cpcQuery->selectRaw('COUNT(*)')->toSql()}) as cpc_count, ".
+            "({$cpaQuery->selectRaw('COUNT(*)')->toSql()}) as cpa_count",
+            array_merge($cpmQuery->getBindings(), $cpcQuery->getBindings(), $cpaQuery->getBindings())
+        )->first();
+
+        $cpmCount = (int) ($counts->cpm_count ?? 0);
+        $cpcCount = (int) ($counts->cpc_count ?? 0);
+        $cpaCount = (int) ($counts->cpa_count ?? 0);
+
+        $cpmRevenue = ($cpmCount / 1000) * $cpmAvgPrice;
+        $cpcRevenue = $cpcCount * $cpcAvgPrice;
+        $cpaRevenue = $cpaCount * $cpaAvgPrice;
+
+        return (float) ($cpmRevenue + $cpcRevenue + $cpaRevenue);
     }
 
     public function getRealTimeMetrics(?\DateTime $sinceDate = null): array
