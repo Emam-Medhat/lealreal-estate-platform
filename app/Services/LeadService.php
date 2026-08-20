@@ -2,19 +2,17 @@
 
 namespace App\Services;
 
-use App\Repositories\Contracts\LeadRepositoryInterface;
 use App\Models\Lead;
-use App\Models\LeadSource;
-use App\Models\LeadStatus;
-use App\Models\User;
 use App\Models\LeadActivity;
 use App\Models\LeadConversion;
 use App\Models\LeadScore;
-use App\Services\CacheService;
+use App\Models\LeadSource;
+use App\Models\LeadStatus;
+use App\Models\User;
+use App\Repositories\Contracts\LeadRepositoryInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class LeadService
 {
@@ -30,7 +28,7 @@ class LeadService
      */
     public function getLeads(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
-        return CacheService::rememberLeads('filtered_' . md5(serialize($filters) . $perPage), function () use ($filters, $perPage) {
+        return CacheService::rememberLeads('filtered_'.md5(serialize($filters).$perPage), function () use ($filters, $perPage) {
             return $this->leadRepository->getFilteredLeads($filters, $perPage);
         }, 'medium');
     }
@@ -134,15 +132,15 @@ class LeadService
             $pipelineData = collect();
             foreach ($statuses as $status) {
                 $statusLeads = $leads->where('status_id', $status->id);
-                
+
                 // Create anonymous object with required properties
                 $statusObject = (object) [
                     'id' => $status->id,
                     'name' => $status->name,
                     'color' => $status->color,
-                    'leads' => $statusLeads
+                    'leads' => $statusLeads,
                 ];
-                
+
                 $pipelineData->push($statusObject);
             }
 
@@ -160,7 +158,7 @@ class LeadService
         try {
             $lead = $this->leadRepository->create($data);
 
-            if (!empty($tagIds)) {
+            if (! empty($tagIds)) {
                 $lead->tags()->attach($tagIds);
             }
 
@@ -208,7 +206,7 @@ class LeadService
                     'lead_id' => $lead->id,
                     'type' => 'status_changed',
                     'title' => 'تغيير الحالة',
-                    'description' => 'تم تغيير الحالة إلى ' . ($lead->status->name ?? $lead->status_id),
+                    'description' => 'تم تغيير الحالة إلى '.($lead->status->name ?? $lead->status_id),
                     'activity_date' => now(),
                     'user_id' => Auth::id(),
                 ]);
@@ -238,6 +236,7 @@ class LeadService
             $result = $this->leadRepository->deleteById($lead->id);
             $this->clearLeadCaches();
             DB::commit();
+
             return $result;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -272,13 +271,14 @@ class LeadService
                 'lead_id' => $lead->id,
                 'type' => 'converted',
                 'title' => 'تحويل العميل',
-                'description' => 'تم تحويل العميل المحتمل إلى ' . $data['converted_to_type'],
+                'description' => 'تم تحويل العميل المحتمل إلى '.$data['converted_to_type'],
                 'activity_date' => now(),
                 'user_id' => Auth::id(),
             ]);
 
             DB::commit();
             $this->clearLeadCaches();
+
             return $conversion;
         } catch (\Exception $e) {
             DB::rollback();
@@ -304,12 +304,13 @@ class LeadService
             'lead_id' => $lead->id,
             'type' => 'scored',
             'title' => 'تقييم العميل',
-            'description' => 'تم تقييم العميل المحتمل بدرجة ' . $data['score'],
+            'description' => 'تم تقييم العميل المحتمل بدرجة '.$data['score'],
             'activity_date' => now(),
             'user_id' => Auth::id(),
         ]);
 
         $this->clearLeadCaches();
+
         return $score;
     }
 
@@ -325,24 +326,29 @@ class LeadService
         if ($lead->source) {
             $weight = $lead->source->weight ?? 0;
             $score += $weight;
-            $factors[] = 'المصدر: ' . $lead->source->name . ' (+' . $weight . ')';
+            $factors[] = 'المصدر: '.$lead->source->name.' (+'.$weight.')';
         }
 
         // Score based on completeness
         $completeness = 0;
-        if ($lead->email)
+        if ($lead->email) {
             $completeness += 20;
-        if ($lead->phone)
+        }
+        if ($lead->phone) {
             $completeness += 20;
-        if ($lead->company)
+        }
+        if ($lead->company) {
             $completeness += 15;
-        if ($lead->job_title || $lead->position)
+        }
+        if ($lead->job_title || $lead->position) {
             $completeness += 15;
-        if ($lead->estimated_value)
+        }
+        if ($lead->estimated_value) {
             $completeness += 30;
+        }
 
         $score += $completeness;
-        $factors[] = 'اكتمال البيانات: ' . $completeness . '%';
+        $factors[] = 'اكتمال البيانات: '.$completeness.'%';
 
         // Score based on priority
         $priorityScores = [
@@ -355,7 +361,7 @@ class LeadService
         $priority = strtolower($lead->priority);
         if (isset($priorityScores[$priority])) {
             $score += $priorityScores[$priority];
-            $factors[] = 'الأولوية: ' . $priority . ' (+' . $priorityScores[$priority] . ')';
+            $factors[] = 'الأولوية: '.$priority.' (+'.$priorityScores[$priority].')';
         }
 
         LeadScore::updateOrCreate(
@@ -379,20 +385,25 @@ class LeadService
     }
 
     /**
-     * Get lead conversion funnel data.
+     * Get lead conversion funnel data with single-query aggregation.
      */
     public function getConversionFunnel()
     {
         return CacheService::rememberAnalytics('lead_conversion_funnel', function () {
             $statuses = LeadStatus::orderBy('order')->get(['id', 'name']);
-            $funnel = [];
+            // Aggregate lead counts grouped by status in a single query to eliminate N+1 DB calls
+            $statusCounts = Lead::select('lead_status', DB::raw('COUNT(*) as count'))
+                ->groupBy('lead_status')
+                ->pluck('count', 'lead_status');
+            $totalLeads = $this->leadRepository->countTotal();
 
+            $funnel = [];
             foreach ($statuses as $status) {
-                $count = $this->leadRepository->countByStatusName($status->name);
+                $count = (int) ($statusCounts[$status->name] ?? 0);
                 $funnel[] = [
                     'status' => $status->name,
                     'count' => $count,
-                    'percentage' => $this->calculateConversionPercentage($count)
+                    'percentage' => $this->calculateConversionPercentage($count, $totalLeads),
                 ];
             }
 
@@ -400,10 +411,11 @@ class LeadService
         }, 'medium');
     }
 
-    private function calculateConversionPercentage(int $count): float
+    private function calculateConversionPercentage(int $count, ?int $totalLeads = null): float
     {
-        $totalLeads = $this->leadRepository->countTotal();
-        return $totalLeads > 0 ? round(($count / $totalLeads) * 100, 2) : 0;
+        $total = $totalLeads ?? $this->leadRepository->countTotal();
+
+        return $total > 0 ? round(($count / $total) * 100, 2) : 0;
     }
 
     public function getLeadsForExport(array $filters = []): \Generator
