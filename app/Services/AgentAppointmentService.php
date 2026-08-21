@@ -6,7 +6,6 @@ use App\Models\Agent;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
 
 class AgentAppointmentService
 {
@@ -17,7 +16,7 @@ class AgentAppointmentService
      */
     public function getAgentAppointments(Agent $agent, Request $request, int $perPage = 20)
     {
-        $cacheKey = 'agent_appointments_' . $agent->id . '_' . md5(json_encode($request->all()) . $perPage);
+        $cacheKey = 'agent_appointments_'.$agent->id.'_'.md5(json_encode($request->all()).$perPage);
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent, $request, $perPage) {
             $appointments = $agent->appointments()
@@ -69,16 +68,31 @@ class AgentAppointmentService
      */
     public function getAppointmentStats(Agent $agent): array
     {
-        $cacheKey = 'agent_appointment_stats_' . $agent->id;
+        $cacheKey = 'agent_appointment_stats_'.$agent->id;
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            $today = today()->toDateString();
+            $now = now()->toDateTimeString();
+
+            // Bolt Optimization: Replace 6 sequential database queries with a single conditional aggregation query
+            $stats = $agent->appointments()
+                ->selectRaw("
+                    COUNT(*) as total_appointments,
+                    COUNT(CASE WHEN DATE(start_datetime) = ? THEN 1 END) as today_appointments,
+                    COUNT(CASE WHEN start_datetime > ? THEN 1 END) as upcoming_appointments,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_appointments,
+                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_appointments,
+                    COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_appointments
+                ", [$today, $now])
+                ->first();
+
             return [
-                'total_appointments' => $agent->appointments()->count(),
-                'today_appointments' => $agent->appointments()->whereDate('start_datetime', today())->count(),
-                'upcoming_appointments' => $agent->appointments()->where('start_datetime', '>', now())->count(),
-                'completed_appointments' => $agent->appointments()->where('status', 'completed')->count(),
-                'pending_appointments' => $agent->appointments()->where('status', 'pending')->count(),
-                'confirmed_appointments' => $agent->appointments()->where('status', 'confirmed')->count(),
+                'total_appointments' => (int) ($stats->total_appointments ?? 0),
+                'today_appointments' => (int) ($stats->today_appointments ?? 0),
+                'upcoming_appointments' => (int) ($stats->upcoming_appointments ?? 0),
+                'completed_appointments' => (int) ($stats->completed_appointments ?? 0),
+                'pending_appointments' => (int) ($stats->pending_appointments ?? 0),
+                'confirmed_appointments' => (int) ($stats->confirmed_appointments ?? 0),
             ];
         });
     }
@@ -89,7 +103,7 @@ class AgentAppointmentService
     public function invalidateCache(int $agentId)
     {
         // Invalidate all relevant caches for this agent
-        Cache::forget('agent_appointments_' . $agentId . '_*'); // Wildcard for all paginated results
-        Cache::forget('agent_appointment_stats_' . $agentId);
+        Cache::forget('agent_appointments_'.$agentId.'_*'); // Wildcard for all paginated results
+        Cache::forget('agent_appointment_stats_'.$agentId);
     }
 }

@@ -1,0 +1,3 @@
+## 2026-08-21 - Agent Appointment Stats Query Consolidation
+**Learning:** Sequential `count()` calls on Eloquent relationships execute individual database queries for each metric. Utilizing `selectRaw` with conditional aggregation (`COUNT(CASE WHEN ... THEN 1 END)`) consolidates these calls into a single SQL query while preserving exact return structures and avoiding N+1 / redundant query overhead.
+**Action:** Always replace multiple sequential `count()` or `sum()` queries on the same base relation with a single `selectRaw` conditional aggregation query when computing dashboard or analytics statistics.
