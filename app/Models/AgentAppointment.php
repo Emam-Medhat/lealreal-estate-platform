@@ -4,22 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AgentAppointment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'appointments';
+
     protected $fillable = [
+        'uuid',
         'agent_id',
         'client_id',
         'lead_id',
         'property_id',
         'title',
         'description',
+        'start_datetime',
+        'end_datetime',
         'appointment_date',
         'appointment_time',
         'duration_minutes',
@@ -158,19 +162,19 @@ class AgentAppointment extends Model
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('appointment_date', now()->month)
-                    ->whereYear('appointment_date', now()->year);
+            ->whereYear('appointment_date', now()->year);
     }
 
     public function scopeUpcoming($query)
     {
         return $query->where('appointment_date', '>=', today())
-                    ->where('status', 'scheduled');
+            ->where('status', 'scheduled');
     }
 
     public function scopePast($query)
     {
         return $query->where('appointment_date', '<', today())
-                    ->orWhereIn('status', ['completed', 'cancelled', 'no_show']);
+            ->orWhereIn('status', ['completed', 'cancelled', 'no_show']);
     }
 
     public function scopeScheduled($query)
@@ -201,14 +205,14 @@ class AgentAppointment extends Model
     public function scopePendingReminder($query)
     {
         return $query->where('reminder_sent', false)
-                    ->where('appointment_date', '>=', today())
-                    ->where('appointment_date', '<=', today()->addDays(2));
+            ->where('appointment_date', '>=', today())
+            ->where('appointment_date', '<=', today()->addDays(2));
     }
 
     public function scopePendingConfirmation($query)
     {
         return $query->where('confirmation_sent', false)
-                    ->where('status', 'scheduled');
+            ->where('status', 'scheduled');
     }
 
     public function scopeHighPriority($query)
@@ -243,15 +247,15 @@ class AgentAppointment extends Model
 
     public function scopeSearch($query, string $term)
     {
-        return $query->where(function($q) use ($term) {
-            $q->where('title', 'like', '%' . $term . '%')
-              ->orWhere('description', 'like', '%' . $term . '%')
-              ->orWhere('location', 'like', '%' . $term . '%')
-              ->orWhere('client_name', 'like', '%' . $term . '%')
-              ->orWhere('client_email', 'like', '%' . $term . '%')
-              ->orWhere('client_phone', 'like', '%' . $term . '%')
-              ->orWhere('property_address', 'like', '%' . $term . '%')
-              ->orWhere('notes', 'like', '%' . $term . '%');
+        return $query->where(function ($q) use ($term) {
+            $q->where('title', 'like', '%'.$term.'%')
+                ->orWhere('description', 'like', '%'.$term.'%')
+                ->orWhere('location', 'like', '%'.$term.'%')
+                ->orWhere('client_name', 'like', '%'.$term.'%')
+                ->orWhere('client_email', 'like', '%'.$term.'%')
+                ->orWhere('client_phone', 'like', '%'.$term.'%')
+                ->orWhere('property_address', 'like', '%'.$term.'%')
+                ->orWhere('notes', 'like', '%'.$term.'%');
         });
     }
 
@@ -268,13 +272,14 @@ class AgentAppointment extends Model
 
     public function getFormattedDateTimeAttribute(): string
     {
-        return $this->appointment_date->format('M d, Y') . ' at ' . $this->appointment_time->format('h:i A');
+        return $this->appointment_date->format('M d, Y').' at '.$this->appointment_time->format('h:i A');
     }
 
     public function getEndTimeAttribute(): \DateTime
     {
         $endTime = clone $this->appointment_time;
         $endTime->addMinutes($this->duration_minutes);
+
         return $endTime;
     }
 
@@ -285,12 +290,12 @@ class AgentAppointment extends Model
 
     public function getTimeRangeAttribute(): string
     {
-        return $this->formatted_time . ' - ' . $this->formatted_end_time;
+        return $this->formatted_time.' - '.$this->formatted_end_time;
     }
 
     public function getFullDateTimeRangeAttribute(): string
     {
-        return $this->formatted_date . ' (' . $this->time_range . ')';
+        return $this->formatted_date.' ('.$this->time_range.')';
     }
 
     public function getDurationHoursAttribute(): float
@@ -301,17 +306,17 @@ class AgentAppointment extends Model
     public function getFormattedDurationAttribute(): string
     {
         if ($this->duration_minutes < 60) {
-            return $this->duration_minutes . ' minutes';
+            return $this->duration_minutes.' minutes';
         } elseif ($this->duration_minutes === 60) {
             return '1 hour';
         } else {
             $hours = floor($this->duration_minutes / 60);
             $minutes = $this->duration_minutes % 60;
-            
+
             if ($minutes === 0) {
-                return $hours . ' hours';
+                return $hours.' hours';
             } else {
-                return $hours . 'h ' . $minutes . 'm';
+                return $hours.'h '.$minutes.'m';
             }
         }
     }
@@ -367,22 +372,22 @@ class AgentAppointment extends Model
 
     public function getHasMeetingLinkAttribute(): bool
     {
-        return !empty($this->meeting_link);
+        return ! empty($this->meeting_link);
     }
 
     public function getHasPropertyAttribute(): bool
     {
-        return !empty($this->property_id);
+        return ! empty($this->property_id);
     }
 
     public function getHasLeadAttribute(): bool
     {
-        return !empty($this->lead_id);
+        return ! empty($this->lead_id);
     }
 
     public function getHasClientAttribute(): bool
     {
-        return !empty($this->client_id);
+        return ! empty($this->client_id);
     }
 
     public function getClientDisplayNameAttribute(): string
@@ -505,7 +510,7 @@ class AgentAppointment extends Model
 
     public function isRescheduled(): bool
     {
-        return !empty($this->rescheduled_from);
+        return ! empty($this->rescheduled_from);
     }
 
     public function canBeRescheduled(): bool
@@ -525,14 +530,14 @@ class AgentAppointment extends Model
 
     public function needsReminder(): bool
     {
-        return !$this->reminder_sent && 
-               $this->appointment_date->isFuture() && 
+        return ! $this->reminder_sent &&
+               $this->appointment_date->isFuture() &&
                $this->appointment_date->diffInDays(today()) <= 2;
     }
 
     public function needsConfirmation(): bool
     {
-        return !$this->confirmation_sent && $this->status === 'scheduled';
+        return ! $this->confirmation_sent && $this->status === 'scheduled';
     }
 
     public function markAsScheduled(): void
@@ -540,7 +545,7 @@ class AgentAppointment extends Model
         $this->update(['status' => 'scheduled']);
     }
 
-    public function markAsCompleted(string $outcome = null, string $feedback = null, float $rating = null): void
+    public function markAsCompleted(?string $outcome = null, ?string $feedback = null, ?float $rating = null): void
     {
         $this->update([
             'status' => 'completed',
@@ -550,7 +555,7 @@ class AgentAppointment extends Model
         ]);
     }
 
-    public function markAsCancelled(string $reason = null, string $cancelledBy = null): void
+    public function markAsCancelled(?string $reason = null, ?string $cancelledBy = null): void
     {
         $this->update([
             'status' => 'cancelled',
@@ -560,7 +565,7 @@ class AgentAppointment extends Model
         ]);
     }
 
-    public function markAsNoShow(string $reason = null): void
+    public function markAsNoShow(?string $reason = null): void
     {
         $this->update([
             'status' => 'no_show',
@@ -569,7 +574,7 @@ class AgentAppointment extends Model
         ]);
     }
 
-    public function rescheduleTo($newDateTime, string $reason = null): void
+    public function rescheduleTo($newDateTime, ?string $reason = null): void
     {
         $this->update([
             'rescheduled_from' => $this->appointment_time,
@@ -607,7 +612,7 @@ class AgentAppointment extends Model
     public function removeAttendee($index): void
     {
         $attendees = $this->attendees ?? [];
-        
+
         if (isset($attendees[$index])) {
             unset($attendees[$index]);
             $this->update(['attendees' => array_values($attendees)]);
@@ -624,6 +629,7 @@ class AgentAppointment extends Model
     public function getCustomField(string $key, $default = null)
     {
         $customFields = $this->custom_fields ?? [];
+
         return $customFields[$key] ?? $default;
     }
 
@@ -673,14 +679,14 @@ class AgentAppointment extends Model
     public function createFollowUpAppointment($intervalDays = 7): self
     {
         $followUpDate = $this->appointment_date->addDays($intervalDays);
-        
+
         return self::create([
             'agent_id' => $this->agent_id,
             'client_id' => $this->client_id,
             'lead_id' => $this->lead_id,
             'property_id' => $this->property_id,
-            'title' => 'Follow-up: ' . $this->title,
-            'description' => 'Follow-up appointment for: ' . $this->description,
+            'title' => 'Follow-up: '.$this->title,
+            'description' => 'Follow-up appointment for: '.$this->description,
             'appointment_date' => $followUpDate->format('Y-m-d'),
             'appointment_time' => $followUpDate,
             'duration_minutes' => $this->duration_minutes,
