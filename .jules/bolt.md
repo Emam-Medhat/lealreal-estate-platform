@@ -1,0 +1,3 @@
+## 2026-08-25 - Service Provider Performance Metrics Aggregation
+**Learning:** Sequential queries against `MaintenanceRequest` models for service provider performance metrics resulted in 8 queries per call. Using conditional SQL aggregations (`COUNT(CASE WHEN ... END)`, `SUM(CASE WHEN ... END)`, `AVG(CASE WHEN ... END)`) combined with driver-aware date expressions (`julianday` vs `TIMESTAMPDIFF`) reduced this to 2 queries total while maintaining portability across SQLite and MySQL.
+**Action:** Always check `DB::getDriverName()` for database-specific date/time functions and consolidate repeated model relationship calculations into single conditional `selectRaw` queries.

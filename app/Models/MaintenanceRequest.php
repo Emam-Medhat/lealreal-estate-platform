@@ -12,6 +12,11 @@ class MaintenanceRequest extends Model
 
     protected $fillable = [
         'property_id',
+        'request_number',
+        'requested_by',
+        'service_provider_id',
+        'started_at',
+        'completed_at',
         'user_id',
         'title',
         'description',
