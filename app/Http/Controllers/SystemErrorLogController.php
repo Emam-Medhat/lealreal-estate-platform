@@ -13,11 +13,22 @@ class SystemErrorLogController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        // Bolt Optimization: Consolidate 4 individual count queries into a single query using conditional SQL aggregations
+        $todayStart = now()->startOfDay()->toDateTimeString();
+        $statsRaw = DB::table('system_error_logs')
+            ->selectRaw('
+                COUNT(*) as total,
+                COUNT(CASE WHEN is_resolved = 1 THEN 1 END) as resolved,
+                COUNT(CASE WHEN is_resolved = 0 THEN 1 END) as unresolved,
+                COUNT(CASE WHEN created_at >= ? THEN 1 END) as today
+            ', [$todayStart])
+            ->first();
+
         $stats = [
-            'total' => DB::table('system_error_logs')->count(),
-            'resolved' => DB::table('system_error_logs')->where('is_resolved', true)->count(),
-            'unresolved' => DB::table('system_error_logs')->where('is_resolved', false)->count(),
-            'today' => DB::table('system_error_logs')->whereDate('created_at', now()->toDateString())->count(),
+            'total' => (int) ($statsRaw->total ?? 0),
+            'resolved' => (int) ($statsRaw->resolved ?? 0),
+            'unresolved' => (int) ($statsRaw->unresolved ?? 0),
+            'today' => (int) ($statsRaw->today ?? 0),
         ];
 
         return view('admin.errors.index', compact('logs', 'stats'));
@@ -26,7 +37,7 @@ class SystemErrorLogController extends Controller
     public function show($id)
     {
         $log = DB::table('system_error_logs')->where('id', $id)->first();
-        if (!$log) {
+        if (! $log) {
             return redirect()->route('admin.errors.index')->with('error', 'Log not found');
         }
 
@@ -36,12 +47,14 @@ class SystemErrorLogController extends Controller
     public function resolve($id)
     {
         DB::table('system_error_logs')->where('id', $id)->update(['is_resolved' => true]);
+
         return back()->with('success', 'Error marked as resolved');
     }
 
     public function clear()
     {
         DB::table('system_error_logs')->truncate();
+
         return back()->with('success', 'All error logs cleared');
     }
 
@@ -52,7 +65,7 @@ class SystemErrorLogController extends Controller
 
         foreach ($routes as $route) {
             // Only test GET routes
-            if (!in_array('GET', $route->methods())) {
+            if (! in_array('GET', $route->methods())) {
                 continue;
             }
 
@@ -64,8 +77,8 @@ class SystemErrorLogController extends Controller
             }
 
             // Skip internal or dangerous routes
-            if (str_contains($uri, '_ignition') || 
-                str_contains($uri, 'telescope') || 
+            if (str_contains($uri, '_ignition') ||
+                str_contains($uri, 'telescope') ||
                 str_contains($uri, 'logout') ||
                 str_contains($uri, 'admin/errors/clear')) {
                 continue;
@@ -74,33 +87,33 @@ class SystemErrorLogController extends Controller
             try {
                 // Simulate a request
                 $request = \Illuminate\Http\Request::create($uri, 'GET');
-                
+
                 // If current user is authenticated, we should probably maintain that session
                 if (auth()->check()) {
-                    $request->setUserResolver(fn() => auth()->user());
+                    $request->setUserResolver(fn () => auth()->user());
                 }
 
                 $response = app()->handle($request);
                 $status = $response->getStatusCode();
-                
+
                 // We consider anything >= 400 as a potential issue to review
                 // (Though 401/403 are expected for protected routes if not logged in correctly in simulation)
                 if ($status >= 400) {
                     $results[] = [
-                        'uri' => '/' . ltrim($uri, '/'),
+                        'uri' => '/'.ltrim($uri, '/'),
                         'name' => $route->getName(),
                         'status' => $status,
                         'is_error' => true,
-                        'error_message' => 'HTTP Status ' . $status
+                        'error_message' => 'HTTP Status '.$status,
                     ];
                 }
             } catch (\Exception $e) {
                 $results[] = [
-                    'uri' => '/' . ltrim($uri, '/'),
+                    'uri' => '/'.ltrim($uri, '/'),
                     'name' => $route->getName(),
                     'status' => 500,
                     'is_error' => true,
-                    'error_message' => $e->getMessage()
+                    'error_message' => $e->getMessage(),
                 ];
             }
         }
@@ -108,7 +121,7 @@ class SystemErrorLogController extends Controller
         return response()->json([
             'total_scanned' => count($routes),
             'errors_found' => count($results),
-            'results' => $results
+            'results' => $results,
         ]);
     }
 }
