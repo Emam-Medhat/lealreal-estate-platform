@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 class Commission extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+
+    protected $table = 'agent_commissions';
 
     protected $fillable = [
         'agent_id',
@@ -190,19 +190,19 @@ class Commission extends Model
     public function scopeOverdue($query)
     {
         return $query->where('due_date', '<', now())
-                    ->where('status', '!=', 'paid');
+            ->where('status', '!=', 'paid');
     }
 
     public function scopeDueThisMonth($query)
     {
         return $query->whereMonth('due_date', now()->month)
-                    ->whereYear('due_date', now()->year);
+            ->whereYear('due_date', now()->year);
     }
 
     public function scopePaidThisMonth($query)
     {
         return $query->whereMonth('paid_date', now()->month)
-                    ->whereYear('paid_date', now()->year);
+            ->whereYear('paid_date', now()->year);
     }
 
     public function scopeInDispute($query)
@@ -238,7 +238,7 @@ class Commission extends Model
 
     public function getFormattedPercentageAttribute()
     {
-        return number_format($this->percentage, 2) . '%';
+        return number_format($this->percentage, 2).'%';
     }
 
     public function getFormattedTaxAmountAttribute()
@@ -303,6 +303,7 @@ class Commission extends Model
         if ($this->due_date && $this->status !== 'paid') {
             return now()->diffInDays($this->due_date, false);
         }
+
         return 0;
     }
 
@@ -348,12 +349,12 @@ class Commission extends Model
 
     public function canBeApproved()
     {
-        return $this->status === 'pending' && !$this->isInDispute();
+        return $this->status === 'pending' && ! $this->isInDispute();
     }
 
     public function canBeRejected()
     {
-        return $this->status === 'pending' && !$this->isInDispute();
+        return $this->status === 'pending' && ! $this->isInDispute();
     }
 
     public function canBePaid()
@@ -363,7 +364,7 @@ class Commission extends Model
 
     public function canBeDisputed()
     {
-        return in_array($this->status, ['approved', 'paid']) && !$this->isInDispute();
+        return in_array($this->status, ['approved', 'paid']) && ! $this->isInDispute();
     }
 
     public function approve($approvedBy, $notes = null)
@@ -409,52 +410,52 @@ class Commission extends Model
         $this->dispute_status = 'resolved';
         $this->dispute_resolved_by = $resolvedBy;
         $this->dispute_resolved_at = now();
-        $this->notes .= "\n\nDispute Resolution: " . $resolution;
+        $this->notes .= "\n\nDispute Resolution: ".$resolution;
         $this->save();
     }
 
     public function calculateFinalAmount()
     {
         $amount = $this->amount;
-        
+
         // Add bonus
         if ($this->bonus_amount) {
             $amount += $this->bonus_amount;
         }
-        
+
         // Subtract penalty
         if ($this->penalty_amount) {
             $amount -= $this->penalty_amount;
         }
-        
+
         // Add/subtract adjustment
         if ($this->adjustment_amount) {
             $amount += $this->adjustment_amount;
         }
-        
+
         // Apply early payment discount
         if ($this->early_payment_discount && $this->paid_date && $this->paid_date <= $this->due_date) {
             $amount -= $this->early_payment_discount;
         }
-        
+
         // Apply late fee
         if ($this->late_fee && $this->isOverdue()) {
             $amount += $this->late_fee;
         }
-        
+
         $this->final_amount = $amount;
         $this->save();
-        
+
         return $amount;
     }
 
     public function generateInvoiceNumber()
     {
-        if (!$this->invoice_number) {
-            $this->invoice_number = 'INV-' . date('Y') . '-' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
+        if (! $this->invoice_number) {
+            $this->invoice_number = 'INV-'.date('Y').'-'.str_pad($this->id, 6, '0', STR_PAD_LEFT);
             $this->save();
         }
-        
+
         return $this->invoice_number;
     }
 
@@ -463,7 +464,7 @@ class Commission extends Model
         $this->invoice_sent_at = now();
         $this->generateInvoiceNumber();
         $this->save();
-        
+
         // Logic to send invoice email would go here
     }
 
@@ -471,7 +472,7 @@ class Commission extends Model
     {
         $this->payment_reminder_sent_at = now();
         $this->save();
-        
+
         // Logic to send payment reminder email would go here
     }
 
@@ -487,7 +488,7 @@ class Commission extends Model
         if ($this->commission_period) {
             return $this->commission_period;
         }
-        
+
         // Generate period based on creation date
         return $this->created_at->format('Y-m');
     }
@@ -495,8 +496,8 @@ class Commission extends Model
     public function scopeWithOutstandingBalance($query)
     {
         return $query->where('status', '!=', 'paid')
-                    ->where('status', '!=', 'rejected')
-                    ->where('status', '!=', 'cancelled');
+            ->where('status', '!=', 'rejected')
+            ->where('status', '!=', 'cancelled');
     }
 
     public function scopeByPaymentMethod($query, $method)
