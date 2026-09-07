@@ -4,10 +4,8 @@ namespace App\Services;
 
 use App\Models\Agent;
 use App\Models\Commission;
-use App\Models\AgentPerformance;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class AgentCommissionService
 {
@@ -53,7 +51,7 @@ class AgentCommissionService
             'base_amount' => $baseAmount,
             'rate' => $rate,
             'commission_amount' => $commissionAmount,
-            'calculated_at' => now()
+            'calculated_at' => now(),
         ];
     }
 
@@ -75,14 +73,14 @@ class AgentCommissionService
                 'payment_method' => $paymentMethod,
                 'payment_date' => now(),
                 'status' => 'paid',
-                'paid_by' => auth()->id()
+                'paid_by' => auth()->id(),
             ]);
 
             // Update commission status
             $commission->update([
                 'status' => 'paid',
                 'paid_at' => now(),
-                'payment_id' => $payment->id
+                'payment_id' => $payment->id,
             ]);
 
             // Update agent's total earned commissions
@@ -97,7 +95,7 @@ class AgentCommissionService
                 'agent_id' => $agentId,
                 'commission_id' => $commissionId,
                 'amount' => $commission->amount,
-                'payment_method' => $paymentMethod
+                'payment_method' => $paymentMethod,
             ]);
 
             DB::commit();
@@ -109,9 +107,9 @@ class AgentCommissionService
             Log::error('Failed to pay commission to agent', [
                 'agent_id' => $agentId,
                 'commission_id' => $commissionId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             throw $e;
         }
     }
@@ -148,7 +146,7 @@ class AgentCommissionService
             'commissions' => $commissions,
             'total_amount' => $commissions->sum('amount'),
             'total_count' => $commissions->count(),
-            'filters' => $filters
+            'filters' => $filters,
         ];
     }
 
@@ -158,10 +156,10 @@ class AgentCommissionService
     public function getCommissionSummary(int $agentId, string $period = 'month'): array
     {
         $agent = Agent::findOrFail($agentId);
-        
+
         // Get date range
         $dateRange = $this->getDateRange($period);
-        
+
         // Get commissions for the period
         $commissions = Commission::where('agent_id', $agentId)
             ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
@@ -169,7 +167,7 @@ class AgentCommissionService
             ->get(['type', 'amount', 'created_at']);
 
         // Calculate summary
-        $totalAmount = $commissions->sum('amount');
+        $totalAmount = (float) $commissions->sum('amount');
         $totalCount = $commissions->count();
         $averageAmount = $totalCount > 0 ? $totalAmount / $totalCount : 0;
 
@@ -178,10 +176,13 @@ class AgentCommissionService
             return [
                 'type' => $group->first()->type,
                 'count' => $group->count(),
-                'total_amount' => $group->sum('amount'),
-                'average_amount' => $group->count() > 0 ? $group->sum('amount') / $group->count() : 0
+                'total_amount' => (float) $group->sum('amount'),
+                'average_amount' => $group->count() > 0 ? (float) $group->sum('amount') / $group->count() : 0,
             ];
         });
+
+        // Optimization: calculate monthly average once and pass to calculateYearlyProjection
+        $monthlyAverage = $this->calculateMonthlyAverage($agentId);
 
         return [
             'agent_id' => $agentId,
@@ -191,8 +192,8 @@ class AgentCommissionService
             'total_count' => $totalCount,
             'average_amount' => $averageAmount,
             'by_type' => $byType,
-            'monthly_average' => $this->calculateMonthlyAverage($agentId),
-            'yearly_projection' => $this->calculateYearlyProjection($agentId)
+            'monthly_average' => $monthlyAverage,
+            'yearly_projection' => $this->calculateYearlyProjection($agentId, $monthlyAverage),
         ];
     }
 
@@ -201,28 +202,28 @@ class AgentCommissionService
      */
     private function calculateMonthlyAverage(int $agentId): float
     {
-        $commissions = Commission::where('agent_id', $agentId)
+        // Optimization: use SQL aggregate directly instead of loading Eloquent collection into memory
+        return (float) (Commission::where('agent_id', $agentId)
             ->where('status', 'paid')
             ->whereBetween('created_at', [
                 now()->subMonths(6)->startOfMonth()->toDateString(),
-                now()->subMonth()->endOfMonth()->toDateString()
+                now()->subMonth()->endOfMonth()->toDateString(),
             ])
-            ->get(['amount']);
-
-        return $commissions->avg('amount') ?? 0;
+            ->avg('amount') ?? 0);
     }
 
     /**
      * Calculate yearly projection
      */
-    private function calculateYearlyProjection(int $agentId): array
+    private function calculateYearlyProjection(int $agentId, ?float $monthlyAverage = null): array
     {
-        $monthlyAverage = $this->calculateMonthlyAverage($agentId);
-        $currentYearToDate = Commission::where('agent_id', $agentId)
+        // Optimization: accept pre-calculated monthlyAverage to eliminate redundant database query
+        $monthlyAverage = $monthlyAverage ?? $this->calculateMonthlyAverage($agentId);
+        $currentYearToDate = (float) Commission::where('agent_id', $agentId)
             ->where('status', 'paid')
             ->whereBetween('created_at', [
                 now()->startOfYear()->toDateString(),
-                now()->endOfDay()->toDateString()
+                now()->endOfDay()->toDateString(),
             ])
             ->sum('amount');
 
@@ -232,7 +233,7 @@ class AgentCommissionService
             'current_year_to_date' => $currentYearToDate,
             'monthly_average' => $monthlyAverage,
             'projected_year_end' => $projectedYearEnd,
-            'projection_confidence' => 'medium'
+            'projection_confidence' => 'medium',
         ];
     }
 
@@ -245,27 +246,27 @@ class AgentCommissionService
             case 'week':
                 return [
                     'start' => now()->subWeek()->startOfWeek()->toDateString(),
-                    'end' => now()->subWeek()->endOfWeek()->toDateString()
+                    'end' => now()->subWeek()->endOfWeek()->toDateString(),
                 ];
             case 'month':
                 return [
                     'start' => now()->subMonth()->startOfMonth()->toDateString(),
-                    'end' => now()->subMonth()->endOfMonth()->toDateString()
+                    'end' => now()->subMonth()->endOfMonth()->toDateString(),
                 ];
             case 'quarter':
                 return [
                     'start' => now()->subQuarter()->startOfMonth()->toDateString(),
-                    'end' => now()->subQuarter()->endOfMonth()->toDateString()
+                    'end' => now()->subQuarter()->endOfMonth()->toDateString(),
                 ];
             case 'year':
                 return [
                     'start' => now()->subYear()->startOfYear()->toDateString(),
-                    'end' => now()->subYear()->endOfYear()->toDateString()
+                    'end' => now()->subYear()->endOfYear()->toDateString(),
                 ];
             default:
                 return [
                     'start' => now()->subMonth()->startOfMonth()->toDateString(),
-                    'end' => now()->subMonth()->endOfMonth()->toDateString()
+                    'end' => now()->subMonth()->endOfMonth()->toDateString(),
                 ];
         }
     }
