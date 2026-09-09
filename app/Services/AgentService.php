@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Models\Agent;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Repositories\Contracts\AgentRepositoryInterface;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class AgentService
 {
     protected $agentRepository;
+
     protected $cacheTTL = 3600; // 1 hour
 
     public function __construct(AgentRepositoryInterface $agentRepository)
@@ -37,14 +37,14 @@ class AgentService
 
         return Cache::remember($cacheKey, 600, function () use ($agent) {
             $agent->loadCount([
-                'properties', 
-                'properties as active_properties' => fn($q) => $q->where('status', 'active'),
-                'properties as sold_properties' => fn($q) => $q->where('status', 'sold'),
+                'properties',
+                'properties as active_properties' => fn ($q) => $q->where('status', 'active'),
+                'properties as sold_properties' => fn ($q) => $q->where('status', 'sold'),
                 'reviews',
                 'clients',
-                'commissions'
+                'commissions',
             ]);
-            
+
             $agent->loadAvg('reviews', 'rating');
 
             return [
@@ -74,7 +74,7 @@ class AgentService
 
         return Cache::remember($cacheKey, 300, function () use ($agent) {
             $activities = [];
-            
+
             // Recent properties
             $properties = $agent->properties()->latest()->limit(3)->get();
             foreach ($properties as $property) {
@@ -82,7 +82,7 @@ class AgentService
                     'icon' => 'home',
                     'message' => "Added new property: {$property->title}",
                     'time' => $property->created_at->diffForHumans(),
-                    'timestamp' => $property->created_at
+                    'timestamp' => $property->created_at,
                 ];
             }
 
@@ -93,7 +93,7 @@ class AgentService
                     'icon' => 'star',
                     'message' => "Received a {$review->rating}-star review from {$review->client_name}",
                     'time' => $review->created_at->diffForHumans(),
-                    'timestamp' => $review->created_at
+                    'timestamp' => $review->created_at,
                 ];
             }
 
@@ -102,9 +102,9 @@ class AgentService
             foreach ($commissions as $commission) {
                 $activities[] = [
                     'icon' => 'dollar-sign',
-                    'message' => "Earned commission of " . number_format($commission->amount, 2) . " SAR",
+                    'message' => 'Earned commission of '.number_format($commission->amount, 2).' SAR',
                     'time' => $commission->created_at->diffForHumans(),
-                    'timestamp' => $commission->created_at
+                    'timestamp' => $commission->created_at,
                 ];
             }
 
@@ -148,6 +148,7 @@ class AgentService
 
         $agent->profile()->updateOrCreate(['agent_id' => $agent->id], $profileData);
         $this->invalidateCache($agent->id); // Invalidate cache after update
+
         return $this->getAgentProfile($agent);
     }
 
@@ -162,7 +163,8 @@ class AgentService
         $path = $photo->store('agent-photos', 'public');
         $agent->profile()->updateOrCreate(['agent_id' => $agent->id], ['profile_photo' => $path]);
         $this->invalidateCache($agent->id);
-        return asset('storage/' . $path);
+
+        return asset('storage/'.$path);
     }
 
     /**
@@ -194,13 +196,13 @@ class AgentService
                     $query->latest()->limit(10);
                 },
                 'certifications',
-                'licenses'
+                'licenses',
             ]);
 
             $agent->loadCount([
                 'properties',
-                'properties as sold_properties_count' => fn($q) => $q->where('status', 'sold'),
-                'reviews'
+                'properties as sold_properties_count' => fn ($q) => $q->where('status', 'sold'),
+                'reviews',
             ]);
             $agent->loadAvg('reviews', 'rating');
 
@@ -221,7 +223,7 @@ class AgentService
      */
     public function getAgentsPaginated(array $filters, int $perPage = 12, bool $forDirectory = false)
     {
-        $cacheKey = 'agents_paginated_' . md5(json_encode($filters) . $perPage . $forDirectory);
+        $cacheKey = 'agents_paginated_'.md5(json_encode($filters).$perPage.$forDirectory);
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($filters, $perPage, $forDirectory) {
             return $this->agentRepository->getPaginated($filters, $perPage, $forDirectory);
@@ -252,11 +254,21 @@ class AgentService
                 $query->latest()->limit(5);
             }]);
 
+            // Consolidate property stats into 1 query using conditional SQL aggregation
+            $propertyStats = $agent->properties()
+                ->selectRaw('COUNT(*) as total_properties, COUNT(CASE WHEN status = ? THEN 1 END) as sold_properties', ['sold'])
+                ->first();
+
+            // Consolidate review stats into 1 query using SQL aggregation
+            $reviewStats = $agent->reviews()
+                ->selectRaw('COUNT(*) as total_reviews, AVG(rating) as average_rating')
+                ->first();
+
             $stats = [
-                'total_properties' => $agent->properties()->count(),
-                'sold_properties' => $agent->properties()->where('status', 'sold')->count(),
-                'average_rating' => $agent->reviews()->avg('rating') ?? 0,
-                'total_reviews' => $agent->reviews()->count(),
+                'total_properties' => (int) ($propertyStats->total_properties ?? 0),
+                'sold_properties' => (int) ($propertyStats->sold_properties ?? 0),
+                'average_rating' => (float) ($reviewStats->average_rating ?? 0),
+                'total_reviews' => (int) ($reviewStats->total_reviews ?? 0),
                 'experience_years' => $agent->profile ? $agent->profile->experience_years : 0,
             ];
 
@@ -269,7 +281,7 @@ class AgentService
      */
     public function getFilteredAgents(array $filters): \Illuminate\Database\Eloquent\Collection
     {
-        $cacheKey = 'filtered_agents_' . md5(json_encode($filters));
+        $cacheKey = 'filtered_agents_'.md5(json_encode($filters));
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($filters) {
             return $this->agentRepository->getFiltered($filters);
@@ -285,7 +297,7 @@ class AgentService
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
             $currentMonth = now()->startOfMonth();
-            
+
             // Get metrics from database
             $dbMetrics = \DB::table('agent_performance_metrics')
                 ->where('agent_id', $agent->id)
@@ -293,12 +305,12 @@ class AgentService
                 ->where('period_start', '>=', $currentMonth)
                 ->pluck('value', 'metric_type')
                 ->toArray();
-            
+
             return [
                 'total_sales' => $dbMetrics['total_sales'] ?? 0,
                 'commission_earned' => $dbMetrics['commission_earned'] ?? 0,
                 'properties_listed' => $dbMetrics['properties_listed'] ?? 0,
-                'satisfaction_rate' => $dbMetrics['satisfaction_rate'] ?? 0
+                'satisfaction_rate' => $dbMetrics['satisfaction_rate'] ?? 0,
             ];
         });
     }
@@ -322,7 +334,7 @@ class AgentService
                         'date' => \Carbon\Carbon::parse($activity->created_at)->format('Y-m-d'),
                         'value' => $activity->value,
                         'status' => $activity->status,
-                        'icon' => $activity->icon
+                        'icon' => $activity->icon,
                     ];
                 })
                 ->toArray();
@@ -353,7 +365,7 @@ class AgentService
             return [
                 'current_rank' => $currentAgentRank,
                 'total_agents' => count($agentRankings),
-                'rankings' => $agentRankings
+                'rankings' => $agentRankings,
             ];
         });
     }
@@ -378,7 +390,7 @@ class AgentService
             $targets = [
                 'monthly_sales_target' => 30,
                 'commission_target' => 20000,
-                'satisfaction_target' => 95
+                'satisfaction_target' => 95,
             ];
 
             return [
@@ -393,11 +405,11 @@ class AgentService
                 'satisfaction_target' => $targets['satisfaction_target'],
                 'active_goals' => [
                     ['title' => 'Monthly Sales Target', 'description' => 'Achieve 30 sales this month', 'progress' => min(100, round(($metrics['total_sales'] ?? 0) / $targets['monthly_sales_target'] * 100)), 'status' => 'on-track', 'due_date' => now()->endOfMonth()->format('Y-m-d')],
-                    ['title' => 'Client Satisfaction', 'description' => 'Maintain 95% satisfaction rate', 'progress' => min(100, round(($metrics['satisfaction_rate'] ?? 0) / $targets['satisfaction_target'] * 100)), 'status' => 'on-track', 'due_date' => now()->endOfMonth()->format('Y-m-d')]
+                    ['title' => 'Client Satisfaction', 'description' => 'Maintain 95% satisfaction rate', 'progress' => min(100, round(($metrics['satisfaction_rate'] ?? 0) / $targets['satisfaction_target'] * 100)), 'status' => 'on-track', 'due_date' => now()->endOfMonth()->format('Y-m-d')],
                 ],
                 'completed_goals' => [
-                    ['title' => 'Q4 Sales Goal', 'completed_date' => now()->subMonth()->endOfMonth()->format('Y-m-d'), 'achievement' => 'Exceeded Target', 'result' => '125% of goal achieved']
-                ]
+                    ['title' => 'Q4 Sales Goal', 'completed_date' => now()->subMonth()->endOfMonth()->format('Y-m-d'), 'achievement' => 'Exceeded Target', 'result' => '125% of goal achieved'],
+                ],
             ];
         });
     }
@@ -410,7 +422,7 @@ class AgentService
         $cacheKey = "agent_rankings_{$period}";
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($period) {
-            $periodStart = $period === 'monthly' ? now()->startOfMonth() : 
+            $periodStart = $period === 'monthly' ? now()->startOfMonth() :
                           ($period === 'quarterly' ? now()->startOfQuarter() : now()->startOfYear());
 
             return \DB::table('agent_performance_metrics')
@@ -430,7 +442,7 @@ class AgentService
                         'sales' => $agent->sales,
                         'commission' => $agent->sales * 0.03, // Assuming 3% commission
                         'rating' => rand(4.0, 5.0),
-                        'status' => 'Active'
+                        'status' => 'Active',
                     ];
                 })
                 ->toArray();
