@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Repositories\Contracts\ClientRepositoryInterface;
 use App\Repositories\Contracts\InvoiceRepositoryInterface;
 use App\Repositories\Contracts\PaymentRepositoryInterface;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
-use App\Repositories\Contracts\ClientRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +13,11 @@ use Illuminate\Support\Facades\DB;
 class ReportService
 {
     protected InvoiceRepositoryInterface $invoiceRepository;
+
     protected PaymentRepositoryInterface $paymentRepository;
+
     protected PropertyRepositoryInterface $propertyRepository;
+
     protected ClientRepositoryInterface $clientRepository;
 
     public function __construct(
@@ -34,8 +37,8 @@ class ReportService
      */
     public function generateFinancialReport(array $filters = []): array
     {
-        $cacheKey = 'financial_report_' . md5(serialize($filters));
-        
+        $cacheKey = 'financial_report_'.md5(serialize($filters));
+
         return Cache::remember($cacheKey, 300, function () use ($filters) {
             return [
                 'revenue' => $this->getRevenueReport($filters),
@@ -51,15 +54,15 @@ class ReportService
     /**
      * Generate property performance report
      */
-    public function generatePropertyPerformanceReport(int $propertyId = null): array
+    public function generatePropertyPerformanceReport(?int $propertyId = null): array
     {
-        $cacheKey = 'property_performance_' . ($propertyId ?? 'all');
-        
+        $cacheKey = 'property_performance_'.($propertyId ?? 'all');
+
         return Cache::remember($cacheKey, 600, function () use ($propertyId) {
             if ($propertyId) {
                 return $this->getSinglePropertyPerformance($propertyId);
             }
-            
+
             return $this->getAllPropertiesPerformance();
         });
     }
@@ -67,15 +70,15 @@ class ReportService
     /**
      * Generate agent performance report
      */
-    public function generateAgentPerformanceReport(int $agentId = null): array
+    public function generateAgentPerformanceReport(?int $agentId = null): array
     {
-        $cacheKey = 'agent_performance_' . ($agentId ?? 'all');
-        
+        $cacheKey = 'agent_performance_'.($agentId ?? 'all');
+
         return Cache::remember($cacheKey, 600, function () use ($agentId) {
             if ($agentId) {
                 return $this->getSingleAgentPerformance($agentId);
             }
-            
+
             return $this->getAllAgentsPerformance();
         });
     }
@@ -85,8 +88,8 @@ class ReportService
      */
     public function generateClientAnalyticsReport(array $filters = []): array
     {
-        $cacheKey = 'client_analytics_' . md5(serialize($filters));
-        
+        $cacheKey = 'client_analytics_'.md5(serialize($filters));
+
         return Cache::remember($cacheKey, 300, function () use ($filters) {
             return [
                 'acquisition' => $this->getClientAcquisitionReport($filters),
@@ -102,17 +105,19 @@ class ReportService
     /**
      * Generate monthly cash flow report
      */
-    public function generateCashFlowReport(int $year = null): array
+    public function generateCashFlowReport(?int $year = null): array
     {
         $year = $year ?? date('Y');
         $cacheKey = "cash_flow_{$year}";
-        
+
         return Cache::remember($cacheKey, 3600, function () use ($year) {
+            $monthlyData = $this->getMonthlyCashFlow($year);
+
             return [
-                'monthly_cash_flow' => $this->getMonthlyCashFlow($year),
-                'quarterly_cash_flow' => $this->getQuarterlyCashFlow($year),
-                'yearly_summary' => $this->getYearlyCashFlowSummary($year),
-                'projections' => $this->getCashFlowProjections($year),
+                'monthly_cash_flow' => $monthlyData,
+                'quarterly_cash_flow' => $this->getQuarterlyCashFlow($year, $monthlyData),
+                'yearly_summary' => $this->getYearlyCashFlowSummary($year, $monthlyData),
+                'projections' => $this->getCashFlowProjections($year, $monthlyData),
                 'generated_at' => now(),
             ];
         });
@@ -252,7 +257,7 @@ class ReportService
     private function getFinancialSummary(array $filters): array
     {
         $stats = $this->invoiceRepository->getInvoiceStats($filters);
-        
+
         return [
             'total_invoices' => $stats['total'],
             'paid_invoices' => $stats['paid'],
@@ -270,7 +275,7 @@ class ReportService
     {
         $property = $this->propertyRepository->findById($propertyId);
         $revenueData = $this->invoiceRepository->getRevenueByProperty($propertyId);
-        
+
         return [
             'property' => $property,
             'revenue' => $revenueData,
@@ -298,7 +303,7 @@ class ReportService
                 'type' => $property->type ?? 'Unknown',
                 'agent_id' => $property->agent_id ?? null,
             ];
-            
+
             $performanceData[$property->id] = $propertyData;
             $allProperties->push((object) $propertyData);
         }
@@ -308,7 +313,7 @@ class ReportService
             ->sortByDesc('views_count')
             ->take(5);
 
-        // Sort and get top inquired properties  
+        // Sort and get top inquired properties
         $topInquiredProperties = $allProperties
             ->sortByDesc('inquiries_count')
             ->take(5);
@@ -359,7 +364,7 @@ class ReportService
         // Generate sample monthly performance data for the last 12 months
         $monthlyData = collect();
         $currentDate = now();
-        
+
         for ($i = 11; $i >= 0; $i--) {
             $date = $currentDate->copy()->subMonths($i);
             $monthlyData->push((object) [
@@ -373,7 +378,7 @@ class ReportService
                 'avg_performance_score' => rand(65, 92),
             ]);
         }
-        
+
         return $monthlyData;
     }
 
@@ -432,14 +437,14 @@ class ReportService
         }
 
         $count = count($performanceData);
-        
+
         // Calculate overall performance score (0-100)
         $overallScore = 0;
         if ($count > 0) {
             $viewToInquiryRate = $totalViews > 0 ? ($totalInquiries / $totalViews) * 100 : 0;
             $inquiryToSaleRate = $totalInquiries > 0 ? ($soldProperties / $totalInquiries) * 100 : 0;
             $soldRate = $count > 0 ? ($soldProperties / $count) * 100 : 0;
-            
+
             // Weighted score: 30% views to inquiries, 40% inquiries to sales, 30% sold rate
             $overallScore = ($viewToInquiryRate * 0.3) + ($inquiryToSaleRate * 0.4) + ($soldRate * 0.3);
         }
@@ -468,23 +473,45 @@ class ReportService
     // Private Methods for Cash Flow
     private function getMonthlyCashFlow(int $year): array
     {
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'sqlite') {
+            $paidAtMonth = "cast(strftime('%m', paid_at) as integer)";
+            $dateMonth = "cast(strftime('%m', date) as integer)";
+        } elseif ($driver === 'pgsql') {
+            $paidAtMonth = 'EXTRACT(MONTH FROM paid_at)';
+            $dateMonth = 'EXTRACT(MONTH FROM date)';
+        } else {
+            $paidAtMonth = 'MONTH(paid_at)';
+            $dateMonth = 'MONTH(date)';
+        }
+
+        $inflowSelect = [];
+        $outflowSelect = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $inflowSelect[] = "SUM(CASE WHEN {$paidAtMonth} = {$m} THEN amount ELSE 0 END) as m{$m}";
+            $outflowSelect[] = "SUM(CASE WHEN {$dateMonth} = {$m} THEN amount ELSE 0 END) as m{$m}";
+        }
+
+        // Consolidated query for all 12 monthly inflows
+        $inflows = DB::table('payments')
+            ->where('status', 'completed')
+            ->whereYear('paid_at', $year)
+            ->selectRaw(implode(', ', $inflowSelect))
+            ->first();
+
+        // Consolidated query for all 12 monthly outflows
+        $outflows = DB::table('expenses')
+            ->whereYear('date', $year)
+            ->selectRaw(implode(', ', $outflowSelect))
+            ->first();
+
         $monthlyData = [];
-        
         for ($month = 1; $month <= 12; $month++) {
             $monthStart = Carbon::create($year, $month, 1);
-            $monthEnd = $monthStart->copy()->endOfMonth();
-            
-            $inflow = DB::table('payments')
-                ->where('status', 'completed')
-                ->whereYear('paid_at', $year)
-                ->whereMonth('paid_at', $month)
-                ->sum('amount');
-                
-            $outflow = DB::table('expenses')
-                ->whereYear('date', $year)
-                ->whereMonth('date', $month)
-                ->sum('amount');
-                
+            $inflowKey = "m{$month}";
+            $inflow = (float) ($inflows->$inflowKey ?? 0);
+            $outflow = (float) ($outflows->$inflowKey ?? 0);
+
             $monthlyData[$month] = [
                 'month' => $monthStart->format('F Y'),
                 'inflow' => $inflow,
@@ -492,27 +519,27 @@ class ReportService
                 'net_flow' => $inflow - $outflow,
             ];
         }
-        
+
         return $monthlyData;
     }
 
-    private function getQuarterlyCashFlow(int $year): array
+    private function getQuarterlyCashFlow(int $year, ?array $monthlyData = null): array
     {
+        $monthlyData = $monthlyData ?? $this->getMonthlyCashFlow($year);
         $quarterlyData = [];
-        
+
         for ($quarter = 1; $quarter <= 4; $quarter++) {
-            $quarterStart = Carbon::create($year, (($quarter - 1) * 3) + 1, 1);
-            $quarterEnd = $quarterStart->copy()->addMonths(2)->endOfMonth();
-            
-            $inflow = DB::table('payments')
-                ->where('status', 'completed')
-                ->whereBetween('paid_at', [$quarterStart, $quarterEnd])
-                ->sum('amount');
-                
-            $outflow = DB::table('expenses')
-                ->whereBetween('date', [$quarterStart, $quarterEnd])
-                ->sum('amount');
-                
+            $startMonth = (($quarter - 1) * 3) + 1;
+            $endMonth = $startMonth + 2;
+
+            $inflow = 0;
+            $outflow = 0;
+
+            for ($m = $startMonth; $m <= $endMonth; $m++) {
+                $inflow += $monthlyData[$m]['inflow'] ?? 0;
+                $outflow += $monthlyData[$m]['outflow'] ?? 0;
+            }
+
             $quarterlyData[$quarter] = [
                 'quarter' => "Q{$quarter} {$year}",
                 'inflow' => $inflow,
@@ -520,21 +547,17 @@ class ReportService
                 'net_flow' => $inflow - $outflow,
             ];
         }
-        
+
         return $quarterlyData;
     }
 
-    private function getYearlyCashFlowSummary(int $year): array
+    private function getYearlyCashFlowSummary(int $year, ?array $monthlyData = null): array
     {
-        $totalInflow = DB::table('payments')
-            ->where('status', 'completed')
-            ->whereYear('paid_at', $year)
-            ->sum('amount');
-            
-        $totalOutflow = DB::table('expenses')
-            ->whereYear('date', $year)
-            ->sum('amount');
-            
+        $monthlyData = $monthlyData ?? $this->getMonthlyCashFlow($year);
+
+        $totalInflow = (float) array_sum(array_column($monthlyData, 'inflow'));
+        $totalOutflow = (float) array_sum(array_column($monthlyData, 'outflow'));
+
         return [
             'year' => $year,
             'total_inflow' => $totalInflow,
@@ -544,20 +567,20 @@ class ReportService
         ];
     }
 
-    private function getCashFlowProjections(int $year): array
+    private function getCashFlowProjections(int $year, ?array $currentYearData = null): array
     {
         // Simple projection based on historical data
         $lastYearData = $this->getMonthlyCashFlow($year - 1);
-        $currentYearData = $this->getMonthlyCashFlow($year);
-        
+        $currentYearData = $currentYearData ?? $this->getMonthlyCashFlow($year);
+
         $projections = [];
         $currentMonth = now()->month;
-        
+
         for ($month = $currentMonth + 1; $month <= 12; $month++) {
             // Use last year's data as projection
             $projectedInflow = $lastYearData[$month]['inflow'] * 1.1; // 10% growth assumption
             $projectedOutflow = $lastYearData[$month]['outflow'] * 1.05; // 5% growth assumption
-            
+
             $projections[$month] = [
                 'month' => Carbon::create($year, $month, 1)->format('F Y'),
                 'projected_inflow' => $projectedInflow,
@@ -565,7 +588,7 @@ class ReportService
                 'projected_net_flow' => $projectedInflow - $projectedOutflow,
             ];
         }
-        
+
         return $projections;
     }
 
