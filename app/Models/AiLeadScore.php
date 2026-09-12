@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 class AiLeadScore extends Model
 {
@@ -131,6 +130,14 @@ class AiLeadScore extends Model
     }
 
     /**
+     * Alias score accessor to total_score for backward compatibility.
+     */
+    public function getScoreAttribute(): float
+    {
+        return (float) ($this->attributes['total_score'] ?? $this->total_score ?? 0);
+    }
+
+    /**
      * Get scoring model label in Arabic.
      */
     public function getScoringModelLabelAttribute(): string
@@ -201,10 +208,19 @@ class AiLeadScore extends Model
      */
     public function getConfidenceLevelTextAttribute(): string
     {
-        if ($this->confidence_level >= 0.9) return 'عالي جداً';
-        if ($this->confidence_level >= 0.8) return 'عالي';
-        if ($this->confidence_level >= 0.7) return 'متوسط';
-        if ($this->confidence_level >= 0.6) return 'منخفض';
+        if ($this->confidence_level >= 0.9) {
+            return 'عالي جداً';
+        }
+        if ($this->confidence_level >= 0.8) {
+            return 'عالي';
+        }
+        if ($this->confidence_level >= 0.7) {
+            return 'متوسط';
+        }
+        if ($this->confidence_level >= 0.6) {
+            return 'منخفض';
+        }
+
         return 'منخفض جداً';
     }
 
@@ -213,7 +229,7 @@ class AiLeadScore extends Model
      */
     public function getConversionProbabilityPercentageAttribute(): string
     {
-        return round($this->conversion_probability * 100, 1) . '%';
+        return round($this->conversion_probability * 100, 1).'%';
     }
 
     /**
@@ -240,7 +256,7 @@ class AiLeadScore extends Model
         $factors = $this->score_breakdown;
         $maxScore = max($factors);
         $factor = array_search($maxScore, $factors);
-        
+
         return [
             'factor' => $factor,
             'score' => $maxScore,
@@ -256,7 +272,7 @@ class AiLeadScore extends Model
         $factors = $this->score_breakdown;
         $minScore = min($factors);
         $factor = array_search($minScore, $factors);
-        
+
         return [
             'factor' => $factor,
             'score' => $minScore,
@@ -295,7 +311,7 @@ class AiLeadScore extends Model
      */
     public function needsImmediateAttention(): bool
     {
-        return $this->priority_level === 'urgent' || 
+        return $this->priority_level === 'urgent' ||
                ($this->total_score >= 90 && $this->conversion_probability >= 0.8);
     }
 
@@ -304,7 +320,7 @@ class AiLeadScore extends Model
      */
     public function isRecentScore(): bool
     {
-        return $this->last_scored_at && 
+        return $this->last_scored_at &&
                $this->last_scored_at->diffInHours(Carbon::now()) <= 24;
     }
 
@@ -313,7 +329,7 @@ class AiLeadScore extends Model
      */
     public function needsUpdate(): bool
     {
-        return !$this->last_scored_at || 
+        return ! $this->last_scored_at ||
                $this->last_scored_at->diffInDays(Carbon::now()) > 7;
     }
 
@@ -323,17 +339,26 @@ class AiLeadScore extends Model
     public function getRiskLevelAttribute(): string
     {
         $risk = $this->risk_assessment ?? [];
-        
+
         if (isset($risk['risk_score'])) {
             $score = $risk['risk_score'];
-            
-            if ($score >= 80) return 'مرتفع جداً';
-            if ($score >= 60) return 'مرتفع';
-            if ($score >= 40) return 'متوسط';
-            if ($score >= 20) return 'منخفض';
+
+            if ($score >= 80) {
+                return 'مرتفع جداً';
+            }
+            if ($score >= 60) {
+                return 'مرتفع';
+            }
+            if ($score >= 40) {
+                return 'متوسط';
+            }
+            if ($score >= 20) {
+                return 'منخفض';
+            }
+
             return 'منخفض جداً';
         }
-        
+
         return 'غير محدد';
     }
 
@@ -343,7 +368,7 @@ class AiLeadScore extends Model
     public function getOptimalContactTimeFormattedAttribute(): string
     {
         $time = $this->optimal_contact_time ?? [];
-        
+
         if (isset($time['day']) && isset($time['time'])) {
             $days = [
                 'sunday' => 'الأحد',
@@ -354,10 +379,10 @@ class AiLeadScore extends Model
                 'friday' => 'الجمعة',
                 'saturday' => 'السبت',
             ];
-            
-            return $days[$time['day']] . ' ' . $time['time'];
+
+            return $days[$time['day']].' '.$time['time'];
         }
-        
+
         return 'غير محدد';
     }
 
@@ -367,17 +392,22 @@ class AiLeadScore extends Model
     public function getScoreTrendAttribute(): string
     {
         $history = $this->score_history ?? [];
-        
+
         if (count($history) < 2) {
             return 'غير محدد';
         }
-        
+
         $recent = array_slice($history, -2);
         $previous = $recent[0]['score'] ?? 0;
         $current = $recent[1]['score'] ?? 0;
-        
-        if ($current > $previous * 1.05) return 'تحسن';
-        if ($current < $previous * 0.95) return 'تراجع';
+
+        if ($current > $previous * 1.05) {
+            return 'تحسن';
+        }
+        if ($current < $previous * 0.95) {
+            return 'تراجع';
+        }
+
         return 'مستقر';
     }
 
@@ -387,15 +417,15 @@ class AiLeadScore extends Model
     public function getScoreTrendPercentageAttribute(): float
     {
         $history = $this->score_history ?? [];
-        
+
         if (count($history) < 2) {
             return 0;
         }
-        
+
         $recent = array_slice($history, -2);
         $previous = $recent[0]['score'] ?? 1;
         $current = $recent[1]['score'] ?? 0;
-        
+
         return round((($current - $previous) / $previous) * 100, 2);
     }
 
@@ -410,7 +440,7 @@ class AiLeadScore extends Model
             'date' => now()->toDateTimeString(),
             'model_version' => $this->ai_model_version,
         ];
-        
+
         // Keep only last 30 entries
         $this->score_history = array_slice($history, -30);
     }
@@ -422,7 +452,7 @@ class AiLeadScore extends Model
     {
         $leadId = $data['lead_id'];
         $scoringModel = $data['scoring_model'] ?? 'predictive_ml';
-        
+
         // Simulate AI scoring algorithm
         $demographicScore = rand(40, 95);
         $behavioralScore = rand(30, 90);
@@ -431,7 +461,7 @@ class AiLeadScore extends Model
         $timingScore = rand(60, 95);
         $budgetScore = rand(35, 85);
         $propertyMatchScore = rand(45, 90);
-        
+
         // Calculate weighted total score
         $weights = [
             'demographic' => 0.15,
@@ -442,7 +472,7 @@ class AiLeadScore extends Model
             'budget' => 0.10,
             'property_match' => 0.05,
         ];
-        
+
         $totalScore = (
             $demographicScore * $weights['demographic'] +
             $behavioralScore * $weights['behavioral'] +
@@ -452,25 +482,38 @@ class AiLeadScore extends Model
             $budgetScore * $weights['budget'] +
             $propertyMatchScore * $weights['property_match']
         );
-        
+
         // Determine quality level
-        if ($totalScore >= 90) $qualityLevel = 'excellent';
-        elseif ($totalScore >= 80) $qualityLevel = 'very_good';
-        elseif ($totalScore >= 70) $qualityLevel = 'good';
-        elseif ($totalScore >= 60) $qualityLevel = 'average';
-        elseif ($totalScore >= 50) $qualityLevel = 'poor';
-        else $qualityLevel = 'very_poor';
-        
+        if ($totalScore >= 90) {
+            $qualityLevel = 'excellent';
+        } elseif ($totalScore >= 80) {
+            $qualityLevel = 'very_good';
+        } elseif ($totalScore >= 70) {
+            $qualityLevel = 'good';
+        } elseif ($totalScore >= 60) {
+            $qualityLevel = 'average';
+        } elseif ($totalScore >= 50) {
+            $qualityLevel = 'poor';
+        } else {
+            $qualityLevel = 'very_poor';
+        }
+
         // Determine priority level
-        if ($totalScore >= 85) $priorityLevel = 'urgent';
-        elseif ($totalScore >= 75) $priorityLevel = 'high';
-        elseif ($totalScore >= 65) $priorityLevel = 'medium';
-        elseif ($totalScore >= 55) $priorityLevel = 'low';
-        else $priorityLevel = 'very_low';
-        
+        if ($totalScore >= 85) {
+            $priorityLevel = 'urgent';
+        } elseif ($totalScore >= 75) {
+            $priorityLevel = 'high';
+        } elseif ($totalScore >= 65) {
+            $priorityLevel = 'medium';
+        } elseif ($totalScore >= 55) {
+            $priorityLevel = 'low';
+        } else {
+            $priorityLevel = 'very_low';
+        }
+
         // Calculate conversion probability
         $conversionProbability = min(0.95, ($totalScore / 100) * 1.2);
-        
+
         // Generate scoring factors
         $scoringFactors = [
             'demographic_factors' => [
@@ -492,7 +535,7 @@ class AiLeadScore extends Model
                 'social_engagement' => rand(20, 70) / 100,
             ],
         ];
-        
+
         // Generate risk assessment
         $riskScore = max(0, 100 - $totalScore + rand(-10, 10));
         $riskAssessment = [
@@ -509,7 +552,7 @@ class AiLeadScore extends Model
                 'timing_optimization' => $timingScore < 70,
             ],
         ];
-        
+
         // Generate recommended actions
         $recommendedActions = [];
         if ($engagementScore < 60) {
@@ -524,7 +567,7 @@ class AiLeadScore extends Model
         if ($totalScore >= 80) {
             $recommendedActions[] = 'تسريع عملية البيع';
         }
-        
+
         // Generate next best action
         $nextBestAction = [
             'action' => $totalScore >= 80 ? 'immediate_contact' : 'nurturing_campaign',
@@ -532,14 +575,14 @@ class AiLeadScore extends Model
             'timing' => $totalScore >= 85 ? 'asap' : 'within_24h',
             'channel' => $engagementScore >= 70 ? 'phone' : 'email',
         ];
-        
+
         // Generate optimal contact time
         $optimalContactTime = [
             'day' => ['monday', 'tuesday', 'wednesday', 'thursday'][array_rand(['monday', 'tuesday', 'wednesday', 'thursday'])],
             'time' => ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'][array_rand(['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'])],
             'timezone' => 'Asia/Riyadh',
         ];
-        
+
         // Generate improvement suggestions
         $improvementSuggestions = [];
         if ($demographicScore < 70) {
@@ -574,7 +617,7 @@ class AiLeadScore extends Model
             'optimal_contact_time' => $optimalContactTime,
             'ai_model_version' => '9.2.3',
             'scoring_metadata' => [
-                'processing_time' => rand(0.3, 1.8) . 's',
+                'processing_time' => rand(0.3, 1.8).'s',
                 'data_points_analyzed' => rand(50, 200),
                 'model_confidence' => rand(75, 95) / 100,
                 'scoring_date' => now()->toDateTimeString(),
@@ -587,11 +630,11 @@ class AiLeadScore extends Model
             'improvement_suggestions' => $improvementSuggestions,
             'created_by' => $data['created_by'] ?? auth()->id(),
         ]);
-        
+
         // Add initial score to history
         $leadScore->addToHistory($totalScore);
         $leadScore->save();
-        
+
         return $leadScore;
     }
 
@@ -602,14 +645,14 @@ class AiLeadScore extends Model
     {
         // Add current score to history
         $this->addToHistory($this->total_score);
-        
+
         // Simulate score recalculation
         $scoreChange = rand(-5, 10) / 100;
         $newScore = max(0, min(100, $this->total_score * (1 + $scoreChange)));
-        
+
         $this->total_score = round($newScore, 2);
         $this->last_scored_at = now();
-        
+
         // Recalculate quality and priority levels
         if ($this->total_score >= 90) {
             $this->lead_quality_level = 'excellent';
@@ -624,10 +667,10 @@ class AiLeadScore extends Model
             $this->lead_quality_level = 'average';
             $this->priority_level = 'low';
         }
-        
+
         // Recalculate conversion probability
         $this->conversion_probability = min(0.95, ($this->total_score / 100) * 1.2);
-        
+
         return $this->save();
     }
 

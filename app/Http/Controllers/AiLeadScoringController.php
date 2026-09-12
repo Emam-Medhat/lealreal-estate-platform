@@ -4,22 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\AiLeadScore;
 use App\Models\Lead;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
 
 class AiLeadScoringController extends Controller
 {
     public function dashboard()
     {
+        $scoreStats = $this->getScoreStats();
+
         $stats = [
-            'total_scores' => AiLeadScore::count(),
-            'high_quality_leads' => AiLeadScore::where('score', '>=', 80)->count(),
-            'medium_quality_leads' => AiLeadScore::whereBetween('score', [50, 79])->count(),
-            'low_quality_leads' => AiLeadScore::where('score', '<', 50)->count(),
-            'average_score' => $this->getAverageScore(),
+            'total_scores' => $scoreStats['total_scores'],
+            'high_quality_leads' => $scoreStats['high_quality_leads'],
+            'medium_quality_leads' => $scoreStats['medium_quality_leads'],
+            'low_quality_leads' => $scoreStats['low_quality_leads'],
+            'average_score' => $scoreStats['average_score'],
             'scoring_accuracy' => $this->getScoringAccuracy(),
         ];
 
@@ -29,12 +28,12 @@ class AiLeadScoringController extends Controller
             ->get();
 
         $scoringTrends = $this->getScoringTrends();
-        $performanceMetrics = $this->getPerformanceMetrics();
+        $performanceMetrics = $this->getPerformanceMetrics($scoreStats);
 
         return view('ai.lead-scoring.dashboard', compact(
-            'stats', 
-            'recentScores', 
-            'scoringTrends', 
+            'stats',
+            'recentScores',
+            'scoringTrends',
             'performanceMetrics'
         ));
     }
@@ -48,15 +47,15 @@ class AiLeadScoringController extends Controller
         }
 
         if ($request->filled('score_min')) {
-            $query->where('score', '>=', $request->score_min);
+            $query->where('total_score', '>=', $request->score_min);
         }
 
         if ($request->filled('score_max')) {
-            $query->where('score', '<=', $request->score_max);
+            $query->where('total_score', '<=', $request->score_max);
         }
 
         if ($request->filled('quality_level')) {
-            $query->where('quality_level', $request->quality_level);
+            $query->where('lead_quality_level', $request->quality_level);
         }
 
         if ($request->filled('date_from')) {
@@ -88,7 +87,7 @@ class AiLeadScoringController extends Controller
     {
         $validated = $request->validate([
             'lead_id' => 'required|exists:leads,id',
-            'scoring_model' => 'required|string|in:' . implode(',', array_keys($this->getScoringModels())),
+            'scoring_model' => 'required|string|in:'.implode(',', array_keys($this->getScoringModels())),
             'scoring_factors' => 'required|array',
             'lead_data' => 'required|array',
             'behavioral_data' => 'required|array',
@@ -130,15 +129,15 @@ class AiLeadScoringController extends Controller
     public function show(AiLeadScore $leadScore)
     {
         $leadScore->load(['lead', 'user', 'metadata']);
-        
+
         $scoreDetails = $this->getScoreDetails($leadScore);
         $factorAnalysis = $this->getFactorAnalysis($leadScore);
         $recommendations = $this->getDetailedRecommendations($leadScore);
 
         return view('ai.lead-scoring.show', compact(
-            'leadScore', 
-            'scoreDetails', 
-            'factorAnalysis', 
+            'leadScore',
+            'scoreDetails',
+            'factorAnalysis',
             'recommendations'
         ));
     }
@@ -211,7 +210,7 @@ class AiLeadScoringController extends Controller
     public function rescore(AiLeadScore $leadScore)
     {
         $rescoringResults = $this->performRescoring($leadScore);
-        
+
         $leadScore->update([
             'score' => $rescoringResults['score'],
             'quality_level' => $this->determineQualityLevel($rescoringResults['score']),
@@ -233,7 +232,7 @@ class AiLeadScoringController extends Controller
     public function analyze(AiLeadScore $leadScore)
     {
         $analysis = $this->performScoreAnalysis($leadScore);
-        
+
         $leadScore->update([
             'metadata' => array_merge($leadScore->metadata, [
                 'analysis_results' => $analysis,
@@ -251,7 +250,7 @@ class AiLeadScoringController extends Controller
     public function compare(AiLeadScore $leadScore)
     {
         $comparisons = $this->getScoreComparisons($leadScore);
-        
+
         return response()->json([
             'success' => true,
             'comparisons' => $comparisons,
@@ -262,7 +261,7 @@ class AiLeadScoringController extends Controller
     public function insights()
     {
         $insights = $this->generateScoringInsights();
-        
+
         return response()->json([
             'success' => true,
             'insights' => $insights,
@@ -270,9 +269,31 @@ class AiLeadScoringController extends Controller
     }
 
     // Helper Methods
+    /**
+     * Retrieve aggregated AI lead score statistics in a single query.
+     */
+    private function getScoreStats(): array
+    {
+        $stats = AiLeadScore::selectRaw('
+            COUNT(*) as total_scores,
+            COUNT(CASE WHEN total_score >= 80 THEN 1 END) as high_quality_leads,
+            COUNT(CASE WHEN total_score >= 50 AND total_score < 80 THEN 1 END) as medium_quality_leads,
+            COUNT(CASE WHEN total_score < 50 THEN 1 END) as low_quality_leads,
+            COALESCE(AVG(total_score), 0) as average_score
+        ')->first();
+
+        return [
+            'total_scores' => (int) ($stats->total_scores ?? 0),
+            'high_quality_leads' => (int) ($stats->high_quality_leads ?? 0),
+            'medium_quality_leads' => (int) ($stats->medium_quality_leads ?? 0),
+            'low_quality_leads' => (int) ($stats->low_quality_leads ?? 0),
+            'average_score' => (float) round($stats->average_score ?? 0, 2),
+        ];
+    }
+
     private function getAverageScore(): float
     {
-        return AiLeadScore::avg('score') ?? 0;
+        return (float) (AiLeadScore::avg('total_score') ?? 0);
     }
 
     private function getScoringAccuracy(): float
@@ -284,23 +305,26 @@ class AiLeadScoringController extends Controller
     private function getScoringTrends(): array
     {
         return AiLeadScore::select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as count'),
-                DB::raw('AVG(score) as avg_score')
-            )
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(*) as count'),
+            DB::raw('AVG(total_score) as avg_score')
+        )
             ->groupBy('date')
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->toArray();
     }
 
-    private function getPerformanceMetrics(): array
+    private function getPerformanceMetrics(?array $scoreStats = null): array
     {
+        $scoreStats = $scoreStats ?? $this->getScoreStats();
+
         return [
-            'total_scores' => AiLeadScore::count(),
-            'high_quality_leads' => AiLeadScore::where('score', '>=', 80)->count(),
-            'medium_quality_leads' => AiLeadScore::whereBetween('score', [50, 79])->count(),
-            'low_quality_leads' => AiLeadScore::where('score', '<', 50)->count(),
-            'average_score' => $this->getAverageScore(),
+            'total_scores' => $scoreStats['total_scores'],
+            'high_quality_leads' => $scoreStats['high_quality_leads'],
+            'medium_quality_leads' => $scoreStats['medium_quality_leads'],
+            'low_quality_leads' => $scoreStats['low_quality_leads'],
+            'average_score' => $scoreStats['average_score'],
             'model_performance' => $this->getModelPerformance(),
         ];
     }
@@ -663,7 +687,7 @@ class AiLeadScoringController extends Controller
     private function getScoreComparisons(AiLeadScore $leadScore): array
     {
         $similarLeads = AiLeadScore::where('id', '!=', $leadScore->id)
-            ->whereBetween('score', [$leadScore->score - 10, $leadScore->score + 10])
+            ->whereBetween('total_score', [$leadScore->score - 10, $leadScore->score + 10])
             ->take(5)
             ->get();
 
@@ -672,7 +696,7 @@ class AiLeadScoringController extends Controller
             $comparisons[] = [
                 'lead_id' => $similarLead->lead_id,
                 'score' => $similarLead->score,
-                'quality_level' => $similarLead->quality_level,
+                'quality_level' => $similarLead->lead_quality_level,
                 'difference' => $similarLead->score - $leadScore->score,
             ];
         }
@@ -682,22 +706,26 @@ class AiLeadScoringController extends Controller
 
     private function generateScoringInsights(): array
     {
+        $scoreStats = $this->getScoreStats();
+
         return [
-            'total_leads_scored' => AiLeadScore::count(),
-            'average_score' => $this->getAverageScore(),
-            'score_distribution' => $this->getScoreDistribution(),
+            'total_leads_scored' => $scoreStats['total_scores'],
+            'average_score' => $scoreStats['average_score'],
+            'score_distribution' => $this->getScoreDistribution($scoreStats),
             'top_scoring_factors' => $this->getTopScoringFactors(),
             'conversion_correlation' => $this->getConversionCorrelation(),
             'model_performance' => $this->getModelPerformance(),
         ];
     }
 
-    private function getScoreDistribution(): array
+    private function getScoreDistribution(?array $scoreStats = null): array
     {
+        $scoreStats = $scoreStats ?? $this->getScoreStats();
+
         return [
-            'high' => AiLeadScore::where('score', '>=', 80)->count(),
-            'medium' => AiLeadScore::whereBetween('score', [50, 79])->count(),
-            'low' => AiLeadScore::where('score', '<', 50)->count(),
+            'high' => $scoreStats['high_quality_leads'],
+            'medium' => $scoreStats['medium_quality_leads'],
+            'low' => $scoreStats['low_quality_leads'],
         ];
     }
 
@@ -762,7 +790,7 @@ class AiLeadScoringController extends Controller
     private function getDetailedRecommendations(AiLeadScore $leadScore): array
     {
         $recommendations = $leadScore->recommendations ?? [];
-        
+
         return [
             'primary_recommendations' => array_slice($recommendations, 0, 2),
             'secondary_recommendations' => array_slice($recommendations, 2),
@@ -784,19 +812,19 @@ class AiLeadScoringController extends Controller
     private function identifyStrengths(AiLeadScore $leadScore): array
     {
         $strengths = [];
-        
+
         if ($this->calculateDemographicScore($leadScore->demographic_data) >= 70) {
             $strengths[] = 'بيانات ديموغرافية قوية';
         }
-        
+
         if ($this->calculateBehavioralScore($leadScore->behavioral_data) >= 70) {
             $strengths[] = 'سلوك نشط';
         }
-        
+
         if ($this->calculateEngagementScore($leadScore->engagement_metrics) >= 70) {
             $strengths[] = 'مشاركة عالية';
         }
-        
+
         if ($this->calculateLeadDataScore($leadScore->lead_data) >= 70) {
             $strengths[] = 'بيانات العميل متوافقة';
         }
@@ -807,19 +835,19 @@ class AiLeadScoringController extends Controller
     private function identifyWeaknesses(AiLeadScore $leadScore): array
     {
         $weaknesses = [];
-        
+
         if ($this->calculateDemographicScore($leadScore->demographic_data) < 50) {
             $weaknesses[] = 'بيانات ديموغرافية محدودة';
         }
-        
+
         if ($this->calculateBehavioralScore($leadScore->behavioral_data) < 50) {
             $weaknesses[] = 'سلوك غير نشط';
         }
-        
+
         if ($this->calculateEngagementScore($leadScore->engagement_metrics) < 50) {
             $weaknesses[] = 'مشاركة منخفضة';
         }
-        
+
         if ($this->calculateLeadDataScore($leadScore->lead_data) < 50) {
             $weaknesses[] = 'بيانات العميل غير متوافقة';
         }
@@ -830,19 +858,19 @@ class AiLeadScoringController extends Controller
     private function getImprovementSuggestions(AiLeadScore $leadScore): array
     {
         $suggestions = [];
-        
+
         if ($this->calculateDemographicScore($leadScore->demographic_data) < 50) {
             $suggestions[] = 'جمع المزيد من البيانات الديموغرافية';
         }
-        
+
         if ($this->calculateBehavioralScore($leadScore->behavioral_data) < 50) {
             $suggestions[] = 'تحفيز المزيد من التفاعل مع الموقع';
         }
-        
+
         if ($this->calculateEngagementScore($leadScore->engagement_metrics) < 50) {
             $suggestions[] = 'تحسين حملات البريد الإلكتروني';
         }
-        
+
         if ($this->calculateLeadDataScore($leadScore->lead_data) < 50) {
             $suggestions[] = 'تحديث معلومات الميزانية والجدول الزمني';
         }
