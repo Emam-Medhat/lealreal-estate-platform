@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\Payment;
-use App\Models\Invoice;
-use App\Models\Property;
 use App\Models\Client;
-use App\Models\Agent;
-use App\Models\Company;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Property;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class PaymentService
 {
@@ -198,7 +196,7 @@ class PaymentService
     /**
      * Process a payment failure
      */
-    public function processPaymentFailure(Payment $payment, string $reason, string $code = null): bool
+    public function processPaymentFailure(Payment $payment, string $reason, ?string $code = null): bool
     {
         try {
             DB::beginTransaction();
@@ -245,7 +243,7 @@ class PaymentService
 
             Log::info('Payment refunded successfully', [
                 'payment_id' => $payment->id,
-                'refund_amount' => $amount
+                'refund_amount' => $amount,
             ]);
 
             return true;
@@ -298,7 +296,7 @@ class PaymentService
 
             Log::warning('Payment flagged as suspicious', [
                 'payment_id' => $payment->id,
-                'reason' => $reason
+                'reason' => $reason,
             ]);
 
             return true;
@@ -342,12 +340,22 @@ class PaymentService
             $query->where('created_at', '<=', $filters['date_to']);
         }
 
-        $totalPayments = $query->count();
-        $totalAmount = $query->sum('amount');
-        $completedAmount = $query->where('status', 'completed')->sum('amount');
-        $failedAmount = $query->where('status', 'failed')->sum('amount');
-        $refundedAmount = $query->where('status', 'refunded')->sum('amount');
-        $pendingAmount = $query->where('status', 'pending')->sum('amount');
+        // Consolidate 6 separate COUNT/SUM queries into 1 single query using conditional aggregations
+        $stats = $query->selectRaw("
+            COUNT(*) as total_payments,
+            COALESCE(SUM(amount), 0) as total_amount,
+            COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) as completed_amount,
+            COALESCE(SUM(CASE WHEN status = 'failed' THEN amount ELSE 0 END), 0) as failed_amount,
+            COALESCE(SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END), 0) as refunded_amount,
+            COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_amount
+        ")->first();
+
+        $totalPayments = (int) ($stats->total_payments ?? 0);
+        $totalAmount = (float) ($stats->total_amount ?? 0);
+        $completedAmount = (float) ($stats->completed_amount ?? 0);
+        $failedAmount = (float) ($stats->failed_amount ?? 0);
+        $refundedAmount = (float) ($stats->refunded_amount ?? 0);
+        $pendingAmount = (float) ($stats->pending_amount ?? 0);
 
         return [
             'total_payments' => $totalPayments,
@@ -367,8 +375,8 @@ class PaymentService
     public function getHighRiskPayments(array $filters = []): Collection
     {
         $query = Payment::where('risk_score', '>=', 7)
-                       ->where('status', '!=', 'failed')
-                       ->where('status', '!=', 'cancelled');
+            ->where('status', '!=', 'failed')
+            ->where('status', '!=', 'cancelled');
 
         // Apply filters
         if (isset($filters['company_id'])) {
@@ -379,9 +387,9 @@ class PaymentService
         }
 
         return $query->with(['client', 'property', 'company'])
-                    ->orderBy('risk_score', 'desc')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+            ->orderBy('risk_score', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -390,7 +398,7 @@ class PaymentService
     public function getPendingPayments(array $filters = []): Collection
     {
         $query = Payment::where('status', 'pending')
-                       ->orWhere('status', 'processing');
+            ->orWhere('status', 'processing');
 
         // Apply filters
         if (isset($filters['company_id'])) {
@@ -401,8 +409,8 @@ class PaymentService
         }
 
         return $query->with(['client', 'property', 'company', 'invoice'])
-                    ->orderBy('created_at', 'asc')
-                    ->get();
+            ->orderBy('created_at', 'asc')
+            ->get();
     }
 
     /**
@@ -411,9 +419,9 @@ class PaymentService
     public function createRecurringPayments(): Collection
     {
         $recurringPayments = Payment::where('is_recurring', true)
-                                   ->where('recurring_next_date', '<=', now())
-                                   ->where('recurring_remaining', '>', 0)
-                                   ->get();
+            ->where('recurring_next_date', '<=', now())
+            ->where('recurring_remaining', '>', 0)
+            ->get();
 
         $createdPayments = collect();
 
@@ -430,12 +438,12 @@ class PaymentService
 
                 Log::info('Recurring payment created', [
                     'template_id' => $template->id,
-                    'new_payment_id' => $newPayment->id
+                    'new_payment_id' => $newPayment->id,
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to create recurring payment', [
                     'template_id' => $template->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -449,8 +457,8 @@ class PaymentService
     public function processPendingPayments(): Collection
     {
         $pendingPayments = Payment::where('status', 'pending')
-                                ->where('created_at', '<', now()->subHours(1))
-                                ->get();
+            ->where('created_at', '<', now()->subHours(1))
+            ->get();
 
         $processedPayments = collect();
 
@@ -465,7 +473,7 @@ class PaymentService
             } catch (\Exception $e) {
                 Log::error('Failed to process pending payment', [
                     'payment_id' => $payment->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -483,7 +491,7 @@ class PaymentService
             $clientTotalInvoices = $payment->client->invoices()->sum('total');
             $clientPaidAmount = $payment->client->invoices()->sum('paid_amount');
             $clientBalance = $clientTotalInvoices - $clientPaidAmount;
-            
+
             $payment->client->update(['balance' => $clientBalance]);
         }
 
@@ -492,7 +500,7 @@ class PaymentService
             $propertyTotalInvoices = $payment->property->invoices()->sum('total');
             $propertyPaidAmount = $payment->property->invoices()->sum('paid_amount');
             $propertyBalance = $propertyTotalInvoices - $propertyPaidAmount;
-            
+
             $payment->property->update(['outstanding_payments' => $propertyBalance]);
         }
     }
@@ -507,7 +515,7 @@ class PaymentService
         Log::info("Payment {$type} notification", [
             'payment_id' => $payment->id,
             'client_id' => $payment->client_id,
-            'type' => $type
+            'type' => $type,
         ]);
     }
 
@@ -570,7 +578,7 @@ class PaymentService
         return [
             'payments' => $payments,
             'summary' => $this->getPaymentStatistics($filters),
-            'filters' => $filters
+            'filters' => $filters,
         ];
     }
 
