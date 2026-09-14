@@ -1,0 +1,3 @@
+## 2026-09-14 - Consolidating Payment Statistics Aggregations into Single Query
+**Learning:** In `PaymentService::getPaymentStatistics`, sequential calls to `$query->where('status', 'completed')->sum('amount')` were executing multiple separate queries and mutating the shared Eloquent query builder instance. Replacing sequential `where()` and aggregation calls with a single `selectRaw` query using conditional aggregations (`SUM(CASE WHEN status = ... THEN amount ELSE 0 END)`) reduces database round-trips from 6 to 1 and avoids query builder state pollution.
+**Action:** Always check analytics and stats methods performing multiple `count()`/`sum()` calls on a base query builder, and consolidate them into a single `selectRaw()` query using conditional SQL aggregations.
