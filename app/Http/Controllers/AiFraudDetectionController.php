@@ -32,14 +32,30 @@ class AiFraudDetectionController extends Controller
     {
         $user = Auth::user();
         
-        // Get fraud detection statistics
+        // Get fraud detection statistics using a single optimized SQL aggregation
+        // Reduces database queries from 8 down to 1
+        $alertCounts = DB::table('ai_fraud_alerts')
+            ->selectRaw("
+                COUNT(*) as total_alerts,
+                COUNT(CASE WHEN risk_level = 'high' THEN 1 END) as high_risk_alerts,
+                COUNT(CASE WHEN investigation_status = 'resolved' OR resolution_status = 'resolved' THEN 1 END) as resolved_alerts,
+                COUNT(CASE WHEN investigation_status = 'pending' OR resolution_status = 'pending' THEN 1 END) as pending_investigation,
+                COUNT(CASE WHEN investigation_status = 'confirmed' OR resolution_status = 'confirmed' THEN 1 END) as confirmed_alerts,
+                COUNT(CASE WHEN investigation_status = 'false_positive' OR resolution_status = 'false_positive' THEN 1 END) as false_positive_alerts
+            ")
+            ->first();
+
+        $total = $alertCounts->total_alerts ?? 0;
+        $confirmed = $alertCounts->confirmed_alerts ?? 0;
+        $falsePositive = $alertCounts->false_positive_alerts ?? 0;
+
         $stats = [
-            'total_alerts' => DB::table('ai_fraud_alerts')->count(),
-            'high_risk_alerts' => DB::table('ai_fraud_alerts')->where('risk_level', 'high')->count(),
-            'resolved_alerts' => DB::table('ai_fraud_alerts')->where('status', 'resolved')->count(),
-            'pending_investigation' => DB::table('ai_fraud_alerts')->where('status', 'pending')->count(),
-            'detection_accuracy' => $this->getDetectionAccuracy(),
-            'false_positive_rate' => $this->getFalsePositiveRate(),
+            'total_alerts' => (int) $total,
+            'high_risk_alerts' => (int) ($alertCounts->high_risk_alerts ?? 0),
+            'resolved_alerts' => (int) ($alertCounts->resolved_alerts ?? 0),
+            'pending_investigation' => (int) ($alertCounts->pending_investigation ?? 0),
+            'detection_accuracy' => $total > 0 ? ($confirmed / $total) * 100 : 0.0,
+            'false_positive_rate' => $total > 0 ? ($falsePositive / $total) * 100 : 0.0,
         ];
 
         // Get recent fraud alerts
@@ -527,22 +543,6 @@ class AiFraudDetectionController extends Controller
     /**
      * Helper methods for dashboard
      */
-    private function getDetectionAccuracy(): float
-    {
-        $total = DB::table('ai_fraud_alerts')->count();
-        $confirmed = DB::table('ai_fraud_alerts')->where('status', 'confirmed')->count();
-        
-        return $total > 0 ? ($confirmed / $total) * 100 : 0;
-    }
-
-    private function getFalsePositiveRate(): float
-    {
-        $total = DB::table('ai_fraud_alerts')->count();
-        $falsePositive = DB::table('ai_fraud_alerts')->where('status', 'false_positive')->count();
-        
-        return $total > 0 ? ($falsePositive / $total) * 100 : 0;
-    }
-
     private function getTrendingPatterns(): array
     {
         return [
