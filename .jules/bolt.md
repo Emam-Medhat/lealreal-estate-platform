@@ -1,0 +1,3 @@
+## 2026-09-16 - AI Fraud Detection Dashboard Query Optimization
+**Learning:** `AiFraudDetectionController::dashboard` performed 8 separate SQL count queries (including inside helper methods `getDetectionAccuracy` and `getFalsePositiveRate`) to calculate dashboard statistics. Consolidating these queries using conditional SQL aggregations (`COUNT(CASE WHEN ... THEN 1 END)`) on `investigation_status`, `resolution_status`, and `risk_level` reduced database roundtrips from 8 down to 1.
+**Action:** When calculating multi-metric stats from a single table in Laravel controllers or services, use `selectRaw` conditional aggregations to execute a single query rather than making multiple `.where().count()` calls or delegating to helper methods that repeat queries.
