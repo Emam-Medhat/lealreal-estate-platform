@@ -11,6 +11,8 @@ class VirtualOpenHouseMarketing extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'virtual_open_house_marketing';
+
     protected $fillable = [
         'property_id',
         'title',

@@ -41,13 +41,26 @@ class MarketingService
     public function getVirtualOpenHouseStats(): array
     {
         return Cache::remember('virtual_open_house_stats', 600, function () {
+            // Bolt Optimization: Consolidate 6 individual aggregate queries into a single SQL query
+            // using conditional aggregations, reducing database overhead from 6 queries to 1 query.
+            $stats = VirtualOpenHouseMarketing::query()
+                ->selectRaw("
+                    COUNT(*) as total_campaigns,
+                    COUNT(CASE WHEN status = 'active' THEN 1 END) as active_campaigns,
+                    COUNT(CASE WHEN status = 'scheduled' THEN 1 END) as scheduled_campaigns,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_campaigns,
+                    COALESCE(SUM(total_attendees), 0) as total_attendees,
+                    COALESCE(SUM(total_views), 0) as total_views
+                ")
+                ->first();
+
             return [
-                'total_campaigns' => VirtualOpenHouseMarketing::count(),
-                'active_campaigns' => VirtualOpenHouseMarketing::where('status', 'active')->count(),
-                'scheduled_campaigns' => VirtualOpenHouseMarketing::where('status', 'scheduled')->count(),
-                'completed_campaigns' => VirtualOpenHouseMarketing::where('status', 'completed')->count(),
-                'total_attendees' => VirtualOpenHouseMarketing::sum('total_attendees'),
-                'total_views' => VirtualOpenHouseMarketing::sum('total_views'),
+                'total_campaigns' => (int) ($stats->total_campaigns ?? 0),
+                'active_campaigns' => (int) ($stats->active_campaigns ?? 0),
+                'scheduled_campaigns' => (int) ($stats->scheduled_campaigns ?? 0),
+                'completed_campaigns' => (int) ($stats->completed_campaigns ?? 0),
+                'total_attendees' => (int) ($stats->total_attendees ?? 0),
+                'total_views' => (int) ($stats->total_views ?? 0),
             ];
         });
     }
