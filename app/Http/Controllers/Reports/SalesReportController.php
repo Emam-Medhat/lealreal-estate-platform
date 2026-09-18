@@ -634,11 +634,13 @@ class SalesReportController extends Controller
         $startDate = $request->start_date ?? now()->subMonth();
         $endDate = $request->end_date ?? now();
 
+        $stats = $this->getSalesStats($startDate, $endDate);
+
         $data = [
-            'total_sales' => $this->getTotalSales($startDate, $endDate),
-            'total_commission' => $this->getTotalCommission($startDate, $endDate),
-            'properties_sold' => $this->getPropertiesSold($startDate, $endDate),
-            'average_sale_price' => $this->getAverageSalePrice($startDate, $endDate),
+            'total_sales' => $stats['total_sales'],
+            'total_commission' => $stats['total_commission'],
+            'properties_sold' => $stats['properties_sold'],
+            'average_sale_price' => $stats['average_sale_price'],
             'sales_by_agent' => $this->getSalesByAgent($startDate, $endDate),
             'sales_by_property_type' => $this->getSalesByPropertyType($startDate, $endDate),
             'monthly_sales' => $this->getMonthlySales($startDate, $endDate),
@@ -653,11 +655,13 @@ class SalesReportController extends Controller
             $startDate = Carbon::parse($validated['date_range']['start']);
             $endDate = Carbon::parse($validated['date_range']['end']);
 
+            $stats = $this->getSalesStats($startDate, $endDate);
+
             $salesData = [
-                'total_sales' => $this->getTotalSales($startDate, $endDate),
-                'total_commission' => $this->getTotalCommission($startDate, $endDate),
-                'properties_sold' => $this->getPropertiesSold($startDate, $endDate),
-                'average_sale_price' => $this->getAverageSalePrice($startDate, $endDate),
+                'total_sales' => $stats['total_sales'],
+                'total_commission' => $stats['total_commission'],
+                'properties_sold' => $stats['properties_sold'],
+                'average_sale_price' => $stats['average_sale_price'],
                 'average_days_on_market' => $this->getAverageDaysOnMarket($startDate, $endDate),
                 'sales_by_agent' => $this->getSalesByAgent($startDate, $endDate),
                 'sales_by_property_type' => $this->getSalesByPropertyType($startDate, $endDate),
@@ -703,11 +707,21 @@ class SalesReportController extends Controller
 
     private function getSalesStats(Carbon $startDate, Carbon $endDate): array
     {
+        // Bolt performance optimization: single SQL query to aggregate sum and count
+        $stats = DB::table('properties')
+            ->where('status', 'sold')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('COALESCE(SUM(price), 0) as total_sales, COUNT(*) as properties_sold')
+            ->first();
+
+        $totalSales = (float) ($stats->total_sales ?? 0);
+        $propertiesSold = (int) ($stats->properties_sold ?? 0);
+
         return [
-            'total_sales' => $this->getTotalSales($startDate, $endDate),
-            'total_commission' => $this->getTotalCommission($startDate, $endDate),
-            'properties_sold' => $this->getPropertiesSold($startDate, $endDate),
-            'average_sale_price' => $this->getAverageSalePrice($startDate, $endDate),
+            'total_sales' => $totalSales,
+            'total_commission' => $totalSales * 0.05,
+            'properties_sold' => $propertiesSold,
+            'average_sale_price' => $propertiesSold > 0 ? $totalSales / $propertiesSold : 0,
         ];
     }
 
@@ -780,24 +794,34 @@ class SalesReportController extends Controller
 
     private function getMonthlySales(Carbon $startDate, Carbon $endDate): array
     {
+        $driver = DB::connection()->getDriverName();
+        $dateFormat = $driver === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')";
+
+        // Bolt performance optimization: Single SQL GROUP BY query eliminates 2N monthly loop database queries
+        $monthlyAggregates = DB::table('properties')
+            ->where('status', 'sold')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw("{$dateFormat} as month, COALESCE(SUM(price), 0) as sales, COUNT(*) as properties")
+            ->groupBy('month')
+            ->get()
+            ->keyBy('month');
+
         $monthlyData = [];
         $current = $startDate->copy()->startOfMonth();
-        
+
         while ($current <= $endDate) {
-            $monthEnd = $current->copy()->endOfMonth();
-            if ($monthEnd > $endDate) {
-                $monthEnd = $endDate;
-            }
-            
+            $monthKey = $current->format('Y-m');
+            $record = $monthlyAggregates->get($monthKey);
+
             $monthlyData[] = [
-                'month' => $current->format('Y-m'),
-                'sales' => $this->getTotalSales($current, $monthEnd),
-                'properties' => $this->getPropertiesSold($current, $monthEnd),
+                'month' => $monthKey,
+                'sales' => (float) ($record->sales ?? 0),
+                'properties' => (int) ($record->properties ?? 0),
             ];
-            
+
             $current->addMonth();
         }
-        
+
         return $monthlyData;
     }
 
