@@ -66,13 +66,28 @@ class AgentCrmService
         $cacheKey = 'agent_crm_stats_' . $agent->id;
 
         return Cache::remember($cacheKey, $this->cacheTTL, function () use ($agent) {
+            // Consolidate 6 individual count queries into a single SQL selectRaw aggregation query
+            $startOfMonth = now()->startOfMonth();
+            $endOfMonth = now()->endOfMonth();
+
+            $stats = $agent->leads()
+                ->selectRaw("
+                    COUNT(*) as total_leads,
+                    COUNT(CASE WHEN created_at >= ? AND created_at <= ? THEN 1 END) as new_leads_this_month,
+                    COUNT(CASE WHEN temperature >= 80 THEN 1 END) as hot_leads,
+                    COUNT(CASE WHEN temperature >= 40 AND temperature <= 79 THEN 1 END) as warm_leads,
+                    COUNT(CASE WHEN temperature < 40 THEN 1 END) as cold_leads,
+                    COUNT(CASE WHEN lead_status = 'converted' THEN 1 END) as converted_leads
+                ", [$startOfMonth, $endOfMonth])
+                ->first();
+
             return [
-                'total_leads' => $agent->leads()->count(),
-                'new_leads_this_month' => $agent->leads()->whereMonth('created_at', now()->month)->count(),
-                'hot_leads' => $agent->leads()->where('temperature', '>=', 80)->count(),
-                'warm_leads' => $agent->leads()->whereBetween('temperature', [40, 79])->count(),
-                'cold_leads' => $agent->leads()->where('temperature', '<', 40)->count(),
-                'converted_leads' => $agent->leads()->where('lead_status', 'converted')->count(),
+                'total_leads' => (int) ($stats->total_leads ?? 0),
+                'new_leads_this_month' => (int) ($stats->new_leads_this_month ?? 0),
+                'hot_leads' => (int) ($stats->hot_leads ?? 0),
+                'warm_leads' => (int) ($stats->warm_leads ?? 0),
+                'cold_leads' => (int) ($stats->cold_leads ?? 0),
+                'converted_leads' => (int) ($stats->converted_leads ?? 0),
             ];
         });
     }
