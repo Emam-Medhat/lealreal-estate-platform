@@ -151,11 +151,23 @@ class EnterpriseService
 
     public function getDashboardStats(): array
     {
+        $startOfMonth = now()->startOfMonth();
+
+        // Single DB query with conditional aggregations for account statistics,
+        // using index-friendly range filtering for new accounts this month.
+        $accountStats = EnterpriseAccount::query()
+            ->selectRaw("
+                COUNT(*) as total_accounts,
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_accounts,
+                COUNT(CASE WHEN created_at >= ? THEN 1 END) as new_this_month
+            ", [$startOfMonth])
+            ->first();
+
         return [
-            'total_accounts' => EnterpriseAccount::count(),
-            'active_accounts' => EnterpriseAccount::where('status', 'active')->count(),
-            'total_revenue' => Subscription::whereNotNull('enterprise_id')->sum('price'), // or amount
-            'new_this_month' => EnterpriseAccount::whereMonth('created_at', now()->month)->count()
+            'total_accounts' => (int) ($accountStats->total_accounts ?? 0),
+            'active_accounts' => (int) ($accountStats->active_accounts ?? 0),
+            'total_revenue' => (float) Subscription::whereNotNull('enterprise_id')->sum('price'),
+            'new_this_month' => (int) ($accountStats->new_this_month ?? 0),
         ];
     }
 
