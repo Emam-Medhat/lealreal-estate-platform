@@ -13,13 +13,39 @@ class AiPricePredictorController extends Controller
 {
     public function dashboard()
     {
+        $todayStart = today()->startOfDay();
+
+        // Bolt performance optimization: Consolidate 8 database queries down to 1 single SQL query
+        // using conditional aggregations and range filter on created_at to leverage indexes.
+        $agg = AiPricePrediction::selectRaw("
+            COUNT(*) as total_predictions,
+            COUNT(CASE WHEN created_at >= ? THEN 1 END) as today_predictions,
+            COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_predictions,
+            AVG(CASE WHEN status = 'completed' THEN accuracy END) as completed_avg_accuracy,
+            COUNT(DISTINCT CASE WHEN status = 'completed' THEN property_id END) as total_properties_analyzed,
+            COUNT(CASE WHEN accuracy >= 0.8 THEN 1 END) as high_accuracy_predictions,
+            AVG(accuracy) as overall_avg_accuracy
+        ", [$todayStart])->first();
+
+        $totalPredictions = (int) ($agg->total_predictions ?? 0);
+        $completedPredictions = (int) ($agg->completed_predictions ?? 0);
+        $predictionSuccessRate = $totalPredictions > 0 ? ($completedPredictions / $totalPredictions) * 100 : 0;
+
         $stats = [
-            'total_predictions' => AiPricePrediction::count(),
-            'today_predictions' => AiPricePrediction::whereDate('created_at', today())->count(),
-            'average_accuracy' => $this->getAverageAccuracy(),
-            'total_properties_analyzed' => $this->getTotalPropertiesAnalyzed(),
-            'prediction_success_rate' => $this->getPredictionSuccessRate(),
+            'total_predictions' => $totalPredictions,
+            'today_predictions' => (int) ($agg->today_predictions ?? 0),
+            'average_accuracy' => (float) ($agg->completed_avg_accuracy ?? 0),
+            'total_properties_analyzed' => (int) ($agg->total_properties_analyzed ?? 0),
+            'prediction_success_rate' => $predictionSuccessRate,
             'last_update' => AiPricePrediction::latest()->first()?->created_at?->diffForHumans() ?? 'الآن',
+        ];
+
+        $accuracyMetrics = [
+            'total_predictions' => $totalPredictions,
+            'high_accuracy_predictions' => (int) ($agg->high_accuracy_predictions ?? 0),
+            'average_accuracy' => (float) ($agg->overall_avg_accuracy ?? 0),
+            'model_performance' => $this->getModelPerformance(),
+            'time_horizon_performance' => $this->getTimeHorizonPerformance(),
         ];
 
         $recentPredictions = AiPricePrediction::with(['property', 'user'])
@@ -28,7 +54,6 @@ class AiPricePredictorController extends Controller
             ->get();
 
         $predictionTrends = $this->getPredictionTrends();
-        $accuracyMetrics = $this->getAccuracyMetrics();
 
         return view('ai.price-prediction', compact(
             'stats', 
@@ -36,7 +61,7 @@ class AiPricePredictorController extends Controller
             'predictionTrends', 
             'accuracyMetrics'
         ));
-        }
+    }
 
     public function export()
     {
@@ -460,27 +485,6 @@ class AiPricePredictorController extends Controller
     }
 
     // Helper Methods
-    private function getAverageAccuracy(): float
-    {
-        return AiPricePrediction::where('status', 'completed')
-            ->avg('accuracy') ?? 0;
-    }
-
-    private function getTotalPropertiesAnalyzed(): int
-    {
-        return AiPricePrediction::where('status', 'completed')
-            ->distinct('property_id')
-            ->count();
-    }
-
-    private function getPredictionSuccessRate(): float
-    {
-        $total = AiPricePrediction::count();
-        $completed = AiPricePrediction::where('status', 'completed')->count();
-        
-        return $total > 0 ? ($completed / $total) * 100 : 0;
-    }
-
     private function getPredictionTrends(): array
     {
         return AiPricePrediction::select(
@@ -493,17 +497,6 @@ class AiPricePredictorController extends Controller
             ->orderBy('date')
             ->get()
             ->toArray();
-    }
-
-    private function getAccuracyMetrics(): array
-    {
-        return [
-            'total_predictions' => AiPricePrediction::count(),
-            'high_accuracy_predictions' => AiPricePrediction::where('accuracy', '>=', 0.8)->count(),
-            'average_accuracy' => AiPricePrediction::avg('accuracy') ?? 0,
-            'model_performance' => $this->getModelPerformance(),
-            'time_horizon_performance' => $this->getTimeHorizonPerformance(),
-        ];
     }
 
     private function getModelPerformance(): array
