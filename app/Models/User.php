@@ -295,6 +295,16 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function companyMembers(): HasMany
+    {
+        return $this->hasMany(CompanyMember::class);
+    }
+
+    public function companyMemberships(): HasMany
+    {
+        return $this->hasMany(CompanyMember::class);
+    }
+
     public function developer(): BelongsTo
     {
         return $this->belongsTo(Developer::class);

@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('agent_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('company_id')->nullable()->index();
             $table->string('property_code')->unique();
             $table->string('title');
             $table->text('description');

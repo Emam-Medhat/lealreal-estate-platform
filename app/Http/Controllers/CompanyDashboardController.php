@@ -17,16 +17,34 @@ class CompanyDashboardController extends Controller
     {
         $this->authorize('view', $company);
         
-        // Get company statistics
+        // Consolidated property aggregations into 1 single query instead of 5 separate queries
+        $propertyStats = $company->properties()
+            ->selectRaw("
+                COUNT(*) as total_properties,
+                COUNT(CASE WHEN status = 'published' THEN 1 END) as published_properties,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_properties,
+                COALESCE(SUM(views_count), 0) as total_views,
+                COALESCE(SUM(inquiries_count), 0) as total_inquiries
+            ")
+            ->first();
+
+        // Consolidated member aggregations into 1 query instead of 2 separate queries
+        $memberStats = $company->members()
+            ->selectRaw("
+                COUNT(*) as total_members,
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_members
+            ")
+            ->first();
+
         $stats = [
-            'total_properties' => $company->properties()->count(),
-            'published_properties' => $company->properties()->where('status', 'published')->count(),
-            'pending_properties' => $company->properties()->where('status', 'pending')->count(),
-            'total_members' => $company->members()->count(),
-            'active_members' => $company->members()->where('status', 'active')->count(),
+            'total_properties' => (int) ($propertyStats->total_properties ?? 0),
+            'published_properties' => (int) ($propertyStats->published_properties ?? 0),
+            'pending_properties' => (int) ($propertyStats->pending_properties ?? 0),
+            'total_members' => (int) ($memberStats->total_members ?? 0),
+            'active_members' => (int) ($memberStats->active_members ?? 0),
             'total_branches' => $company->branches()->count(),
-            'total_views' => $company->properties()->sum('views_count'),
-            'total_inquiries' => $company->properties()->sum('inquiries_count'),
+            'total_views' => (int) ($propertyStats->total_views ?? 0),
+            'total_inquiries' => (int) ($propertyStats->total_inquiries ?? 0),
         ];
 
         // Get recent activities
@@ -54,7 +72,7 @@ class CompanyDashboardController extends Controller
             ->get();
 
         // Get analytics data for charts
-        $analytics = $this->getAnalyticsData($company);
+        $analytics = $this->fetchAnalyticsData($company);
 
         return view('company.dashboard', compact(
             'company',
@@ -70,13 +88,23 @@ class CompanyDashboardController extends Controller
     {
         $this->authorize('view', $company);
         
+        // Consolidated property statistics into a single SQL aggregation query
+        $propertyStats = $company->properties()
+            ->selectRaw("
+                COUNT(*) as total_properties,
+                COUNT(CASE WHEN status = 'published' THEN 1 END) as published_properties,
+                COALESCE(SUM(views_count), 0) as total_views,
+                COALESCE(SUM(inquiries_count), 0) as total_inquiries
+            ")
+            ->first();
+
         $stats = [
-            'total_properties' => $company->properties()->count(),
-            'published_properties' => $company->properties()->where('status', 'published')->count(),
+            'total_properties' => (int) ($propertyStats->total_properties ?? 0),
+            'published_properties' => (int) ($propertyStats->published_properties ?? 0),
             'total_members' => $company->members()->count(),
             'total_branches' => $company->branches()->count(),
-            'total_views' => $company->properties()->sum('views_count'),
-            'total_inquiries' => $company->properties()->sum('inquiries_count'),
+            'total_views' => (int) ($propertyStats->total_views ?? 0),
+            'total_inquiries' => (int) ($propertyStats->total_inquiries ?? 0),
         ];
 
         return response()->json([
@@ -140,7 +168,7 @@ class CompanyDashboardController extends Controller
     {
         $this->authorize('view', $company);
         
-        $analytics = $this->getAnalyticsData($company);
+        $analytics = $this->fetchAnalyticsData($company);
 
         return response()->json([
             'success' => true,
@@ -148,7 +176,7 @@ class CompanyDashboardController extends Controller
         ]);
     }
 
-    private function getAnalyticsData(Company $company): array
+    private function fetchAnalyticsData(Company $company): array
     {
         // Property views over last 30 days
         $viewsData = CompanyAnalytic::where('company_id', $company->id)
@@ -194,12 +222,31 @@ class CompanyDashboardController extends Controller
     {
         $this->authorize('view', $company);
         
+        // Consolidated avg views, avg inquiries, total views, total inquiries, and total properties into 1 query
+        $propertyStats = $company->properties()
+            ->selectRaw('
+                COALESCE(AVG(views_count), 0) as avg_views,
+                COALESCE(AVG(inquiries_count), 0) as avg_inquiries,
+                COALESCE(SUM(views_count), 0) as total_views,
+                COALESCE(SUM(inquiries_count), 0) as total_inquiries,
+                COUNT(*) as total_properties
+            ')
+            ->first();
+
+        $totalViews = (float) ($propertyStats->total_views ?? 0);
+        $totalInquiries = (float) ($propertyStats->total_inquiries ?? 0);
+        $conversionRate = $totalViews > 0 ? round(($totalInquiries / $totalViews) * 100, 2) : 0;
+
+        $activeMembers = $company->members()->where('status', 'active')->count();
+        $totalProperties = (int) ($propertyStats->total_properties ?? 0);
+        $memberProductivity = $activeMembers > 0 ? round($totalProperties / $activeMembers, 2) : 0;
+
         $metrics = [
-            'average_property_views' => $company->properties()->avg('views_count') ?? 0,
-            'average_property_inquiries' => $company->properties()->avg('inquiries_count') ?? 0,
-            'conversion_rate' => $this->calculateConversionRate($company),
+            'average_property_views' => round((float) ($propertyStats->avg_views ?? 0), 2),
+            'average_property_inquiries' => round((float) ($propertyStats->avg_inquiries ?? 0), 2),
+            'conversion_rate' => $conversionRate,
             'listings_growth' => $this->calculateListingsGrowth($company),
-            'member_productivity' => $this->calculateMemberProductivity($company),
+            'member_productivity' => $memberProductivity,
         ];
 
         return response()->json([
@@ -263,12 +310,12 @@ class CompanyDashboardController extends Controller
                 $data['members'] = $company->members()->with('user.profile')->get();
                 break;
             case 'analytics':
-                $data['analytics'] = $this->getAnalyticsData($company);
+                $data['analytics'] = $this->fetchAnalyticsData($company);
                 break;
             case 'all':
                 $data['properties'] = $company->properties()->get();
                 $data['members'] = $company->members()->with('user.profile')->get();
-                $data['analytics'] = $this->getAnalyticsData($company);
+                $data['analytics'] = $this->fetchAnalyticsData($company);
                 break;
         }
 
