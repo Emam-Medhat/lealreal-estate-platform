@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\ApiController;
 use App\Services\CacheService;
 use App\Services\LeadService;
 use App\Services\PropertyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class DashboardApiController extends Controller
+class DashboardApiController extends ApiController
 {
     protected $leadService;
     protected $propertyService;
@@ -355,14 +355,34 @@ class DashboardApiController extends Controller
     }
 
     /**
+     * Helper to compute monthly growth rate using index-friendly date ranges and single SQL query
+     */
+    private function calculateModelGrowthRate(string $modelClass): float
+    {
+        $startOfThisMonth = now()->firstOfMonth();
+        $startOfLastMonth = now()->firstOfMonth()->subMonth();
+        $endOfLastMonth = now()->firstOfMonth()->subMonth()->endOfMonth();
+
+        // Single SQL aggregation query replacing two whereMonth queries and leveraging created_at index
+        $stats = $modelClass::where('created_at', '>=', $startOfLastMonth)
+            ->selectRaw("
+                COUNT(CASE WHEN created_at >= ? THEN 1 END) as this_month,
+                COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) as last_month
+            ", [$startOfThisMonth, $startOfLastMonth, $startOfThisMonth])
+            ->first();
+
+        $thisMonth = $stats->this_month ?? 0;
+        $lastMonth = $stats->last_month ?? 0;
+
+        return $lastMonth > 0 ? (($thisMonth - $lastMonth) / $lastMonth) * 100 : 0;
+    }
+
+    /**
      * Get leads growth rate
      */
     private function getLeadsGrowthRate(): float
     {
-        $thisMonth = \App\Models\Lead::whereMonth('created_at', now()->month)->count();
-        $lastMonth = \App\Models\Lead::whereMonth('created_at', now()->subMonth())->count();
-
-        return $lastMonth > 0 ? (($thisMonth - $lastMonth) / $lastMonth) * 100 : 0;
+        return $this->calculateModelGrowthRate(\App\Models\Lead::class);
     }
 
     /**
@@ -370,10 +390,7 @@ class DashboardApiController extends Controller
      */
     private function getPropertiesGrowthRate(): float
     {
-        $thisMonth = \App\Models\Property::whereMonth('created_at', now()->month)->count();
-        $lastMonth = \App\Models\Property::whereMonth('created_at', now()->subMonth())->count();
-
-        return $lastMonth > 0 ? (($thisMonth - $lastMonth) / $lastMonth) * 100 : 0;
+        return $this->calculateModelGrowthRate(\App\Models\Property::class);
     }
 
     /**
@@ -381,10 +398,7 @@ class DashboardApiController extends Controller
      */
     private function getUsersGrowthRate(): float
     {
-        $thisMonth = \App\Models\User::whereMonth('created_at', now()->month)->count();
-        $lastMonth = \App\Models\User::whereMonth('created_at', now()->subMonth())->count();
-
-        return $lastMonth > 0 ? (($thisMonth - $lastMonth) / $lastMonth) * 100 : 0;
+        return $this->calculateModelGrowthRate(\App\Models\User::class);
     }
 
     /**

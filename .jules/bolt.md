@@ -1,0 +1,3 @@
+## 2026-03-30 - Growth Metrics Query Consolidation and Index Optimization
+**Learning:** Using `whereMonth('created_at', ...)` applies SQL date functions on columns which prevents database engines from utilizing column indexes and forces full table scans. Furthermore, evaluating current vs prior month stats individually doubles database query roundtrips.
+**Action:** Consolidate month-over-month growth calculations using index-friendly range filtering (`created_at >= $startOfLastMonth`) with conditional SQL aggregations (`COUNT(CASE WHEN created_at >= ? THEN 1 END)`), reducing query count by 50% while unlocking index utilization.
