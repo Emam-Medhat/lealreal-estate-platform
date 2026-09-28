@@ -55,11 +55,20 @@ class ActivityController extends Controller
         }
 
         // Get activity statistics
+        // Optimization: Consolidate individual count queries into a single selectRaw aggregation query
+        // and replace whereDate('created_at', today()) with index-friendly created_at >= $todayStart.
         try {
+            $todayStart = now()->startOfDay();
+            $aggregateStats = UserActivityLog::selectRaw("
+                COUNT(*) as total_activities,
+                COUNT(CASE WHEN created_at >= ? THEN 1 END) as today_activities,
+                COUNT(DISTINCT user_id) as unique_users
+            ", [$todayStart])->first();
+
             $stats = [
-                'total_activities' => UserActivityLog::count(),
-                'today_activities' => UserActivityLog::whereDate('created_at', today())->count(),
-                'unique_users' => UserActivityLog::distinct('user_id')->count(),
+                'total_activities' => (int) ($aggregateStats->total_activities ?? 0),
+                'today_activities' => (int) ($aggregateStats->today_activities ?? 0),
+                'unique_users' => (int) ($aggregateStats->unique_users ?? 0),
                 'top_actions' => UserActivityLog::groupBy('action')
                     ->selectRaw('action, COUNT(*) as count')
                     ->orderBy('count', 'desc')

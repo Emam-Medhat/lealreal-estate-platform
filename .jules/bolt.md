@@ -1,0 +1,3 @@
+## 2025-02-28 - Consolidating UserActivityLog Stats Queries & Index-Friendly Date Filtering
+**Learning:** Sequential `count()`, `whereDate('created_at', today())->count()`, and `distinct('user_id')->count()` on `UserActivityLog` execute multiple separate database calls and force full table scans due to function wrapping on the indexed `created_at` column. Combining these into a single `selectRaw` query with `COUNT(CASE WHEN created_at >= ? THEN 1 END)` reduces database queries while allowing B-tree index scans on `created_at`.
+**Action:** When gathering activity or event stats in controllers, aggregate total, date-filtered, and unique counts into a single `selectRaw` conditional query using `$todayStart` date range bounds.
