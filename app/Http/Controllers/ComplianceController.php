@@ -14,17 +14,21 @@ class ComplianceController extends Controller
     {
         $user = Auth::user();
         
+        // Bolt performance optimization: Consolidate individual COUNT queries into 1 raw SQL query
+        $stats = ComplianceRecord::where('user_id', $user->id)
+            ->selectRaw("
+                COUNT(*) as total_records,
+                COUNT(CASE WHEN compliance_status = 'compliant' THEN 1 END) as compliant_records,
+                COUNT(CASE WHEN compliance_status = 'pending_review' THEN 1 END) as pending_reviews,
+                COUNT(CASE WHEN compliance_status = 'non_compliant' THEN 1 END) as non_compliant
+            ")
+            ->first();
+
         $complianceStats = [
-            'total_records' => ComplianceRecord::where('user_id', $user->id)->count(),
-            'compliant_records' => ComplianceRecord::where('user_id', $user->id)
-                ->where('compliance_status', 'compliant')
-                ->count(),
-            'pending_reviews' => ComplianceRecord::where('user_id', $user->id)
-                ->where('compliance_status', 'pending_review')
-                ->count(),
-            'non_compliant' => ComplianceRecord::where('user_id', $user->id)
-                ->where('compliance_status', 'non_compliant')
-                ->count(),
+            'total_records' => (int) ($stats->total_records ?? 0),
+            'compliant_records' => (int) ($stats->compliant_records ?? 0),
+            'pending_reviews' => (int) ($stats->pending_reviews ?? 0),
+            'non_compliant' => (int) ($stats->non_compliant ?? 0),
         ];
 
         $recentRecords = ComplianceRecord::where('user_id', $user->id)
@@ -342,18 +346,26 @@ class ComplianceController extends Controller
 
     private function getComplianceOverview($userId)
     {
+        // Bolt performance optimization: Consolidate 5 separate queries into 1 raw SQL aggregate query
+        $now = now();
+        $stats = ComplianceRecord::where('user_id', $userId)
+            ->selectRaw("
+                AVG(compliance_score) as total_score,
+                COUNT(*) as total_count,
+                COUNT(CASE WHEN compliance_status = 'compliant' THEN 1 END) as compliant_count,
+                COUNT(CASE WHEN risk_level = 'high' THEN 1 END) as high_risk_items,
+                COUNT(CASE WHEN next_assessment_date < ? THEN 1 END) as overdue_assessments
+            ", [$now])
+            ->first();
+
+        $totalCount = (int) ($stats->total_count ?? 0);
+        $compliantCount = (int) ($stats->compliant_count ?? 0);
+
         return [
-            'total_score' => ComplianceRecord::where('user_id', $userId)
-                ->avg('compliance_score'),
-            'compliance_rate' => ComplianceRecord::where('user_id', $userId)
-                ->where('compliance_status', 'compliant')
-                ->count() / ComplianceRecord::where('user_id', $userId)->count() * 100,
-            'high_risk_items' => ComplianceRecord::where('user_id', $userId)
-                ->where('risk_level', 'high')
-                ->count(),
-            'overdue_assessments' => ComplianceRecord::where('user_id', $userId)
-                ->where('next_assessment_date', '<', now())
-                ->count(),
+            'total_score' => $stats->total_score !== null ? (float) $stats->total_score : 0,
+            'compliance_rate' => $totalCount > 0 ? ($compliantCount / $totalCount) * 100 : 0,
+            'high_risk_items' => (int) ($stats->high_risk_items ?? 0),
+            'overdue_assessments' => (int) ($stats->overdue_assessments ?? 0),
         ];
     }
 
