@@ -321,23 +321,37 @@ class FractionalOwnershipService
         }
 
         DB::transaction(function () use ($payouts, $asset, $totalIncome, &$breakdown, &$totalDistributed, &$shareholdersPaid) {
-            foreach ($payouts as $payout) {
-                if ($payout['dividend'] <= 0) {
-                    continue;
+            $validPayouts = array_filter($payouts, fn($p) => $p['dividend'] > 0);
+
+            if (!empty($validPayouts)) {
+                $ids = [];
+                $cases = [];
+                $now = now()->toDateTimeString();
+
+                foreach ($validPayouts as $payout) {
+                    $id = (int) $payout['ownership_id'];
+                    $dividend = (float) $payout['dividend'];
+                    $ids[] = $id;
+                    $cases[] = "WHEN {$id} THEN dividends_earned + {$dividend}";
+
+                    $breakdown[] = [
+                        'user_id' => $payout['user_id'],
+                        'shares' => $payout['shares'],
+                        'dividend' => $payout['dividend'],
+                    ];
+
+                    $totalDistributed += $payout['dividend'];
+                    $shareholdersPaid++;
                 }
 
-                DB::table('fractional_ownerships')
-                    ->where('id', $payout['ownership_id'])
-                    ->increment('dividends_earned', $payout['dividend'], ['updated_at' => now()]);
-
-                $breakdown[] = [
-                    'user_id' => $payout['user_id'],
-                    'shares' => $payout['shares'],
-                    'dividend' => $payout['dividend'],
-                ];
-
-                $totalDistributed += $payout['dividend'];
-                $shareholdersPaid++;
+                // Optimization: Batch update all shareholder dividend balances in a single bulk SQL statement
+                // using a CASE expression. This reduces DB update queries from N down to 1 query,
+                // significantly decreasing database roundtrips and lock holding time inside the transaction.
+                if (!empty($ids)) {
+                    $idsList = implode(',', $ids);
+                    $caseSql = implode(' ', $cases);
+                    DB::statement("UPDATE fractional_ownerships SET dividends_earned = CASE id {$caseSql} END, updated_at = ? WHERE id IN ({$idsList})", [$now]);
+                }
             }
 
             // Single ledger entry for the entire distribution event
