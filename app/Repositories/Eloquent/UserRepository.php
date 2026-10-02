@@ -44,12 +44,22 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 return [];
             }
             
+            // Consolidate property stats into a single SQL aggregation query instead of 5 separate queries
+            $stats = $user->properties()->selectRaw("
+                COUNT(*) as total_properties,
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_listings,
+                COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold_properties,
+                COALESCE(SUM(CASE WHEN status = 'sold' THEN price ELSE 0 END), 0) as total_sales_value
+            ")->first();
+
+            $totalSalesValue = (float) ($stats->total_sales_value ?? 0);
+
             return [
-                'total_properties' => $user->properties()->count(),
-                'active_listings' => $user->properties()->where('status', 'active')->count(),
-                'sold_properties' => $user->properties()->where('status', 'sold')->count(),
-                'total_sales_value' => $user->properties()->where('status', 'sold')->sum('price'),
-                'commission_earned' => $user->properties()->where('status', 'sold')->sum('price') * 0.05,
+                'total_properties' => (int) ($stats->total_properties ?? 0),
+                'active_listings' => (int) ($stats->active_listings ?? 0),
+                'sold_properties' => (int) ($stats->sold_properties ?? 0),
+                'total_sales_value' => $totalSalesValue,
+                'commission_earned' => $totalSalesValue * 0.05,
             ];
         }, ['user_id' => $userId], 600);
     }
@@ -261,30 +271,69 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function getUserStats(): array
     {
         return $this->remember('getUserStats', function () {
-            $stats = $this->model->selectRaw('
+            $isSqlite = DB::getDriverName() === 'sqlite';
+
+            $sevenDaysAgo = now()->subDays(7)->toDateTimeString();
+            $thirtyDaysAgo = now()->subDays(30)->toDateTimeString();
+            $sixtyDaysAgo = now()->subDays(60)->toDateTimeString();
+            $ninetyDaysAgo = now()->subDays(90)->toDateTimeString();
+
+            if ($isSqlite) {
+                $dateSub7 = "created_at >= '{$sevenDaysAgo}'";
+                $dateSub30 = "created_at >= '{$thirtyDaysAgo}'";
+                $dateSub60To30 = "created_at >= '{$sixtyDaysAgo}' AND created_at < '{$thirtyDaysAgo}'";
+                $dateSub90 = "created_at >= '{$ninetyDaysAgo}'";
+                $lastLogin7 = "last_login_at >= '{$sevenDaysAgo}'";
+                $lastLogin30 = "last_login_at >= '{$thirtyDaysAgo}'";
+            } else {
+                $dateSub7 = "created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+                $dateSub30 = "created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+                $dateSub60To30 = "created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)";
+                $dateSub90 = "created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)";
+                $lastLogin7 = "last_login_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+                $lastLogin30 = "last_login_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+            }
+
+            // Consolidate all user counts including previous month into a single SQL query
+            // to avoid additional DB queries in calculateGrowthRate, calculateActivationRate, etc.
+            $stats = $this->model->selectRaw("
                 COUNT(*) as total_users,
-                COUNT(CASE WHEN account_status = "active" THEN 1 END) as active_users,
-                COUNT(CASE WHEN account_status = "inactive" THEN 1 END) as inactive_users,
-                COUNT(CASE WHEN account_status = "suspended" THEN 1 END) as suspended_users,
-                COUNT(CASE WHEN user_type = "admin" THEN 1 END) as admin_users,
-                COUNT(CASE WHEN user_type = "agent" THEN 1 END) as agent_users,
-                COUNT(CASE WHEN user_type = "company" THEN 1 END) as company_users,
-                COUNT(CASE WHEN user_type = "developer" THEN 1 END) as developer_users,
-                COUNT(CASE WHEN user_type = "investor" THEN 1 END) as investor_users,
+                COUNT(CASE WHEN account_status = 'active' THEN 1 END) as active_users,
+                COUNT(CASE WHEN account_status = 'inactive' THEN 1 END) as inactive_users,
+                COUNT(CASE WHEN account_status = 'suspended' THEN 1 END) as suspended_users,
+                COUNT(CASE WHEN user_type = 'admin' THEN 1 END) as admin_users,
+                COUNT(CASE WHEN user_type = 'agent' THEN 1 END) as agent_users,
+                COUNT(CASE WHEN user_type = 'company' THEN 1 END) as company_users,
+                COUNT(CASE WHEN user_type = 'developer' THEN 1 END) as developer_users,
+                COUNT(CASE WHEN user_type = 'investor' THEN 1 END) as investor_users,
                 COUNT(CASE WHEN is_agent = 1 THEN 1 END) as verified_agents,
-                COUNT(CASE WHEN kyc_status = "verified" THEN 1 END) as kyc_verified_users,
-                COUNT(CASE WHEN kyc_status = "pending" THEN 1 END) as kyc_pending_users,
+                COUNT(CASE WHEN kyc_status = 'verified' THEN 1 END) as kyc_verified_users,
+                COUNT(CASE WHEN kyc_status = 'pending' THEN 1 END) as kyc_pending_users,
                 COUNT(CASE WHEN two_factor_enabled = 1 THEN 1 END) as two_factor_enabled_users,
-                COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as users_this_week,
-                COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as users_this_month,
-                COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY) THEN 1 END) as users_this_quarter,
-                COUNT(CASE WHEN last_login_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as active_this_week,
-                COUNT(CASE WHEN last_login_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as active_this_month
-            ')->first();
+                COUNT(CASE WHEN {$dateSub7} THEN 1 END) as users_this_week,
+                COUNT(CASE WHEN {$dateSub30} THEN 1 END) as users_this_month,
+                COUNT(CASE WHEN {$dateSub60To30} THEN 1 END) as users_last_month,
+                COUNT(CASE WHEN {$dateSub90} THEN 1 END) as users_this_quarter,
+                COUNT(CASE WHEN {$lastLogin7} THEN 1 END) as active_this_week,
+                COUNT(CASE WHEN {$lastLogin30} THEN 1 END) as active_this_month
+            ")->first();
+
+            $total = (int) $stats->total_users;
+            $thisMonth = (int) $stats->users_this_month;
+            $lastMonth = (int) $stats->users_last_month;
+            $active = (int) $stats->active_users;
+            $kycVerified = (int) $stats->kyc_verified_users;
+            $twoFactor = (int) $stats->two_factor_enabled_users;
+
+            // Calculate derived rates in-memory without extra DB calls
+            $growthRate = $lastMonth > 0 ? (($thisMonth - $lastMonth) / $lastMonth) * 100 : 0.0;
+            $activationRate = $total > 0 ? ($active / $total) * 100 : 0.0;
+            $kycCompletionRate = $total > 0 ? ($kycVerified / $total) * 100 : 0.0;
+            $twoFactorAdoptionRate = $total > 0 ? ($twoFactor / $total) * 100 : 0.0;
 
             return [
-                'total_users' => (int) $stats->total_users,
-                'active_users' => (int) $stats->active_users,
+                'total_users' => $total,
+                'active_users' => $active,
                 'inactive_users' => (int) $stats->inactive_users,
                 'suspended_users' => (int) $stats->suspended_users,
                 'admin_users' => (int) $stats->admin_users,
@@ -293,18 +342,18 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 'developer_users' => (int) $stats->developer_users,
                 'investor_users' => (int) $stats->investor_users,
                 'verified_agents' => (int) $stats->verified_agents,
-                'kyc_verified_users' => (int) $stats->kyc_verified_users,
+                'kyc_verified_users' => $kycVerified,
                 'kyc_pending_users' => (int) $stats->kyc_pending_users,
-                'two_factor_enabled_users' => (int) $stats->two_factor_enabled_users,
+                'two_factor_enabled_users' => $twoFactor,
                 'users_this_week' => (int) $stats->users_this_week,
-                'users_this_month' => (int) $stats->users_this_month,
+                'users_this_month' => $thisMonth,
                 'users_this_quarter' => (int) $stats->users_this_quarter,
                 'active_this_week' => (int) $stats->active_this_week,
                 'active_this_month' => (int) $stats->active_this_month,
-                'growth_rate' => $this->calculateGrowthRate(),
-                'activation_rate' => $this->calculateActivationRate(),
-                'kyc_completion_rate' => $this->calculateKycCompletionRate(),
-                'two_factor_adoption_rate' => $this->calculateTwoFactorAdoptionRate(),
+                'growth_rate' => (float) $growthRate,
+                'activation_rate' => (float) $activationRate,
+                'kyc_completion_rate' => (float) $kycCompletionRate,
+                'two_factor_adoption_rate' => (float) $twoFactorAdoptionRate,
             ];
         }, [], 1800);
     }
