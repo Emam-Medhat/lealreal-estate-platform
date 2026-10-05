@@ -27,3 +27,4 @@ Thumbs.db
 bootstrap/cache/*
 mysql_data/
 *.sock
+storage/framework/
