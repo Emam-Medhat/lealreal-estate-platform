@@ -244,21 +244,38 @@ class RentCollectionController extends Controller
         ));
     }
 
+    /**
+     * Bolt Optimization: Consolidate 24 monthly trend queries into 2 bulk GROUP BY queries.
+     */
     private function getMonthlyTrends()
     {
+        $startDate = now()->subMonths(11)->startOfMonth();
+        $endDate = now()->endOfMonth();
+
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $paidFormat = $driver === 'sqlite' ? "strftime('%Y-%m', payment_date)" : "DATE_FORMAT(payment_date, '%Y-%m')";
+        $dueFormat = $driver === 'sqlite' ? "strftime('%Y-%m', due_date)" : "DATE_FORMAT(due_date, '%Y-%m')";
+
+        $paidGrouped = RentPayment::where('status', 'paid')
+            ->whereBetween('payment_date', [$startDate, $endDate])
+            ->selectRaw("{$paidFormat} as ym, SUM(paid_amount) as total_paid")
+            ->groupBy('ym')
+            ->pluck('total_paid', 'ym');
+
+        $dueGrouped = RentPayment::whereBetween('due_date', [$startDate, $endDate])
+            ->selectRaw("{$dueFormat} as ym, SUM(amount) as total_due")
+            ->groupBy('ym')
+            ->pluck('total_due', 'ym');
+
         $trends = [];
-        
+
         for ($i = 11; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $paid = RentPayment::whereMonth('payment_date', $month)
-                ->whereYear('payment_date', $month)
-                ->where('status', 'paid')
-                ->sum('paid_amount');
-                
-            $due = RentPayment::whereMonth('due_date', $month)
-                ->whereYear('due_date', $month)
-                ->sum('amount');
-                
+            $key = $month->format('Y-m');
+
+            $paid = (float) ($paidGrouped[$key] ?? 0);
+            $due = (float) ($dueGrouped[$key] ?? 0);
+
             $trends[] = [
                 'month' => $month->format('M Y'),
                 'paid' => $paid,
@@ -266,7 +283,7 @@ class RentCollectionController extends Controller
                 'rate' => $due > 0 ? ($paid / $due) * 100 : 0,
             ];
         }
-        
+
         return $trends;
     }
 
