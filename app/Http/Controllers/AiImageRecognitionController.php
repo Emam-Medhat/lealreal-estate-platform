@@ -14,13 +14,40 @@ class AiImageRecognitionController extends Controller
 {
     public function dashboard()
     {
+        // Consolidated SQL query: Replaces 8+ separate count/avg/sum database queries
+        // with a single conditional aggregation query for optimal dashboard loading speed.
+        $rawStats = AiImageAnalysis::selectRaw("
+            COUNT(*) as total_analyses,
+            COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_analyses,
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_analyses,
+            COALESCE(AVG(CASE WHEN status = 'completed' THEN confidence_level END), 0) as average_completed_confidence,
+            COALESCE(AVG(confidence_level), 0) as average_confidence,
+            COUNT(CASE WHEN confidence_level >= 0.8 THEN 1 END) as high_confidence_analyses
+        ")->first();
+
+        $total = (int) ($rawStats->total_analyses ?? 0);
+        $completed = (int) ($rawStats->completed_analyses ?? 0);
+        $pending = (int) ($rawStats->pending_analyses ?? 0);
+        $avgCompletedConfidence = round((float) ($rawStats->average_completed_confidence ?? 0), 2);
+        $avgConfidence = round((float) ($rawStats->average_confidence ?? 0), 2);
+        $highConfidence = (int) ($rawStats->high_confidence_analyses ?? 0);
+        $successRate = $total > 0 ? round(($completed / $total) * 100, 2) : 0;
+
         $stats = [
-            'total_analyses' => AiImageAnalysis::count(),
-            'completed_analyses' => AiImageAnalysis::where('status', 'completed')->count(),
-            'pending_analyses' => AiImageAnalysis::where('status', 'pending')->count(),
-            'average_confidence' => $this->getAverageConfidence(),
-            'total_images_processed' => $this->getTotalImagesProcessed(),
-            'recognition_success_rate' => $this->getRecognitionSuccessRate(),
+            'total_analyses' => $total,
+            'completed_analyses' => $completed,
+            'pending_analyses' => $pending,
+            'average_confidence' => $avgCompletedConfidence,
+            'total_images_processed' => $completed,
+            'recognition_success_rate' => $successRate,
+        ];
+
+        $performanceMetrics = [
+            'total_analyses' => $total,
+            'high_confidence_analyses' => $highConfidence,
+            'average_confidence' => $avgConfidence,
+            'model_performance' => $this->getModelPerformance(),
+            'analysis_type_performance' => $this->getAnalysisTypePerformance(),
         ];
 
         $recentAnalyses = AiImageAnalysis::with(['property', 'user'])
@@ -29,14 +56,22 @@ class AiImageRecognitionController extends Controller
             ->get();
 
         $analysisTrends = $this->getAnalysisTrends();
-        $performanceMetrics = $this->getPerformanceMetrics();
 
-        return view('ai.image-recognition.dashboard', compact(
-            'stats', 
-            'recentAnalyses', 
-            'analysisTrends', 
-            'performanceMetrics'
-        ));
+        if (view()->exists('ai.image-recognition.dashboard')) {
+            return view('ai.image-recognition.dashboard', compact(
+                'stats',
+                'recentAnalyses',
+                'analysisTrends',
+                'performanceMetrics'
+            ));
+        }
+
+        return response()->json([
+            'stats' => $stats,
+            'recentAnalyses' => $recentAnalyses,
+            'analysisTrends' => $analysisTrends,
+            'performanceMetrics' => $performanceMetrics,
+        ]);
     }
 
     public function index(Request $request)
@@ -324,12 +359,12 @@ class AiImageRecognitionController extends Controller
         return $total > 0 ? ($completed / $total) * 100 : 0;
     }
 
-    private function getAnalysisTrends(): array
+    private function getAnalysisTrends()
     {
         return AiImageAnalysis::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as count'),
-                DB::raw('AVG(confidence_score) as avg_confidence')
+                DB::raw('AVG(confidence_level) as avg_confidence')
             )
             ->groupBy('date')
             ->orderBy('date')

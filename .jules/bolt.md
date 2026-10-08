@@ -1,0 +1,3 @@
+## 2026-03-31 - SQL Conditional Aggregations and Schema Column Verification
+**Learning:** In Laravel controllers calculating dashboard metrics, multiple individual `count()`, `avg()`, and `sum()` queries can be consolidated into 1 `selectRaw` query using conditional CASE statements (`COUNT(CASE WHEN status = 'completed' THEN 1 END)`). Always check migration schema for actual column names (e.g. `confidence_level` instead of `confidence_score`) and use single quotes for string literals in SQL to ensure portability across database engines.
+**Action:** When optimizing dashboard metrics, inspect the database migration schema first, replace multiple query calls with a single `selectRaw` query with single-quoted string literals, and verify with a query log assertion test.
