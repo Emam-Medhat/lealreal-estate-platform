@@ -14,7 +14,10 @@ class AuctionResult extends Model
     protected $fillable = [
         'auction_id',
         'winner_id',
+        'winning_bid',
         'final_price',
+        'total_amount',
+        'result_time',
         'completed_at',
         'notes',
         'status',

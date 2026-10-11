@@ -73,31 +73,62 @@ class AuctionResultRepository extends BaseRepository implements AuctionResultRep
         }, ['userId' => $userId]);
     }
 
+    /**
+     * Get aggregated auction result stats.
+     *
+     * Performance Optimization:
+     * Consolidate 9 separate database queries (count, sum, avg, max, min, this_month, last_month, plus growth rate subqueries)
+     * into a single raw SQL query with conditional aggregations and date range filtering.
+     */
     public function getStats(): array
     {
         return $this->remember('getStats', function () {
+            $startOfThisMonth = now()->startOfMonth()->toDateTimeString();
+            $endOfThisMonth = now()->endOfMonth()->toDateTimeString();
+            $startOfLastMonth = now()->subMonth()->startOfMonth()->toDateTimeString();
+            $endOfLastMonth = now()->subMonth()->endOfMonth()->toDateTimeString();
+
+            $stats = $this->model->newQuery()
+                ->selectRaw('
+                    COUNT(*) as total_completed,
+                    COALESCE(SUM(final_price), 0) as total_revenue,
+                    COALESCE(AVG(final_price), 0) as average_price,
+                    COALESCE(MAX(final_price), 0) as highest_price,
+                    COALESCE(MIN(final_price), 0) as lowest_price,
+                    COUNT(CASE WHEN result_time >= ? AND result_time <= ? THEN 1 END) as this_month,
+                    COUNT(CASE WHEN result_time >= ? AND result_time <= ? THEN 1 END) as last_month
+                ', [
+                    $startOfThisMonth,
+                    $endOfThisMonth,
+                    $startOfLastMonth,
+                    $endOfLastMonth
+                ])
+                ->first();
+
+            $thisMonth = (int) ($stats->this_month ?? 0);
+            $lastMonth = (int) ($stats->last_month ?? 0);
+            $growthRate = $lastMonth > 0 ? round((($thisMonth - $lastMonth) / $lastMonth) * 100, 2) : 0.0;
+
             return [
-                'total_completed' => $this->model->count(),
-                'total_revenue' => $this->model->sum('final_price'),
-                'average_price' => $this->model->avg('final_price'),
-                'highest_price' => $this->model->max('final_price'),
-                'lowest_price' => $this->model->min('final_price'),
-                'this_month' => $this->model->whereMonth('result_time', now()->month)->count(),
-                'last_month' => $this->model->whereMonth('result_time', now()->subMonth())->count(),
-                'growth_rate' => $this->calculateGrowthRate()
+                'total_completed' => (int) ($stats->total_completed ?? 0),
+                'total_revenue' => (float) ($stats->total_revenue ?? 0),
+                'average_price' => (float) ($stats->average_price ?? 0),
+                'highest_price' => (float) ($stats->highest_price ?? 0),
+                'lowest_price' => (float) ($stats->lowest_price ?? 0),
+                'this_month' => $thisMonth,
+                'last_month' => $lastMonth,
+                'growth_rate' => (float) $growthRate,
             ];
         }, [], 3600);
     }
 
+    /**
+     * Calculate growth rate between current month and previous month.
+     * Reuses cached stats to avoid extra database queries.
+     */
     public function calculateGrowthRate(): float
     {
-        $thisMonth = $this->model->whereMonth('result_time', now()->month)->count();
-        $lastMonth = $this->model->whereMonth('result_time', now()->subMonth())->count();
-
-        if ($lastMonth === 0) {
-            return 0;
-        }
-
-        return round((($thisMonth - $lastMonth) / $lastMonth) * 100, 2);
+        $stats = $this->getStats();
+        return (float) ($stats['growth_rate'] ?? 0.0);
     }
 }

@@ -1,0 +1,3 @@
+## 2026-10-11 - Database Aggregation Optimization in AuctionResultRepository
+**Learning:** Calling `count()`, `sum()`, `avg()`, `max()`, `min()`, and `whereMonth()` separately on Eloquent models leads to redundant database roundtrips (9 queries in `AuctionResultRepository::getStats`). Consolidating these aggregations into a single `selectRaw` query with `COUNT(CASE WHEN ... THEN 1 END)` conditional aggregations and index-friendly date range filtering (`>=` and `<=`) reduces query count from 9 down to 1.
+**Action:** Always combine multi-metric statistical aggregations and period-based counts into single `selectRaw` queries.
