@@ -12,6 +12,8 @@ class AgentLead extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'leads';
+
     protected $fillable = [
         'agent_id',
         'client_name',
