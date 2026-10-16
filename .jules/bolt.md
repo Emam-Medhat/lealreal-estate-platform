@@ -1,0 +1,3 @@
+## 2026-03-01 - Agent CRM Statistics Query Consolidation
+**Learning:** `AgentCrmService::getCrmStats` executed 6 separate queries with `whereMonth()`, bypassing database indexes. In addition, the `AgentLead` Eloquent model defaulted to non-existent `agent_leads` table due to missing `$table = 'leads'` property mapping.
+**Action:** Consolidate multiple count metrics into a single `selectRaw` query with conditional aggregations (`COUNT(CASE WHEN ... THEN 1 END)`), replace `whereMonth()` with indexable `created_at >= $startOfMonth` range check, and explicitly set `protected $table = 'leads';` on `AgentLead`.
