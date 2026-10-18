@@ -254,25 +254,36 @@ class AgentLeadController extends Controller
     public function getLeadStats(): JsonResponse
     {
         $agent = Auth::user()->agent;
-        
-        $stats = [
-            'total_leads' => $agent->leads()->count(),
-            'new_leads' => $agent->leads()->where('status', 'new')->count(),
-            'contacted_leads' => $agent->leads()->where('status', 'contacted')->count(),
-            'qualified_leads' => $agent->leads()->where('status', 'qualified')->count(),
-            'converted_leads' => $agent->leads()->where('status', 'converted')->count(),
-            'lost_leads' => $agent->leads()->where('status', 'lost')->count(),
-            'conversion_rate' => 0,
-            'this_month_leads' => $agent->leads()
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->count(),
-        ];
+        $startOfMonth = now()->startOfMonth();
 
-        $totalLeads = $stats['total_leads'];
-        if ($totalLeads > 0) {
-            $stats['conversion_rate'] = round(($stats['converted_leads'] / $totalLeads) * 100, 2);
-        }
+        // Bolt performance optimization: Consolidate 7 individual count database queries
+        // into a single selectRaw query with conditional aggregations and index-friendly date range filtering.
+        $rawStats = $agent->leads()
+            ->selectRaw("
+                COUNT(*) as total_leads,
+                COUNT(CASE WHEN lead_status = 'new' THEN 1 END) as new_leads,
+                COUNT(CASE WHEN lead_status = 'contacted' THEN 1 END) as contacted_leads,
+                COUNT(CASE WHEN lead_status = 'qualified' THEN 1 END) as qualified_leads,
+                COUNT(CASE WHEN lead_status = 'converted' THEN 1 END) as converted_leads,
+                COUNT(CASE WHEN lead_status = 'lost' THEN 1 END) as lost_leads,
+                COUNT(CASE WHEN created_at >= ? THEN 1 END) as this_month_leads
+            ", [$startOfMonth])
+            ->first();
+
+        $totalLeads = (int) ($rawStats->total_leads ?? 0);
+        $convertedLeads = (int) ($rawStats->converted_leads ?? 0);
+        $conversionRate = $totalLeads > 0 ? round(($convertedLeads / $totalLeads) * 100, 2) : 0;
+
+        $stats = [
+            'total_leads' => $totalLeads,
+            'new_leads' => (int) ($rawStats->new_leads ?? 0),
+            'contacted_leads' => (int) ($rawStats->contacted_leads ?? 0),
+            'qualified_leads' => (int) ($rawStats->qualified_leads ?? 0),
+            'converted_leads' => $convertedLeads,
+            'lost_leads' => (int) ($rawStats->lost_leads ?? 0),
+            'conversion_rate' => $conversionRate,
+            'this_month_leads' => (int) ($rawStats->this_month_leads ?? 0),
+        ];
 
         return response()->json([
             'success' => true,
