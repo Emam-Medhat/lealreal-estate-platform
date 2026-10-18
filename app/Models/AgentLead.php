@@ -12,7 +12,15 @@ class AgentLead extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'leads';
+
     protected $fillable = [
+        'uuid',
+        'first_name',
+        'last_name',
+        'email',
+        'lead_status',
+        'created_by',
         'agent_id',
         'client_name',
         'client_email',
