@@ -347,30 +347,45 @@ class AgentAppointmentController extends Controller
     {
         $agent = Auth::user()->agent;
         
-        $stats = [
-            'total_appointments' => $agent->appointments()->count(),
-            'scheduled_appointments' => $agent->appointments()->where('status', 'scheduled')->count(),
-            'completed_appointments' => $agent->appointments()->where('status', 'completed')->count(),
-            'cancelled_appointments' => $agent->appointments()->where('status', 'cancelled')->count(),
-            'today_appointments' => $agent->appointments()
-                ->whereDate('appointment_date', today())
-                ->where('status', 'scheduled')
-                ->count(),
-            'this_week_appointments' => $agent->appointments()
-                ->whereBetween('appointment_date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->where('status', 'scheduled')
-                ->count(),
-            'this_month_appointments' => $agent->appointments()
-                ->whereMonth('appointment_date', now()->month)
-                ->whereYear('appointment_date', now()->year)
-                ->count(),
-            'completion_rate' => 0,
-        ];
+        // Optimization: Consolidate 7 individual count database queries into 1 raw SQL query
+        // using conditional aggregations (COUNT(CASE WHEN ... THEN 1 END)) and index-friendly date ranges.
+        $now = now();
+        $todayStart = $now->copy()->startOfDay();
+        $todayEnd = $now->copy()->endOfDay();
+        $weekStart = $now->copy()->startOfWeek();
+        $weekEnd = $now->copy()->endOfWeek();
+        $monthStart = $now->copy()->startOfMonth();
+        $monthEnd = $now->copy()->endOfMonth();
 
-        $totalAppointments = $stats['total_appointments'];
-        if ($totalAppointments > 0) {
-            $stats['completion_rate'] = round(($stats['completed_appointments'] / $totalAppointments) * 100, 2);
-        }
+        $rawStats = $agent->appointments()
+            ->selectRaw("
+                COUNT(*) as total_appointments,
+                COUNT(CASE WHEN status = 'scheduled' THEN 1 END) as scheduled_appointments,
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_appointments,
+                COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_appointments,
+                COUNT(CASE WHEN status = 'scheduled' AND appointment_date >= ? AND appointment_date <= ? THEN 1 END) as today_appointments,
+                COUNT(CASE WHEN status = 'scheduled' AND appointment_date >= ? AND appointment_date <= ? THEN 1 END) as this_week_appointments,
+                COUNT(CASE WHEN appointment_date >= ? AND appointment_date <= ? THEN 1 END) as this_month_appointments
+            ", [
+                $todayStart, $todayEnd,
+                $weekStart, $weekEnd,
+                $monthStart, $monthEnd
+            ])
+            ->first();
+
+        $totalAppointments = (int) ($rawStats->total_appointments ?? 0);
+        $completedAppointments = (int) ($rawStats->completed_appointments ?? 0);
+
+        $stats = [
+            'total_appointments' => $totalAppointments,
+            'scheduled_appointments' => (int) ($rawStats->scheduled_appointments ?? 0),
+            'completed_appointments' => $completedAppointments,
+            'cancelled_appointments' => (int) ($rawStats->cancelled_appointments ?? 0),
+            'today_appointments' => (int) ($rawStats->today_appointments ?? 0),
+            'this_week_appointments' => (int) ($rawStats->this_week_appointments ?? 0),
+            'this_month_appointments' => (int) ($rawStats->this_month_appointments ?? 0),
+            'completion_rate' => $totalAppointments > 0 ? round(($completedAppointments / $totalAppointments) * 100, 2) : 0,
+        ];
 
         return response()->json([
             'success' => true,

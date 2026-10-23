@@ -24,8 +24,10 @@ return new class extends Migration
             $table->string('priority')->default('medium');
             
             // Date and time
-            $table->dateTime('start_datetime');
-            $table->dateTime('end_datetime');
+            $table->dateTime('start_datetime')->nullable();
+            $table->dateTime('end_datetime')->nullable();
+            $table->dateTime('appointment_date')->nullable();
+            $table->dateTime('appointment_end_date')->nullable();
             $table->integer('duration')->default(60); // in minutes
             $table->string('timezone')->default('UTC');
             
