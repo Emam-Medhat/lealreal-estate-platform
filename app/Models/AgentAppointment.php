@@ -13,7 +13,10 @@ class AgentAppointment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'appointments';
+
     protected $fillable = [
+        'uuid',
         'agent_id',
         'client_id',
         'lead_id',
@@ -21,6 +24,9 @@ class AgentAppointment extends Model
         'title',
         'description',
         'appointment_date',
+        'appointment_end_date',
+        'start_datetime',
+        'end_datetime',
         'appointment_time',
         'duration_minutes',
         'location',
