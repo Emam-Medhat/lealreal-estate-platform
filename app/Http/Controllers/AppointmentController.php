@@ -23,7 +23,7 @@ class AppointmentController extends Controller
         
         // Filter
         if ($request->filter === 'today') {
-            $query->whereDate('start_datetime', today());
+            $query->whereBetween('start_datetime', [now()->startOfDay(), now()->endOfDay()]);
         } elseif ($request->filter === 'week') {
             $query->whereBetween('start_datetime', [now()->startOfWeek(), now()->endOfWeek()]);
         } elseif ($request->filter === 'month') {
@@ -48,17 +48,31 @@ class AppointmentController extends Controller
         $appointments = $query->with(['user', 'participant'])
             ->paginate(15);
         
+        // Consolidated SQL query to compute all appointment statistics in a single database call instead of 4 separate queries.
+        $todayStart = now()->startOfDay();
+        $todayEnd = now()->endOfDay();
+
+        $rawStats = Appointment::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->orWhere('participant_id', $user->id);
+        })->selectRaw("
+            COUNT(*) as total,
+            COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+            COUNT(CASE WHEN start_datetime >= ? AND start_datetime <= ? THEN 1 END) as today
+        ", [$todayStart, $todayEnd])->first();
+
         $stats = [
-            'total' => $this->getAppointmentsCount($user),
-            'confirmed' => $this->getAppointmentsCount($user, 'confirmed'),
-            'pending' => $this->getAppointmentsCount($user, 'pending'),
-            'today' => $this->getAppointmentsCount($user, null, today())
+            'total' => (int) ($rawStats->total ?? 0),
+            'confirmed' => (int) ($rawStats->confirmed ?? 0),
+            'pending' => (int) ($rawStats->pending ?? 0),
+            'today' => (int) ($rawStats->today ?? 0),
         ];
         
         $todayEvents = Appointment::where(function ($query) use ($user) {
             $query->where('user_id', $user->id)
                   ->orWhere('participant_id', $user->id);
-        })->whereDate('start_datetime', today())
+        })->whereBetween('start_datetime', [$todayStart, $todayEnd])
           ->where('status', '!=', 'cancelled')
           ->with(['user', 'participant'])
           ->orderBy('start_datetime', 'asc')
@@ -339,7 +353,7 @@ class AppointmentController extends Controller
         
         $appointments = Appointment::where(function ($query) use ($user) {
             $query->where('user_id', $user->id)
-                  ->orWhere('participant_id', $user->id());
+                  ->orWhere('participant_id', $user->id);
         })->with(['user', 'participant'])
           ->orderBy('start_datetime', 'asc')
           ->get();
@@ -382,7 +396,8 @@ class AppointmentController extends Controller
         }
         
         if ($date) {
-            $query->whereDate('start_datetime', $date);
+            $dateObj = Carbon::parse($date);
+            $query->whereBetween('start_datetime', [$dateObj->copy()->startOfDay(), $dateObj->copy()->endOfDay()]);
         }
         
         return $query->count();
