@@ -20,12 +20,19 @@ class LocationIntelligenceController extends Controller
     {
         $filters = $request->only(['city', 'property_type', 'intelligence_type', 'date_range']);
 
-        // Get intelligence statistics
+        // Get intelligence statistics - consolidated 4 queries into 1 raw SQL query
+        $statsData = LocationIntelligence::selectRaw('
+            COUNT(*) as total_intelligence,
+            COUNT(CASE WHEN status = ? THEN 1 END) as active_intelligence,
+            COUNT(CASE WHEN location_score >= ? THEN 1 END) as high_score_locations,
+            AVG(location_score) as average_score
+        ', ['active', 80])->first();
+
         $stats = [
-            'total_intelligence' => LocationIntelligence::count(),
-            'active_intelligence' => LocationIntelligence::where('status', 'active')->count(),
-            'high_score_locations' => LocationIntelligence::where('score', '>=', 80)->count(),
-            'average_score' => LocationIntelligence::avg('score') ?? 0,
+            'total_intelligence' => (int) ($statsData->total_intelligence ?? 0),
+            'active_intelligence' => (int) ($statsData->active_intelligence ?? 0),
+            'high_score_locations' => (int) ($statsData->high_score_locations ?? 0),
+            'average_score' => round((float) ($statsData->average_score ?? 0), 2),
             'top_performing_cities' => $this->getTopPerformingCities(),
             'emerging_areas' => $this->getEmergingAreas(),
         ];
@@ -41,7 +48,7 @@ class LocationIntelligenceController extends Controller
                     'property_id' => $intelligence->property_id,
                     'property_name' => $intelligence->property?->name ?? 'Unknown',
                     'intelligence_type' => $intelligence->intelligence_type,
-                    'score' => $intelligence->score,
+                    'score' => $intelligence->location_score,
                     'status' => $intelligence->status,
                     'created_at' => $intelligence->created_at->format('Y-m-d H:i:s'),
                 ];
